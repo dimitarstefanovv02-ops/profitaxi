@@ -10,6 +10,8 @@
   <g clip-path="url(#tsq)">
     <rect width="512" height="512" fill="url(#tbg)"/>
     <ellipse cx="256" cy="300" rx="230" ry="150" fill="url(#tglow)"/>
+    <!-- надпис -->
+    <text x="256" y="118" text-anchor="middle" font-family="'Inter Display', Inter, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="76" letter-spacing="-2.5" fill="#FFFFFF">Profi<tspan fill="#FFC21A">Taxi</tspan></text>
     <!-- линии на скоростта -->
     <g stroke="#FFFFFF" stroke-linecap="round" opacity=".22">
       <path d="M446 236h40" stroke-width="10"/><path d="M458 270h34" stroke-width="10"/><path d="M440 304h48" stroke-width="10"/>

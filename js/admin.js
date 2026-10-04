@@ -51,7 +51,7 @@ function sidebar(active) {
   const a = store.adminUser();
   const n = store.admin.drivers().length;
   return h('aside', { class: 'adm-side' },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin.svg', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi'), h('span', { class: 'adm-badge' }, 'Админ')),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi'), h('span', { class: 'adm-badge' }, 'Админ')),
     h('nav', { class: 'adm-nav' }, NAV.map(([p, ic, label]) =>
       h('a', { href: '#' + p, class: cx((active === p || (p === '/drivers' && active === '/driver')) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n)))),
     h('div', { class: 'adm-side-foot' },
@@ -65,7 +65,7 @@ function loginView() {
   const pw = h('input', { class: 'input', type: 'password', autocomplete: 'current-password' });
   const err = h('p', { class: 'err' });
   return h('div', { class: 'auth', style: { maxWidth: '420px', margin: '0 auto' } },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin.svg', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi')),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi')),
     h('div', { class: 'auth-hero' }, h('h1', null, 'Администрация'), h('p', null, 'Вход само за администратори.')),
     h('form', { class: 'form', onsubmit: (e) => { e.preventDefault(); const r = store.adminLogin(email.value, pw.value); if (r.error) { err.textContent = r.error; return; } render(); } },
       field('Имейл', email), field('Парола', pw), err,

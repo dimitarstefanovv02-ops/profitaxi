@@ -9,6 +9,8 @@
     <rect width="512" height="512" fill="url(#abg)"/>
     <circle cx="440" cy="60" r="170" fill="#FFFFFF" opacity=".08"/>
     <circle cx="40" cy="500" r="150" fill="#000000" opacity=".12"/>
+    <text x="256" y="104" text-anchor="middle" font-family="'Inter Display', Inter, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="70" letter-spacing="-2" fill="#FFFFFF">ProfiTaxi</text>
+    <g transform="translate(256 268) scale(0.7) translate(-256 -256)">
     <!-- стъклена карта -->
     <rect x="72" y="96" width="368" height="320" rx="44" fill="#FFFFFF" opacity=".14"/>
     <rect x="72" y="96" width="368" height="320" rx="44" fill="none" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="3"/>
@@ -22,5 +24,7 @@
     <!-- светеща точка -->
     <circle cx="394" cy="158" r="44" fill="url(#adot)"/>
     <circle cx="394" cy="158" r="20" fill="#FFC21A" stroke="#FFFFFF" stroke-width="8"/>
+    </g>
+    <text x="256" y="462" text-anchor="middle" font-family="'Inter Display', Inter, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="78" letter-spacing="-1" fill="#FFC21A">Stats</text>
   </g>
 </svg>
