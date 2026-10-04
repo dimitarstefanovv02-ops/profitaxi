@@ -1,6 +1,6 @@
 {
-  "name": "ProfiTaxi – Администрация",
-  "short_name": "ProfiTaxi Админ",
+  "name": "ProfiTaxi Stats",
+  "short_name": "ProfiTaxi Stats",
   "lang": "bg",
   "start_url": "/admin",
   "scope": "/admin",
