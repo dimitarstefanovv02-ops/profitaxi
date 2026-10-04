@@ -1,17 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFD84D"/><stop offset="1" stop-color="#FFB300"/></linearGradient>
-    <pattern id="chk" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#1C1500"/><rect width="20" height="20" fill="#FFC21A"/><rect x="20" y="20" width="20" height="20" fill="#FFC21A"/></pattern>
-    <clipPath id="sq"><rect width="512" height="512" rx="0"/></clipPath>
+    <linearGradient id="tbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B3442"/><stop offset="1" stop-color="#11151C"/></linearGradient>
+    <linearGradient id="tcar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE066"/><stop offset=".55" stop-color="#FFC21A"/><stop offset="1" stop-color="#F2A100"/></linearGradient>
+    <linearGradient id="tglass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5B6B82"/><stop offset="1" stop-color="#1E2633"/></linearGradient>
+    <radialGradient id="tglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFC21A" stop-opacity=".35"/><stop offset="1" stop-color="#FFC21A" stop-opacity="0"/></radialGradient>
+    <pattern id="tchk" width="12" height="12" patternUnits="userSpaceOnUse"><rect width="12" height="12" fill="#1C1500"/><rect width="6" height="6" fill="#FFF3C4"/><rect x="6" y="6" width="6" height="6" fill="#FFF3C4"/></pattern>
+    <clipPath id="tsq"><rect width="512" height="512" rx="0"/></clipPath>
   </defs>
-  <g clip-path="url(#sq)">
-    <rect width="512" height="512" fill="url(#bg)"/>
-    <rect y="412" width="512" height="40" fill="url(#chk)"/>
-    <!-- табела на такси -->
-    <path d="M168 158h176a14 14 0 0 1 13.6 10.7L388 300H124l30.4-131.3A14 14 0 0 1 168 158z" fill="#1C1500"/>
-    <rect x="104" y="300" width="304" height="42" rx="21" fill="#1C1500"/>
-    <!-- стрелка нагоре: печалбата расте -->
-    <path d="M176 266l52-48 36 28 64-66" fill="none" stroke="#FFC21A" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M292 180h40v40" fill="none" stroke="#FFC21A" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <g clip-path="url(#tsq)">
+    <rect width="512" height="512" fill="url(#tbg)"/>
+    <ellipse cx="256" cy="300" rx="230" ry="150" fill="url(#tglow)"/>
+    <!-- линии на скоростта -->
+    <g stroke="#FFFFFF" stroke-linecap="round" opacity=".22">
+      <path d="M446 236h40" stroke-width="10"/><path d="M458 270h34" stroke-width="10"/><path d="M440 304h48" stroke-width="10"/>
+    </g>
+    <!-- пътят -->
+    <rect y="398" width="512" height="114" fill="#0B0E13" opacity=".55"/>
+    <g stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" opacity=".35"><path d="M24 448h56M128 448h56M232 448h56M336 448h56M440 448h56"/></g>
+    <!-- табела на покрива -->
+    <rect x="248" y="170" width="72" height="30" rx="8" fill="url(#tchk)"/>
+    <rect x="248" y="170" width="72" height="30" rx="8" fill="none" stroke="#1C1500" stroke-width="4"/>
+    <!-- каросерия -->
+    <path d="M70 324c0-22 13-38 35-42l58-10 50-52c11-11 26-18 42-18h86c17 0 33 8 44 21l36 45 26 6c20 5 34 22 34 43v20c0 11-9 20-20 20H88c-10 0-18-8-18-18z" fill="url(#tcar)"/>
+    <!-- прозорци -->
+    <path d="M226 268l30-36c5-6 12-9 20-9h38v45z" fill="url(#tglass)"/>
+    <path d="M330 223h20c9 0 17 4 22 11l26 34h-68z" fill="url(#tglass)"/>
+    <!-- линия по вратите -->
+    <path d="M150 302h296" stroke="#C98400" stroke-width="5" stroke-linecap="round" opacity=".6"/>
+    <path d="M322 270v64" stroke="#C98400" stroke-width="4" opacity=".5"/>
+    <!-- светлини -->
+    <path d="M74 300h26c5 0 8 4 7 9l-2 6H72z" fill="#FFFBEA"/>
+    <rect x="432" y="290" width="14" height="18" rx="5" fill="#FF5A5F"/>
+    <!-- гуми -->
+    <circle cx="150" cy="352" r="40" fill="#0E1217"/><circle cx="150" cy="352" r="18" fill="#C9D1DC"/><circle cx="150" cy="352" r="7" fill="#0E1217"/>
+    <circle cx="372" cy="352" r="40" fill="#0E1217"/><circle cx="372" cy="352" r="18" fill="#C9D1DC"/><circle cx="372" cy="352" r="7" fill="#0E1217"/>
   </g>
 </svg>
