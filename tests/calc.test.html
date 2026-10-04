@@ -1,0 +1,108 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ProfiTaxi – тестове на изчисленията</title>
+<pre id="out">Running…</pre>
+<script type="module">
+import { fixedForDay, periodStats, goalProgress, shiftHours, shiftDate, monthlyFixed, records, timeInsights, upcomingReminders } from '../js/calc.js';
+import { todayStr, addDays, startOfMonth, endOfMonth, parseDate, daysInMonth } from '../js/util.js';
+import * as store from '../js/store.js';
+
+const results = [];
+const ok = (name, cond, extra = '') => results.push(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  [' + extra + ']' : ''}`);
+const near = (a, b, eps = 0.01) => Math.abs(a - b) < eps;
+const profile = { sharePct: 100, monthlyGoal: 2000, carType: 'rent', dispatch: { mode: 'none', amount: 0 } };
+
+// 1. Постоянни разходи по дни
+const d = '2026-09-15';
+ok('Седмичен наем 140 € = 20 €/ден', near(fixedForDay([{ amount: 140, period: 'week', startDate: '2026-01-01' }], profile, d, false), 20));
+ok('Ефир 10 €/ден само в работни дни (работен)', near(fixedForDay([{ amount: 10, period: 'day', perWorkDay: true, startDate: '2026-01-01' }], profile, d, true), 10));
+ok('Ефир 10 €/ден само в работни дни (почивен = 0)', near(fixedForDay([{ amount: 10, period: 'day', perWorkDay: true, startDate: '2026-01-01' }], profile, d, false), 0));
+ok('Месечен 300 € в септември (30 дни) = 10 €/ден', near(fixedForDay([{ amount: 300, period: 'month', startDate: '2026-01-01' }], profile, d, false), 10));
+ok('Тримесечен 120 € = 120×4/365 на ден', near(fixedForDay([{ amount: 120, period: 'quarter', startDate: '2026-01-01' }], profile, d, false), 480 / 365));
+ok('Годишен 365 € = 1 €/ден', near(fixedForDay([{ amount: 365, period: 'year', startDate: '2026-01-01' }], profile, d, false), 1));
+ok('Разход преди началната дата не се смята', fixedForDay([{ amount: 140, period: 'week', startDate: '2026-09-20' }], profile, d, false) === 0);
+ok('Разход след крайната дата не се смята', fixedForDay([{ amount: 140, period: 'week', startDate: '2026-01-01', endDate: '2026-09-10' }], profile, d, false) === 0);
+ok('Дял 50% от разход за колата (наем)', near(fixedForDay([{ amount: 140, period: 'week', category: 'rent', startDate: '2026-01-01' }], { ...profile, sharePct: 50 }, d, false), 10));
+ok('Дял не засяга разход, който не е за колата (данъци)', near(fixedForDay([{ amount: 300, period: 'month', category: 'taxes', startDate: '2026-01-01' }], { ...profile, sharePct: 50 }, d, false), 10));
+ok('Месечна сума: седмичен 140 € ≈ 608,8 €/мес', near(monthlyFixed([{ amount: 140, period: 'week', startDate: '2026-01-01' }], profile), 140 * 52.1775 / 12, 0.1));
+
+// 2. Примерът на потребителя: наем 140 €/седм, първи ден 150 € за 10 часа
+const today = todayStr();
+const m0 = startOfMonth(today);
+const dim = parseDate(endOfMonth(today)).getDate();
+const elapsed = parseDate(today).getDate();
+const startISO = new Date(m0 + 'T08:00:00').toISOString();
+const endISO = new Date(m0 + 'T18:00:00').toISOString();
+const data = {
+  user: { createdAt: new Date(m0 + 'T07:00:00').toISOString() }, profile,
+  shifts: [{ id: 's1', start: startISO, end: endISO, kmStart: 0, kmEnd: 200, income: { cash: 150, card: 0, app: 0, tips: 0 }, expenses: [] }],
+  costs: [{ id: 'c1', amount: 140, period: 'week', category: 'rent', startDate: m0 }], reminders: [],
+};
+const st = periodStats(data, m0, today);
+ok('Чисто досега = 150 − 20×изминали дни', near(st.net, 150 - 20 * elapsed), `${st.net.toFixed(2)}`);
+const g = goalProgress(data);
+ok('Печалба на час = 15 €, не (150−20)/10', near(g.ratePerHour, 15), `${g.ratePerHour}`);
+const remainingDays = dim - elapsed;
+ok('Постоянни до края на месеца = 20 × оставащи дни', near(g.fixedLeft, 20 * remainingDays, 0.05), `${g.fixedLeft.toFixed(2)}`);
+const expectHours = (2000 - st.net + 20 * remainingDays) / 15;
+ok('Часове до целта = (цел − чисто + наем до края) / 15', near(g.hoursNeeded, expectHours, 0.05), `${g.hoursNeeded?.toFixed(1)} ч`);
+ok('Смени до целта = часове / 10 ч на смяна (закръглено нагоре)', g.shiftsNeeded === Math.ceil(expectHours / 10), `${g.shiftsNeeded}`);
+
+// 3. Нощна смяна през полунощ
+const n = { start: new Date('2026-09-10T20:00:00').toISOString(), end: new Date('2026-09-11T06:30:00').toISOString(), income: { cash: 100, card: 0, app: 0, tips: 0 }, expenses: [], kmStart: 1, kmEnd: 2 };
+ok('Нощна смяна се брои към деня на започване', shiftDate(n) === '2026-09-10');
+ok('Нощна смяна: 10,5 часа', near(shiftHours(n), 10.5));
+
+// 4. Рекорди и „Кога се печели“ не падат с празни данни
+ok('Рекорди без смени', records({ ...data, shifts: [] }).totalShifts === 0);
+ok('Кога се печели без смени', timeInsights([]).hasData === false);
+
+// 5. Напомняния: дни и км
+const rem = upcomingReminders({ ...data, costs: [{ id: 'x', name: 'Винетка', amount: 97, period: 'year', startDate: m0, dueDate: addDays(today, 2) }], reminders: [{ id: 'r', title: 'Масло', dueKm: 1200 }], shifts: [{ ...data.shifts[0], kmEnd: 1000 }] });
+ok('Падеж след 2 дни се показва като „скоро“', rem.find((r) => r.kind === 'cost')?.daysLeft === 2 && rem.find((r) => r.kind === 'cost')?.soon);
+ok('Напомняне по км: остават 200 км', rem.find((r) => r.kind === 'reminder')?.kmLeft === 200);
+
+// 6. Платено: тримесечие мести падежа с 3 месеца; крайна дата спира
+store.resetDemo();
+const L = store.login('ivan@demo.bg', 'demo123');
+ok('Вход на демо шофьор', !!L.user);
+store.saveCost({ name: 'Тест тримесечие', category: 'insurance', amount: 120, period: 'quarter', dueDate: '2026-10-07', endDate: '2027-02-01' });
+let c = store.myData().costs.find((x) => x.name === 'Тест тримесечие');
+let paid = store.markCostPaid(c.id);
+ok('Платено: падеж 7 окт → 7 яну', paid.dueDate === '2027-01-07', paid.dueDate);
+paid = store.markCostPaid(c.id);
+ok('Платено след крайната дата: няма следващ падеж', paid.dueDate === null, String(paid.dueDate));
+ok('Историята пази 2 плащания', paid.payments.length === 2);
+
+// 7. Смяна към кола под наем спира собственическите разходи
+const before = store.myData().costs.filter((x) => ['vignette', 'insurance', 'inspection'].includes(x.category) && (!x.endDate || x.endDate >= today)).length;
+store.updateProfile({ carType: 'rent', rent: { amount: 140, period: 'week' } });
+const dd = store.myData();
+const after = dd.costs.filter((x) => ['vignette', 'insurance', 'inspection', 'casco', 'meter', 'service'].includes(x.category) && (!x.endDate || x.endDate >= today)).length;
+ok('Под наем: застраховки/винетка/преглед спират от днес', before > 0 && after === 0, `${before} → ${after}`);
+ok('Под наем: добавен е наем 140 €/седм от днес', dd.costs.some((x) => x.system === 'rent' && x.amount === 140 && x.startDate === today));
+const pastSt = periodStats(dd, addDays(today, -40), addDays(today, -10));
+ok('Минали месеци не са променени (има разходи за винетка в миналото)', (pastSt.fixedByCat.vignette || 0) > 0);
+
+// 8. Изолация: шофьор вижда само своите данни
+const ivanId = store.currentUser().id;
+const all = store._debug.db.shifts;
+const mine = store.myData().shifts;
+ok('Шофьорът вижда само своите смени', mine.length > 0 && mine.every((s) => s.userId === ivanId) && all.some((s) => s.userId !== ivanId));
+const foreign = all.find((s) => s.userId !== ivanId);
+ok('Не може да отвори чужда смяна', store.getShift(foreign.id) === null);
+ok('Не може да изтрие чужда смяна', (store.deleteShift(foreign.id), store._debug.db.shifts.some((s) => s.id === foreign.id)));
+ok('Не може да презапише чужда смяна', store.saveShift({ ...foreign, income: { cash: 9999, card: 0, app: 0, tips: 0 } }) === null);
+let adminBlocked = false; try { store.admin.drivers(); } catch { adminBlocked = true; }
+ok('Шофьор няма достъп до админ функциите', adminBlocked);
+ok('Админ паролата не става за вход на шофьор', !!store.login('admin@profitaxi.bg', 'admin123').error);
+ok('Месец без препълване: 31 яну → 28 фев', store.nextDue('2027-01-31', 'month') === '2027-02-28', store.nextDue('2027-01-31', 'month'));
+ok('Тримесечие: 30 ное → 28 фев', store.nextDue('2026-11-30', 'quarter') === '2027-02-28', store.nextDue('2026-11-30', 'quarter'));
+ok('Година: 29 фев 2028 → 28 фев 2029', store.nextDue('2028-02-29', 'year') === '2029-02-28', store.nextDue('2028-02-29', 'year'));
+ok('Котва на деня: 28 фев с котва 31 → 31 мар', store.nextDue('2027-02-28', 'month', 31) === '2027-03-31');
+ok('Седмица: +7 дни през края на годината', store.nextDue('2026-12-29', 'week') === '2027-01-05');
+store.logout(); store.resetDemo();
+
+document.getElementById('out').textContent = results.join('\n');
+window.__results = results;
+</script>

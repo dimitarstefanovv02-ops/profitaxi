@@ -56,7 +56,17 @@ export function registerView({ go }) {
   const submit = (e) => {
     e.preventDefault();
     const v = cc.value();
-    if (!carType) { err.textContent = 'Избери каква е колата'; return; }
+    // проверки в реда на формата
+    const checks = [
+      [!name.value.trim(), 'Въведи име'],
+      [!/^\S+@\S+\.\S+$/.test(email.value), 'Невалиден имейл'],
+      [pw.value.length < 6, 'Паролата трябва да е поне 6 символа'],
+      [!v.city, 'Избери град'],
+      [!v.company, 'Избери фирма или напиши името ѝ'],
+      [!carType, 'Избери каква е колата'],
+    ];
+    const bad = checks.find(([c]) => c);
+    if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
     const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType });
     if (r.error) { err.textContent = r.error; return; }

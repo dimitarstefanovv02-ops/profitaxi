@@ -3,7 +3,7 @@
 import { h, icon, cx, money, money2, todayStr, addDays, startOfWeek, startOfMonth, endOfMonth, parseDate, MONTHS, MONTHS_SHORT, fmtDate, fmtNum, fmtNum1, fmtDuration, WD_SHORT, dateStr, minStr, fmtTime } from '../util.js';
 import { periodStats, series, timeInsights, records, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, shiftNetAfterFixed, shiftProfit } from '../calc.js';
 import { INCOME_TYPES, FUEL_TYPES, expenseCat, costCat } from '../constants.js';
-import { segmented, barChart, shareRows, stat, tone, cardTitle, hero } from '../ui.js';
+import { segmented, barChart, shareRows, stat, tone, cardTitle, hero, empty } from '../ui.js';
 
 // Състояние на избрания период (пази се между отварянията)
 const state = { unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() };
@@ -83,8 +83,9 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
   ];
   const dayShifts = unit === 'day' ? data.shifts.filter((s) => s.end && shiftDate(s) === from) : [];
 
+  if (!st.shifts && !st.fixedExp) return h('section', { class: 'card' }, empty('chart', 'Няма смени за този период', admin ? 'Шофьорът не е въвел смени за избрания период.' : 'Започни смяна или избери друг период, за да видиш статистика.'));
   return h('div', null,
-    pts && pts.length > 1 && h('section', { class: 'card' },
+    pts && pts.length > 1 && st.shifts > 0 && h('section', { class: 'card' },
       cardTitle('chart', chartUnit === 'day' ? 'Чисто по дни' : 'Чисто по месеци'),
       barChart(pts, { highlight: chartUnit === 'day' ? todayStr() : todayStr().slice(0, 8) + '01' })),
 

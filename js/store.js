@@ -176,6 +176,8 @@ export function saveCost(cost) {
   const id = myId();
   const c = { payments: [], ...clone(cost), userId: id };
   if (!c.id) { c.id = uid(); c.startDate = c.startDate || todayStr(); }
+  const prev = db.costs.find((x) => x.id === c.id);
+  if (!prev || prev.dueDate !== c.dueDate) c.dueDay = c.dueDate ? Number(c.dueDate.slice(8, 10)) : null;
   const i = db.costs.findIndex((x) => x.id === c.id);
   if (i >= 0) { if (db.costs[i].userId !== id) return; db.costs[i] = c; } else db.costs.push(c);
   commit();
@@ -190,13 +192,17 @@ export function deleteCost(cid) {
   commit();
 }
 // Следваща дата на плащане според периода
-export function nextDue(date, period) {
+export function nextDue(date, period, anchorDay) {
   const d = parseDate(date);
   if (period === 'day') d.setDate(d.getDate() + 1);
   else if (period === 'week') d.setDate(d.getDate() + 7);
-  else if (period === 'month') d.setMonth(d.getMonth() + 1);
-  else if (period === 'quarter') d.setMonth(d.getMonth() + 3);
-  else d.setFullYear(d.getFullYear() + 1);
+  else {
+    // месеци без препълване: 31 яну + 1 месец = 28/29 фев, не 3 март
+    const add = period === 'month' ? 1 : period === 'quarter' ? 3 : 12;
+    const day = anchorDay || d.getDate();
+    d.setDate(1); d.setMonth(d.getMonth() + add);
+    d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  }
   return dateStr(d);
 }
 // Отбелязва плащане и мести падежа напред с един период
@@ -207,7 +213,8 @@ export function markCostPaid(cid) {
   c.payments = c.payments || [];
   c.payments.push({ date: todayStr(), amount: c.amount, due: c.dueDate });
   if (c.dueDate) {
-    const n = nextDue(c.dueDate, c.period);
+    c.dueDay = c.dueDay || Number(c.dueDate.slice(8, 10)); // помни деня на падежа (31-во остава 31-во)
+    const n = nextDue(c.dueDate, c.period, c.dueDay);
     c.dueDate = c.endDate && n > c.endDate ? null : n;
   }
   commit();

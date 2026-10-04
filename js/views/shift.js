@@ -169,7 +169,7 @@ export function shiftEditorView(ctx) {
     const ended = wasActive && saved.end;
     draft = null; draftKey = null;
     toast(ended ? 'Смяната приключи' : 'Запазено');
-    go(ended || isNew ? '/home' : '/shifts', true);
+    go(ended || isNew || wasActive ? '/home' : '/shifts', true);
   }
   function del() {
     confirmSheet({ title: 'Изтриване на смяната?', text: 'Приходите и разходите от тази смяна ще бъдат изтрити.', okLabel: 'Изтрий', danger: true,

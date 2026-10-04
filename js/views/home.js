@@ -105,6 +105,7 @@ function meter(g, month) {
       h('div', { class: 'meter-cell' }, h('span', null, 'Още работа'), h('b', { class: 'hl' }, hours != null ? `~${Math.ceil(hours)} ч` : '—')),
       h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
       h('div', { class: 'meter-cell' }, h('span', null, 'Прогноза'), h('b', null, money(g.forecast)))),
+    g.goal > 0 && !g.done && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко часа и смени остават до целта ще сметнем след първата ти смяна.')),
     g.goal > 0 && !g.done && hours != null && h('div', { class: 'meter-note' }, icon('alert', 14),
       h('span', null, `Сметнато по ${money2(g.ratePerHour)} на час печалба от смяна. Включени са и постоянните разходи до края на месеца (${money(g.fixedLeft)}).`)));
 }
