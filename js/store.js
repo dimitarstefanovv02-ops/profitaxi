@@ -9,7 +9,7 @@ import { CAR_TYPES, COST_CATS, COMPANIES, OTHER } from './constants.js';
 const KEY = 'profitaxi.v2';
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 3;
+const VERSION = 4;
 const listeners = new Set();
 let db = null;
 
@@ -327,28 +327,28 @@ function seed() {
 
   // Основните демо профили – фиксирани, за да могат да се пробват
   const fixed = [
-    { name: 'Иван Петров', email: 'ivan@demo.bg', city: 'Пловдив', company: 'ONE Taxi', seed: 11, days: 150, plan: 'paid', valid: 20,
+    { name: 'Иван Петров', email: 'ivan@demo.bg', city: 'Пловдив', company: 'ONE Такси – 032 22 22', seed: 11, days: 150, plan: 'paid', valid: 20,
       profile: { carType: 'own', fuel: 'petrol_lpg', dispatch: { mode: 'weekly', amount: 40 }, monthlyGoal: 2500 },
       style: { workProb: 0.84, night: 0.35, rate: 0.95, kmMin: 170, kmMax: 300 } },
-    { name: 'Георги Димитров', email: 'georgi@demo.bg', city: 'Пловдив', company: 'Такси 1 (6142)', seed: 23, days: 120, plan: 'paid', valid: 45,
+    { name: 'Георги Димитров', email: 'georgi@demo.bg', city: 'Пловдив', company: 'Еко Такси 6155', seed: 23, days: 120, plan: 'paid', valid: 45,
       profile: { carType: 'rent', fuel: 'diesel', rent: { amount: 140, period: 'week' }, dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1800 },
       style: { workProb: 0.9, night: 0.6, rate: 0.9, kmMin: 200, kmMax: 340 } },
-    { name: 'Мария Колева', email: 'maria@demo.bg', city: 'София', company: 'Yellow Taxi', seed: 37, days: 90, plan: 'paid', valid: 5,
+    { name: 'Мария Колева', email: 'maria@demo.bg', city: 'София', company: 'Yellow!', seed: 37, days: 90, plan: 'paid', valid: 5,
       profile: { carType: 'leasing', fuel: 'hybrid', leasing: { amount: 420 }, dispatch: { mode: 'monthly', amount: 150 }, monthlyGoal: 2200 },
       style: { workProb: 0.7, night: 0.1, rate: 1.05, kmMin: 150, kmMax: 260 } },
-    { name: 'Стоян Ангелов', email: 'stoyan@demo.bg', city: 'Варна', company: 'Триумф Такси', seed: 41, days: 40, plan: 'trial', valid: -3,
+    { name: 'Стоян Ангелов', email: 'stoyan@demo.bg', city: 'Варна', company: 'Триумф Такси / Транстриумф', seed: 41, days: 40, plan: 'trial', valid: -3,
       profile: { carType: 'own', fuel: 'lpg', dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1200 },
       style: { workProb: 0.45, night: 0.5, rate: 0.9, kmMin: 120, kmMax: 220 } },
-    { name: 'Николай Иванов', email: 'nikolay@demo.bg', city: 'София', company: 'ОК Супертранс', seed: 53, days: 75, plan: 'paid', valid: 120, blocked: true,
+    { name: 'Николай Иванов', email: 'nikolay@demo.bg', city: 'София', company: 'OK Supertrans', seed: 53, days: 75, plan: 'paid', valid: 120, blocked: true,
       profile: { carType: 'own', fuel: 'electric', dispatch: { mode: 'none', amount: 0 }, monthlyGoal: 2000 },
       style: { workProb: 0.75, night: 0.3, rate: 1.0, kmMin: 160, kmMax: 280 } },
   ];
   // Още шофьори за статистиките в админ панела
   const r0 = rng(777);
   const pick = (a) => a[Math.floor(r0() * a.length)];
-  const cityW = ['София', 'София', 'София', 'Пловдив', 'Пловдив', 'Варна', 'Варна', 'Бургас', 'Стара Загора', 'Русе', 'Плевен', 'Велико Търново', 'Хасково'];
+  const cityW = ['София', 'София', 'София', 'Пловдив', 'Пловдив', 'Пловдив', 'Варна', 'Варна', 'Бургас', 'Стара Загора', 'Русе', 'Сливен', 'Нова Загора', 'Хасково'];
   const extra = [];
-  for (let i = 0; i < 17; i++) {
+  for (let i = 0; i < 25; i++) {
     const first = FIRST[(i + 5) % FIRST.length];
     let last = LAST[(i * 7 + 3) % LAST.length];
     const female = ['Мария', 'Елена', 'Милена'].includes(first);
@@ -356,7 +356,7 @@ function seed() {
     if (!female && last.endsWith('а')) last = last.slice(0, -1);
     const city = pick(cityW);
     const list = COMPANIES[city] || [];
-    const company = list.length && r0() > 0.12 ? pick(list.slice(0, 5)) : 'Местно такси';
+    const company = list.length && r0() > 0.12 ? pick(list) : 'Местно такси';
     const carType = pick(['own', 'own', 'own', 'rent', 'rent', 'leasing']);
     const fuel = pick(['petrol_lpg', 'petrol_lpg', 'petrol_lpg', 'diesel', 'hybrid', 'lpg', 'electric']);
     const trial = r0() < 0.2;

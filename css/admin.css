@@ -93,3 +93,21 @@ tr:nth-child(3) .rank { background: linear-gradient(135deg, #F3C49B, #C98A55); c
   .adm-filters .input[type=search] { max-width: 300px; }
   .adm-filters select.input { width: auto; }
 }
+
+/* Филтър град → фирма */
+.scope-bar { position: sticky; top: 0; z-index: 8; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; margin: -6px -4px 18px; padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); }
+.scope-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #6366F1, #A855F7); color: #fff; flex: none; }
+.scope-field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px; min-width: 0; }
+.scope-field span { font-size: .72rem; font-weight: 700; color: var(--muted); }
+.scope-field .input { min-height: 42px; padding: 8px 36px 8px 12px; font-size: .92rem; }
+.scope-field .input:disabled { opacity: .55; }
+.scope-sum { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1 1 100%; font-size: .85rem; }
+.scope-sum span { color: var(--muted); }
+@media (min-width: 1000px) {
+  .scope-bar { top: 10px; flex-wrap: nowrap; align-items: center; }
+  .scope-field { flex: 0 1 260px; }
+  .scope-sum { flex: 1; justify-content: flex-end; }
+}
+@media (max-width: 999px) { .adm-side { position: static; } }

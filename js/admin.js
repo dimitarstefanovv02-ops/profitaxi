@@ -14,14 +14,20 @@ document.body.classList.add('admin');
 const NAV = [
   ['/overview', 'chart', 'Общ преглед'],
   ['/geo', 'target', 'Градове и фирми'],
+  ['/market', 'coins', 'Ефир, наеми, работа'],
   ['/drivers', 'users', 'Шофьори'],
   ['/subs', 'receipt', 'Абонаменти'],
   ['/new', 'plus', 'Нов шофьор'],
   ['/settings', 'shield', 'Настройки'],
 ];
 const mkState = () => ({ unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() });
-const overviewState = mkState(), geoState = mkState(), driverState = mkState();
-const listState = { q: '', filter: 'all', city: '', company: '', sort: 'net' };
+const overviewState = mkState(), geoState = mkState(), driverState = mkState(), marketState = mkState();
+const listState = { q: '', filter: 'all', sort: 'net' };
+// Общ филтър за целия админ панел: град → фирма
+const scope = { city: '', company: '' };
+const inScope = (d) => (!scope.city || d.user.city === scope.city) && (!scope.company || d.user.company === scope.company);
+const scoped = () => store.admin.allData().filter(inScope);
+const scopeLabel = () => (scope.company ? `${scope.company}, ${scope.city}` : scope.city || 'Цяла България');
 const PALETTE = ['#6366F1', '#1FB866', '#F5A524', '#EC4899', '#1EA5EE', '#FF7A1A', '#14B8A6', '#8B5CF6', '#F04461', '#64748B'];
 
 const go = (p) => { location.hash = p; };
@@ -32,10 +38,11 @@ function render() {
   const r = parse();
   if (!store.adminUser()) return fill(app, loginView());
   if (r.name === '/login') return go('/overview');
-  const views = { '/overview': overview, '/geo': geo, '/drivers': drivers, '/driver': driverDetail, '/subs': subs, '/new': newDriver, '/settings': settings };
+  const views = { '/overview': overview, '/geo': geo, '/market': market, '/drivers': drivers, '/driver': driverDetail, '/subs': subs, '/new': newDriver, '/settings': settings };
   const view = views[r.name] || overview;
+  const withScope = ['/overview', '/geo', '/market', '/drivers', '/subs'].includes(r.name) || !views[r.name];
   const y = window.scrollY;
-  fill(app, h('div', { class: 'adm' }, sidebar(r.name), h('main', { class: 'adm-main' }, view(r))));
+  fill(app, h('div', { class: 'adm' }, sidebar(r.name), h('main', { class: 'adm-main' }, withScope && scopeBar(), view(r))));
   if (r.raw === render.last) window.scrollTo(0, y); else window.scrollTo(0, 0);
   render.last = r.raw;
 }
@@ -113,12 +120,145 @@ function aggregate(rows) {
   return T;
 }
 
+// ---------- Филтър град → фирма (горе на всяка страница) ----------
+function scopeBar() {
+  const all = store.admin.allData();
+  const cityCount = {};
+  all.forEach((d) => { cityCount[d.user.city] = (cityCount[d.user.city] || 0) + 1; });
+  const cities = Object.keys(cityCount).sort((a, b) => cityCount[b] - cityCount[a] || a.localeCompare(b, 'bg'));
+  const compCount = {};
+  all.filter((d) => d.user.city === scope.city).forEach((d) => { compCount[d.user.company] = (compCount[d.user.company] || 0) + 1; });
+  const companies = Object.keys(compCount).sort((a, b) => compCount[b] - compCount[a] || a.localeCompare(b, 'bg'));
+  const n = all.filter(inScope).length;
+  return h('div', { class: 'scope-bar' },
+    h('div', { class: 'scope-ic' }, icon('target', 18)),
+    h('label', { class: 'scope-field' }, h('span', null, 'Град'),
+      h('select', { class: 'input', onchange: (e) => { scope.city = e.target.value; scope.company = ''; render(); } },
+        h('option', { value: '' }, `Цяла България (${all.length})`),
+        cities.map((c) => h('option', { value: c, selected: scope.city === c }, `${c} (${cityCount[c]})`)))),
+    h('label', { class: 'scope-field' }, h('span', null, 'Фирма'),
+      h('select', { class: 'input', disabled: !scope.city, onchange: (e) => { scope.company = e.target.value; render(); } },
+        h('option', { value: '' }, scope.city ? `Всички фирми (${cityCount[scope.city] || 0})` : 'Първо избери град'),
+        companies.map((c) => h('option', { value: c, selected: scope.company === c }, `${c} (${compCount[c]})`)))),
+    h('div', { class: 'scope-sum' }, h('b', null, scopeLabel()), h('span', null, `${n} ${n === 1 ? 'шофьор' : 'шофьори'}`),
+      scope.city && h('button', { class: 'chip', onclick: () => { scope.city = ''; scope.company = ''; render(); } }, icon('x', 14), 'Изчисти')));
+}
+
+// ---------- Показатели на шофьор за пазарния анализ ----------
+function driverMetrics(d, st, days) {
+  const p = d.profile;
+  const m = { d, st };
+  if (p.dispatch.mode !== 'none' && p.dispatch.amount > 0) {
+    m.dispatchMode = p.dispatch.mode; m.dispatchAmount = p.dispatch.amount;
+    m.dispatchMonthly = p.dispatch.mode === 'daily' ? p.dispatch.amount * (st.workedDays ? (st.workedDays / days) * 30.44 : 22) : p.dispatch.mode === 'weekly' ? p.dispatch.amount * 4.345 : p.dispatch.amount;
+  }
+  if (p.carType === 'rent' && p.rent.amount > 0) m.rentWeekly = p.rent.period === 'day' ? p.rent.amount * 7 : p.rent.period === 'month' ? p.rent.amount / 4.345 : p.rent.amount;
+  if (p.carType === 'leasing' && p.leasing.amount > 0) m.leasingMonthly = p.leasing.amount;
+  if (st.shifts) {
+    m.hoursPerShift = st.hours / st.shifts;
+    m.hoursPerDay = st.hours / st.workedDays;
+    m.shiftsPerWeek = st.shifts / (days / 7);
+    m.kmPerShift = st.km / st.shifts;
+    m.incomePerHour = st.hours ? st.income / st.hours : null;
+    m.netPerHour = st.hours ? st.net / st.hours : null;
+    m.fuelPerKm = st.km ? (st.expByCat.fuel || 0) / st.km : null;
+    m.incomePerShift = st.income / st.shifts;
+  }
+  return m;
+}
+const avgOf = (list, k) => { const v = list.map((x) => x[k]).filter((x) => x != null && Number.isFinite(x)); return v.length ? { avg: v.reduce((a, b) => a + b, 0) / v.length, min: Math.min(...v), max: Math.max(...v), n: v.length } : null; };
+const fmtAvg = (a, f) => (a ? f(a.avg) : '—');
+const rangeTxt = (a, f) => (a ? (a.n > 1 ? `от ${f(a.min)} до ${f(a.max)}, ${a.n} шоф.` : `${a.n} шофьор`) : 'няма данни');
+
+// ---------- Ефир, наеми, работа ----------
+function market() {
+  const root = h('div');
+  const draw = () => {
+    const r = periodRange(marketState);
+    const toEff = r.to < todayStr() ? r.to : todayStr();
+    const days = Math.max(1, Math.round((parseDate(toEff) - parseDate(r.from)) / 86400000) + 1);
+    const all = scoped();
+    const ms = all.map((d) => driverMetrics(d, periodStats(d, r.from, r.to), days));
+    const h1 = (k) => avgOf(ms, k);
+    const disp = h1('dispatchMonthly'), rent = h1('rentWeekly'), leas = h1('leasingMonthly');
+    const iph = h1('incomePerHour'), nph = h1('netPerHour'), hps = h1('hoursPerShift'), hpd = h1('hoursPerDay'), spw = h1('shiftsPerWeek'), kps = h1('kmPerShift'), fpk = h1('fuelPerKm'), ips = h1('incomePerShift');
+    const cars = { own: 0, rent: 0, leasing: 0 };
+    all.forEach((d) => { cars[d.profile.carType]++; });
+    const fuels = {};
+    all.forEach((d) => { fuels[d.profile.fuel] = (fuels[d.profile.fuel] || 0) + 1; });
+    // ефир по начин на плащане
+    const modes = ['daily', 'weekly', 'monthly'].map((mode) => {
+      const list = ms.filter((x) => x.dispatchMode === mode);
+      return { mode, list, a: avgOf(list, 'dispatchAmount'), m: avgOf(list, 'dispatchMonthly') };
+    });
+    const noDispatch = ms.filter((x) => !x.dispatchMode).length;
+    // сравнение по фирми (или по градове, ако не е избран град)
+    const keyFn = scope.city ? (d) => d.user.company : (d) => d.user.city;
+    const groups = new Map();
+    ms.forEach((x) => { const k = keyFn(x.d); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); });
+    const cmp = [...groups.entries()].map(([k, list]) => ({ k, list, city: list[0].d.user.city })).sort((a, b) => b.list.length - a.list.length);
+    // кога започват смените
+    const shiftsP = all.flatMap((d) => d.shifts.filter((s) => s.end && shiftDate(s) >= r.from && shiftDate(s) <= r.to));
+    const starts = Array(8).fill(0); shiftsP.forEach((s) => { starts[Math.floor(new Date(s.start).getHours() / 3)]++; });
+    const lens = [[0, 6, 'до 6 ч'], [6, 8, '6–8 ч'], [8, 10, '8–10 ч'], [10, 12, '10–12 ч'], [12, 99, '12+ ч']].map(([a, b, label]) => ({ label, value: shiftsP.filter((s) => { const x = shiftHours(s); return x >= a && x < b; }).length }));
+    const modeLabel = { daily: 'На ден', weekly: 'На седмица', monthly: 'На месец' };
+
+    fill(root,
+      pageHead('Ефир, наеми и работа', `${scopeLabel()}: ${all.length} шофьори`),
+      h('div', { class: 'adm-picker' }, periodPicker(marketState, draw)),
+      h('div', { class: 'kpis' },
+        kpi('phone', '#8B5CF6', 'Ефир средно', fmtAvg(disp, (v) => `${money(v)}/мес`), rangeTxt(disp, (v) => money(v))),
+        kpi('key', '#3D7BFF', 'Наем средно', fmtAvg(rent, (v) => `${money(v)}/седм.`), rangeTxt(rent, (v) => money(v))),
+        kpi('doc', '#14B8A6', 'Лизинг средно', fmtAvg(leas, (v) => `${money(v)}/мес`), rangeTxt(leas, (v) => money(v))),
+        kpi('car', '#F5A524', 'Коли', String(all.length), `${cars.own} собствени, ${cars.rent} под наем, ${cars.leasing} лизинг`),
+        kpi('coins', '#1FB866', 'Приход на час', fmtAvg(iph, money2), `чисто ${fmtAvg(nph, money2)}/ч`),
+        kpi('clock', '#1EA5EE', 'Часове на смяна', fmtAvg(hps, fmtDuration), `${fmtAvg(hpd, fmtDuration)} на работен ден`),
+        kpi('calendar', '#EC4899', 'Смени на седмица', fmtAvg(spw, (v) => fmtNum1(v)), 'средно на шофьор'),
+        kpi('road', '#FF7A1A', 'Км на смяна', fmtAvg(kps, (v) => `${fmtNum(v)} км`), `гориво ${fmtAvg(fpk, money2)}/км`)),
+      h('div', { class: 'adm-grid two' },
+        h('section', { class: 'card' }, cardTitle('phone', 'Ефир / диспечер'),
+          table(['Как се плаща', 'Шофьори', 'Средна такса', 'От – до', 'Равно на месец'],
+            modes.filter((x) => x.list.length).map((x) => ({ cells: [h('b', null, modeLabel[x.mode]), x.list.length, money(x.a.avg, x.a.avg % 1 ? 2 : 0), x.a.n > 1 ? `${money(x.a.min)} – ${money(x.a.max)}` : money(x.a.min), money(x.m.avg)] })), { rightFrom: 1 }),
+          h('p', { class: 'muted small', style: { marginTop: '10px' } }, `${noDispatch} ${noDispatch === 1 ? 'шофьор не плаща' : 'шофьори не плащат'} ефир. „Равно на месец“ при таксата на ден е по реалните им работни дни.`)),
+        h('section', { class: 'card' }, cardTitle('key', 'Наеми и лизинг'),
+          table(['Вид', 'Шофьори', 'Средно', 'Най-малко', 'Най-много'], [
+            rent && { cells: [h('b', null, 'Наем (на седмица)'), rent.n, money(rent.avg), money(rent.min), money(rent.max)] },
+            leas && { cells: [h('b', null, 'Лизинг (на месец)'), leas.n, money(leas.avg), money(leas.min), money(leas.max)] },
+          ].filter(Boolean), { rightFrom: 1 }),
+          h('div', { style: { marginTop: '14px' } }, donut([
+            { label: 'Собствена', value: cars.own, color: '#F5A524', text: String(cars.own) },
+            { label: 'Под наем', value: cars.rent, color: '#3D7BFF', text: String(cars.rent) },
+            { label: 'Лизинг', value: cars.leasing, color: '#14B8A6', text: String(cars.leasing) }], 'коли', String(all.length))))),
+      h('section', { class: 'card', style: { marginTop: '14px' } }, cardTitle(scope.city ? 'car' : 'target', scope.city ? `Сравнение на фирмите в ${scope.city}` : 'Сравнение по градове'),
+        table([scope.city ? 'Фирма' : 'Град', 'Шофьори', 'Ефир/мес', 'Наем/седм.', 'Приход/ч', 'Чисто/ч', 'Ч/смяна', 'Ч/ден', 'Смени/седм.', 'Км/смяна', 'Гориво/км'],
+          cmp.map((g) => { const a = (k) => avgOf(g.list, k); return { cells: [
+            h('b', null, g.k), g.list.length, fmtAvg(a('dispatchMonthly'), money), fmtAvg(a('rentWeekly'), money), fmtAvg(a('incomePerHour'), money2),
+            h('b', { class: tone(a('netPerHour')?.avg || 0) }, fmtAvg(a('netPerHour'), money2)), fmtAvg(a('hoursPerShift'), (v) => fmtNum1(v)), fmtAvg(a('hoursPerDay'), (v) => fmtNum1(v)),
+            fmtAvg(a('shiftsPerWeek'), (v) => fmtNum1(v)), fmtAvg(a('kmPerShift'), fmtNum), fmtAvg(a('fuelPerKm'), money2)] }; }), { rightFrom: 1 })),
+      h('div', { class: 'adm-grid three' },
+        h('section', { class: 'card' }, cardTitle('clock', 'Кога започват смените'), colBars(starts.map((v, i) => ({ label: `${i * 3}ч`, value: v })))),
+        h('section', { class: 'card' }, cardTitle('calendar', 'Колко дълги са смените'), colBars(lens.map((x) => ({ ...x, color: 'linear-gradient(180deg,#7DD3FC,#1EA5EE)' })))),
+        h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'),
+          donut(Object.entries(fuels).sort((a, b) => b[1] - a[1]).map(([k, v], i) => ({ label: FUELS[k]?.label || k, value: v, color: PALETTE[(i + 3) % PALETTE.length], text: String(v) })), 'коли', String(all.length)))),
+      h('section', { class: 'card' }, cardTitle('users', 'По шофьори'),
+        table(['Шофьор', 'Кола', 'Ефир', 'Наем', 'Смени', 'Приход/ч', 'Чисто/ч', 'Ч/смяна', 'Ч/ден', 'Приход/смяна'],
+          ms.filter((x) => x.st.shifts).sort((a, b) => (b.netPerHour || 0) - (a.netPerHour || 0)).map((x) => ({ href: '#/driver/' + x.d.user.id, cells: [
+            h('span', { class: 'who-cell' }, h('b', null, x.d.user.name), h('span', null, `${x.d.user.city}, ${x.d.user.company}`)),
+            CAR_TYPES[x.d.profile.carType]?.label,
+            x.dispatchMode ? `${money(x.dispatchAmount)}${{ daily: '/ден', weekly: '/седм.', monthly: '/мес' }[x.dispatchMode]}` : '—',
+            x.rentWeekly ? `${money(x.rentWeekly)}/седм.` : x.leasingMonthly ? `лизинг ${money(x.leasingMonthly)}` : '—',
+            x.st.shifts, money2(x.incomePerHour), h('b', { class: tone(x.netPerHour) }, money2(x.netPerHour)), fmtNum1(x.hoursPerShift), fmtNum1(x.hoursPerDay), money(x.incomePerShift)] })), { rightFrom: 4 })));
+  };
+  draw();
+  return root;
+}
+
 // ---------- Общ преглед ----------
 function overview() {
   const root = h('div');
   const draw = () => {
     const r = periodRange(overviewState);
-    const all = store.admin.allData();
+    const all = scoped();
     const rows = all.map((d) => ({ d, st: periodStats(d, r.from, r.to) }));
     const T = aggregate(rows);
     const states = all.map((d) => subState(d.user));
@@ -158,7 +298,7 @@ function overview() {
     const risk = all.filter((d) => subState(d.user).key !== 'blocked' && (daysSince(d) == null || daysSince(d) >= 7)).sort((a, b) => (daysSince(b) ?? 999) - (daysSince(a) ?? 999));
 
     fill(root,
-      pageHead('Общ преглед', `${all.length} шофьори, ${T.active} активни през периода`),
+      pageHead('Общ преглед', `${scopeLabel()}: ${all.length} шофьори, ${T.active} активни през периода`),
       h('div', { class: 'adm-picker' }, periodPicker(overviewState, draw)),
       h('div', { class: 'kpis' },
         kpi('coins', '#1FB866', 'Приход', money(T.income), `${fmtNum(T.shifts)} смени`),
@@ -208,7 +348,7 @@ function geo() {
   const root = h('div');
   const draw = () => {
     const r = periodRange(geoState);
-    const all = store.admin.allData();
+    const all = scoped();
     const rows = all.map((d) => ({ d, st: periodStats(d, r.from, r.to) }));
     const group = (keyFn) => {
       const m = new Map();
@@ -221,7 +361,7 @@ function geo() {
     const maxC = Math.max(1, ...companies.map((c) => c.list.length));
     const rowCells = (g) => [g.list.length, g.T.active, g.T.shifts, money(g.T.income), money(g.T.perShift), h('b', { class: tone(g.T.perHour) }, money2(g.T.perHour)), money2(g.T.perKm)];
     fill(root,
-      pageHead('Градове и фирми', `${cities.length} града, ${companies.length} фирми`),
+      pageHead(scope.city ? `Фирми в ${scope.city}` : 'Градове и фирми', `${scopeLabel()}: ${cities.length} ${cities.length === 1 ? 'град' : 'града'}, ${companies.length} ${companies.length === 1 ? 'фирма' : 'фирми'}`),
       h('div', { class: 'adm-picker' }, periodPicker(geoState, draw)),
       h('div', { class: 'kpis' },
         kpi('target', '#6366F1', 'Най-много шофьори', cities[0]?.key || '—', cities[0] ? `${cities[0].list.length} шофьори` : ''),
@@ -244,13 +384,11 @@ function drivers() {
   const root = h('div');
   const today = todayStr();
   const mFrom = startOfMonth(today);
-  const all = store.admin.allData().map((d) => ({ d, s: subState(d.user), st: periodStats(d, mFrom, today), last: lastShift(d) }));
-  const cities = [...new Set(all.map((x) => x.d.user.city))].sort((a, b) => a.localeCompare(b, 'bg'));
+  const all = scoped().map((d) => ({ d, s: subState(d.user), st: periodStats(d, mFrom, today), last: lastShift(d) }));
   const listEl = h('div');
   function drawList() {
     const q = listState.q.trim().toLowerCase();
     const list = all.filter(({ d, s }) => (listState.filter === 'all' || s.key === listState.filter) &&
-      (!listState.city || d.user.city === listState.city) && (!listState.company || d.user.company === listState.company) &&
       (!q || [d.user.name, d.user.email, d.user.phone, d.user.company, d.user.city].join(' ').toLowerCase().includes(q)));
     const sorters = { net: (a, b) => b.st.net - a.st.net, name: (a, b) => a.d.user.name.localeCompare(b.d.user.name, 'bg'), recent: (a, b) => (b.last?.start || '').localeCompare(a.last?.start || ''), sub: (a, b) => a.d.user.subscription.validUntil.localeCompare(b.d.user.subscription.validUntil), reg: (a, b) => b.d.user.createdAt.localeCompare(a.d.user.createdAt) };
     list.sort(sorters[listState.sort]);
@@ -269,17 +407,12 @@ function drivers() {
       })), { rightFrom: 6 }) : empty('users', 'Няма намерени шофьори', 'Промени търсенето или филтъра.'));
   }
   const counts = (k) => all.filter((x) => k === 'all' || x.s.key === k).length;
-  const sel = (value, options, onchange, placeholder) => h('select', { class: 'input', style: { minHeight: '44px', padding: '8px 36px 8px 12px' }, onchange },
-    h('option', { value: '' }, placeholder), options.map((o) => h('option', { value: o, selected: value === o }, o)));
   const drawAll = () => {
-    const companies = [...new Set(all.filter((x) => !listState.city || x.d.user.city === listState.city).map((x) => x.d.user.company))].sort((a, b) => a.localeCompare(b, 'bg'));
     fill(root,
-      pageHead('Шофьори', `${all.length} акаунта`, [h('button', { class: 'btn btn-page', onclick: () => go('/new') }, icon('plus', 18), 'Нов шофьор')]),
+      pageHead('Шофьори', `${scopeLabel()}: ${all.length} акаунта`, [h('button', { class: 'btn btn-page', onclick: () => go('/new') }, icon('plus', 18), 'Нов шофьор')]),
       segmented({ all: `Всички ${counts('all')}`, active: `Активни ${counts('active')}`, trial: `Пробни ${counts('trial')}`, expired: `Изтекли ${counts('expired')}`, blocked: `Спрени ${counts('blocked')}` }, listState.filter, (f) => { listState.filter = f; drawAll(); }, { small: true, wrap: true, page: true }),
       h('div', { class: 'adm-filters', style: { marginTop: '10px' } },
         h('input', { class: 'input', type: 'search', placeholder: 'Търси по име, имейл, телефон, фирма', value: listState.q, style: { minHeight: '44px' }, oninput: (e) => { listState.q = e.target.value; drawList(); } }),
-        sel(listState.city, cities, (e) => { listState.city = e.target.value; listState.company = ''; drawAll(); }, 'Всички градове'),
-        sel(listState.company, companies, (e) => { listState.company = e.target.value; drawList(); }, 'Всички фирми'),
         h('select', { class: 'input', style: { minHeight: '44px', padding: '8px 36px 8px 12px' }, onchange: (e) => { listState.sort = e.target.value; drawList(); } },
           [['net', 'По печалба'], ['name', 'По име'], ['recent', 'По последна смяна'], ['sub', 'По абонамент'], ['reg', 'По регистрация']].map(([v, l]) => h('option', { value: v, selected: listState.sort === v }, l)))),
       h('section', { class: 'card', style: { marginTop: '14px' } }, listEl));
@@ -396,7 +529,7 @@ function resetPw(u) {
 
 // ---------- Абонаменти ----------
 function subs() {
-  const all = store.admin.allData();
+  const all = scoped();
   const today = todayStr();
   const price = store.admin.settings().price || 0;
   const st = all.map((d) => ({ d, s: subState(d.user) }));
@@ -411,7 +544,7 @@ function subs() {
   const regs = months.map((m) => ({ label: MONTHS_SHORT[Number(m.slice(5)) - 1], value: all.filter((d) => isoToDateStr(d.user.createdAt).slice(0, 7) === m).length }));
   const subRow = ({ d, s }) => ({ href: '#/driver/' + d.user.id, cells: [h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`)), h('span', { class: cx('chip', s.cls) }, s.label), fmtDate(d.user.subscription.validUntil, { year: true }), s.left == null ? '—' : s.left === 0 ? 'днес' : s.left === 1 ? '1 ден' : s.left > 0 ? `${s.left} дни` : `преди ${-s.left} дни`] });
   return h('div', null,
-    pageHead('Абонаменти', 'Плащания, пробни периоди и изтичащи достъпи'),
+    pageHead('Абонаменти', `${scopeLabel()}: плащания, пробни периоди и изтичащи достъпи`),
     h('div', { class: 'kpis' },
       kpi('receipt', '#F5A524', 'Месечни приходи (MRR)', money(count('active') * price, 2), `годишно ${money(count('active') * price * 12)}`),
       kpi('check', '#1FB866', 'Платени', String(count('active')), `от ${all.length} акаунта`),
