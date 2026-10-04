@@ -6,7 +6,7 @@
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
 import { CAR_TYPES, COST_CATS, COMPANIES, OTHER } from './constants.js';
 
-const KEY = 'profitaxi.v2';
+const KEY = 'profitaxi.v4'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
 const VERSION = 4;
@@ -16,6 +16,7 @@ let db = null;
 function load() {
   if (db) return db;
   try { db = JSON.parse(localStorage.getItem(KEY)); } catch { db = null; }
+  if (db && db.version > VERSION) { location.reload(); return db; } // друг раздел вече е с по-нова версия
   if (!db || db.version !== VERSION) { db = seed(); persist(); }
   return db;
 }
@@ -23,10 +24,17 @@ function persist() { localStorage.setItem(KEY, JSON.stringify(db)); }
 function commit() { persist(); listeners.forEach((fn) => fn()); }
 export const onChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export function resetDemo() { localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
-localStorage.removeItem('profitaxi.v1');
+['profitaxi.v1', 'profitaxi.v2'].forEach((k) => localStorage.removeItem(k)); // стари демо данни
 
 // Синхронизация между отворени раздели
-window.addEventListener('storage', (e) => { if (e.key === KEY) { db = null; load(); listeners.forEach((fn) => fn()); } });
+// Само чете – никога не записва в отговор на друг раздел, за да няма безкрайно презаписване
+window.addEventListener('storage', (e) => {
+  if (e.key !== KEY || !e.newValue) return;
+  let next; try { next = JSON.parse(e.newValue); } catch { return; }
+  if (!next || next.version !== VERSION) { if (next && next.version > VERSION) location.reload(); return; }
+  db = next;
+  listeners.forEach((fn) => fn());
+});
 
 const norm = (e) => String(e || '').trim().toLowerCase();
 const clone = (o) => JSON.parse(JSON.stringify(o));

@@ -608,7 +608,9 @@ function settings() {
 
 let pending = false;
 window.addEventListener('hashchange', render);
-store.onChange(() => { if (document.querySelector('.sheet-wrap')) pending = true; else render(); });
-window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !document.querySelector('.sheet-wrap')) { pending = false; render(); } });
+const busy = () => { const a = document.activeElement; return !!document.querySelector('.sheet-wrap') || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
+store.onChange(() => { if (busy()) pending = true; else render(); });
+document.addEventListener('focusout', () => setTimeout(() => { if (pending && !busy()) { pending = false; render(); } }, 0));
+window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
 render();
 export { eachDay, fmtNum1, FUEL_TYPES, MONTHS };
