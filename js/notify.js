@@ -35,7 +35,7 @@ export async function checkNotifications(data) {
     const { title, body } = reminderMessage(r);
     try {
       const reg = await navigator.serviceWorker?.getRegistration?.();
-      if (reg) await reg.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: r.id, data: { url: '/#/costs' } });
+      if (reg) await reg.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: r.id, data: { url: '/app#/costs' } });
       else new Notification(title, { body, icon: '/icons/icon-192.png', tag: r.id });
       sent.add(key);
     } catch { /* браузърът отказа */ }

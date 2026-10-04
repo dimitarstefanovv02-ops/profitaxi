@@ -9,7 +9,7 @@ async def main():
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.on('console', lambda m: errs.append(m.text) if m.type=='error' and 'TUNNEL' not in m.text and 'fonts' not in m.text else None)
         base='http://localhost:8765'
-        await pg.goto(base+'/'); await pg.evaluate('localStorage.clear()'); await pg.goto(base+'/#/register'); await pg.wait_for_timeout(400)
+        await pg.goto(base+'/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(base+'/app#/register'); await pg.wait_for_timeout(400)
         T = lambda s: pg.locator(s)
         # --- Регистрация: валидации ---
         await pg.fill('input[autocomplete=name]','Тест Шофьор'); await pg.fill('input[type=email]','test@test.bg'); await pg.fill('input[type=password]','123456')
@@ -35,7 +35,7 @@ async def main():
         await pg.click('.seg-btn:has-text("На ден")'); await pg.click('.tile'); await pg.keyboard.type('10'); await pg.click('text=Готово')
         await pg.click('text=Напред'); await pg.click('text=Започни'); await pg.wait_for_timeout(500)
         ok('След настройката → начален екран', '#/home' in pg.url)
-        await pg.goto(base+'/#/costs'); await pg.wait_for_timeout(400)
+        await pg.goto(base+'/app#/costs'); await pg.wait_for_timeout(400)
         body = await T('#app').inner_text()
         ok('Наем 140 €/седм. и ефир 10 €/ден са в постоянните разходи', 'Наем на колата' in body and 'Ефир / диспечер' in body)
         ok('Под наем няма винетка/застраховка', 'Винетка' not in body and 'Гражданска' not in body)
@@ -44,7 +44,7 @@ async def main():
         ok('Под наем не може да се добави винетка/застраховка', not any(x in chips for x in ['Винетка','Гражданска отговорност','Каско','Технически преглед']), chips)
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
         # --- Смяна ---
-        await pg.goto(base+'/#/home'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/home'); await pg.wait_for_timeout(300)
         await pg.click('text=Започвам смяна'); await pg.keyboard.type('250000'); await pg.click('text=Старт'); await pg.wait_for_timeout(500)
         ok('Активна смяна с таймер', await T('[data-timer]').count()==1)
         await pg.click('text=Отчет'); await pg.wait_for_timeout(300)
@@ -67,7 +67,7 @@ async def main():
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(500)
         ok('„Приключи“ връща към началото без активна смяна', '#/home' in pg.url and await T('[data-timer]').count()==0)
         # --- Смени и редакция ---
-        await pg.goto(base+'/#/shifts'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/shifts'); await pg.wait_for_timeout(300)
         rows = await T('.shift-row').count()
         ok('Смяната е в списъка', rows==1, rows)
         await pg.click('.shift-row'); await pg.wait_for_timeout(300)
@@ -76,23 +76,23 @@ async def main():
         await pg.click('.icon-btn[aria-label="Изтрий смяната"]'); await pg.click('.sheet >> text=Изтрий'); await pg.wait_for_timeout(500)
         ok('Изтриване на смяна', await T('.shift-row').count()==0)
         # --- Минала смяна + копиране на разходи ---
-        await pg.goto(base+'/#/shift/new'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/shift/new'); await pg.wait_for_timeout(300)
         await pg.click('.tile >> nth=0'); await pg.keyboard.type('120'); await pg.click('.np-actions >> text=Запиши')
         await pg.click('.quick button >> nth=1'); await pg.keyboard.type('6'); await pg.click('.np-actions >> text=Добави')
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(400)
-        await pg.goto(base+'/#/shift/new'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/shift/new'); await pg.wait_for_timeout(300)
         await pg.click('text=Разходите от предишната смяна'); await pg.wait_for_timeout(200)
         ok('Копиране на разходите от предишната смяна', 'Миене' in await T('.exp-list').inner_text())
         await pg.click('.back'); await pg.wait_for_timeout(300)
         # --- Невалидни данни ---
-        await pg.goto(base+'/#/shift/new'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/shift/new'); await pg.wait_for_timeout(300)
         await pg.click('.km-row .tile >> nth=0'); await pg.keyboard.type('1000'); await pg.click('.np-actions >> text=Запиши'); await pg.wait_for_timeout(100)
         await pg.click('.km-row .tile >> nth=1'); await pg.keyboard.type('5'); await pg.click('.np-actions >> text=Запиши'); await pg.wait_for_timeout(100)
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(200)
         ok('Краен км < начален не се записва', 'километража' in await T('#toast').inner_text())
         await pg.click('.back'); await pg.wait_for_timeout(300)
         # --- Постоянен разход + Платено ---
-        await pg.goto(base+'/#/costs'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/costs'); await pg.wait_for_timeout(300)
         await pg.click('.hero-btn'); await pg.wait_for_timeout(300)
         await pg.click('.sheet .chip-btn:has-text("Разрешително")')
         await pg.fill('.sheet input[inputmode=decimal]','100')
@@ -109,7 +109,7 @@ async def main():
         await pg.click('.sheet >> text=Запази'); await pg.wait_for_timeout(400)
         ok('Напомняне по км е добавено', 'Масло' in await T('#app').inner_text())
         # --- Статистика + Excel ---
-        await pg.goto(base+'/#/stats'); await pg.wait_for_timeout(500)
+        await pg.goto(base+'/app#/stats'); await pg.wait_for_timeout(500)
         async with pg.expect_download() as dl:
             await pg.click('.hero-btn[aria-label="Свали в Excel"]')
         d = await dl.value; path = await d.path(); txt = open(path, encoding='utf-8-sig').read()
@@ -118,12 +118,12 @@ async def main():
             await pg.click(f'.seg-btn >> nth={["day","week","month","year","custom"].index(u)}'); await pg.wait_for_timeout(250)
         ok('Всички периоди в статистиката се отварят без грешка', not errs, errs[:2])
         # --- Профил ---
-        await pg.goto(base+'/#/profile'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)
         await pg.click('.seg-btn:has-text("Седмица")'); await pg.click('.tile:has-text("Такса")'); await pg.keyboard.type('40'); await pg.click('text=Готово')
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(500)
-        await pg.goto(base+'/#/costs'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/costs'); await pg.wait_for_timeout(300)
         ok('Смяна на ефира на 40 €/седм. от профила', '40 € на седмица' in await T('#app').inner_text())
-        await pg.goto(base+'/#/profile'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)
         await pg.click('.seg-btn:has-text("Тъмна")'); await pg.wait_for_timeout(150)
         ok('Тъмна тема се включва', await pg.evaluate('document.documentElement.dataset.theme')=='dark')
         await pg.click('.seg-btn:has-text("Автоматично")')
@@ -138,7 +138,7 @@ async def main():
         ok('Вход с новата парола', '#/home' in pg.url)
         # --- Ширина и грешки ---
         for route in ['home','shifts','stats','costs','profile','shift/new']:
-            await pg.goto(base+'/#/'+route); await pg.wait_for_timeout(350)
+            await pg.goto(base+'/app#/'+route); await pg.wait_for_timeout(350)
             w = await pg.evaluate('document.documentElement.scrollWidth')
             if w>390: ok(f'Без хоризонтално превъртане: {route}', False, w)
         ok('Без хоризонтално превъртане на всички страници (390 px)', not any('превъртане' in r and r.startswith('FAIL') for r in R))

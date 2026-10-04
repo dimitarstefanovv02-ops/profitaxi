@@ -3,28 +3,210 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>ProfiTaxi</title>
-  <meta name="description" content="Приходи, разходи и чиста печалба за таксиметрови шофьори.">
-  <meta name="theme-color" content="#EEF1F5">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="ProfiTaxi">
-  <link rel="manifest" href="/manifest.webmanifest">
+  <title>ProfiTaxi – колко изкарваш наистина</title>
+  <meta name="description" content="Приложение за таксиметрови шофьори: приходи, разходи и реална чиста печалба след гориво, наем, ефир и всички такси. Пробвай 14 дни безплатно.">
+  <meta name="theme-color" content="#11151C">
+  <meta property="og:title" content="ProfiTaxi – колко изкарваш наистина">
+  <meta property="og:description" content="Чистата печалба от всяка смяна, след гориво, наем и ефир. За таксиметрови шофьори в България.">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <meta property="og:type" content="website">
   <link rel="icon" href="/icons/favicon-64.png" type="image/png">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap&subset=cyrillic">
   <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/landing.css">
   <script>
-    (function () { var t = localStorage.getItem('profitaxi.theme'); if (t && t !== 'auto') document.documentElement.setAttribute('data-theme', t); })();
+    // Стари линкове към приложението (/#/…) и инсталираното приложение отиват в /app
+    (function () {
+      if (location.hash.indexOf('#/') === 0) location.replace('/app' + location.hash);
+      else if (matchMedia('(display-mode: standalone)').matches || navigator.standalone) location.replace('/app#/home');
+    })();
   </script>
 </head>
-<body>
-  <div id="app"></div>
-  <div id="sheet-root"></div>
-  <noscript>ProfiTaxi изисква JavaScript.</noscript>
-  <script type="module" src="/js/app.js"></script>
+<body class="landing">
+
+<header class="l-head">
+  <div class="l-wrap l-head-in">
+    <a class="l-brand" href="/"><img src="/icons/icon-192.png" alt="" width="40" height="40"><span>ProfiTaxi</span></a>
+    <nav class="l-links" aria-label="Секции">
+      <a href="#features">Какво прави</a>
+      <a href="#how">Как работи</a>
+      <a href="#price">Цена</a>
+      <a href="#faq">Въпроси</a>
+    </nav>
+    <div class="l-head-cta">
+      <a class="l-btn l-btn-ghost" href="/app#/login">Вход</a>
+      <a class="l-btn l-btn-yellow" href="/app#/register">Пробвай <span class="hide-sm">безплатно</span></a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Начало -->
+  <section class="l-hero">
+    <div class="l-wrap l-hero-in">
+      <div class="l-hero-text">
+        <p class="l-kicker"><span class="dot"></span>За таксиметрови шофьори в България</p>
+        <h1>Колко изкарваш <em>наистина?</em></h1>
+        <p class="l-lead">Оборотът е едно, чистото е друго. ProfiTaxi вади горивото, наема, ефира и всички такси и ти показва реалната печалба от всяка смяна. Въвеждаш за 30 секунди.</p>
+        <div class="l-hero-cta">
+          <a class="l-btn l-btn-yellow l-btn-lg" href="/app#/register">Пробвай 14 дни безплатно</a>
+          <a class="l-btn l-btn-outline l-btn-lg" href="/app#/login">Имам акаунт</a>
+        </div>
+        <p class="l-note">Без карта. Работи на всеки телефон, Android и iPhone.</p>
+      </div>
+      <div class="l-hero-visual">
+        <div class="phone"><img src="/img/screen-home-dark.jpg" alt="Началният екран на ProfiTaxi: чистата печалба за месеца и колко часа остават до целта" width="390" height="844"></div>
+        <div class="receipt" aria-label="Пример: от оборот до чисто">
+          <div class="receipt-title">Октомври, пример</div>
+          <div class="r-row"><span>Оборот</span><b data-count="4120">4 120 €</b></div>
+          <div class="r-row minus"><span>Гориво</span><b data-count="-612">−612 €</b></div>
+          <div class="r-row minus"><span>Наем на колата</span><b data-count="-560">−560 €</b></div>
+          <div class="r-row minus"><span>Ефир</span><b data-count="-160">−160 €</b></div>
+          <div class="r-row minus"><span>Такси и други</span><b data-count="-214">−214 €</b></div>
+          <div class="r-total"><span>Чисто</span><b data-count="2574">2 574 €</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="checker" aria-hidden="true"></div>
+  </section>
+
+  <!-- Проблемът -->
+  <section class="l-sec">
+    <div class="l-wrap">
+      <div class="l-intro">
+        <h2>Тефтерчето не смята наема</h2>
+        <p>Повечето шофьори знаят колко са взели за деня. Малцина знаят колко им остава след седмичния наем, ефира, застраховката и винетката. ProfiTaxi разпределя всички постоянни разходи по дни, така че всяка смяна показва истинското чисто.</p>
+      </div>
+      <div class="l-trio">
+        <div class="l-card"><div class="l-ic" style="--c:#FF7A1A"><svg viewBox="0 0 24 24"><path d="M4 21V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v16M3 21h13M4 10h11M15 8l3.5 3v6.5a1.5 1.5 0 0 0 3 0V8l-3-3"/></svg></div><h3>Горивото изяжда тихо</h3><p>Виж разхода на 100 км и колко ти струва всеки километър, за бензин, газ, дизел или ток.</p></div>
+        <div class="l-card"><div class="l-ic" style="--c:#3D7BFF"><svg viewBox="0 0 24 24"><path d="M14.5 9.5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0zM13.5 12.5 21 20M18 17l2-2"/></svg></div><h3>Наемът тече и в почивен ден</h3><p>Наем, лизинг и ефир се смятат автоматично: на ден, седмица или месец, както плащаш.</p></div>
+        <div class="l-card"><div class="l-ic" style="--c:#8B5CF6"><svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2"/></svg></div><h3>Колко още трябва да караш</h3><p>Задаваш цел за месеца и виждаш колко часа и смени остават, сметнати по твоето темпо.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Функции -->
+  <section class="l-sec l-sec-alt" id="features">
+    <div class="l-wrap">
+      <div class="feature">
+        <div class="feature-text">
+          <span class="tag" style="--c:#3D7BFF">Смяната</span>
+          <h2>Едно натискане за старт, едно за край</h2>
+          <p>„Започвам смяна“ пуска таймера. В края въвеждаш кеш, карта, поръчки от приложения и бакшиш с голяма цифрова клавиатура. Горивото, миенето и паркинга са с бързи бутони. Можеш да копираш разходите от предната смяна и само да смениш сумите.</p>
+          <ul class="ticks"><li>Нощни смени през полунощ</li><li>Километри и разход на 100 км</li><li>Минали смени и редакция по всяко време</li></ul>
+        </div>
+        <div class="feature-visual"><div class="phone small"><img src="/img/screen-numpad.jpg" alt="Въвеждане на приход с голяма цифрова клавиатура" width="390" height="844" loading="lazy"></div></div>
+      </div>
+      <div class="feature reverse">
+        <div class="feature-text">
+          <span class="tag" style="--c:#8B5CF6">Статистика</span>
+          <h2>Разбери кога се печели най-много</h2>
+          <p>Чисто по дни, седмици, месеци и години, на час и на километър. ProfiTaxi ти показва най-доходните часове и дни от седмицата, по твоите собствени смени, и пази рекордите ти.</p>
+          <ul class="ticks"><li>Топ 3 часови прозореца</li><li>Как плащат клиентите: кеш, карта, приложения</li><li>Отчет в Excel и PDF за счетоводителя</li></ul>
+        </div>
+        <div class="feature-visual"><div class="phone small"><img src="/img/screen-time.jpg" alt="Кога се печели най-много: по дни от седмицата и по часове" width="390" height="844" loading="lazy"></div></div>
+      </div>
+      <div class="feature">
+        <div class="feature-text">
+          <span class="tag" style="--c:#FF6A3D">Разходи и плащания</span>
+          <h2>Нито една пропусната застраховка</h2>
+          <p>Застраховки, винетка, преглед, разрешително, данъци. Записваш ги веднъж и ProfiTaxi ти напомня 3, 2 и 1 ден преди падежа. Натискаш „Платено“ и следващата дата се сменя сама, дори за тримесечни плащания.</p>
+          <ul class="ticks"><li>При кола под наем показва само твоите разходи</li><li>Обща кола с друг шофьор: делене в процент</li><li>Напомняне за масло по километраж</li></ul>
+        </div>
+        <div class="feature-visual"><div class="phone small"><img src="/img/screen-costs.jpg" alt="Постоянни разходи и предстоящи плащания" width="390" height="844" loading="lazy"></div></div>
+      </div>
+
+      <div class="l-grid6">
+        <div class="mini"><b>Мотивация всеки ден</b><span>Закачливи съобщения и серии от поредни работни дни.</span></div>
+        <div class="mini"><b>Светла и тъмна тема</b><span>Удобно за очите и денем, и в нощна смяна.</span></div>
+        <div class="mini"><b>Работи и без интернет</b><span>Добавяш го на началния екран като истинско приложение.</span></div>
+        <div class="mini"><b>Всички видове гориво</b><span>Бензин, газ, дизел, хибрид или електрическа кола.</span></div>
+        <div class="mini"><b>Всеки град и фирма</b><span>София, Пловдив, Варна, Бургас и навсякъде другаде.</span></div>
+        <div class="mini"><b>Твоите данни са си твои</b><span>Друг шофьор или фирмата ти не ги виждат.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Как работи -->
+  <section class="l-sec" id="how">
+    <div class="l-wrap">
+      <div class="l-intro center"><h2>Започваш за 2 минути</h2></div>
+      <ol class="steps3">
+        <li><span>1</span><h3>Регистрирай се</h3><p>Име, имейл, град, фирма и каква е колата. Без карта.</p></li>
+        <li><span>2</span><h3>Настрой разходите</h3><p>Наем или лизинг, ефир, гориво и цел за месеца. Веднъж.</p></li>
+        <li><span>3</span><h3>Карай и гледай чистото</h3><p>Старт и край на смяната, а ProfiTaxi смята всичко останало.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- Цена -->
+  <section class="l-sec l-sec-alt" id="price">
+    <div class="l-wrap">
+      <div class="l-intro center"><h2>Една цена, всичко включено</h2><p>По-малко от една поръчка на седмица.</p></div>
+      <div class="price-switch" role="tablist">
+        <button class="on" data-plan="m" role="tab" aria-selected="true">Месечно</button>
+        <button data-plan="y" role="tab" aria-selected="false">Годишно <em>2 месеца подарък</em></button>
+      </div>
+      <div class="price-card">
+        <div class="price-top">
+          <div class="price-trial">14 дни безплатно</div>
+          <div class="price-amount"><b data-m="9,99 €" data-y="99 €">9,99 €</b><span data-m="на месец" data-y="на година">на месец</span></div>
+          <p class="price-sub" data-m="Спираш по всяко време." data-y="Излиза 8,25 € на месец.">Спираш по всяко време.</p>
+        </div>
+        <ul class="ticks">
+          <li>Неограничен брой смени и разходи</li>
+          <li>Чиста печалба на час, на км и по дни</li>
+          <li>Цел за месеца и часове до нея</li>
+          <li>Напомняния за плащания и „Платено“</li>
+          <li>Статистики, рекорди и най-добри часове</li>
+          <li>Отчети в Excel и PDF</li>
+        </ul>
+        <a class="l-btn l-btn-yellow l-btn-lg l-btn-block" href="/app#/register">Започни безплатно</a>
+        <p class="l-note center">Без карта при регистрация.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Въпроси -->
+  <section class="l-sec" id="faq">
+    <div class="l-wrap l-narrow">
+      <div class="l-intro center"><h2>Често задавани въпроси</h2></div>
+      <details><summary>Трябва ли да въвеждам карта, за да пробвам?</summary><p>Не. Регистрираш се с имейл и ползваш всичко 14 дни безплатно.</p></details>
+      <details><summary>Фирмата ми или другите шофьори виждат ли колко изкарвам?</summary><p>Не. Данните ти не се виждат от твоята таксиметрова фирма или от други шофьори. Достъп до тях има само екипът на ProfiTaxi за поддръжка и статистика, както е описано в <a href="/privacy">политиката за поверителност</a>.</p></details>
+      <details><summary>Карам кола под наем. Подходящо ли е за мен?</summary><p>Да. Избираш „Под наем“, въвеждаш наема на ден, седмица или месец и той се смята автоматично. Застраховки, винетка и преглед не се показват, защото са грижа на собственика.</p></details>
+      <details><summary>Работи ли на iPhone и Android?</summary><p>Да. Отваряш го в браузъра на телефона и го добавяш към началния екран. После се отваря като обикновено приложение, без да го сваляш от магазин.</p></details>
+      <details><summary>Плащам ефира на седмица, а понякога на ден. Как се смята?</summary><p>Избираш как плащаш: на ден, седмица или месец. Таксата на ден се смята само в дните, в които работиш. Можеш да я смениш по всяко време, без да се променят миналите месеци.</p></details>
+      <details><summary>Мога ли да дам отчета на счетоводителя си?</summary><p>Да. Сваляш всички смени в Excel или правиш PDF отчет за избран период.</p></details>
+      <details><summary>Как спирам абонамента?</summary><p>Пишеш ни на support@profitaxi.bg. Данните ти остават запазени, ако решиш да се върнеш.</p></details>
+    </div>
+  </section>
+
+  <!-- Последен призив -->
+  <section class="l-final">
+    <div class="checker" aria-hidden="true"></div>
+    <div class="l-wrap l-final-in">
+      <img src="/icons/icon-192.png" alt="" width="72" height="72">
+      <h2>Следващата смяна вече може да е с ясни сметки</h2>
+      <p>14 дни безплатно, без карта.</p>
+      <div class="l-hero-cta center">
+        <a class="l-btn l-btn-yellow l-btn-lg" href="/app#/register">Пробвай безплатно</a>
+        <a class="l-btn l-btn-outline l-btn-lg" href="/app#/login">Вход</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="l-foot">
+  <div class="l-wrap l-foot-in">
+    <a class="l-brand" href="/"><img src="/icons/icon-192.png" alt="" width="32" height="32"><span>ProfiTaxi</span></a>
+    <nav aria-label="Документи"><a href="/terms">Общи условия</a><a href="/privacy">Поверителност</a><a href="mailto:support@profitaxi.bg">support@profitaxi.bg</a></nav>
+    <p>© 2026 ProfiTaxi</p>
+  </div>
+</footer>
+
+<script src="/js/landing.js" defer></script>
 </body>
 </html>

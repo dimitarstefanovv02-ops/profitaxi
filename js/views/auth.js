@@ -6,7 +6,7 @@ import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
 
-export const brand = () => h('div', { class: 'brand' },
+export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
   h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }),
   h('span', { class: 'brand-name' }, 'ProfiTaxi'));
 

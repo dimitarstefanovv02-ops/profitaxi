@@ -54,7 +54,7 @@ async def main():
         await a.click('text=Спри достъпа'); await a.click('.sheet >> text=Спри достъпа'); await a.wait_for_timeout(500)
         ok('Спиране на достъпа', 'Спрян' in await a.inner_text('.adm-head'))
         # шофьорът вижда заключен екран
-        d = await ctx.new_page(); await d.goto(base+'/'); await d.wait_for_timeout(300)
+        d = await ctx.new_page(); await d.goto(base+'/app'); await d.wait_for_timeout(300)
         await d.fill('input[type=email]','ivan@demo.bg'); await d.fill('input[type=password]','demo123'); await d.click('button[type=submit]'); await d.wait_for_timeout(500)
         ok('Спрян шофьор вижда „Достъпът е спрян“', 'Достъпът е спрян' in await d.inner_text('#app'))
         await a.click('text=Пусни достъпа'); await a.wait_for_timeout(500)
@@ -82,7 +82,7 @@ async def main():
         await a.click('.adm-nav >> text=Настройки'); await a.wait_for_timeout(400)
 
         await a.fill('input[type=number]','30'); await a.click('main .btn-page'); await a.wait_for_timeout(300)
-        d2 = await ctx.new_page(); await d2.goto(base+'/'); await d2.evaluate("localStorage.removeItem('profitaxi.session')"); await d2.goto(base+'/#/register'); await d2.wait_for_timeout(400)
+        d2 = await ctx.new_page(); await d2.goto(base+'/app'); await d2.evaluate("localStorage.removeItem('profitaxi.session')"); await d2.goto(base+'/app#/register'); await d2.wait_for_timeout(400)
         await d2.fill('input[autocomplete=name]','Проба'); await d2.fill('input[type=email]','proba@test.bg'); await d2.fill('input[type=password]','123456')
         await d2.select_option('select >> nth=0','Нова Загора'); await d2.wait_for_timeout(150); await d2.select_option('select >> nth=1','Ирис Такси')
         await d2.click('text=Собствена'); await d2.click('input[type=checkbox]'); await d2.click('button[type=submit]'); await d2.wait_for_timeout(500)

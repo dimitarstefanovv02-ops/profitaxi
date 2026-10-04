@@ -3,7 +3,7 @@
   "short_name": "ProfiTaxi",
   "description": "Приходи, разходи и чиста печалба за таксиметрови шофьори.",
   "lang": "bg",
-  "start_url": "/#/home",
+  "start_url": "/app#/home",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
