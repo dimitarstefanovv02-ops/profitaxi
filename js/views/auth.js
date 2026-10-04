@@ -7,7 +7,7 @@ import * as store from '../store.js';
 import { toast, field } from '../ui.js';
 
 export const brand = () => h('div', { class: 'brand' },
-  h('div', { class: 'brand-mark' }, icon('car', 24)),
+  h('img', { class: 'brand-logo', src: '/icons/icon.svg', alt: '' }),
   h('span', { class: 'brand-name' }, 'ProfiTaxi'));
 
 const input = (attrs) => h('input', { class: 'input', ...attrs });

@@ -1,0 +1,14 @@
+{
+  "name": "ProfiTaxi – Администрация",
+  "short_name": "ProfiTaxi Админ",
+  "lang": "bg",
+  "start_url": "/admin",
+  "scope": "/admin",
+  "display": "standalone",
+  "background_color": "#0E1330",
+  "theme_color": "#1B1F4E",
+  "icons": [
+    { "src": "/icons/admin-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/admin-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

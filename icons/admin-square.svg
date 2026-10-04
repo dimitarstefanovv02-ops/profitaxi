@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="abg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1B1F4E"/><stop offset="1" stop-color="#5B4FE9"/></linearGradient>
+    <linearGradient id="agl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCDDFF"/></linearGradient>
+    <pattern id="achk" width="40" height="40" patternUnits="userSpaceOnUse"><rect width="40" height="40" fill="#FFC21A"/><rect width="20" height="20" fill="#1B1F4E"/><rect x="20" y="20" width="20" height="20" fill="#1B1F4E"/></pattern>
+    <clipPath id="asq"><rect width="512" height="512" rx="0"/></clipPath>
+  </defs>
+  <g clip-path="url(#asq)">
+    <rect width="512" height="512" fill="url(#abg)"/>
+    <circle cx="430" cy="70" r="150" fill="#fff" opacity=".06"/>
+    <rect y="412" width="512" height="40" fill="url(#achk)"/>
+    <!-- табела на такси -->
+    <path d="M168 158h176a14 14 0 0 1 13.6 10.7L388 300H124l30.4-131.3A14 14 0 0 1 168 158z" fill="url(#agl)"/>
+    <rect x="104" y="300" width="304" height="42" rx="21" fill="url(#agl)"/>
+    <!-- стълбчета: табло със статистики -->
+    <rect x="188" y="236" width="30" height="48" rx="8" fill="#5B4FE9"/>
+    <rect x="241" y="206" width="30" height="78" rx="8" fill="#5B4FE9"/>
+    <rect x="294" y="180" width="30" height="104" rx="8" fill="#FFB300"/>
+  </g>
+</svg>
