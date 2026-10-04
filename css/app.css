@@ -221,7 +221,7 @@ p { margin: 0; }
 .stat { background: var(--surface-2); border-radius: var(--r-md); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .stat-label { color: var(--muted); font-size: .8rem; font-weight: 600; display: flex; gap: 6px; align-items: center; }
 .stat-label .ic { color: var(--sc, var(--muted)); }
-.stat-value { font-family: var(--display); font-size: 1.2rem; font-weight: 600; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-value { font-family: var(--display); font-size: 1.2rem; font-weight: 600; letter-spacing: -.02em; display: block; }
 .stat-sub { color: var(--faint); font-size: .75rem; }
 .stat-card { background: var(--surface); box-shadow: var(--shadow); }
 
@@ -483,3 +483,14 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
   .print-only { display: block !important; }
 }
 .print-only { display: none; }
+
+/* ---------- Големите числа никога не се режат: смаляват се (виж autoFit) ---------- */
+.kpi-value, .stat-value, .hero-num, .meter-value, .big-net, .tile-val, .meter-cell b, .np-val, .save-bar .sum b, .cost-amt b, .shift-amt b, .rec-title b, .win b, .card-title .num, .mini-kpi b {
+  white-space: nowrap; overflow: hidden; text-overflow: clip; max-width: 100%; }
+.stat-value { text-overflow: clip; }
+/* Заглавие на карта и сума: ако не се събират, сумата минава на нов ред */
+.card-title { flex-wrap: wrap; row-gap: 4px; }
+.card-title h2, .card-title h3 { flex: 1 1 auto; min-width: 0; }
+.card-title > .num, .card-title > b { margin-left: auto; min-width: 0; }
+.rec-title > span { flex: 1; min-width: 0; }
+.rec-title > b { flex: none; max-width: 55%; }

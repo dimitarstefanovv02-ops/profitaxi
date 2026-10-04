@@ -50,10 +50,20 @@ const nf1 = new Intl.NumberFormat('bg-BG', { minimumFractionDigits: 1, maximumFr
 export const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 export const fmtNum = (n) => nf0.format(Math.round(n || 0));
 export const fmtNum1 = (n) => nf1.format(n || 0);
+// Пари. Суми над 100 000 € се съкращават („350,8 хил. €“, „1,2 млн. €“);
+// пълната сума дава moneyFull().
 export function money(n, dec = 0) {
   const v = Number(n) || 0;
-  const s = dec ? nf2.format(Math.abs(v)) : nf0.format(Math.round(Math.abs(v)));
-  return `${v < 0 && Math.round(Math.abs(v) * (dec ? 100 : 1)) !== 0 ? '−' : ''}${s} €`;
+  const a = Math.abs(v);
+  const sign = v < 0 && Math.round(a * (dec ? 100 : 1)) !== 0 ? '−' : '';
+  if (a >= 1e6) return `${sign}${nf1.format(a / 1e6)} млн. €`;
+  if (a >= 1e5) return `${sign}${nf1.format(a / 1e3)} хил. €`;
+  const s = dec ? nf2.format(a) : nf0.format(Math.round(a));
+  return `${sign}${s} €`;
+}
+export function moneyFull(n) {
+  const v = Number(n) || 0;
+  return `${v < 0 && Math.round(Math.abs(v)) ? '−' : ''}${nf0.format(Math.round(Math.abs(v)))} €`;
 }
 export const money2 = (n) => money(n, 2);
 export const parseNum = (v) => { const n = parseFloat(String(v).replace(/\s/g, '').replace(',', '.')); return Number.isFinite(n) ? n : 0; };

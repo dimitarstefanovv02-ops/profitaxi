@@ -1,6 +1,6 @@
 // ProfiTaxi – админ панел. Отделен вход на /admin. Шофьорите нямат връзка към него.
 
-import { h, fill, icon, cx, money, money2, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, eachDay, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, dateStr } from './util.js';
+import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, eachDay, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, dateStr } from './util.js';
 import * as store from './store.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, getTheme, setTheme, shareRows, cardTitle } from './ui.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
@@ -85,9 +85,51 @@ function subState(u) {
 const lastShift = (d) => d.shifts.find((s) => s.end);
 const daysSince = (d) => { const l = lastShift(d); return l ? Math.round((parseDate(todayStr()) - parseDate(shiftDate(l))) / 86400000) : null; };
 const pageHead = (title, sub, actions) => h('div', { class: 'adm-head' }, h('div', null, h('h1', null, title), sub && h('p', null, sub)), actions && h('div', { class: 'row gap' }, actions));
-const kpi = (ic, color, label, value, sub, valCls) => h('div', { class: 'kpi', style: { '--kc': color } },
-  h('div', { class: 'kpi-ic' }, icon(ic, 20)),
-  h('div', { class: 'kpi-body' }, h('div', { class: 'kpi-label' }, label), h('div', { class: cx('kpi-value', valCls) }, value), sub && h('div', { class: 'kpi-sub' }, sub)));
+const kpi = (ic, color, label, value, sub, valCls, extra = {}) => h('div', { class: cx('kpi', extra.lg && 'kpi-lg'), style: { '--kc': color }, title: extra.title || null },
+  h('div', { class: 'kpi-head' }, h('div', { class: 'kpi-ic' }, icon(ic, 18)), h('div', { class: 'kpi-label' }, label), extra.trend),
+  h('div', { class: cx('kpi-value', valCls) }, value),
+  sub && h('div', { class: 'kpi-sub' }, sub),
+  extra.bar != null && h('div', { class: 'kpi-bar', title: `${Math.round(extra.bar * 100)}%` }, h('span', { style: { width: `${Math.max(0, Math.min(1, extra.bar)) * 100}%` } })),
+  extra.spark);
+// Промяна спрямо предишния период
+function trendChip(cur, prev, { invert, unit = '%' } = {}) {
+  if (prev == null || !Number.isFinite(prev) || Math.abs(prev) < 0.01) return null;
+  const d = (cur - prev) / Math.abs(prev);
+  if (!Number.isFinite(d)) return null;
+  const up = d >= 0, good = invert ? !up : up;
+  return h('span', { class: cx('trend-chip', good ? 'up' : 'down'), title: 'Спрямо предишния период' }, `${up ? '▲' : '▼'} ${Math.abs(Math.round(d * 100))}${unit}`);
+}
+// Мини графика (линия с площ)
+function sparkline(values, color) {
+  const v = values.filter((x) => Number.isFinite(x));
+  if (v.length < 2) return null;
+  const W = 200, H = 38, max = Math.max(...v), min = Math.min(0, ...v), rng = max - min || 1;
+  const pts = v.map((x, i) => [(i / (v.length - 1)) * W, H - 2 - ((x - min) / rng) * (H - 4)]);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  return h('svg', { class: 'spark', viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'none', 'aria-hidden': 'true' },
+    h('path', { d: `${line} L${W},${H} L0,${H} Z`, fill: color, opacity: '0.14' }),
+    h('path', { d: line, fill: 'none', stroke: color, 'stroke-width': '2', 'vector-effect': 'non-scaling-stroke', 'stroke-linejoin': 'round' }));
+}
+// Малък показател в лента
+const miniKpi = (ic, color, label, value, sub) => h('div', { class: 'mini-kpi', style: { '--kc': color } },
+  h('span', { class: 'mini-ic' }, icon(ic, 16)), h('div', { style: { minWidth: 0 } }, h('span', null, label), h('b', null, value), sub && h('em', null, sub)));
+// Предишен период със същата дължина
+function prevRange(st) {
+  if (st.unit === 'custom') { const len = Math.round((parseDate(st.to) - parseDate(st.from)) / 86400000) + 1; return { from: addDays(st.from, -len), to: addDays(st.from, -1) }; }
+  const c = { ...st }; shiftAnchorLocal(c, -1); const r = periodRange(c);
+  // за текущ период сравняваме само до същия ден (напр. 1–5 окт срещу 1–5 сеп)
+  const cur = periodRange(st);
+  if (cur.to >= todayStr() && cur.from <= todayStr()) { const len = Math.round((parseDate(todayStr()) - parseDate(cur.from)) / 86400000); return { from: r.from, to: addDays(r.from, len) }; }
+  return r;
+}
+function shiftAnchorLocal(st, dir) {
+  const d = parseDate(st.anchor);
+  if (st.unit === 'day') d.setDate(d.getDate() + dir);
+  if (st.unit === 'week') d.setDate(d.getDate() + 7 * dir);
+  if (st.unit === 'month') d.setMonth(d.getMonth() + dir, 1);
+  if (st.unit === 'year') d.setFullYear(d.getFullYear() + dir, 0, 1);
+  st.anchor = dateStr(d);
+}
 const pct = (a, b) => (b ? `${Math.round((a / b) * 100)}%` : '—');
 
 function table(headers, rows, { rightFrom = 1 } = {}) {
@@ -103,7 +145,10 @@ function donut(items, centerLabel, centerValue) {
   const stops = items.map((x) => { const from = acc; acc += (x.value / total) * 360; return `${x.color} ${from}deg ${acc}deg`; }).join(', ');
   return h('div', { class: 'donut-wrap' },
     h('div', { class: 'donut', style: { background: `conic-gradient(${stops || 'var(--surface-3) 0 360deg'})` } }, h('div', { class: 'donut-center' }, h('div', null, h('b', null, centerValue), centerLabel))),
-    h('div', { class: 'legend-list' }, items.map((x) => h('div', null, h('span', null, h('i', { style: { background: x.color } }), x.label), h('b', null, x.text ?? pct(x.value, total))))));
+    h('div', { class: 'legend-list' }, items.map((x) => h('div', { class: 'lg-row' },
+      h('span', { class: 'lg-name' }, h('i', { style: { background: x.color } }), x.label),
+      h('b', null, x.text ?? pct(x.value, total)),
+      x.sub && h('small', null, x.sub)))));
 }
 function colBars(items, fmt = (v) => String(v)) {
   const max = Math.max(1, ...items.map((x) => x.value));
@@ -276,6 +321,13 @@ function overview() {
       pts = per[0]?.map((p, i) => ({ ...p, net: per.reduce((a, s) => a + s[i].net, 0), income: per.reduce((a, s) => a + s[i].income, 0) })) || [];
       if (unit === 'day') activePts = per[0]?.map((p, i) => ({ ...p, net: per.reduce((a, s) => a + (s[i].worked ? 1 : 0), 0) }));
     }
+    // Предишен период и мини графики
+    const pr = prevRange(overviewState);
+    const P = aggregate(all.map((d) => ({ d, st: periodStats(d, pr.from, pr.to) })));
+    let sparkPts = pts || [], activeSpark = activePts ? activePts.map((x) => x.net) : null;
+    if (!pts) { const per = all.map((d) => series(d, addDays(r.to, -13), r.to, 'day')); sparkPts = per[0]?.map((p, i) => ({ net: per.reduce((a, x) => a + x[i].net, 0), income: per.reduce((a, x) => a + x[i].income, 0) })) || []; }
+    sparkPts = sparkPts.filter((x) => !x.future);
+    if (activeSpark && activePts) activeSpark = activePts.filter((x) => !x.future).map((x) => x.net);
     // Всички смени за периода
     const shiftsP = all.flatMap((d) => d.shifts.filter((s) => s.end && shiftDate(s) >= r.from && shiftDate(s) <= r.to));
     const ti = timeInsights(shiftsP);
@@ -300,15 +352,16 @@ function overview() {
     fill(root,
       pageHead('Общ преглед', `${scopeLabel()}: ${all.length} шофьори, ${T.active} активни през периода`),
       h('div', { class: 'adm-picker' }, periodPicker(overviewState, draw)),
-      h('div', { class: 'kpis' },
-        kpi('coins', '#1FB866', 'Приход', money(T.income), `${fmtNum(T.shifts)} смени`),
-        kpi('wallet', '#6366F1', 'Чиста печалба', money(T.net), `разходи ${money(T.exp)}`, tone(T.net)),
-        kpi('users', '#EC4899', 'Активни шофьори', `${T.active} от ${all.length}`, `${newRegs} нови регистрации`),
-        kpi('receipt', '#F5A524', 'Месечни приходи (MRR)', money(mrr, 2), `${count('active')} платени по ${money(price, 2)}`),
-        kpi('clock', '#1EA5EE', 'Средно на час', money2(T.perHour), `приход ${money2(T.incPerHour)}/ч`),
-        kpi('road', '#14B8A6', 'Средно на км', money2(T.perKm), `${fmtNum(T.km)} км общо`),
-        kpi('calendar', '#8B5CF6', 'Средно на смяна', money(T.perShift), `${T.shifts ? fmtDuration(T.hours / T.shifts) : '—'} продължителност`),
-        kpi('heart', '#FF7A1A', 'Бакшиши', money(T.tips), `${pct(night, shiftsP.length)} нощни смени`)),
+      h('div', { class: 'kpis kpis-lg' },
+        kpi('coins', '#1FB866', 'Приход', money(T.income), `${fmtNum(T.shifts)} смени`, '', { lg: true, title: moneyFull(T.income), trend: trendChip(T.income, P.income), spark: sparkline(sparkPts.map((x) => x.income), '#1FB866') }),
+        kpi('wallet', '#6366F1', 'Чиста печалба', money(T.net), `разходи ${money(T.exp)}`, tone(T.net), { lg: true, title: moneyFull(T.net), trend: trendChip(T.net, P.net), spark: sparkline(sparkPts.map((x) => x.net), '#6366F1') }),
+        kpi('users', '#EC4899', 'Активни шофьори', `${T.active} от ${all.length}`, `${newRegs} нови регистрации`, '', { lg: true, trend: trendChip(T.active, P.active), spark: activeSpark && sparkline(activeSpark, '#EC4899'), bar: activeSpark ? null : (all.length ? T.active / all.length : 0) }),
+        kpi('receipt', '#F5A524', 'Абонаменти на месец', money(mrr), `${count('active')} платени по ${money(price, 2)}`, '', { lg: true, title: 'MRR – месечни приходи от абонаменти', bar: all.length ? count('active') / all.length : 0 })),
+      h('div', { class: 'mini-kpis' },
+        miniKpi('clock', '#1EA5EE', 'Чисто на час', money2(T.perHour), `приход ${money2(T.incPerHour)}`),
+        miniKpi('road', '#14B8A6', 'Чисто на км', money2(T.perKm), `${fmtNum(T.km)} км`),
+        miniKpi('calendar', '#8B5CF6', 'Приход на смяна', money(T.perShift), T.shifts ? fmtDuration(T.hours / T.shifts) : ''),
+        miniKpi('heart', '#FF7A1A', 'Бакшиши', money(T.tips), `${pct(night, shiftsP.length)} нощни`)),
       pts && pts.length > 1 && h('div', { class: 'adm-grid two' },
         h('section', { class: 'card' }, cardTitle('chart', 'Чиста печалба на всички', h('b', { class: cx('num', tone(T.net)) }, money(T.net))), barChart(pts, { height: 170 })),
         activePts ? h('section', { class: 'card' }, cardTitle('users', 'Активни шофьори по дни'), barChart(activePts, { height: 170, cls: 'violet', fmt: (v) => `${Math.round(v)} шофьори` }))
@@ -317,9 +370,9 @@ function overview() {
         h('section', { class: 'card' }, cardTitle('card', 'Как плащат клиентите'),
           donut(Object.entries(INCOME_TYPES).map(([k, t], i) => ({ label: t.label, value: T[k], color: ['#1FB866', '#3D7BFF', '#8B5CF6', '#F5A524'][i] })), 'приход', money(T.income))),
         h('section', { class: 'card' }, cardTitle('car', 'Тип кола'),
-          donut(byCar.map((g, i) => ({ label: g.label, value: g.drivers, color: PALETTE[i], text: `${g.drivers} шоф., ${money2(g.hours ? g.net / g.hours : 0)}/ч` })), 'шофьори', String(all.length))),
+          donut(byCar.map((g, i) => ({ label: g.label, value: g.drivers, color: PALETTE[i], text: String(g.drivers), sub: `${money2(g.hours ? g.net / g.hours : 0)} чисто на час` })), 'шофьори', String(all.length))),
         h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'),
-          donut(byFuel.map((g, i) => ({ label: g.label, value: g.drivers, color: PALETTE[(i + 3) % PALETTE.length], text: `${g.drivers} шоф., гориво ${money2(g.km ? g.fuel / g.km : 0)}/км` })), 'шофьори', String(all.length)))),
+          donut(byFuel.map((g, i) => ({ label: g.label, value: g.drivers, color: PALETTE[(i + 3) % PALETTE.length], text: String(g.drivers), sub: `гориво ${money2(g.km ? g.fuel / g.km : 0)} на км` })), 'шофьори', String(all.length)))),
       h('div', { class: 'adm-grid two' },
         h('section', { class: 'card' }, cardTitle('calendar', 'Смени по дни от седмицата'), colBars(byWd.map((v, i) => ({ label: WD_SHORT[i], value: v })))),
         h('section', { class: 'card' }, cardTitle('clock', 'Приход на час през денонощието'),
@@ -546,7 +599,7 @@ function subs() {
   return h('div', null,
     pageHead('Абонаменти', `${scopeLabel()}: плащания, пробни периоди и изтичащи достъпи`),
     h('div', { class: 'kpis' },
-      kpi('receipt', '#F5A524', 'Месечни приходи (MRR)', money(count('active') * price, 2), `годишно ${money(count('active') * price * 12)}`),
+      kpi('receipt', '#F5A524', 'Месечни приходи (MRR)', money(count('active') * price), `годишно ${money(count('active') * price * 12)}`),
       kpi('check', '#1FB866', 'Платени', String(count('active')), `от ${all.length} акаунта`),
       kpi('clock', '#1EA5EE', 'Пробни', String(count('trial')), 'в момента'),
       kpi('trophy', '#6366F1', 'От пробен към платен', pct(paidEver, trialsDone), 'конверсия'),

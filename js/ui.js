@@ -184,3 +184,22 @@ export const cardTitle = (ic, title, right) => h('div', { class: 'card-title' },
 // Цветна шапка на страница
 export const hero = (...kids) => h('section', { class: 'hero' }, ...kids);
 export const numCompact = (n) => fmtNum(n);
+
+// ---------- Числата се смаляват сами, за да се съберат ----------
+// Вместо да се режат с „…“, големите числа намаляват шрифта си до 55%.
+const FIT = '.kpi-value, .stat-value, .hero-num, .meter-value, .big-net, .tile-val, .meter-cell b, .donut-center b, .np-val, .save-bar .sum b, .cost-amt b, .shift-amt b, .rec-title b, .win b, .card-title .num, .kpi-big, .mini-kpi b';
+export function autoFit(root = document) {
+  root.querySelectorAll(FIT).forEach((el) => {
+    el.style.fontSize = '';
+    if (!el.clientWidth || el.scrollWidth <= el.clientWidth + 1) return;
+    const base = parseFloat(getComputedStyle(el).fontSize);
+    let size = base * (el.clientWidth / el.scrollWidth) * 0.98;
+    size = Math.max(size, base * 0.55);
+    el.style.fontSize = size + 'px';
+  });
+}
+let fitQueued = false;
+const queueFit = () => { if (fitQueued) return; fitQueued = true; requestAnimationFrame(() => { fitQueued = false; autoFit(); }); };
+new MutationObserver(queueFit).observe(document.documentElement, { childList: true, subtree: true });
+window.addEventListener('resize', queueFit);
+document.fonts?.ready?.then(queueFit);
