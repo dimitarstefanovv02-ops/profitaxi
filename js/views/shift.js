@@ -3,9 +3,9 @@
 
 import { h, fill, icon, cx, money, uid, toLocalInput, fromLocalInput, fmtDateLong, isoToDateStr, round2, fmtDuration } from '../util.js';
 import * as store from '../store.js';
-import { INCOME_TYPES, EXPENSE_CATS, FUELS, FUEL_TYPES } from '../constants.js';
+import { INCOME_TYPES, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat } from '../constants.js';
 import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
-import { openNumpad, openSheet, sheetHead, confirmSheet, toast } from '../ui.js';
+import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
 
 let draft = null;      // чернова на отворената смяна
 let draftKey = null;
@@ -27,7 +27,7 @@ export function shiftEditorView(ctx) {
       if (route.query.get('end') === '1' && !draft.end) draft.end = new Date().toISOString();
     }
   }
-  const root = h('div', { class: 'screen no-nav', style: { paddingBottom: '120px' } });
+  const root = h('div', { class: 'screen no-nav', 'data-page': 'shift', style: { paddingBottom: '120px' } });
   const profile = data.profile;
   const fuelTypes = FUELS[profile.fuel]?.types || ['petrol'];
   const isNew = !draft.id;
@@ -49,20 +49,20 @@ export function shiftEditorView(ctx) {
 
       // Приходи
       h('section', { class: 'card' },
-        h('div', { class: 'card-title' }, h('h2', null, 'Приходи'), h('b', { class: 'num' }, money(inc))),
+        cardTitle('coins', 'Приходи', h('b', { class: 'num pos' }, money(inc))),
         h('div', { class: 'tiles' }, Object.entries(INCOME_TYPES).map(([k, t]) =>
-          h('button', { class: 'tile', onclick: () => editIncome(k) },
-            h('span', { class: 'tile-top' }, icon(t.icon, 18), t.label),
+          h('button', { class: 'tile', style: { '--tc': t.color }, onclick: () => editIncome(k) },
+            h('span', { class: 'tile-top' }, h('span', { class: 'ic-chip' }, icon(t.icon, 16)), t.label),
             h('span', { class: cx('tile-val', !draft.income[k] && 'zero') }, money(draft.income[k], draft.income[k] % 1 ? 2 : 0)))))),
 
       // Разходи
       h('section', { class: 'card' },
-        h('div', { class: 'card-title' }, h('h2', null, 'Разходи'), h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
+        cardTitle('fuel', 'Разходи', h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
         h('div', { class: 'quick' }, Object.entries(EXPENSE_CATS).map(([k, c]) =>
-          h('button', { onclick: () => (k === 'fuel' ? editFuel() : editExpense({ category: k })) }, icon(c.icon, 24), c.label))),
+          h('button', { style: { '--qc': c.color }, onclick: () => (k === 'fuel' ? editFuel() : editExpense({ category: k })) }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label))),
         draft.expenses.length > 0 && h('div', { class: 'exp-list' }, draft.expenses.map((e) =>
-          h('div', { class: 'exp-item' },
-            icon(EXPENSE_CATS[e.category]?.icon || 'more', 20),
+          h('div', { class: 'exp-item', style: { '--qc': expenseCat(e.category).color } },
+            h('span', { class: 'e-ic' }, icon(expenseCat(e.category).icon, 17)),
             h('button', { class: 'grow', style: { textAlign: 'left' }, onclick: () => (e.category === 'fuel' ? editFuel(e) : editExpense(e)) },
               h('div', { class: 'name' }, expName(e)),
               e.category === 'fuel' && e.qty > 0 && h('div', { class: 'det' }, `${String(e.qty).replace('.', ',')} ${FUEL_TYPES[e.fuelType]?.unit || 'л'}, ${money(e.amount / e.qty, 2)}/${FUEL_TYPES[e.fuelType]?.unit || 'л'}`)),
@@ -73,7 +73,7 @@ export function shiftEditorView(ctx) {
 
       // Километри
       h('section', { class: 'card' },
-        h('div', { class: 'card-title' }, h('h2', null, 'Километри'), h('b', { class: 'num' }, `${shiftKm(draft)} км`)),
+        cardTitle('gauge', 'Километри', h('b', { class: 'num' }, `${shiftKm(draft)} км`)),
         h('div', { class: 'km-row' },
           kmTile('Начало', draft.kmStart, () => editKm('kmStart')),
           kmTile('Край', draft.kmEnd, () => editKm('kmEnd'))),
@@ -81,7 +81,7 @@ export function shiftEditorView(ctx) {
 
       // Време
       h('section', { class: 'card' },
-        h('div', { class: 'card-title' }, h('h2', null, 'Време'), h('b', { class: 'num' }, fmtDuration(shiftHours(draft)))),
+        cardTitle('clock', 'Време', h('b', { class: 'num' }, fmtDuration(shiftHours(draft)))),
         h('div', { class: 'time-row' },
           h('label', { class: 'time-in' }, h('span', null, 'Начало'),
             h('input', { type: 'datetime-local', value: toLocalInput(draft.start), onchange: (e) => { if (e.target.value) { draft.start = fromLocalInput(e.target.value); draw(); } } })),
@@ -102,8 +102,8 @@ export function shiftEditorView(ctx) {
         h('button', { class: 'btn btn-primary btn-lg', onclick: save }, icon('check', 20), !draft.end ? 'Запази' : wasActive ? 'Приключи' : 'Запази')));
   }
 
-  const kmTile = (label, v, onTap) => h('button', { class: 'tile', onclick: onTap },
-    h('span', { class: 'tile-top' }, icon('gauge', 18), label),
+  const kmTile = (label, v, onTap) => h('button', { class: 'tile', style: { '--tc': 'var(--c-teal)' }, onclick: onTap },
+    h('span', { class: 'tile-top' }, h('span', { class: 'ic-chip' }, icon('gauge', 16)), label),
     h('span', { class: cx('tile-val', !v && 'zero') }, v ? v.toLocaleString('bg-BG') : '—'));
 
   function editIncome(k) {
@@ -121,8 +121,8 @@ export function shiftEditorView(ctx) {
     const isNewE = !e.id;
     let label = e.label || '';
     openNumpad({
-      title: EXPENSE_CATS[e.category]?.label || 'Разход',
-      top: e.category === 'other' || e.category === 'service' ? () => h('input', { class: 'input', style: { marginBottom: '12px' }, placeholder: 'Описание (по желание)', value: label, oninput: (ev) => { label = ev.target.value; } }) : null,
+      title: expenseCat(e.category).label,
+      top: ['other', 'service', 'fine'].includes(e.category) ? () => h('input', { class: 'input', style: { marginBottom: '12px' }, placeholder: 'Описание (по желание)', value: label, oninput: (ev) => { label = ev.target.value; } }) : null,
       fields: [{ key: 'v', label: 'Сума', value: e.amount || '' }],
       actions: [{ label: isNewE ? 'Добави' : 'Запиши', primary: true, run: ({ v }) => {
         if (!v) return;
@@ -183,6 +183,6 @@ export function shiftEditorView(ctx) {
 
 function expName(e) {
   if (e.category === 'fuel') return FUEL_TYPES[e.fuelType]?.label || 'Гориво';
-  return e.label || EXPENSE_CATS[e.category]?.label || 'Разход';
+  return e.label || expenseCat(e.category).label;
 }
 export { openSheet, sheetHead };

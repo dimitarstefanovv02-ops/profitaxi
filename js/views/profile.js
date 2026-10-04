@@ -1,71 +1,96 @@
-// Профил: кола, гориво, ефир, цел, тема, данни, акаунт
+// Профил: акаунт, град и фирма, кола, гориво, ефир, цел, известия, тема, данни
 
 import { h, fill, icon, cx, money, todayStr, fmtDate } from '../util.js';
 import * as store from '../store.js';
 import { CAR_TYPES, FUELS } from '../constants.js';
 import { carBlock, fuelBlock, dispatchBlock, shareBlock, goalBlock } from './carSettings.js';
-import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme } from '../ui.js';
+import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero } from '../ui.js';
+import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
+import { cityCompanyPicker } from './cityPicker.js';
 import { exportCsv } from './stats.js';
 
 export function profileView({ go, user, data }) {
-  const root = h('div', { class: 'screen' });
+  const root = h('div', { class: 'screen', 'data-page': 'profile' });
   const d = store.getProfile();
   const orig = JSON.stringify(d);
   const draw = () => {
     const dirty = JSON.stringify(d) !== orig;
     const sub = user.subscription;
-    fill(root, 
-      h('div', { class: 'top' }, h('h1', null, 'Профил')),
+    const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
+    fill(root,
+      hero(
+        h('div', { class: 'hero-top' },
+          h('div', { class: 'row gap' },
+            h('div', { class: 'avatar', style: { width: '58px', height: '58px', fontSize: '1.15rem', background: '#fff', color: '#0E6F66' } }, user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')),
+            h('div', { style: { minWidth: 0 } },
+              h('h1', { style: { fontSize: '1.25rem' } }, user.name),
+              h('div', { class: 'hero-sub', style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, user.email))),
+          h('button', { class: 'hero-btn', 'aria-label': 'Редактирай профила', onclick: () => editAccount(user) }, icon('edit', 20))),
+        h('div', { class: 'hero-chips' },
+          h('span', { class: 'hero-chip' }, icon('target', 14), user.city || 'без град'),
+          h('span', { class: 'hero-chip' }, icon('car', 14), user.company || 'без фирма'),
+          h('span', { class: 'hero-chip' }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`))),
 
-      h('section', { class: 'card row gap' },
-        h('div', { class: 'avatar', style: { width: '56px', height: '56px', fontSize: '1.1rem' } }, user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')),
-        h('div', { class: 'grow', style: { minWidth: 0 } },
-          h('div', { style: { fontWeight: 700, fontSize: '1.1rem' } }, user.name),
-          h('div', { class: 'muted small', style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, user.email),
-          h('div', { class: 'small', style: { marginTop: '4px' } },
-            h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, `${sub.plan === 'trial' ? 'Пробен период' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}`))),
-        h('button', { class: 'icon-btn', 'aria-label': 'Редактирай профила', onclick: () => editAccount(user) }, icon('edit', 20))),
-
-      h('h2', { class: 'section-title' }, 'Кола'),
-      h('section', { class: 'card' }, carBlock(d, draw)),
-      h('h2', { class: 'section-title' }, 'Гориво'),
-      h('section', { class: 'card' }, fuelBlock(d, draw)),
-      h('h2', { class: 'section-title' }, 'Ефир / диспечер'),
-      h('section', { class: 'card' }, dispatchBlock(d, draw)),
+      h('section', { class: 'card' }, cardTitle('car', 'Кола'), carBlock(d, draw),
+        d.carType === 'rent' && h('p', { class: 'auto-note' }, icon('key', 15), 'При кола под наем застраховки, винетка, преглед и сервиз не се смятат. Плаща ги собственикът.')),
+      h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
+      h('section', { class: 'card' }, cardTitle('phone', 'Ефир / диспечер'), dispatchBlock(d, draw)),
       h('section', { class: 'card' }, shareBlock(d, draw)),
-      h('h2', { class: 'section-title' }, 'Цел'),
-      h('section', { class: 'card' }, goalBlock(d, draw)),
+      h('section', { class: 'card' }, cardTitle('target', 'Цел'), goalBlock(d, draw)),
 
       dirty && h('div', { class: 'save-bar', style: { bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom))' } },
         h('div', { class: 'sum' }, h('span', null, 'Има промени'), h('div', { class: 'small muted' }, 'Важат от днес нататък')),
-        h('button', { class: 'btn btn-primary btn-lg', onclick: () => { store.updateProfile(d); toast('Настройките са запазени'); } }, icon('check', 20), 'Запази')),
+        h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.updateProfile(d); toast('Настройките са запазени'); } }, icon('check', 20), 'Запази')),
 
-      h('h2', { class: 'section-title' }, 'Изглед'),
-      h('section', { class: 'card' }, segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); })),
+      h('section', { class: 'card' }, cardTitle('bell', 'Известия'), notifyRow(d)),
+      h('section', { class: 'card' }, cardTitle('sun', 'Изглед'), segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); }, { page: true })),
 
-      h('h2', { class: 'section-title' }, 'Данни и акаунт'),
-      h('section', { class: 'card', style: { padding: '4px 18px' } },
-        h('button', { class: 'list-btn', onclick: () => exportCsv(data, { from: '2000-01-01', to: todayStr() }) }, icon('download', 20), h('span', { class: 'grow' }, 'Свали всички смени (Excel)')),
-        h('button', { class: 'list-btn', onclick: () => go('/stats') }, icon('print', 20), h('span', { class: 'grow' }, 'Отчет в PDF'), icon('right', 18)),
-        h('button', { class: 'list-btn', onclick: changePw }, icon('lock', 20), h('span', { class: 'grow' }, 'Смяна на паролата')),
-        h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, icon('shield', 20), h('span', { class: 'grow' }, 'Поверителност и условия')),
-        h('button', { class: 'list-btn', onclick: () => { store.logout(); go('/login'); } }, icon('logout', 20), h('span', { class: 'grow' }, 'Изход')),
-        h('button', { class: 'list-btn danger', onclick: delAccount }, icon('trash', 20), h('span', { class: 'grow' }, 'Изтрий акаунта'))),
+      h('section', { class: 'card', style: { padding: '8px 18px' } },
+        listBtn('download', 'Свали всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() })),
+        listBtn('print', 'Отчет в PDF', () => go('/stats'), true),
+        listBtn('lock', 'Смяна на паролата', changePw),
+        h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност и условия')),
+        listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
+        h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта'))),
       h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, 'ProfiTaxi, демо версия. Данните се пазят на това устройство.'));
   };
   draw();
   return root;
 }
 
+const listBtn = (ic, label, onclick, arrow) => h('button', { class: 'list-btn', onclick }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, label), arrow && icon('right', 18));
+
+function notifyRow(d) {
+  const perm = notifyPermission();
+  const on = d.notify && perm === 'granted';
+  return h('div', { class: 'setting', style: { padding: 0 } },
+    h('div', { class: 'grow' },
+      h('div', { class: 'setting-title' }, 'Напомняния за плащания'),
+      h('div', { class: 'setting-sub' }, !notifySupported() ? 'Браузърът не поддържа известия. На iPhone първо добави приложението към началния екран.' : perm === 'denied' ? 'Забранени в браузъра. Разреши ги от настройките на сайта.' : '3, 2 и 1 ден преди падеж и в деня')),
+    notifySupported() && perm !== 'denied' && h('button', { class: cx('toggle', on && 'on'), role: 'switch', 'aria-checked': String(on), 'aria-label': 'Известия', onclick: async () => {
+      if (on) { store.updateProfile({ notify: false }); toast('Известията са изключени'); return; }
+      const r = await requestNotify();
+      if (r === 'granted') { store.updateProfile({ notify: true }); toast('Известията са включени'); checkNotifications(store.myData()); }
+      else toast('Известията не са разрешени', 'err');
+    } }));
+}
+
 function editAccount(user) {
   openSheet((close) => {
     const name = h('input', { class: 'input', value: user.name });
     const phone = h('input', { class: 'input', type: 'tel', value: user.phone || '' });
+    const cc = cityCompanyPicker({ city: user.city, company: user.company });
+    const err = h('p', { class: 'err' });
     return h('div', { class: 'form' },
       sheetHead('Моите данни', close),
-      field('Име', name), field('Телефон', phone),
-      h('button', { class: 'btn btn-primary btn-lg', onclick: () => { store.updateAccount({ name: name.value, phone: phone.value }); close(); toast('Запазено'); } }, 'Запази'));
-  });
+      field('Име', name), field('Телефон', phone), cc.el, err,
+      h('button', { class: 'btn btn-page btn-lg', onclick: () => {
+        const v = cc.value();
+        if (!v.city) { err.textContent = 'Избери град'; return; }
+        if (!v.company) { err.textContent = 'Избери фирма'; return; }
+        store.updateAccount({ name: name.value, phone: phone.value, ...v }); close(); toast('Запазено');
+      } }, 'Запази'));
+  }, { tall: true });
 }
 
 function changePw() {
@@ -76,7 +101,7 @@ function changePw() {
     return h('div', { class: 'form' },
       sheetHead('Смяна на паролата', close),
       field('Текуща парола', a), field('Нова парола', b, 'Поне 6 символа'), err,
-      h('button', { class: 'btn btn-primary btn-lg', onclick: () => { const r = store.changePassword(a.value, b.value); if (r.error) { err.textContent = r.error; return; } close(); toast('Паролата е сменена'); } }, 'Смени'));
+      h('button', { class: 'btn btn-page btn-lg', onclick: () => { const r = store.changePassword(a.value, b.value); if (r.error) { err.textContent = r.error; return; } close(); toast('Паролата е сменена'); } }, 'Смени'));
   });
 }
 

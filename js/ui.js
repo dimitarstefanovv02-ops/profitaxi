@@ -116,8 +116,8 @@ export function confirmSheet({ title, text, okLabel = 'Да', danger, onOk }) {
 }
 
 // ---------- Сегментиран избор ----------
-export function segmented(options, value, onChange, { small, wrap } = {}) {
-  return h('div', { class: cx('seg', small && 'seg-sm', wrap && 'seg-wrap'), role: 'tablist' },
+export function segmented(options, value, onChange, { small, wrap, page } = {}) {
+  return h('div', { class: cx('seg', small && 'seg-sm', wrap && 'seg-wrap', page && 'on-page'), role: 'tablist' },
     Object.entries(options).map(([k, label]) =>
       h('button', { class: cx('seg-btn', k === value && 'on'), role: 'tab', 'aria-selected': String(k === value), onclick: () => onChange(k) }, label)));
 }
@@ -133,7 +133,7 @@ export function roadProgress(pct) {
 }
 
 // ---------- Стълбовидна графика (SVG + HTML надписи) ----------
-export function barChart(points, { height = 160, valueKey = 'net', highlight } = {}) {
+export function barChart(points, { height = 160, valueKey = 'net', highlight, cls, fmt = money } = {}) {
   const n = points.length || 1;
   const W = 1000, H = height;
   const vals = points.map((p) => p[valueKey]);
@@ -143,16 +143,16 @@ export function barChart(points, { height = 160, valueKey = 'net', highlight } =
   const zero = y(0);
   const step = W / n, bw = step * 0.62;
   const labelEvery = n > 20 ? Math.ceil(n / 8) : n > 12 ? 2 : 1;
-  const svg = h('svg', { viewBox: `0 -6 ${W} ${H + 12}`, class: 'bars', preserveAspectRatio: 'none', role: 'img', 'aria-label': 'Графика на печалбата', style: { height: H + 'px' } },
+  const svg = h('svg', { viewBox: `0 -6 ${W} ${H + 12}`, class: cx('bars', cls), preserveAspectRatio: 'none', role: 'img', 'aria-label': 'Графика на печалбата', style: { height: H + 'px' } },
     h('line', { x1: 0, x2: W, y1: zero, y2: zero, class: 'bars-zero', 'vector-effect': 'non-scaling-stroke' }),
     points.map((p, i) => {
       const v = p[valueKey];
       const hgt = Math.max(v === 0 ? 0 : 2, Math.abs(y(v) - zero));
       return h('rect', { x: i * step + (step - bw) / 2, y: v >= 0 ? zero - hgt : zero, width: bw, height: hgt, class: cx('bar', v < 0 ? 'neg' : 'pos', p.future && 'future', highlight === p.key && 'hl') },
-        h('title', null, `${p.label}: ${money(v)}`));
+        h('title', null, `${p.label}: ${fmt(v)}`));
     }));
   return h('div', { class: 'chart' },
-    h('div', { class: 'chart-scale' }, h('span', null, money(max)), min < 0 && h('span', null, money(min))),
+    h('div', { class: 'chart-scale' }, h('span', null, fmt(max)), min < 0 && h('span', null, fmt(min))),
     svg,
     h('div', { class: 'bars-labels', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } },
       points.map((p, i) => h('span', null, i % labelEvery === 0 ? p.label : ''))));
@@ -163,7 +163,7 @@ export function shareRows(items, total, { cls } = {}) {
   const sorted = items.filter((x) => x.value > 0.004).sort((a, b) => b.value - a.value);
   if (!sorted.length) return h('p', { class: 'muted small' }, 'Няма данни за периода');
   return h('div', { class: 'share-rows' }, sorted.map((x) =>
-    h('div', { class: 'share-row' },
+    h('div', { class: 'share-row', style: x.color ? { '--rc': x.color } : null },
       h('div', { class: 'share-top' },
         h('span', { class: 'share-name' }, x.icon && icon(x.icon, 16), x.label),
         h('span', { class: 'share-val' }, money(x.value), h('span', { class: 'muted' }, ` ${total ? Math.round((x.value / total) * 100) : 0}%`))),
@@ -171,12 +171,16 @@ export function shareRows(items, total, { cls } = {}) {
 }
 
 // ---------- Малки помощници ----------
-export const stat = (label, value, opts = {}) => h('div', { class: cx('stat', opts.cls) },
+export const stat = (label, value, opts = {}) => h('div', { class: cx('stat', opts.cls), style: opts.color ? { '--sc': opts.color } : null },
   h('span', { class: 'stat-label' }, opts.icon && icon(opts.icon, 15), label),
   h('span', { class: cx('stat-value', opts.tone) }, value),
   opts.sub && h('span', { class: 'stat-sub' }, opts.sub));
 export const tone = (v) => (v > 0.004 ? 'pos' : v < -0.004 ? 'neg' : '');
 export const empty = (ic, title, text, action) => h('div', { class: 'empty' },
   h('div', { class: 'empty-ic' }, icon(ic, 28)), h('h3', null, title), text && h('p', { class: 'muted' }, text), action);
-export const field = (label, input, hint) => h('label', { class: 'field' }, h('span', { class: 'field-label' }, label), input, hint && h('span', { class: 'field-hint' }, hint));
+export const field = (label, input, hint, req) => h('label', { class: 'field' }, h('span', { class: 'field-label' }, label, req && h('span', { class: 'req' }, ' *')), input, hint && h('span', { class: 'field-hint' }, hint));
+// Заглавие на карта с цветна икона
+export const cardTitle = (ic, title, right) => h('div', { class: 'card-title' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 17)), title), right);
+// Цветна шапка на страница
+export const hero = (...kids) => h('section', { class: 'hero' }, ...kids);
 export const numCompact = (n) => fmtNum(n);

@@ -1,100 +1,144 @@
-// Постоянни разходи и напомняния
+// Постоянни разходи, падежи и напомняния (с „Платено“ и известия)
 
-import { h, fill, icon, cx, money, money2, todayStr, fmtDate, parseNum } from '../util.js';
+import { h, fill, icon, cx, money, money2, todayStr, fmtDate, parseNum, parseDate } from '../util.js';
 import * as store from '../store.js';
-import { COST_CATS, PERIODS } from '../constants.js';
-import { monthlyFixed, costMonthly, upcomingReminders, currentKm } from '../calc.js';
-import { openSheet, sheetHead, confirmSheet, toast, field, segmented, empty } from '../ui.js';
+import { COST_CATS, PERIODS, costCat } from '../constants.js';
+import { monthlyFixed, costMonthly, upcomingReminders, currentKm, activeCosts } from '../calc.js';
+import { openSheet, sheetHead, confirmSheet, toast, field, segmented, empty, cardTitle, hero } from '../ui.js';
+import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { reminderText } from './home.js';
 
 export function costsView({ go, data }) {
-  const today = todayStr();
-  const active = data.costs.filter((c) => !c.endDate || c.endDate >= today).sort((a, b) => costMonthly(b, data.profile) - costMonthly(a, data.profile));
+  const active = activeCosts(data.costs).sort((a, b) => costMonthly(b, data.profile) - costMonthly(a, data.profile));
   const perMonth = monthlyFixed(data.costs, data.profile);
   const rems = upcomingReminders(data, 30);
+  const next = rems.find((r) => r.kind === 'cost' && r.daysLeft >= 0);
+  const rent = data.profile.carType === 'rent';
+  const km = currentKm(data.shifts);
 
-  return h('div', { class: 'screen' },
-    h('div', { class: 'top' }, h('div', null, h('h1', null, 'Разходи'), h('div', { class: 'sub' }, 'Постоянни разходи и срокове'))),
+  return h('div', { class: 'screen', 'data-page': 'costs' },
+    hero(
+      h('div', { class: 'hero-top' },
+        h('div', null, h('h1', null, 'Разходи'), h('div', { class: 'hero-sub' }, 'Постоянни разходи и плащания')),
+        h('button', { class: 'hero-btn', 'aria-label': 'Нов разход', onclick: () => editCost({}, data) }, icon('plus', 22))),
+      h('div', { class: 'hero-num' }, money(perMonth)),
+      h('div', { class: 'hero-sub' }, 'на месец, разпределени по дни'),
+      h('div', { class: 'hero-chips' },
+        h('span', { class: 'hero-chip' }, icon('calendar', 14), `${money2(perMonth / 30.44)} на ден`),
+        next && h('span', { class: 'hero-chip' }, icon('bell', 14), `следващо: ${next.title}, ${next.daysLeft === 0 ? 'днес' : next.daysLeft === 1 ? 'утре' : `след ${next.daysLeft} дни`}`),
+        data.profile.sharePct < 100 && h('span', { class: 'hero-chip' }, icon('users', 14), `твоят дял ${data.profile.sharePct}%`))),
 
-    h('div', { class: 'grid2' },
-      h('div', { class: 'stat' }, h('span', { class: 'stat-label' }, 'На месец'), h('span', { class: 'stat-value' }, money(perMonth))),
-      h('div', { class: 'stat' }, h('span', { class: 'stat-label' }, 'На ден'), h('span', { class: 'stat-value' }, money2(perMonth / 30.4)))),
-    data.profile.sharePct < 100 && h('p', { class: 'auto-note' }, icon('users', 15), `Разходите за колата са сметнати с твоя дял: ${data.profile.sharePct}%`),
+    notifyBox(data),
 
-    // Напомняния
-    h('div', { class: 'month-head' }, h('h2', null, 'Напомняния'),
-      h('button', { class: 'chip', onclick: () => editReminder({}) }, icon('plus', 14), 'Добави')),
+    // Плащания и напомняния
+    h('div', { class: 'month-head' }, h('h2', null, 'Предстоящи плащания'),
+      h('button', { class: 'chip page', onclick: () => editReminder({}, km) }, icon('plus', 14), 'Напомняне')),
     rems.length
-      ? h('div', { class: 'card', style: { padding: '4px 16px' } }, rems.map((r) => remRow(r, data)))
-      : h('div', { class: 'card' }, h('p', { class: 'muted small' }, 'Добави дата на изтичане към застраховка, винетка или преглед, или напомняне за сервиз на определени километри.')),
+      ? h('div', { class: 'card', style: { padding: '4px 16px' } }, rems.map((r) => remRow(r, data, km)))
+      : h('div', { class: 'card' }, h('p', { class: 'muted small' }, 'Добави дата на следващо плащане към разход (застраховка, винетка, такса) или напомняне за сервиз на километри.')),
 
     // Постоянни разходи
     h('div', { class: 'month-head' }, h('h2', null, 'Постоянни разходи'),
-      h('button', { class: 'chip', onclick: () => editCost({}) }, icon('plus', 14), 'Добави')),
+      h('button', { class: 'chip page', onclick: () => editCost({}, data) }, icon('plus', 14), 'Добави')),
     active.length
       ? h('div', { class: 'card', style: { padding: '4px 16px' } }, active.map((c) => costRow(c, data, go)))
-      : empty('wallet', 'Няма постоянни разходи', 'Добави застраховки, винетка, наем и други, за да виждаш реалната си печалба.'),
+      : empty('wallet', 'Няма постоянни разходи', 'Добави наем, такси, данъци и други, за да виждаш реалната си печалба.'),
+    rent && h('p', { class: 'auto-note' }, icon('key', 15), 'Колата е под наем, затова застраховки, винетка, преглед и сервиз не се показват. Те са грижа на собственика.'),
     h('p', { class: 'auto-note' }, icon('alert', 15), 'Постоянните разходи се разпределят по дни и се вадят от печалбата автоматично.'));
 }
 
+function notifyBox(data) {
+  if (!notifySupported()) return null;
+  const perm = notifyPermission();
+  if (data.profile.notify && perm === 'granted') return null;
+  return h('div', { class: 'notify-box' },
+    h('span', { class: 't-ic' }, icon('bell', 18)),
+    h('div', { class: 'grow small' }, h('b', null, 'Известия за плащания'), h('div', { class: 'muted' }, perm === 'denied' ? 'Известията са забранени в браузъра. Разреши ги от настройките на сайта.' : '3, 2 и 1 ден преди падеж и в деня на плащането.')),
+    perm !== 'denied' && h('button', { class: 'btn btn-page btn-sm', onclick: async () => {
+      const r = await requestNotify();
+      if (r === 'granted') { store.updateProfile({ notify: true }); toast('Известията са включени'); checkNotifications(store.myData()); }
+      else toast('Известията не са разрешени', 'err');
+    } }, 'Включи'));
+}
+
 function costRow(c, data, go) {
-  const cat = COST_CATS[c.category] || COST_CATS.other;
-  const left = c.dueDate ? Math.round((new Date(c.dueDate) - new Date(todayStr())) / 86400000) : null;
-  return h('button', { class: 'cost-row', onclick: () => (c.system ? go('/profile') : editCost(c)) },
+  const cat = costCat(c.category);
+  const left = c.dueDate ? Math.round((parseDate(c.dueDate) - parseDate(todayStr())) / 86400000) : null;
+  return h('button', { class: 'cost-row', style: { '--rc': cat.color }, onclick: () => (c.system ? go('/profile') : editCost(c, data)) },
     h('div', { class: 'cost-ic' }, icon(cat.icon, 20)),
     h('div', { class: 'grow' },
       h('div', { class: 'cost-name' }, c.name),
       h('div', { class: 'cost-det' },
-        h('span', null, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period].label}`),
+        h('span', null, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),
         c.perWorkDay && h('span', null, 'само работни дни'),
         c.system && h('span', { class: 'chip', style: { padding: '2px 8px' } }, 'от профила'),
-        left != null && h('span', { class: cx('chip', left < 0 ? 'bad' : left <= 30 ? 'warn' : ''), style: { padding: '2px 8px' } }, `до ${fmtDate(c.dueDate, { year: true })}`))),
+        left != null && h('span', { class: cx('chip', left < 0 ? 'bad' : left <= 7 ? 'warn' : ''), style: { padding: '2px 8px' } }, `плащане ${fmtDate(c.dueDate)}`),
+        c.endDate && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `до ${fmtDate(c.endDate, { year: true })}`))),
     h('div', { class: 'cost-amt' }, h('b', null, money(costMonthly(c, data.profile))), h('span', null, 'на месец')));
 }
 
-function remRow(r, data) {
-  const days = r.daysLeft ?? (r.kmLeft != null ? Math.round(r.kmLeft / 80) : null);
+function remRow(r, data, km) {
   const bad = (r.daysLeft ?? 1) < 0 || (r.kmLeft ?? 1) < 0;
-  const big = r.daysLeft != null ? (r.daysLeft < 0 ? '!' : r.daysLeft) : r.kmLeft < 0 ? '!' : `${Math.round(r.kmLeft / 100) / 10}к`;
-  const small = r.daysLeft != null ? (r.daysLeft < 0 ? 'изтекло' : r.daysLeft === 1 ? 'ден' : 'дни') : r.kmLeft < 0 ? 'просрочено' : 'км';
+  const days = r.daysLeft ?? (r.kmLeft != null ? Math.round(r.kmLeft / 80) : null);
+  const big = r.daysLeft != null ? (r.daysLeft < 0 ? '!' : r.daysLeft === 0 ? 'днес' : r.daysLeft) : r.kmLeft < 0 ? '!' : `${Math.round(r.kmLeft / 100) / 10}к`;
+  const small = r.daysLeft != null ? (r.daysLeft < 0 ? 'изтекло' : r.daysLeft === 0 ? '' : r.daysLeft === 1 ? 'ден' : 'дни') : r.kmLeft < 0 ? 'просрочено' : 'км';
+  const cost = r.kind === 'cost' ? r.ref : null;
+  const last = cost?.payments?.length ? cost.payments[cost.payments.length - 1] : null;
+  const paid = () => {
+    if (cost) { const c = store.markCostPaid(cost.id); toast(c?.dueDate ? `Платено. Следващо плащане: ${fmtDate(c.dueDate, { year: true })}` : 'Отбелязано като платено'); }
+    else { store.markReminderDone(r.ref.id, km); toast('Отбелязано като готово'); }
+  };
   return h('div', { class: 'rem' },
-    h('div', { class: cx('rem-days', bad ? 'bad' : days != null && days <= 14 ? 'warn' : '') }, h('b', null, big), h('span', null, small)),
-    h('div', { class: 'grow' }, h('div', { style: { fontWeight: 600 } }, r.title), h('div', { class: 'muted small' }, reminderText(r))),
-    h('button', { class: 'icon-btn plain', 'aria-label': 'Редактирай', onclick: () => (r.kind === 'cost' ? editCost(r.ref) : editReminder(r.ref, currentKm(data.shifts))) }, icon('edit', 18)));
+    h('div', { class: 'rem-main' },
+      h('div', { class: cx('rem-days', bad ? 'bad' : days != null && days <= 3 ? 'bad' : days != null && days <= 14 ? 'warn' : '') }, h('b', null, big), small && h('span', null, small)),
+      h('div', { class: 'grow' },
+        h('div', { style: { fontWeight: 700 } }, r.title),
+        h('div', { class: 'muted small' }, reminderText(r)),
+        cost && h('div', { class: 'faint small' }, `${PERIODS[cost.period]?.every || ''}${last ? `, последно платено ${fmtDate(last.date)}` : ''}`)),
+      h('button', { class: 'icon-btn plain', 'aria-label': 'Редактирай', onclick: () => (cost ? editCost(cost, data) : editReminder(r.ref, km)) }, icon('edit', 18))),
+    ((days != null && days <= 14) || bad) && h('div', { class: 'rem-actions' },
+      h('button', { class: 'btn btn-ok btn-sm', onclick: paid }, icon('check', 16), cost ? 'Платено' : 'Готово')));
 }
 
-function editCost(c) {
+function editCost(c, data) {
   const isNew = !c.id;
-  const d = { name: '', category: 'insurance', amount: 0, period: 'year', dueDate: '', ...c };
-  if (isNew) d.name = COST_CATS[d.category].label;
+  const rent = data.profile.carType === 'rent';
+  const d = { name: '', category: rent ? 'license' : 'insurance', amount: 0, period: 'year', dueDate: '', endDate: '', ...c };
+  if (isNew) { d.name = COST_CATS[d.category].label; d.period = COST_CATS[d.category].period || 'month'; }
   openSheet((close) => {
-    const body = h('div');
+    const body = h('div', { class: 'form' });
     const nameIn = h('input', { class: 'input', value: d.name, oninput: (e) => { d.name = e.target.value; } });
     const amountIn = h('input', { class: 'input', inputmode: 'decimal', placeholder: '0', value: d.amount ? String(d.amount).replace('.', ',') : '' });
     const dueIn = h('input', { class: 'input', type: 'date', value: d.dueDate || '' });
+    const endIn = h('input', { class: 'input', type: 'date', value: d.endDate || '' });
     const err = h('p', { class: 'err' });
-    const cats = Object.entries(COST_CATS).filter(([, v]) => !v.system);
-    const draw = () => fill(body, 
+    const cats = Object.entries(COST_CATS).filter(([, v]) => !v.system && !(rent && v.owner));
+    const draw = () => fill(body,
       isNew && h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Вид'),
         h('div', { class: 'chips', style: { marginBottom: 0 } }, cats.map(([k, v]) =>
           h('button', { type: 'button', class: cx('chip-btn', d.category === k && 'on'), onclick: () => {
             const auto = !d.name || d.name === COST_CATS[d.category].label;
             d.category = k; if (auto) { d.name = v.label; nameIn.value = v.label; }
-            if (['insurance', 'casco', 'vignette', 'inspection', 'license'].includes(k)) d.period = 'year';
+            d.period = v.period || d.period;
             draw();
           } }, v.label)))),
       field('Име', nameIn),
-      field('Сума', amountIn),
-      h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Колко често'),
-        segmented({ day: 'Ден', week: 'Седмица', month: 'Месец', year: 'Година' }, d.period, (p) => { d.period = p; draw(); }, { small: true })),
-      field('Валидно до', dueIn, 'По желание. Ще ти напомним преди да изтече.'),
+      field(`Сума ${PERIODS[d.period].label}`, amountIn),
+      h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Колко често се плаща'),
+        segmented({ week: 'Седмица', month: 'Месец', quarter: '3 месеца', year: 'Година' }, d.period, (p) => { d.period = p; draw(); }, { small: true, page: true })),
+      field('Следващо плащане', dueIn, 'Ще ти напомним 3, 2 и 1 ден преди това. След „Платено“ датата се мести с един период.'),
+      field('Крайна дата', endIn, 'По желание. Напр. последната вноска по лизинг или договор. След нея разходът спира.'),
+      !isNew && c.payments?.length > 0 && h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Плащания'),
+        h('div', { class: 'small muted' }, c.payments.slice(-5).reverse().map((p) => h('div', null, `${fmtDate(p.date, { year: true })}: ${money(p.amount, p.amount % 1 ? 2 : 0)}`)))),
       err);
     draw();
     const save = () => {
       d.amount = parseNum(amountIn.value);
       d.dueDate = dueIn.value || null;
+      d.endDate = endIn.value || null;
       if (!d.name.trim()) { err.textContent = 'Въведи име'; return; }
       if (!(d.amount > 0)) { err.textContent = 'Въведи сума'; return; }
+      if (d.endDate && d.dueDate && d.endDate < d.dueDate) { err.textContent = 'Крайната дата е преди следващото плащане'; return; }
       store.saveCost(d); close(); toast(isNew ? 'Разходът е добавен' : 'Запазено');
     };
     return h('div', { class: 'form' },
@@ -102,32 +146,41 @@ function editCost(c) {
       body,
       h('div', { class: 'row gap' },
         !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { close(); confirmSheet({ title: 'Да изтрия ли разхода?', text: 'Ще спре да се смята от днес. Миналите месеци остават същите.', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCost(d.id); toast('Разходът е изтрит'); } }); } }, icon('trash', 20)),
-        h('button', { class: 'btn btn-primary btn-lg grow', onclick: save }, 'Запази')));
+        h('button', { class: 'btn btn-page btn-lg grow', onclick: save }, 'Запази')));
   }, { tall: true });
 }
 
 function editReminder(r, km = 0) {
   const isNew = !r.id;
-  const d = { title: '', dueDate: '', dueKm: 0, ...r };
+  const d = { title: '', dueDate: '', dueKm: 0, everyKm: 0, repeat: 'none', ...r };
   openSheet((close) => {
-    const title = h('input', { class: 'input', placeholder: 'напр. Смяна на масло', value: d.title });
-    const date = h('input', { class: 'input', type: 'date', value: d.dueDate || '' });
+    const box = h('div', { class: 'form' });
+    const title = h('input', { class: 'input', placeholder: 'напр. Смяна на масло', value: d.title, oninput: (e) => { d.title = e.target.value; } });
+    const date = h('input', { class: 'input', type: 'date', value: d.dueDate || '', onchange: (e) => { d.dueDate = e.target.value; } });
     const kmIn = h('input', { class: 'input', inputmode: 'numeric', placeholder: km ? `сега: ${km.toLocaleString('bg-BG')}` : 'напр. 250000', value: d.dueKm || '' });
+    const everyIn = h('input', { class: 'input', inputmode: 'numeric', placeholder: 'напр. 10000', value: d.everyKm || '' });
     const err = h('p', { class: 'err' });
+    const draw = () => fill(box,
+      field('Какво', title),
+      field('На дата', date),
+      h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Повтаря се'),
+        segmented({ none: 'Не', month: 'Месец', quarter: '3 месеца', year: 'Година' }, d.repeat, (v) => { d.repeat = v; draw(); }, { small: true, page: true })),
+      field('Или на километраж', kmIn, 'Сравняваме с последния въведен километраж'),
+      field('Повтаря се на всеки (км)', everyIn, 'По желание. След „Готово“ следващото напомняне се мести напред.'),
+      err);
+    draw();
     const save = () => {
-      d.title = title.value.trim(); d.dueDate = date.value || null; d.dueKm = Math.round(parseNum(kmIn.value)) || null;
+      d.title = d.title.trim(); d.dueDate = date.value || null; d.dueKm = Math.round(parseNum(kmIn.value)) || null; d.everyKm = Math.round(parseNum(everyIn.value)) || null;
       if (!d.title) { err.textContent = 'Въведи заглавие'; return; }
       if (!d.dueDate && !d.dueKm) { err.textContent = 'Задай дата или километраж'; return; }
       store.saveReminder(d); close(); toast('Напомнянето е запазено');
     };
     return h('div', { class: 'form' },
       sheetHead(isNew ? 'Ново напомняне' : 'Напомняне', close),
-      field('Какво', title),
-      field('На дата', date),
-      field('Или на километраж', kmIn, 'Сравняваме с последния въведен километраж'),
-      err,
+      box,
       h('div', { class: 'row gap' },
         !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { store.deleteReminder(d.id); close(); toast('Изтрито'); } }, icon('trash', 20)),
-        h('button', { class: 'btn btn-primary btn-lg grow', onclick: save }, 'Запази')));
+        h('button', { class: 'btn btn-page btn-lg grow', onclick: save }, 'Запази')));
   });
 }
+export { cardTitle };

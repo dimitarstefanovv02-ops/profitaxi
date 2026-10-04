@@ -1,6 +1,8 @@
 // Вход, регистрация, забравена парола
 
-import { h, fill, icon } from '../util.js';
+import { h, fill, icon, cx } from '../util.js';
+import { CAR_TYPES } from '../constants.js';
+import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
 
@@ -43,26 +45,38 @@ export function registerView({ go }) {
   const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg' });
   const phone = input({ type: 'tel', autocomplete: 'tel', inputmode: 'tel', placeholder: '08xx xxx xxx' });
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
-  const agree = h('input', { type: 'checkbox', style: { width: '22px', height: '22px', accentColor: 'var(--accent)' } });
+  const cc = cityCompanyPicker();
+  let carType = '';
+  const carBox = h('div');
+  const drawCar = () => fill(carBox, h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
+    h('button', { type: 'button', class: cx('option', carType === k && 'on'), onclick: () => { carType = k; drawCar(); } }, icon(v.icon, 24), v.label, h('small', null, v.hint)))));
+  drawCar();
+  const agree = h('input', { type: 'checkbox', style: { width: '22px', height: '22px', accentColor: 'var(--accent)', flex: 'none' } });
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = (e) => {
     e.preventDefault();
+    const v = cc.value();
+    if (!carType) { err.textContent = 'Избери каква е колата'; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
-    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value });
+    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType });
     if (r.error) { err.textContent = r.error; return; }
     toast('Акаунтът е създаден');
     go('/onboarding');
   };
+  const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic', style: { '--pc': '#FFC21A' } }, icon(ic, 15)), title), ...kids);
   return h('div', { class: 'auth' },
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),
-    h('div', { class: 'auth-hero', style: { margin: '18px 0 22px' } },
+    h('div', { class: 'auth-hero', style: { margin: '14px 0 20px' } },
       h('h1', null, 'Нов акаунт'),
-      h('p', null, '14 дни безплатно. Без карта.')),
-    h('form', { class: 'form', onsubmit: submit },
-      field('Име', name),
-      field('Имейл', email),
-      field('Телефон', phone, 'По желание'),
-      field('Парола', pw),
+      h('p', null, '14 дни безплатно, без карта. Полетата със звездичка са задължителни.')),
+    h('form', { class: 'form', onsubmit: submit, novalidate: true },
+      group('user', 'Акаунт',
+        field('Име', name, null, true),
+        field('Имейл', email, null, true),
+        field('Парола', pw, null, true),
+        field('Телефон', phone, 'По желание')),
+      group('target', 'Къде караш', cc.el),
+      group('car', 'Колата е', carBox),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Създай акаунт')),

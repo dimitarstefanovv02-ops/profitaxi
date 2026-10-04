@@ -1,12 +1,13 @@
-// Статистика: периоди, графика, разбивки, гориво, топлинна карта, рекорди, експорт
+// Статистика: периоди, графика, разбивки, гориво, кога се печели, рекорди, експорт
 
-import { h, fill, icon, cx, money, money2, todayStr, addDays, startOfWeek, startOfMonth, endOfMonth, parseDate, MONTHS, MONTHS_SHORT, fmtDate, fmtNum, fmtNum1, fmtDuration, WD_SHORT, dateStr, minStr } from '../util.js';
-import { periodStats, series, heatmap, records, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, shiftNetAfterFixed } from '../calc.js';
-import { INCOME_TYPES, EXPENSE_CATS, COST_CATS, FUEL_TYPES } from '../constants.js';
-import { segmented, barChart, shareRows, stat, tone } from '../ui.js';
+import { h, icon, cx, money, money2, todayStr, addDays, startOfWeek, startOfMonth, endOfMonth, parseDate, MONTHS, MONTHS_SHORT, fmtDate, fmtNum, fmtNum1, fmtDuration, WD_SHORT, dateStr, minStr, fmtTime } from '../util.js';
+import { periodStats, series, timeInsights, records, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, shiftNetAfterFixed, shiftProfit } from '../calc.js';
+import { INCOME_TYPES, FUEL_TYPES, expenseCat, costCat } from '../constants.js';
+import { segmented, barChart, shareRows, stat, tone, cardTitle, hero } from '../ui.js';
 
 // Състояние на избрания период (пази се между отварянията)
 const state = { unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() };
+const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
 
 export function periodRange(st) {
   const a = st.anchor;
@@ -25,12 +26,12 @@ export function shiftAnchor(st, dir) {
   st.anchor = dateStr(d);
 }
 
-// Лента за избор на период – използва се и в админ панела
-export function periodPicker(st, onChange) {
+// Избор на период – използва се и в админ панела
+export function periodPicker(st, onChange, { page } = {}) {
   const r = periodRange(st);
   const canNext = st.unit !== 'custom' && r.to < todayStr();
   return h('div', { class: 'no-print' },
-    segmented({ day: 'Ден', week: 'Седм.', month: 'Месец', year: 'Година', custom: 'Период' }, st.unit, (u) => { st.unit = u; st.anchor = todayStr(); onChange(); }, { small: true }),
+    segmented({ day: 'Ден', week: 'Седм.', month: 'Месец', year: 'Година', custom: 'Период' }, st.unit, (u) => { st.unit = u; st.anchor = todayStr(); onChange(); }, { small: true, page }),
     st.unit === 'custom'
       ? h('div', { class: 'date-range' },
         h('label', { class: 'time-in' }, h('span', null, 'От'), h('input', { type: 'date', value: st.from, max: st.to, onchange: (e) => { if (e.target.value) { st.from = e.target.value; onChange(); } } })),
@@ -42,106 +43,138 @@ export function periodPicker(st, onChange) {
 }
 
 export function statsView({ data }) {
-  const root = h('div', { class: 'screen' });
+  const root = h('div', { class: 'screen', 'data-page': 'stats' });
   const draw = () => {
     const r = periodRange(state);
-    fill(root, 
-      h('div', { class: 'top' },
-        h('h1', null, 'Статистика'),
-        h('div', { class: 'row gap no-print' },
-          h('button', { class: 'icon-btn', 'aria-label': 'Свали в Excel', title: 'Excel', onclick: () => exportCsv(data, r) }, icon('download', 20)),
-          h('button', { class: 'icon-btn', 'aria-label': 'Печат или PDF', title: 'PDF', onclick: () => window.print() }, icon('print', 20)))),
+    const st = periodStats(data, r.from, r.to);
+    root.replaceChildren(...[
+      hero(
+        h('div', { class: 'hero-top' },
+          h('div', null, h('h1', null, 'Статистика'), h('div', { class: 'hero-sub' }, 'Чиста печалба за периода')),
+          h('div', { class: 'row gap no-print' },
+            h('button', { class: 'hero-btn', 'aria-label': 'Свали в Excel', title: 'Excel', onclick: () => exportCsv(data, r) }, icon('download', 20)),
+            h('button', { class: 'hero-btn', 'aria-label': 'Печат или PDF', title: 'PDF', onclick: () => window.print() }, icon('print', 20)))),
+        h('div', { class: 'hero-num' }, money(st.net)),
+        h('div', { class: 'hero-chips' },
+          h('span', { class: 'hero-chip' }, icon('coins', 14), `приход ${money(st.income)}`),
+          h('span', { class: 'hero-chip' }, icon('wallet', 14), `разходи ${money(st.totalExp)}`),
+          h('span', { class: 'hero-chip' }, icon('calendar', 14), `${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}`)),
+        h('div', { style: { marginTop: '16px' } }, periodPicker(state, draw))),
       h('div', { class: 'print-only' }, h('h2', null, `ProfiTaxi – ${data.user.name}`), h('p', null, r.label)),
-      periodPicker(state, draw),
-      statsBody(data, r.from, r.to, state.unit));
+      statsBody(data, r.from, r.to, state.unit, { st }),
+    ].filter(Boolean));
   };
   draw();
   return root;
 }
 
-export function statsBody(data, from, to, unit) {
-  const st = periodStats(data, from, to);
+export function statsBody(data, from, to, unit, { st = periodStats(data, from, to), admin } = {}) {
   const days = Math.round((parseDate(to) - parseDate(from)) / 86400000) + 1;
   const chartUnit = unit === 'year' || days > 62 ? 'month' : 'day';
   const pts = unit === 'day' ? null : series(data, from, to, chartUnit);
-  const hm = heatmap(data.shifts);
+  const ti = timeInsights(data.shifts.filter((s) => shiftDate(s) >= from && shiftDate(s) <= to));
+  const usePeriod = ti.shifts >= 15;
+  const tiAll = usePeriod ? ti : timeInsights(data.shifts);
   const rec = records(data);
-  const incomeItems = Object.entries(INCOME_TYPES).map(([k, t]) => ({ label: t.label, icon: t.icon, value: st[k] }));
+  const incomeItems = Object.entries(INCOME_TYPES).map(([k, t]) => ({ label: t.label, icon: t.icon, color: t.color, value: st[k] }));
   const expItems = [
-    ...Object.entries(st.expByCat).map(([k, v]) => ({ label: EXPENSE_CATS[k]?.label || k, icon: EXPENSE_CATS[k]?.icon, value: v })),
-    ...Object.entries(st.fixedByCat).map(([k, v]) => ({ label: COST_CATS[k]?.label || k, icon: COST_CATS[k]?.icon, value: v })),
+    ...Object.entries(st.expByCat).map(([k, v]) => ({ label: expenseCat(k).label, icon: expenseCat(k).icon, color: expenseCat(k).color, value: v })),
+    ...Object.entries(st.fixedByCat).map(([k, v]) => ({ label: costCat(k).label, icon: costCat(k).icon, color: costCat(k).color, value: v })),
   ];
   const dayShifts = unit === 'day' ? data.shifts.filter((s) => s.end && shiftDate(s) === from) : [];
 
   return h('div', null,
-    h('section', { class: 'card', style: { marginTop: '12px' } },
-      h('div', { class: 'muted small', style: { fontWeight: 600 } }, 'Чиста печалба'),
-      h('div', { class: cx('big-net', tone(st.net)) }, money(st.net)),
-      h('div', { class: 'row gap small muted', style: { flexWrap: 'wrap', marginTop: '4px' } },
-        h('span', null, `приход ${money(st.income)}`), h('span', null, `разходи ${money(st.totalExp)}`)),
-      pts && pts.length > 1 && barChart(pts, { highlight: chartUnit === 'day' ? todayStr() : todayStr().slice(0, 8) + '01' })),
+    pts && pts.length > 1 && h('section', { class: 'card' },
+      cardTitle('chart', chartUnit === 'day' ? 'Чисто по дни' : 'Чисто по месеци'),
+      barChart(pts, { highlight: chartUnit === 'day' ? todayStr() : todayStr().slice(0, 8) + '01' })),
 
-    h('div', { class: 'grid2', style: { marginTop: '12px' } },
-      stat('На час', money2(st.netPerHour), { icon: 'clock', sub: `приход ${money2(st.incomePerHour)}/ч` }),
-      stat('На км', money2(st.netPerKm), { icon: 'road', sub: `разход ${money2(st.costPerKm)}/км` }),
-      stat('Часове', fmtDuration(st.hours), { icon: 'clock', sub: `${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}` }),
-      stat('Километри', fmtNum(st.km), { icon: 'gauge', sub: st.shifts ? `средно ${money(st.avgShift)} на смяна` : '' })),
+    h('div', { class: 'grid2', style: { marginTop: '14px' } },
+      stat('На час', money2(st.netPerHour), { icon: 'clock', color: 'var(--c-blue)', cls: 'stat-card', sub: `приход ${money2(st.incomePerHour)}/ч` }),
+      stat('На км', money2(st.netPerKm), { icon: 'road', color: 'var(--c-teal)', cls: 'stat-card', sub: `разход ${money2(st.costPerKm)}/км` }),
+      stat('Часове', fmtDuration(st.hours), { icon: 'clock', color: 'var(--c-violet)', cls: 'stat-card', sub: st.shifts ? `~${fmtDuration(st.avgShiftHours)} на смяна` : '' }),
+      stat('Километри', fmtNum(st.km), { icon: 'gauge', color: 'var(--c-orange)', cls: 'stat-card', sub: st.shifts ? `~${money(st.avgShiftIncome)} приход на смяна` : '' })),
 
-    unit === 'day' && dayShifts.length > 0 && h('section', { class: 'card' },
-      h('div', { class: 'card-title' }, h('h3', null, 'Смени за деня')),
-      dayShifts.map((s) => h('a', { class: 'list-btn', href: '#/shift/' + s.id, style: { justifyContent: 'space-between' } },
-        h('span', null, `${new Date(s.start).toTimeString().slice(0, 5)} – ${new Date(s.end).toTimeString().slice(0, 5)}`),
+    unit === 'day' && dayShifts.length > 0 && h('section', { class: 'card', style: { marginTop: '14px' } },
+      cardTitle('list', 'Смени за деня'),
+      dayShifts.map((s) => h(admin ? 'div' : 'a', { class: 'list-btn', href: admin ? null : '#/shift/' + s.id, style: { justifyContent: 'space-between' } },
+        h('span', null, `${fmtTime(s.start)} – ${fmtTime(s.end)}`),
         h('b', { class: tone(shiftNetAfterFixed(data, s)) }, money(shiftNetAfterFixed(data, s)))))),
 
-    h('section', { class: 'card' },
-      h('div', { class: 'card-title' }, h('h3', null, 'Приходи'), h('b', { class: 'num' }, money(st.income))),
-      shareRows(incomeItems, st.income, { cls: 'inc' })),
+    h('section', { class: 'card', style: { marginTop: '14px' } },
+      cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(st.income))),
+      stackBar(incomeItems, st.income),
+      shareRows(incomeItems, st.income)),
 
     h('section', { class: 'card' },
-      h('div', { class: 'card-title' }, h('h3', null, 'Разходи'), h('b', { class: 'num' }, money(st.totalExp))),
+      cardTitle('wallet', 'Разходи', h('b', { class: 'num' }, money(st.totalExp))),
       h('div', { class: 'grid2', style: { marginBottom: '14px' } },
-        stat('От смените', money(st.varExp)), stat('Постоянни', money(st.fixedExp))),
-      shareRows(expItems, st.totalExp, { cls: 'exp' })),
+        stat('От смените', money(st.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(st.fixedExp), { icon: 'calendar', color: 'var(--c-blue)' })),
+      shareRows(expItems, st.totalExp)),
 
     Object.keys(st.fuel).length > 0 && h('section', { class: 'card' },
-      h('div', { class: 'card-title' }, h('h3', null, 'Гориво')),
+      cardTitle('fuel', 'Гориво'),
       h('div', { class: 'grid2' }, Object.entries(st.fuel).map(([t, f]) =>
         stat(FUEL_TYPES[t]?.label || t, f.per100 ? `${fmtNum1(f.per100)} ${FUEL_TYPES[t]?.unit}` : money(f.amount),
-          { icon: t === 'electric' ? 'bolt' : 'fuel', sub: f.per100 ? `на 100 км, ${money(f.amount)} общо` : 'въведи количество за разход на 100 км' })))),
+          { icon: t === 'electric' ? 'bolt' : 'fuel', color: 'var(--c-orange)', sub: f.per100 ? `на 100 км, ${money(f.amount)} общо` : 'въведи количество за разход на 100 км' })))),
 
-    heatCard(hm),
-    recordsCard(rec));
+    timeCard(tiAll, usePeriod),
+    recordsCard(rec, admin));
 }
 
-function heatCard(hm) {
-  if (!hm.best) return null;
-  const color = (v) => {
-    if (v == null) return 'var(--surface-2)';
-    const t = hm.max > hm.min ? (v - hm.min) / (hm.max - hm.min) : 1;
-    return `color-mix(in srgb, var(--accent) ${Math.round(15 + t * 85)}%, var(--surface-2))`;
-  };
-  const hours = ['0', '3', '6', '9', '12', '15', '18', '21'];
+function stackBar(items, total) {
+  const list = items.filter((x) => x.value > 0);
+  if (!total || !list.length) return null;
+  return h('div', null,
+    h('div', { class: 'stack-bar' }, list.map((x) => h('span', { style: { width: `${(x.value / total) * 100}%`, background: x.color } }))),
+    h('div', { class: 'legend', style: { marginBottom: '14px' } }, list.map((x) => h('span', null, h('i', { style: { background: x.color } }), `${x.label} ${Math.round((x.value / total) * 100)}%`))));
+}
+
+// Кога се печели най-много
+function timeCard(ti, forPeriod) {
+  if (!ti.hasData) return null;
+  const wdMax = Math.max(...ti.byWeekday.map((x) => x.rate || 0));
+  const bestWd = ti.byWeekday.reduce((a, b) => ((b.rate || 0) > (a.rate || 0) ? b : a));
+  const hMax = Math.max(...ti.byHour.map((x) => x.rate || 0));
+  const bestH = ti.byHour.reduce((a, b) => ((b.rate || 0) > (a.rate || 0) ? b : a));
   return h('section', { class: 'card' },
-    h('div', { class: 'card-title' }, h('h3', null, 'Кога се печели най-много')),
-    h('p', { class: 'muted small', style: { marginBottom: '12px' } },
-      `Най-добре: ${['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'][hm.best.wd]} от ${hm.best.b * 3}:00 до ${hm.best.b * 3 + 3}:00, около ${money(hm.best.v)} на час.`),
-    h('div', { class: 'heat', role: 'img', 'aria-label': 'Топлинна карта на прихода по часове' },
-      h('span'), hours.map((x) => h('span', { class: 'heat-h' }, x)),
-      hm.grid.map((row, i) => [h('span', { class: 'heat-wd' }, WD_SHORT[i]),
-        row.map((v, j) => h('span', { class: 'heat-cell', style: { background: color(v) }, title: v == null ? 'Няма данни' : `${WD_SHORT[i]} ${j * 3}–${j * 3 + 3}ч: ${money(v)}/ч` }))])),
-    h('div', { class: 'heat-legend' }, 'по-малко', h('i', { style: { background: color(hm.min) } }), h('i', { style: { background: color((hm.min + hm.max) / 2) } }), h('i', { style: { background: color(hm.max) } }), 'повече'));
+    cardTitle('clock', 'Кога се печели най-много'),
+    h('p', { class: 'muted small', style: { marginBottom: '12px' } }, `Среден приход на час${forPeriod ? ' за периода' : ' за цялото време'}. Средно ${money(ti.avg)} на час.`),
+    h('div', null, ti.top.map((w, i) => h('div', { class: 'win' },
+      h('span', { class: 'win-rank' }, i + 1),
+      h('div', { class: 'grow' },
+        h('div', { style: { fontWeight: 700 } }, `${WD_LONG[w.wd][0].toUpperCase() + WD_LONG[w.wd].slice(1)}, ${w.from}:00 – ${w.to}:00`),
+        h('div', { class: 'muted small' }, `${Math.round((w.rate / ti.avg - 1) * 100)}% над средното`)),
+      h('b', null, `${money(w.rate)}/ч`)))),
+    h('h3', { style: { margin: '20px 0 10px', fontSize: '.92rem' } }, 'По дни от седмицата'),
+    h('div', { class: 'wd-bars' }, ti.byWeekday.map((x) => h('div', { class: cx('wd-row', x === bestWd && 'best') },
+      h('span', null, WD_SHORT[x.wd]),
+      h('div', { class: 'wd-track' }, h('div', { class: 'wd-fill', style: { width: x.rate ? `${(x.rate / wdMax) * 100}%` : '0' } })),
+      h('b', null, x.rate ? `${money(x.rate)}/ч` : '—')))),
+    h('h3', { style: { margin: '20px 0 10px', fontSize: '.92rem' } }, `По часове (най-добре ${bestH.hour}:00 – ${bestH.hour + 1}:00)`),
+    h('div', { class: 'hours', role: 'img', 'aria-label': 'Приход на час по часове от денонощието' }, ti.byHour.map((x) =>
+      h('span', { class: cx(!x.rate && 'none', x === bestH && 'best'), style: { height: x.rate ? `${Math.max(6, (x.rate / hMax) * 100)}%` : '4%' }, title: x.rate ? `${x.hour}:00 – ${money(x.rate)}/ч` : `${x.hour}:00 – няма данни` }))),
+    h('div', { class: 'hours-axis' }, ['0:00', '6:00', '12:00', '18:00'].map((t) => h('span', null, t))),
+    ti.worst && h('p', { class: 'muted small', style: { marginTop: '12px' } }, `Най-слабо: ${WD_LONG[ti.worst.wd]} ${ti.worst.from}:00 – ${ti.worst.to}:00, около ${money(ti.worst.rate)}/ч.`));
 }
 
-function recordsCard(rec) {
+function recordsCard(rec, admin) {
   if (!rec.totalShifts) return null;
-  const row = (ic, title, value, sub) => h('div', { class: 'rec' }, h('div', { class: 'rec-ic' }, icon(ic, 20)), h('div', { class: 'grow' }, h('div', { style: { fontWeight: 600 } }, title), sub && h('span', null, sub)), h('b', null, value));
+  const shiftDet = (s) => `${fmtDate(shiftDate(s), { year: true })}, ${fmtTime(s.start)} – ${fmtTime(s.end)}. Приход ${money(shiftIncome(s))}, разходи ${money(shiftExpenses(s))}, ${fmtDuration(shiftHours(s))}, ${shiftKm(s)} км, ${money2(shiftProfit(s) / Math.max(shiftHours(s), 0.1))}/ч.`;
+  const row = (ic, color, title, value, det, shift) => h(shift && !admin ? 'a' : 'div', { class: 'rec', href: shift && !admin ? '#/shift/' + shift.id : null, style: { '--rc': color } },
+    h('div', { class: 'rec-ic' }, icon(ic, 20)),
+    h('div', { class: 'grow' }, h('div', { class: 'rec-title' }, h('span', null, title), h('b', null, value)), det && h('div', { class: 'rec-det' }, det)));
   const m = rec.bestMonth && parseDate(rec.bestMonth.month + '-01');
   return h('section', { class: 'card' },
-    h('div', { class: 'card-title' }, h('h3', null, 'Рекорди')),
-    rec.bestShift && row('trophy', 'Най-добра смяна', money(rec.bestShift.value), fmtDate(shiftDate(rec.bestShift.shift), { year: true })),
-    rec.bestRate && row('clock', 'Най-добре на час', money2(rec.bestRate.value), fmtDate(shiftDate(rec.bestRate.shift), { year: true })),
-    rec.bestMonth && row('calendar', 'Най-добър месец', money(rec.bestMonth.value), `${MONTHS[m.getMonth()]} ${m.getFullYear()}`),
-    row('flame', 'Поредни работни дни', `${rec.current}`, `рекорд: ${rec.longest}`));
+    cardTitle('trophy', 'Рекорди'),
+    h('p', { class: 'muted small', style: { marginBottom: '4px' } }, '„Печалба от смяна“ е приходът минус разходите по време на смяната (гориво, миене и т.н.), без постоянните разходи. Седмица и месец са чисто, след всички разходи.'),
+    rec.bestShift && row('trophy', 'var(--c-amber)', 'Най-добра смяна (печалба)', money(rec.bestShift.value), shiftDet(rec.bestShift.shift), rec.bestShift.shift),
+    rec.bestIncome && row('coins', 'var(--c-green)', 'Най-голям приход за смяна', money(rec.bestIncome.value), shiftDet(rec.bestIncome.shift), rec.bestIncome.shift),
+    rec.bestRate && row('clock', 'var(--c-blue)', 'Най-добре на час', `${money2(rec.bestRate.value)}/ч`, shiftDet(rec.bestRate.shift), rec.bestRate.shift),
+    rec.mostKm && row('gauge', 'var(--c-orange)', 'Най-много километри', `${fmtNum(rec.mostKm.value)} км`, shiftDet(rec.mostKm.shift), rec.mostKm.shift),
+    rec.longest && row('clock', 'var(--c-slate)', 'Най-дълга смяна', fmtDuration(rec.longest.value), shiftDet(rec.longest.shift), rec.longest.shift),
+    rec.bestWeek && row('calendar', 'var(--c-teal)', 'Най-добра седмица (чисто)', money(rec.bestWeek.value), `${fmtDate(rec.bestWeek.from)} – ${fmtDate(addDays(rec.bestWeek.from, 6), { year: true })}. ${rec.bestWeek.st.shifts} смени, приход ${money(rec.bestWeek.st.income)}, ${fmtDuration(rec.bestWeek.st.hours)}.`),
+    rec.bestMonth && row('calendar', 'var(--c-violet)', 'Най-добър месец (чисто)', money(rec.bestMonth.value), `${MONTHS[m.getMonth()]} ${m.getFullYear()}. ${rec.bestMonth.st.shifts} смени, приход ${money(rec.bestMonth.st.income)}, разходи ${money(rec.bestMonth.st.totalExp)}.`),
+    row('flame', 'var(--c-red)', 'Поредни работни дни', `${rec.current}`, `Рекорд: ${rec.longestRun} дни поред. Общо ${rec.workedDays} работни дни, ${fmtNum(rec.totals.km)} км и ${fmtNum(rec.totals.hours)} часа зад волана.`));
 }
 
 // Excel: CSV с ; и запетая за десетични (както го отваря Excel на български)
@@ -150,7 +183,7 @@ export function exportCsv(data, r) {
   const rows = [['Дата', 'Начало', 'Край', 'Часове', 'Км', 'Кеш', 'Карта', 'Приложения', 'Бакшиш', 'Приход', 'Разходи', 'Печалба от смяната', 'Бележка']];
   const list = data.shifts.filter((s) => s.end && shiftDate(s) >= r.from && shiftDate(s) <= r.to).sort((a, b) => a.start.localeCompare(b.start));
   for (const s of list) {
-    rows.push([shiftDate(s), new Date(s.start).toTimeString().slice(0, 5), new Date(s.end).toTimeString().slice(0, 5), n(shiftHours(s)), shiftKm(s),
+    rows.push([shiftDate(s), fmtTime(s.start), fmtTime(s.end), n(shiftHours(s)), shiftKm(s),
       n(s.income.cash), n(s.income.card), n(s.income.app), n(s.income.tips), n(shiftIncome(s)), n(shiftExpenses(s)), n(shiftIncome(s) - shiftExpenses(s)), (s.note || '').replace(/[;\n]/g, ' ')]);
   }
   const st = periodStats(data, r.from, r.to);

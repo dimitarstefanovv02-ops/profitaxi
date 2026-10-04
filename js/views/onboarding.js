@@ -10,7 +10,7 @@ export function onboardingView({ go, user }) {
   let step = 0;
   const root = h('div', { class: 'screen no-nav' });
   const steps = [
-    { title: 'Каква е колата?', sub: 'Така знаем кои разходи имаш', body: () => carBlock(d, draw) },
+    { title: 'Колата', sub: 'Провери избора. При наем или лизинг въведи сумата', body: () => carBlock(d, draw) },
     { title: 'С какво зареждаш?', sub: 'Полетата за зареждане ще са според избора', body: () => fuelBlock(d, draw) },
     { title: 'Плащаш ли ефир?', sub: 'Такса към диспечер или таксиметрова компания', body: () => dispatchBlock(d, draw) },
     { title: 'Цел за месеца', sub: 'Ще ти казваме колко остава и дали ще я стигнеш', body: () => goalBlock(d, draw) },

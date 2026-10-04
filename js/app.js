@@ -3,6 +3,7 @@
 import { h, icon, clear, cx, fmtTimer } from './util.js';
 import * as store from './store.js';
 import { applyTheme } from './ui.js';
+import { checkNotifications } from './notify.js';
 import { loginView, registerView, forgotView } from './views/auth.js';
 import { onboardingView } from './views/onboarding.js';
 import { homeView } from './views/home.js';
@@ -19,12 +20,13 @@ const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/onboarding': onboardingView,
 };
+// път, икона, надпис, цвят на страницата, цвят на текста върху него
 const TABS = [
-  ['/home', 'home', 'Начало'],
-  ['/shifts', 'list', 'Смени'],
-  ['/stats', 'chart', 'Статистика'],
-  ['/costs', 'wallet', 'Разходи'],
-  ['/profile', 'user', 'Профил'],
+  ['/home', 'home', 'Начало', '#FFC21A', '#1C1500'],
+  ['/shifts', 'list', 'Смени', '#3D7BFF', '#fff'],
+  ['/stats', 'chart', 'Статистика', '#8B5CF6', '#fff'],
+  ['/costs', 'wallet', 'Разходи', '#FF6A3D', '#fff'],
+  ['/profile', 'user', 'Профил', '#14B8A6', '#fff'],
 ];
 
 export const go = (path, replace) => {
@@ -45,6 +47,7 @@ function render() {
   const app = document.getElementById('app');
   const route = parse();
   const user = store.currentUser();
+  document.documentElement.dataset.page = route.name.slice(1);
 
   if (!user) {
     const view = PUBLIC[route.name];
@@ -64,7 +67,9 @@ function render() {
   const ctx = { go, route, user, data: store.myData(), rerender: render };
   const tab = TABS.some(([p]) => p === route.name);
   mount(app, view(ctx), route, tab);
+  if (!notified) { notified = true; checkNotifications(ctx.data); }
 }
+let notified = false;
 
 function mount(app, el, route, withNav) {
   const keepScroll = route.raw === lastRaw;
@@ -77,8 +82,8 @@ function mount(app, el, route, withNav) {
 }
 
 function nav(active) {
-  return h('nav', { class: 'nav', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
-    h('a', { href: '#' + path, class: cx(active === path && 'on'), 'aria-current': active === path ? 'page' : null },
+  return h('nav', { class: 'nav', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label, c, ink]) =>
+    h('a', { href: '#' + path, class: cx(active === path && 'on'), 'aria-current': active === path ? 'page' : null, style: { '--n-c': c, '--n-ink': ink } },
       h('span', { class: 'nav-ic' }, icon(ic, 21)), label)));
 }
 
@@ -99,13 +104,15 @@ function tickTimers() {
   document.querySelectorAll('[data-timer]').forEach((el) => { el.textContent = fmtTimer(Date.now() - new Date(el.dataset.timer).getTime()); });
 }
 setInterval(tickTimers, 1000);
+// Проверка за известия на всеки час, докато приложението е отворено
+setInterval(() => { const u = store.currentUser(); if (u && store.accessState(u) === 'ok') checkNotifications(store.myData()); }, 3600000);
 
-window.addEventListener('hashchange', render);
 let pending = false;
+window.addEventListener('hashchange', render);
 store.onChange(() => { if (document.querySelector('.sheet-wrap')) pending = true; else render(); });
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !document.querySelector('.sheet-wrap')) { pending = false; render(); } });
-render();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
+render();
