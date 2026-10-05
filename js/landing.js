@@ -60,7 +60,7 @@ if (foot) {
         <p>Чистата печалба на таксиметровия шофьор. Направено в България.</p>
       </div>
       <nav aria-label="Страници"><b>Продукт</b>${PAGES.map(([u, l]) => `<a href="${u}">${l}</a>`).join('')}</nav>
-      <nav aria-label="Акаунт"><b>Акаунт</b><a href="/app#/register">Регистрация</a><a href="/app#/login">Вход</a><a href="/app#/invite">Покани колеги</a></nav>
+      <nav aria-label="Акаунт"><b>Акаунт</b><a href="/app#/register">Регистрация</a><a href="/app#/login">Вход</a></nav>
       <nav aria-label="Документи"><b>Документи</b><a href="/terms">Общи условия</a><a href="/privacy">Поверителност</a><a href="mailto:support@profitaxi.bg">support@profitaxi.bg</a></nav>
     </div>
     <div class="s-wrap s-foot-bottom"><span>© 2026 ProfiTaxi</span><span>Сумите на сайта са примерни, от демо профил.</span></div>

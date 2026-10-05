@@ -219,3 +219,38 @@ tr:nth-child(2) .rank, tr:nth-child(3) .rank { background: var(--surface-2); col
 }
 @media (max-width: 480px) { .adm-side .adm-badge { display: none; } .adm-nav .count { display: none; } }
 @media (min-width: 1000px) { .adm-side-foot .btn.grow { flex: 1 1 100%; } }
+
+/* ======================================================================
+   РАЗЛИЧИМИ БУТОНИ И ЛИЛАВИ АКЦЕНТИ (обратна връзка)
+   Жълто = менюто и главното действие на страницата.
+   Лилаво = филтри и второстепенни действия. Червено = опасни. Зелено = пускане.
+   ====================================================================== */
+/* Филтрите (Всички / Активни / Пробни…, периодите) са лилави, за да не се сливат с менюто */
+body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--violet); color: #fff; box-shadow: 0 6px 16px -10px var(--violet); }
+body.admin .seg { border: 1px solid var(--v-line); }
+/* Карти и KPI с лилав контур; иконките – лилави */
+body.admin .card, body.admin .kpi, body.admin .mini-kpis, body.admin .scope-bar, body.admin .tbl-wrap { border-color: var(--v-line) !important; }
+body.admin .kpi-ic, body.admin .t-ic { background: var(--v-soft) !important; color: var(--violet) !important; }
+body.admin .attention { border: 1.5px solid color-mix(in srgb, var(--accent) 60%, transparent); }
+body.admin .adm-head h1 { display: inline-flex; align-items: center; gap: 10px; }
+body.admin .adm-head h1::after { content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 0 4px var(--v-soft); }
+body.admin .tbl thead th { color: var(--violet); }
+body.admin .adm-back { color: var(--violet); }
+/* Второстепенни бутони: ясен контур */
+body.admin .btn-ghost { background: transparent; border: 1.5px solid var(--line); }
+body.admin .btn-ghost.act-v { border-color: var(--v-strong); color: var(--violet); background: var(--v-soft); }
+body.admin .btn-ghost.act-n { border-color: var(--line); color: var(--text); background: var(--surface-2); }
+body.admin .btn-ghost.act-ok { border-color: color-mix(in srgb, var(--pos) 60%, transparent); color: var(--pos); background: color-mix(in srgb, var(--pos) 10%, transparent); }
+body.admin .btn-ghost.act-warn { border-color: color-mix(in srgb, var(--neg) 55%, transparent); color: var(--neg); background: transparent; }
+body.admin .btn-ghost.act-del { border-color: var(--neg); color: #fff; background: var(--neg); }
+.act-label { font-size: .74rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; }
+.act-label + .adm-actions { margin-top: 0; }
+/* Долу в менюто: всяка иконка с различен цвят */
+.adm-side-foot .icon-btn.sf-set { background: rgba(167, 139, 250, .18); color: #C4B5FD; box-shadow: inset 0 0 0 1px rgba(167, 139, 250, .45); }
+.adm-side-foot .icon-btn.sf-set.on { background: #8B5CF6; color: #fff; }
+.adm-side-foot .icon-btn.sf-theme { background: rgba(255, 194, 26, .14); color: #FFC21A; box-shadow: inset 0 0 0 1px rgba(255, 194, 26, .4); }
+.adm-side-foot .icon-btn.sf-help { background: transparent; color: #E5E7EB; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28); }
+.adm-side-foot .btn.sf-out { background: rgba(240, 68, 56, .12); color: #FCA5A5; box-shadow: inset 0 0 0 1px rgba(240, 68, 56, .4); }
+/* Менюто: лилава черта вляво при посочване */
+.adm-nav a:not(.on):hover { box-shadow: inset 3px 0 0 var(--violet); }
+.adm-side { border-right: 1px solid rgba(139, 92, 246, .25); }

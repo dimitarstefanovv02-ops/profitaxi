@@ -2,7 +2,7 @@
 import asyncio, datetime
 from playwright.async_api import async_playwright
 SHOTS = [('home', '#/home', None), ('shifts', '#/shifts', None), ('stats', '#/stats', None), ('costs', '#/costs', None),
-         ('profile', '#/profile', None), ('reservations', '#/reservations', None), ('invite', '#/invite', None),
+         ('profile', '#/profile', None), ('reservations', '#/reservations', None),
          ('time', '#/stats', 'time'), ('numpad', '#/shift/new', 'numpad'), ('records', '#/stats', 'records')]
 async def main():
     async with async_playwright() as p:

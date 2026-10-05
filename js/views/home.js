@@ -1,15 +1,12 @@
-// Начален екран: мотивиращо съобщение, таксиметърът с целта, смяна с едно
-// натискане, седмицата, най-добрите часове за днес, напомняния, последни смени
+// Начален екран: таксиметърът с целта, смяна с едно натискане, календар и
+// резервации, седмицата, най-добрите часове за днес, напомняния, последни смени
 
 import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx } from '../util.js';
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, more } from '../ui.js';
-import { quoteFor } from '../quotes.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl } from './reservations.js';
-import { inviteCard } from './invite.js';
 
-let quoteSeed = 0;
 const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
 
 export function homeView({ go, user, data }) {
@@ -20,7 +17,6 @@ export function homeView({ go, user, data }) {
   const trial = store.trialDaysLeft(user);
   const month = MONTHS[parseDate(today).getMonth()];
   const initials = user.name.split(' ').map((x) => x[0]).slice(0, 2).join('');
-  const workedToday = data.shifts.some((s) => shiftDate(s) === today);
   const rec = records(data);
   const ti = timeInsights(data.shifts);
 
@@ -30,15 +26,8 @@ export function homeView({ go, user, data }) {
     actions: [{ label: 'Старт', primary: true, run: ({ km }) => { store.startShift(km); toast('Смяната започна. Успешен път!'); } }],
   });
 
-  // Мотивиращо съобщение – натискане го сменя
-  const qText = h('div', { class: 'quote-text' });
-  const setQuote = () => { qText.textContent = quoteFor({ goal: g, streak: rec.current, worked: workedToday }, quoteSeed); };
-  setQuote();
-  const quote = h('button', { class: 'quote', onclick: () => { quoteSeed++; setQuote(); } },
-    h('span', { class: 'quote-ic' }, icon('flame', 19)),
-    h('div', null, qText, h('div', { class: 'quote-more' }, 'Натисни за друго')));
-
   const recent = data.shifts.filter((s) => s.end).slice(0, 3);
+  const resCount = upcomingReservations(data.reservations || []).length;
 
   return h('div', { class: 'screen', 'data-page': 'home' },
     h('div', { class: 'hello' },
@@ -51,17 +40,20 @@ export function homeView({ go, user, data }) {
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
 
-    // 1. Главното действие: смяната
+    // 1. Колко ти остава този месец
+    meter(g, month),
+
+    // 2. Главното действие: смяната
     active ? liveShift(active, go) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
     !active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
 
-    // 2. Колко ти остава този месец
-    meter(g, month),
+    // 3. Календар и лични резервации – с едно натискане
+    h('div', { class: 'home-links' },
+      h('a', { class: 'home-link', href: '#/calendar' }, h('span', { class: 'hl-ic' }, icon('calendar', 22)), h('span', null, h('b', null, 'Календар'), h('small', null, 'Всичко по дни'))),
+      h('a', { class: 'home-link', href: '#/reservations' }, h('span', { class: 'hl-ic' }, icon('route', 22)), h('span', null, h('b', null, 'Резервации'), h('small', null, resCount ? `${resCount} предстоящи` : 'Запиши курс')))),
 
-    // 3. Какво следва: курс и плащане с бутоните за тях
+    // 4. Какво следва: курс и плащане с бутоните за тях
     nextUp(data, go),
-
-    quote,
 
     // Всичко останало – на едно натискане
     more('Покажи повече: седмицата, часовете, последните смени',

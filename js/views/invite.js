@@ -1,3 +1,4 @@
+import { INVITES_ON } from '../constants.js';
 // Покани колеги: персонален код, прогрес и спечелени безплатни месеци
 
 import { h, icon, cx, fmtDate } from '../util.js';
@@ -23,7 +24,9 @@ export function inviteCard(ref, go) {
     icon('right', 18));
 }
 
-export function inviteView() {
+export function inviteView({ go } = {}) {
+  // Програмата е спряна засега – връщаме към „Аз“
+  if (!INVITES_ON) { setTimeout(() => go ? go('/me', true) : (location.hash = '#/me')); return h('div'); }
   const ref = store.myReferrals();
   const max = ref.tiers[ref.tiers.length - 1].count;
   return h('div', { class: 'screen', 'data-page': 'invite' },

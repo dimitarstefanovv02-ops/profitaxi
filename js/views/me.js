@@ -6,12 +6,11 @@ import * as store from '../store.js';
 import { themeToggle } from '../ui.js';
 import { profileCover } from './profile.js';
 import { openCategories } from './categories.js';
-import { upcomingReservations } from './reservations.js';
 import { upcomingReminders } from '../calc.js';
+import { INVITES_ON } from '../constants.js';
 
 export function meView({ go, user, data }) {
-  const ref = store.myReferrals();
-  const resN = upcomingReservations(data.reservations || []).length;
+  const ref = INVITES_ON && store.myReferrals();
   const payN = upcomingReminders(data, 14).filter((r) => r.daysLeft != null).length;
   const row = (ic, title, sub, onclick, href) => h(href ? 'a' : 'button', { class: 'big-link', href, onclick },
     h('span', { class: 'bl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), sub && h('span', null, sub)), icon('right', 18));
@@ -22,9 +21,6 @@ export function meView({ go, user, data }) {
       row('car', 'Кола, гориво, ефир и цел', 'Наем или лизинг, вид гориво, цел за месеца', null, '#/profile'),
       row('wallet', 'Постоянни разходи и падежи', payN ? `${payN} плащания в следващите 2 седмици` : 'Наем, ефир, застраховки, данъци', null, '#/costs'),
       row('tag', 'Категории разходи', 'Добави свои, скрий ненужните', () => openCategories())),
-    group('Курсове',
-      row('calendar', 'Календар', 'Курсове, плащания и смени по дни', null, '#/calendar'),
-      row('route', 'Лични резервации', resN ? `${resN} предстоящи` : 'Запиши курс с клиент', null, '#/reservations')),
     group('Още',
       ref && row('gift', 'Покани колеги', `${ref.count} поканени · 5 = 1 месец безплатно`, null, '#/invite'),
       row('bell', 'Известия и имейли', 'Напомняния за плащания и курсове', null, '#/profile?s=notify'),

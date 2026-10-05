@@ -803,3 +803,59 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .more-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-weight: 700; color: var(--muted); padding: 6px 2px; }
 .quick.quick-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .quick .quick-more { border: 1px dashed var(--line); }
+
+/* ===== Днес: Календар и Резервации като два бутона ===== */
+.home-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.home-link { display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 20px; background: var(--card); border: 1px solid var(--line); text-decoration: none; color: var(--text); min-width: 0; }
+.home-link b { display: block; font-size: 1rem; }
+.home-link small { display: block; color: var(--muted); font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-link > span:last-child { min-width: 0; }
+.hl-ic { flex: none; width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; background: var(--v-soft, rgba(139,92,246,.14)); color: var(--violet, #8B5CF6); }
+
+/* ======================================================================
+   ЦВЕТНИ АКЦЕНТИ (обратна връзка): основата остава спокойна, но с
+   лилави контури, лилави иконки и малко цвят в ключовите места.
+   Жълто = главните бутони и числата. Лилаво = контури, иконки, подсказки.
+   ====================================================================== */
+:root { --violet: #7C5CE0; --v-soft: rgba(124, 92, 224, .10); --v-line: rgba(124, 92, 224, .24); --v-strong: rgba(124, 92, 224, .55); --v-glow: rgba(124, 92, 224, .14); }
+:root[data-theme="dark"] { --violet: #A78BFA; --v-soft: rgba(167, 139, 250, .14); --v-line: rgba(167, 139, 250, .22); --v-strong: rgba(167, 139, 250, .55); --v-glow: rgba(139, 92, 246, .22); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --violet: #A78BFA; --v-soft: rgba(167, 139, 250, .14); --v-line: rgba(167, 139, 250, .22); --v-strong: rgba(167, 139, 250, .55); --v-glow: rgba(139, 92, 246, .22); } }
+
+/* Контури на картите – леко лилави */
+.card, .stat-card, .live, .cost-row, .res-row, .tile, .big-link, .home-link, .more > summary, .cover, .ql { border-color: var(--v-line); }
+.card .shift-row, .card .cost-row, .card .res-row { border-color: var(--line); }
+/* Иконките в заглавията и бутоните – лилави */
+.t-ic, .bl-ic, .ql-ic, .cost-ic, .mini-ic, .list-btn .l-ic, .tip-ic { background: var(--v-soft) !important; color: var(--violet) !important; }
+.stat-label .ic { color: var(--violet); }
+/* Главната карта „Чисто за месеца“ и тъмните шапки – по-ясен лилав контур и леко сияние */
+.meter, .hero { border: 1.5px solid var(--v-strong); box-shadow: 0 0 0 4px var(--v-glow), 0 18px 40px -26px var(--violet); }
+.month-sum { border: 1.5px solid var(--v-strong); box-shadow: 0 0 0 4px var(--v-glow); }
+.ms-total b:not(.neg) { color: var(--accent-text); }
+/* Второстепенните бутони – лилав контур */
+.btn-ghost { border: 1px solid var(--v-line); }
+.btn-ghost:hover { border-color: var(--v-strong); }
+/* Заглавия на секции с малка лилава черта */
+.section-title { display: flex; align-items: center; gap: 8px; }
+.section-title::before { content: ''; width: 4px; height: 16px; border-radius: 4px; background: var(--violet); flex: none; }
+.page-title h1 { display: inline-flex; align-items: center; gap: 10px; }
+.page-title h1::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--violet); box-shadow: 0 0 0 4px var(--v-soft); }
+/* Долното меню – лилава линия отгоре, активният бутон жълт */
+.nav { border-top: 1px solid var(--v-line); }
+.nav a:not(.on) .nav-ic { color: var(--muted); }
+/* Разгъваемите блокове – лилава стрелка и лява черта */
+.more > summary { border-left: 3px solid var(--violet); }
+.more > summary .ic { color: var(--violet); }
+/* Днес: двата бутона с различен цвят на иконката */
+.home-link:nth-child(2) .hl-ic { background: var(--accent-soft); color: var(--accent-text); }
+.home-link { border-width: 1px; }
+.home-link:hover, .big-link:hover { border-color: var(--v-strong); }
+/* Чипове и „Следващо“ */
+.next { border-color: var(--v-line); }
+.next-when { background: var(--v-soft); }
+.next-when b { color: var(--violet); }
+.chip.page { background: var(--v-soft); color: var(--violet); }
+/* Профилът и снимката */
+.cover-avatar { box-shadow: 0 0 0 3px var(--violet); }
+.sub-back { color: var(--violet); }
+.section-title { justify-content: flex-start; }
+.home-links + .next, .home-links + .card { margin-top: 14px; }

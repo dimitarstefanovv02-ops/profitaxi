@@ -508,3 +508,43 @@ html.intro #intro::before { display: none; }
 .invite-line { display: block; max-width: 520px; line-height: 1.6; margin-top: 30px; }
 .invite-line > span[data-ic], .invite-line > svg { display: inline-block; vertical-align: -4px; margin-right: 6px; }
 .invite-line > span[data-ic] svg { vertical-align: -4px; }
+/* Функции на телефон: текстът и целият телефон да се виждат на един екран */
+@media (max-width: 959px) {
+  .feat { gap: 20px; }
+  .feat + .feat { margin-top: 64px; }
+  .feat .phone2, .feat .phone2.sm { width: min(172px, 45vw); border-radius: 30px; padding: 6px; }
+  .feat .phone2 img { border-radius: 25px; }
+  .feat h2 { margin: 4px 0 10px; }
+  .feat p { font-size: 1.04rem; line-height: 1.55; }
+}
+
+/* ======================================================================
+   ЦВЕТНИ АКЦЕНТИ (обратна връзка): малко повече лилаво – контури, иконки,
+   етикети; жълтото остава за бутоните и чистата печалба.
+   ====================================================================== */
+.site { --v-soft: rgba(124, 92, 224, .10); --v-strong: rgba(124, 92, 224, .55); --v-txt: #6D4ED8; }
+:root[data-theme="dark"] .site { --v-soft: rgba(167, 139, 250, .14); --v-strong: rgba(167, 139, 250, .55); --v-txt: #B9A4FF; }
+.eyebrow { color: var(--v-txt); }
+.eyebrow::before { background: var(--v); }
+.f-card, .step3, .step4, .faq details, .more-box, .metric, .cmp-card, .roi, .tl, .ns, .quote2 { border: 1px solid var(--v-line); box-shadow: none; }
+.f-card:hover, .step3:hover, .step4:hover { border-color: var(--v-strong); box-shadow: 0 0 0 4px var(--v-soft); }
+.f-ic { color: var(--v-txt); background: var(--v-soft); border-color: var(--v-line); }
+.tag2 { color: var(--v-txt); background: var(--v-soft); border-color: var(--v-line); }
+.step3 .n, .step4 .n { box-shadow: 0 0 0 4px var(--v-soft); }
+.faq summary::after { background-color: var(--v-soft); }
+.faq details[open] { border-color: var(--v-strong); }
+.kick { border-color: var(--v-line); }
+.kick i { background: var(--v) !important; }
+.bill { border: 1px solid var(--v-line); }
+.bill-title em { background: var(--v-soft); }
+.s-btn-line { border-color: var(--v-line); }
+.s-btn-line:hover { border-color: var(--v-strong); background: var(--v-soft); }
+.price-card2 { box-shadow: 0 0 0 6px var(--v-soft); }
+.ticks2 li::before { background-color: var(--v-soft); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237C5CE0' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.marquee span { border-color: var(--v-line); }
+.marquee span:nth-child(3n+2) { color: var(--v-txt); background: var(--v-soft); }
+.cities h2 .v, .sec-head h2 .v { color: var(--v-txt); }
+.phone2 { box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .08) inset, 0 0 0 1px var(--v-line), 0 0 60px -24px var(--v); }
+.s-head.scrolled { box-shadow: 0 1px 0 var(--v-line); }
+.crumbs a { color: var(--v-txt); }
+.hero2 h1 mark::after { background: var(--v) !important; opacity: .35; }

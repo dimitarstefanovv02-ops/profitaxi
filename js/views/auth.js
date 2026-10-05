@@ -1,7 +1,7 @@
 // Вход, регистрация, забравена парола
 
 import { h, fill, icon, cx } from '../util.js';
-import { CAR_TYPES } from '../constants.js';
+import { INVITES_ON, CAR_TYPES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
@@ -87,7 +87,7 @@ export function registerView({ go }) {
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
         field('Телефон', phone, 'По желание'),
-        field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
+        INVITES_ON && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
       group('target', 'Къде караш', cc.el),
       group('car', 'Колата е', carBox),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),

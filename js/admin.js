@@ -5,7 +5,7 @@ import * as store from './store.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, getTheme, setTheme, shareRows, cardTitle, more, isDark } from './ui.js';
 import { startTour, ADMIN_TOUR } from './tour.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
-import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, expenseCat, costCat, FUEL_TYPES } from './constants.js';
+import { INVITES_ON, CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, expenseCat, costCat, FUEL_TYPES } from './constants.js';
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
 import { cityCompanyPicker } from './views/cityPicker.js';
 
@@ -63,10 +63,10 @@ function sidebar(active) {
       h('a', { href: '#' + p, class: cx((active === p || PARENT[active] === p) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n)))),
     h('div', { class: 'adm-side-foot' },
       h('div', { class: 'who' }, a.email),
-      h('a', { class: cx('icon-btn', active === '/settings' && 'on'), id: 'adm-settings', href: '#/settings', 'aria-label': 'Настройки', title: 'Настройки' }, icon('shield', 18)),
-      h('button', { class: 'icon-btn', id: 'adm-theme', 'aria-label': 'Смени темата', title: 'Светла / тъмна тема', onclick: (e) => { setTheme(isDark() ? 'light' : 'dark'); e.currentTarget.replaceChildren(icon(isDark() ? 'sun' : 'moon', 18)); } }, icon(isDark() ? 'sun' : 'moon', 18)),
-      h('button', { class: 'icon-btn', 'aria-label': 'Помощ', title: 'Помощ: кратка разходка', onclick: () => { if (location.hash !== '#/overview') { go('/overview'); setTimeout(runAdminTour, 300); } else runAdminTour(); } }, icon('sparkle', 18)),
-      h('button', { class: 'btn grow', onclick: () => { store.adminLogout(); render(); } }, icon('logout', 18), 'Изход')));
+      h('a', { class: cx('icon-btn', 'sf-set', active === '/settings' && 'on'), id: 'adm-settings', href: '#/settings', 'aria-label': 'Настройки', title: 'Настройки' }, icon('shield', 18)),
+      h('button', { class: 'icon-btn sf-theme', id: 'adm-theme', 'aria-label': 'Смени темата', title: 'Светла / тъмна тема', onclick: (e) => { setTheme(isDark() ? 'light' : 'dark'); e.currentTarget.replaceChildren(icon(isDark() ? 'sun' : 'moon', 18)); } }, icon(isDark() ? 'sun' : 'moon', 18)),
+      h('button', { class: 'icon-btn sf-help', 'aria-label': 'Помощ', title: 'Помощ: кратка разходка', onclick: () => { if (location.hash !== '#/overview') { go('/overview'); setTimeout(runAdminTour, 300); } else runAdminTour(); } }, icon('sparkle', 18)),
+      h('button', { class: 'btn grow sf-out', onclick: () => { store.adminLogout(); render(); } }, icon('logout', 18), 'Изход')));
 }
 
 function runAdminTour() { startTour(ADMIN_TOUR, { onDone: () => { try { localStorage.setItem('profitaxi.adminTour', 'done'); } catch { /* */ } } }); }
@@ -416,7 +416,7 @@ function overview() {
           h('section', { class: 'card' }, cardTitle('wallet', 'Разходи на всички'),
             h('div', { class: 'grid2', style: { marginBottom: '14px' } }, stat('От смените', money(T.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(T.fixed), { icon: 'calendar', color: 'var(--c-blue)' })),
             shareRows(Object.values(exp).sort((a, b) => b.value - a.value).slice(0, 8), T.exp)),
-          referralCard(all, r)))));
+          INVITES_ON && referralCard(all, r)))));
   };
   draw();
   return root;
@@ -594,22 +594,25 @@ function driverDetail(r) {
         info('Ефир', dispatchText),
         info('Дели колата', p.sharePct < 100 ? `да, ${p.sharePct}%` : 'не'),
         info('Известия', p.notify ? 'включени' : 'изключени'),
-        info('Код за покана', `${u.refCode || '—'}, поканени ${store.admin.drivers().filter((x) => x.referredBy === u.id).length}${u.refMonths ? `, спечелени ${u.refMonths} мес.` : ''}`),
+        INVITES_ON && info('Код за покана', `${u.refCode || '—'}, поканени ${store.admin.drivers().filter((x) => x.referredBy === u.id).length}${u.refMonths ? `, спечелени ${u.refMonths} мес.` : ''}`),
         p.car?.plate && info('Кола', `${p.car.model || ''} ${p.car.plate}${p.car.code ? `, код ${p.car.code}` : ''}`.trim())),
       h('section', { class: 'card' },
         cardTitle('receipt', 'Достъп и абонамент'),
         info('План', u.subscription.plan === 'trial' ? 'Пробен период' : 'Платен'),
         info('Валиден до', `${fmtDate(u.subscription.validUntil, { year: true })}${s.left != null ? ` (${s.left >= 0 ? `още ${s.left} дни` : `изтекъл преди ${-s.left} дни`})` : ''}`),
         u.subscription.paidSince && info('Платен от', fmtDate(u.subscription.paidSince, { year: true })),
+        h('div', { class: 'act-label' }, 'Абонамент'),
         h('div', { class: 'adm-actions' },
           h('button', { class: 'btn btn-page', onclick: () => { store.admin.extend(u.id, 30); toast('Удължен с 30 дни'); } }, '+30 дни'),
-          h('button', { class: 'btn btn-ghost', onclick: () => { store.admin.extend(u.id, 365); toast('Удължен с 1 година'); } }, '+1 година'),
-          h('button', { class: 'btn btn-ghost', onclick: () => setDate(u) }, icon('calendar', 18), 'Дата'),
+          h('button', { class: 'btn btn-ghost act-v', onclick: () => { store.admin.extend(u.id, 365); toast('Удължен с 1 година'); } }, '+1 година'),
+          h('button', { class: 'btn btn-ghost act-v', onclick: () => setDate(u) }, icon('calendar', 18), 'Дата')),
+        h('div', { class: 'act-label' }, 'Достъп'),
+        h('div', { class: 'adm-actions' },
           u.status === 'blocked'
-            ? h('button', { class: 'btn btn-ghost', onclick: () => { store.admin.setStatus(u.id, 'active'); toast('Достъпът е пуснат'); } }, icon('check', 18), 'Пусни достъпа')
-            : h('button', { class: 'btn btn-ghost', style: { color: 'var(--neg)' }, onclick: () => confirmSheet({ title: `Спиране на ${u.name}?`, text: 'Шофьорът няма да може да влиза, докато не пуснеш достъпа отново. Данните остават.', okLabel: 'Спри достъпа', danger: true, onOk: () => { store.admin.setStatus(u.id, 'blocked'); toast('Достъпът е спрян'); } }) }, icon('lock', 18), 'Спри достъпа'),
-          h('button', { class: 'btn btn-ghost', onclick: () => resetPw(u) }, icon('key', 18), 'Нова парола'),
-          h('button', { class: 'btn btn-ghost', style: { color: 'var(--neg)' }, onclick: () => confirmSheet({ title: 'Изтриване на акаунта?', text: `Всички данни на ${u.name} ще бъдат изтрити завинаги.`, okLabel: 'Изтрий', danger: true, onOk: () => { store.admin.deleteDriver(u.id); toast('Акаунтът е изтрит'); go('/drivers'); } }) }, icon('trash', 18), 'Изтрий')))),
+            ? h('button', { class: 'btn btn-ghost act-ok', onclick: () => { store.admin.setStatus(u.id, 'active'); toast('Достъпът е пуснат'); } }, icon('check', 18), 'Пусни достъпа')
+            : h('button', { class: 'btn btn-ghost act-warn', onclick: () => confirmSheet({ title: `Спиране на ${u.name}?`, text: 'Шофьорът няма да може да влиза, докато не пуснеш достъпа отново. Данните остават.', okLabel: 'Спри достъпа', danger: true, onOk: () => { store.admin.setStatus(u.id, 'blocked'); toast('Достъпът е спрян'); } }) }, icon('lock', 18), 'Спри достъпа'),
+          h('button', { class: 'btn btn-ghost act-n', onclick: () => resetPw(u) }, icon('key', 18), 'Нова парола'),
+          h('button', { class: 'btn btn-ghost act-del', onclick: () => confirmSheet({ title: 'Изтриване на акаунта?', text: `Всички данни на ${u.name} ще бъдат изтрити завинаги.`, okLabel: 'Изтрий', danger: true, onOk: () => { store.admin.deleteDriver(u.id); toast('Акаунтът е изтрит'); go('/drivers'); } }) }, icon('trash', 18), 'Изтрий')))),
     h('h2', { class: 'section-title' }, 'Статистика'),
     statsBox,
     h('h2', { class: 'section-title' }, 'Смени'),
@@ -739,7 +742,7 @@ function newDriver() {
 function settings() {
   const s = store.admin.settings();
   const days = h('input', { class: 'input', type: 'number', min: 0, max: 90, value: s.trialDays });
-  const price = h('input', { class: 'input', inputmode: 'decimal', value: String(s.price ?? 9.99).replace('.', ',') });
+  const price = h('input', { class: 'input', inputmode: 'decimal', value: String(s.price ?? 3.99).replace('.', ',') });
   return h('div', { style: { maxWidth: '640px' } },
     pageHead('Настройки', 'Общи настройки на услугата'),
     h('section', { class: 'card form' },

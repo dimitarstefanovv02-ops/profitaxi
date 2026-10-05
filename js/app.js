@@ -35,8 +35,8 @@ const TABS = [
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Аз'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/calendar': '/me', '/reservations': '/me', '/invite': '/me' };
-const PARENT_LABEL = { '/money': 'Пари', '/me': 'Аз' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
+const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Аз' };
 
 export const go = (path, replace) => {
   const url = '#' + path;

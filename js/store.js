@@ -18,6 +18,7 @@ function load() {
   try { db = JSON.parse(localStorage.getItem(KEY)); } catch { db = null; }
   if (db && db.version > VERSION) { location.reload(); return db; } // друг раздел вече е с по-нова версия
   if (!db || db.version !== VERSION) { db = seed(); persist(); }
+  if (db.settings && db.settings.price === 9.99) { db.settings.price = 3.99; persist(); } // новата цена
   registerAllCustom();
   return db;
 }
@@ -423,7 +424,7 @@ const LAST = ['Петров', 'Димитров', 'Колева', 'Ангело�
 const LAT = { 'Иван': 'ivan', 'Георги': 'georgi', 'Мария': 'maria', 'Стоян': 'stoyan', 'Николай': 'nikolay', 'Димитър': 'dimitar', 'Петър': 'petar', 'Христо': 'hristo', 'Тодор': 'todor', 'Елена': 'elena', 'Красимир': 'krasimir', 'Васил': 'vasil', 'Атанас': 'atanas', 'Росен': 'rosen', 'Пламен': 'plamen', 'Йордан': 'yordan', 'Светлин': 'svetlin', 'Милена': 'milena', 'Борислав': 'borislav', 'Стефан': 'stefan', 'Калоян': 'kaloyan', 'Ангел': 'angel' };
 
 function seed() {
-  db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: 9.99 } };
+  db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: 3.99 } };
   const today = todayStr();
   db.users.push({ id: 'admin', role: 'admin', name: 'Администратор', email: 'admin@profitaxi.bg', password: 'admin123', status: 'active', createdAt: new Date().toISOString() });
 

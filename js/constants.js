@@ -1,3 +1,6 @@
+// Програмата „Покани колеги“ е спряна засега. true я връща навсякъде.
+export const INVITES_ON = false;
+
 // ProfiTaxi – справочници
 
 export const CAR_TYPES = {
