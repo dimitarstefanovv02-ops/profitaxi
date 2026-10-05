@@ -12,15 +12,14 @@ import { cityCompanyPicker } from './views/cityPicker.js';
 applyTheme();
 document.body.classList.add('admin');
 
+// Менюто е 3 бутона. Останалите страници са вътре в тях (нищо не е махнато).
 const NAV = [
-  ['/overview', 'chart', 'Общ преглед'],
-  ['/geo', 'target', 'Градове и фирми'],
-  ['/market', 'coins', 'Ефир, наеми, работа'],
+  ['/overview', 'home', 'Днес'],
   ['/drivers', 'users', 'Шофьори'],
-  ['/subs', 'receipt', 'Абонаменти'],
-  ['/new', 'plus', 'Нов шофьор'],
-  ['/settings', 'shield', 'Настройки'],
+  ['/reports', 'chart', 'Отчети'],
 ];
+const PARENT = { '/driver': '/drivers', '/new': '/drivers', '/geo': '/reports', '/market': '/reports', '/subs': '/reports' };
+const PARENT_LABEL = { '/drivers': 'Шофьори', '/reports': 'Отчети' };
 const mkState = () => ({ unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() });
 const overviewState = mkState(), geoState = mkState(), driverState = mkState(), marketState = mkState();
 const listState = { q: '', filter: 'all', sort: 'net' };
@@ -40,11 +39,15 @@ function render() {
   const r = parse();
   if (!store.adminUser()) return fill(app, loginView());
   if (r.name === '/login') return go('/overview');
-  const views = { '/overview': overview, '/geo': geo, '/market': market, '/drivers': drivers, '/driver': driverDetail, '/subs': subs, '/new': newDriver, '/settings': settings };
+  const views = { '/overview': overview, '/reports': reports, '/geo': geo, '/market': market, '/drivers': drivers, '/driver': driverDetail, '/subs': subs, '/new': newDriver, '/settings': settings };
   const view = views[r.name] || overview;
-  const withScope = ['/overview', '/geo', '/market', '/drivers', '/subs'].includes(r.name) || !views[r.name];
+  const withScope = ['/overview', '/reports', '/geo', '/market', '/drivers', '/subs'].includes(r.name) || !views[r.name];
   const y = window.scrollY;
-  fill(app, h('div', { class: 'adm' }, sidebar(r.name), h('main', { class: 'adm-main' }, withScope && scopeBar(), view(r))));
+  const parent = PARENT[r.name] && r.name !== '/driver' ? PARENT[r.name] : null;
+  const back = parent && h('a', { class: 'adm-back', href: '#' + parent }, icon('left', 18), PARENT_LABEL[parent]);
+  fill(app, h('div', { class: 'adm' }, sidebar(r.name), h('main', { class: 'adm-main' }, back, withScope && scopeBar(), view(r))));
+  // „Отчети → Графики“ отваря подробните отчети на „Днес“
+  if (r.raw.includes('charts')) { const d = document.querySelector('.adm-main details.more'); if (d) { d.open = true; setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50); } }
   if (r.raw === render.last) window.scrollTo(0, y); else window.scrollTo(0, 0);
   render.last = r.raw;
   let seen = 'done'; try { seen = localStorage.getItem('profitaxi.adminTour'); } catch { /* */ }
@@ -57,9 +60,10 @@ function sidebar(active) {
   return h('aside', { class: 'adm-side' },
     h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi'), h('span', { class: 'adm-badge' }, 'Админ')),
     h('nav', { class: 'adm-nav' }, NAV.map(([p, ic, label]) =>
-      h('a', { href: '#' + p, class: cx((active === p || (p === '/drivers' && active === '/driver')) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n)))),
+      h('a', { href: '#' + p, class: cx((active === p || PARENT[active] === p) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n)))),
     h('div', { class: 'adm-side-foot' },
       h('div', { class: 'who' }, a.email),
+      h('a', { class: cx('icon-btn', active === '/settings' && 'on'), id: 'adm-settings', href: '#/settings', 'aria-label': 'Настройки', title: 'Настройки' }, icon('shield', 18)),
       h('button', { class: 'icon-btn', id: 'adm-theme', 'aria-label': 'Смени темата', title: 'Светла / тъмна тема', onclick: (e) => { setTheme(isDark() ? 'light' : 'dark'); e.currentTarget.replaceChildren(icon(isDark() ? 'sun' : 'moon', 18)); } }, icon(isDark() ? 'sun' : 'moon', 18)),
       h('button', { class: 'icon-btn', 'aria-label': 'Помощ', title: 'Помощ: кратка разходка', onclick: () => { if (location.hash !== '#/overview') { go('/overview'); setTimeout(runAdminTour, 300); } else runAdminTour(); } }, icon('sparkle', 18)),
       h('button', { class: 'btn grow', onclick: () => { store.adminLogout(); render(); } }, icon('logout', 18), 'Изход')));
@@ -372,7 +376,7 @@ function overview() {
     const risk = all.filter((d) => subState(d.user).key !== 'blocked' && (daysSince(d) == null || daysSince(d) >= 7)).sort((a, b) => (daysSince(b) ?? 999) - (daysSince(a) ?? 999));
 
     fill(root,
-      pageHead('Общ преглед', `${scopeLabel()}: ${all.length} шофьори, ${T.active} активни през периода`),
+      pageHead('Днес', `${scopeLabel()}: ${all.length} шофьори, ${T.active} активни през периода`),
       attentionCard(all, risk),
       h('div', { class: 'adm-picker' }, periodPicker(overviewState, draw)),
       h('div', { class: 'kpis kpis-lg' },
@@ -686,6 +690,20 @@ function subs() {
     h('div', { class: 'adm-grid two' },
       h('section', { class: 'card' }, cardTitle('bell', 'Изтичат скоро'), table(['Шофьор', 'Статус', 'Валиден до', 'Остават'], expiring.map(subRow), { rightFrom: 2 })),
       h('section', { class: 'card' }, cardTitle('alert', 'Изтекли'), table(['Шофьор', 'Статус', 'Валиден до', 'Изтекъл'], expired.map(subRow), { rightFrom: 2 }))));
+}
+
+// ---------- Отчети: всички подробни страници на едно място ----------
+function reports() {
+  const all = scoped();
+  const count = (k) => all.filter((d) => subState(d.user).key === k).length;
+  const link = (href, ic, title, sub) => h('a', { class: 'big-link', href }, h('span', { class: 'bl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), h('span', null, sub)), icon('right', 18));
+  return h('div', null,
+    pageHead('Отчети', `${scopeLabel()}: всичко подробно, разделено по теми`),
+    h('div', { class: 'big-links adm-reports' },
+      link('#/overview?charts', 'chart', 'Графики и подробни числа', 'Чисто на час и км, приход по дни, видове приходи и разходи'),
+      link('#/geo', 'target', 'Градове и фирми', 'Сравнение между градове и таксиметрови фирми'),
+      link('#/market', 'coins', 'Ефир, наеми и работа', 'Колко струва ефирът и наемът, кога се работи'),
+      link('#/subs', 'receipt', 'Абонаменти', `${count('active')} платени, ${count('trial')} пробни, ${count('expired')} изтекли`)));
 }
 
 // ---------- Нов шофьор ----------

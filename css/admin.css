@@ -205,3 +205,17 @@ tr:nth-child(2) .rank, tr:nth-child(3) .rank { background: var(--surface-2); col
 .att-n { font-family: var(--display); font-weight: 700; font-size: 1.2rem; }
 .att-ok { display: flex; align-items: center; gap: 10px; color: var(--muted); padding: 6px 0; }
 .adm-help { width: 100%; }
+
+/* ===== Меню от 3 бутона, „Назад“ към раздела, настройки като иконка ===== */
+.adm-back { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; color: var(--muted); text-decoration: none; margin: 0 0 12px; padding: 4px 2px; }
+.adm-back:hover { color: var(--text); }
+.adm-side-foot a.icon-btn { display: inline-grid; place-items: center; text-decoration: none; }
+.adm-side-foot a.icon-btn.on { background: var(--accent); color: var(--accent-ink); }
+.adm-reports { max-width: 760px; }
+@media (max-width: 999px) { .adm-nav a { flex: 1; justify-content: center; } }
+@media (max-width: 999px) {
+  .adm-nav { overflow: visible; margin: 0; padding: 0; }
+  .adm-nav a { flex: 1 1 0; min-width: 0; padding: 10px 6px; gap: 6px; justify-content: center; }
+}
+@media (max-width: 480px) { .adm-side .adm-badge { display: none; } .adm-nav .count { display: none; } }
+@media (min-width: 1000px) { .adm-side-foot .btn.grow { flex: 1 1 100%; } }

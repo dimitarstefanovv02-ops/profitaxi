@@ -32,8 +32,9 @@ async def main():
         ok('Приходът по фирмите в Пловдив = прихода на Пловдив', abs(s2-city_total) <= len(comps), f'{s2} vs {city_total}')
         await a.select_option('.scope-bar select >> nth=1', comps[0]); await a.wait_for_timeout(400)
         # Филтърът се пази между страниците
-        for label in ['Градове и фирми','Ефир, наеми, работа','Шофьори','Абонаменти']:
-            await a.click(f'.adm-nav >> text={label}'); await a.wait_for_timeout(700)
+        for route in ['#/geo','#/market','#/drivers','#/subs','#/reports']:
+            label = route
+            await a.evaluate(f"location.hash='{route}'"); await a.wait_for_timeout(700)
             v = await a.eval_on_selector_all('.scope-bar select', 'e=>e.map(s=>s.value)')
             if v != ['Пловдив', comps[0]]: ok(f'Филтърът се пази: {label}', False, v)
         ok('Филтърът град/фирма се пази на всички страници', not any(r.startswith('FAIL  Филтърът се пази:') for r in R))
@@ -72,7 +73,9 @@ async def main():
         await d.fill('input[type=email]','ivan@demo.bg'); await d.fill('input[type=password]','novaparola1'); await d.click('button[type=submit]'); await d.wait_for_timeout(500)
         ok('Шофьорът влиза с новата парола от админа', '#/home' in d.url)
         # Нов шофьор от админа
-        await a.click('.adm-nav >> text=Нов шофьор'); await a.wait_for_timeout(500)
+        await a.click('.adm-nav >> text=Шофьори'); await a.wait_for_timeout(500)
+        await a.click('main >> text=Нов шофьор'); await a.wait_for_timeout(500)
+        ok('„Нов шофьор“ е бутон в „Шофьори“ и менюто остава на „Шофьори“', '#/new' in a.url and 'Шофьори' in await a.inner_text('.adm-nav a.on'))
         await a.click('button[type=submit]'); await a.wait_for_timeout(200)
         ok('Нов шофьор без данни дава грешка', len(await a.inner_text('.err'))>3, await a.inner_text('.err'))
         await a.fill('label:has-text("Име") input','Нов Шофьор'); await a.fill('input[type=email]','nov@test.bg')
@@ -80,7 +83,7 @@ async def main():
         await a.click('.seg-btn:has-text("Собствена")'); await a.click('button[type=submit]'); await a.wait_for_timeout(800)
         ok('Създаден шофьор в Сливен, Perfect Taxi', 'Perfect Taxi' in await a.inner_text('main'))
         # Настройки: пробен период
-        await a.click('.adm-nav >> text=Настройки'); await a.wait_for_timeout(400)
+        await a.click('#adm-settings'); await a.wait_for_timeout(400)
 
         await a.fill('input[type=number]','30'); await a.click('main .btn-page'); await a.wait_for_timeout(300)
         d2 = await ctx.new_page(); await d2.goto(base+'/app'); await d2.evaluate("localStorage.removeItem('profitaxi.session')"); await d2.goto(base+'/app#/register'); await d2.wait_for_timeout(400)
@@ -90,7 +93,19 @@ async def main():
         days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")
         ok('Пробният период от настройките (30 дни) важи при регистрация', days==30, days)
         # Всички страници без грешки, при всички периоди
-        for label in ['Общ преглед','Градове и фирми','Ефир, наеми, работа','Абонаменти']:
+        ok('Менюто е 3 бутона', await a.locator('.adm-nav a').count()==3)
+        await a.click('.adm-nav >> text=Отчети'); await a.wait_for_timeout(500)
+        ok('„Отчети“ води до всички подробни страници', await a.locator('.adm-reports a').count()==4)
+        await a.click('.adm-reports >> text=Графики и подробни числа'); await a.wait_for_timeout(600)
+        ok('„Графики“ отваря подробните отчети', await a.evaluate("document.querySelector('.adm-main details.more').open"))
+        for label in ['Ефир, наеми и работа','Градове и фирми','Абонаменти']:
+            await a.click('.adm-nav >> text=Отчети'); await a.wait_for_timeout(400)
+            await a.click(f'.adm-reports >> text={label}'); await a.wait_for_timeout(600)
+            ok(f'{label}: менюто е на „Отчети“ и има „Назад“', 'Отчети' in await a.inner_text('.adm-nav a.on') and await a.locator('.adm-back').count()==1)
+            for i in range(5):
+                if await a.locator('.adm-picker .seg-btn').count():
+                    await a.click(f'.adm-picker .seg-btn >> nth={i}'); await a.wait_for_timeout(400)
+        for label in ['Днес']:
             await a.click(f'.adm-nav >> text={label}'); await a.wait_for_timeout(600)
             for i in range(5):
                 if await a.locator('.adm-picker .seg-btn').count():
