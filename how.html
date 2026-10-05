@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Как работи – ProfiTaxi</title>
+  <meta name="description" content="3 минути настройка, 10 секунди на смяна. Как ProfiTaxi смята чистата печалба, с реален пример за месец.">
+  <meta name="theme-color" content="#07080B">
+  <meta property="og:title" content="Как работи – ProfiTaxi">
+  <meta property="og:description" content="3 минути настройка, 10 секунди на смяна. Как ProfiTaxi смята чистата печалба, с реален пример за месец.">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/icons/favicon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap&subset=cyrillic">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <script>
+    (function () {
+      // Стари линкове (/#/…) и инсталираното приложение отиват в /app
+      if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
+      if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
+      // Тема преди изрисуване, за да няма премигване
+      var t; try { t = localStorage.getItem('profitaxi.theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <script type="module" src="/js/landing.js"></script>
+</head>
+<body class="site">
+<div id="site-head"></div>
+<main>
+<section class="page-hero">
+  <div class="glow y" style="width:420px;height:420px;right:-160px;top:-140px"></div>
+  <div class="s-wrap">
+    <div class="crumbs rv"><a href="/">Начало</a> / Как работи</div>
+    <h1 class="rv" style="--d:80ms">3 минути настройка.<br><span class="y-text y">10 секунди</span> на смяна.</h1>
+    <p class="lead rv" style="--d:160ms">Въвеждаш постоянните разходи веднъж. След това записваш само смените. ProfiTaxi смята всичко останало.</p>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:20px">
+  <div class="s-wrap">
+    <div class="steps4 stagger">
+      <div class="step4"><span class="n">1</span><span class="t">1 минута</span><h3>Регистрираш се</h3><p>Имейл, парола, град и таксиметровата ти компания. Ако колега ти е дал код за покана, го въвеждаш тук. Без карта, 14 дни безплатно.</p></div>
+      <div class="step4"><span class="n">2</span><span class="t">1 минута</span><h3>Избираш колата</h3><p>Своя, под наем или на лизинг. Вид гориво, разход на 100 км, как плащаш ефира. Код, номер и снимка на колата, ако искаш.</p></div>
+      <div class="step4"><span class="n">3</span><span class="t">1 минута</span><h3>Постоянни разходи</h3><p>Наем или лизинг, застраховки, винетка, данъци, телефон. С период и падеж. Получаваш напомняния 3, 2 и 1 ден преди плащане.</p></div>
+      <div class="step4"><span class="n">4</span><span class="t">10 секунди</span><h3>Всяка смяна</h3><p>Старт и стоп. Въвеждаш кеш, карта, приложения, бакшиш и горивото. Готово, виждаш чистото.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt">
+  <div class="s-wrap">
+    <div class="sec-head rv"><span class="eyebrow">Формулата</span><h2>Как се смята чистата печалба</h2><p>Просто и прозрачно. Всеки ред можеш да видиш в приложението.</p></div>
+    <div class="formula stagger">
+      <span>Кеш + карта + приложения + бакшиш</span><i>−</i><span>Гориво, паркинг, автомивка от смяната</span><i>−</i><span>Постоянни разходи за деня</span><i>=</i><span class="res">Чисто</span>
+    </div>
+    <div class="f-grid stagger" style="margin-top:30px">
+      <div class="f-card"><span class="f-ic" data-ic="calendar" style="--c:#8B5CF6"></span><h3>Разпределено по дни</h3><p>Винетка 97 € за година = 0,27 € на ден. ГО 120 € на тримесечие = 1,32 € на ден. Така един ден не изглежда на загуба само защото си платил годишна такса.</p></div>
+      <div class="f-card"><span class="f-ic" data-ic="phone" style="--c:#F5A524"></span><h3>Ефир по твоя начин</h3><p>40 € на седмица се разпределят по всички дни. 10 € на ден се смятат само в дните, в които работиш.</p></div>
+      <div class="f-card"><span class="f-ic" data-ic="target" style="--c:#12A15E"></span><h3>Колко часа до целта</h3><p>Оставащото до целта плюс постоянните разходи до края на месеца, разделени на средната ти печалба на час от смените.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="s-wrap">
+    <div class="sec-head rv"><span class="eyebrow">Пример</span><h2>Един месец на примерен шофьор</h2><p>Собствена хибридна кола, София. Ефир 40 € на седмица, автомивка 20 € на седмица, гориво около 100 € на седмица.</p></div>
+    <div class="compare">
+      <div class="cmp-card rv">
+        <h3>Септември <small>23 смени · 217 ч · 4 596 км</small></h3>
+        <div class="metrics" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:16px">
+          <div class="metric count-block"><b data-count="2011" data-suffix=" €">2 011 €</b><span>чисто за месеца</span></div>
+          <div class="metric count-block"><b data-count="87" data-suffix=" €">87 €</b><span>чисто на смяна</span></div>
+          <div class="metric count-block"><b data-count="9.24" data-dec="2" data-suffix=" €">9,24 €</b><span>чисто на час</span></div>
+          <div class="metric count-block"><b data-count="0.44" data-dec="2" data-suffix=" €">0,44 €</b><span>чисто на км</span></div>
+        </div>
+      </div>
+      <div class="cmp-card rv from-r">
+        <h3>От оборота до чистото</h3>
+        <div class="wf">
+          <div class="wf-row"><span>Оборот</span><div class="bar"><span style="--w:100%;--c:var(--y)"></span></div><b>3 145 €</b></div>
+          <div class="wf-row"><span>Гориво</span><div class="bar"><span style="--l:85.4%;--w:14.6%;--dd:120ms"></span></div><b>−460 €</b></div>
+          <div class="wf-row"><span>Ефир</span><div class="bar"><span style="--l:80%;--w:5.4%;--dd:220ms"></span></div><b>−171 €</b></div>
+          <div class="wf-row"><span>Автомивка</span><div class="bar"><span style="--l:77.3%;--w:2.7%;--dd:320ms"></span></div><b>−86 €</b></div>
+          <div class="wf-row"><span>Данъци</span><div class="bar"><span style="--l:69%;--w:8.3%;--dd:420ms"></span></div><b>−260 €</b></div>
+          <div class="wf-row"><span>Обслужване</span><div class="bar"><span style="--l:67.1%;--w:1.9%;--dd:500ms"></span></div><b>−60 €</b></div>
+          <div class="wf-row"><span>ГО, винетка, преглед</span><div class="bar"><span style="--l:65.3%;--w:1.8%;--dd:580ms"></span></div><b>−57 €</b></div>
+          <div class="wf-row"><span>Телефон, апарат, паркинг</span><div class="bar"><span style="--l:64%;--w:1.3%;--dd:660ms"></span></div><b>−40 €</b></div>
+          <div class="wf-row total"><span>Чисто</span><div class="bar"><span style="--w:64%;--c:#12A15E;--dd:760ms"></span></div><b>2 011 €</b></div>
+        </div>
+      </div>
+    </div>
+    <p class="s-muted" style="margin-top:14px;font-size:.85rem">Сумите са закръглени. Ефирът 40 € на седмица е 171 € за 30-дневен месец.</p>
+  </div>
+</section>
+
+<section class="sec alt">
+  <div class="s-wrap two-col">
+    <div class="sec-head rv"><span class="eyebrow">Един ден</span><h2>Как изглежда в реалния живот</h2><p>Нищо за помнене. Приложението ти казва кога да платиш и кого да вземеш.</p>
+      <div class="sec-foot"><a class="s-btn s-btn-y" href="/app#/register">Започни безплатно</a><a class="s-btn s-btn-line" href="/features">Всички функции</a></div></div>
+    <div class="timeline stagger">
+      <div class="tl"><b>Сутрин</b><span>Отваряш приложението: „Днес: Г-жа Николова, 5:30, летището. ГО след 3 дни.“</span></div>
+      <div class="tl"><b>Старт</b><span>Едно докосване. Часовникът тръгва.</span></div>
+      <div class="tl"><b>Зареждане</b><span>Бутон „Гориво“, сума, готово.</span></div>
+      <div class="tl"><b>Край</b><span>Кеш, карта, приложения, бакшиш и километри. Виждаш колко остава от днес и колко часа до целта.</span></div>
+    </div>
+  </div>
+</section>
+<section class="final">
+  <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
+  <div class="s-wrap rv zoom">
+    <img src="/icons/icon-192.png" width="88" height="88" alt="">
+    <h2>Карай за печалба. Не само за оборот.</h2>
+    <p>14 дни безплатно. Без карта. Започваш за минута.</p>
+    <div class="cta-row"><a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай безплатно</a><a class="s-btn s-btn-line s-btn-lg" href="/app#/login">Имам акаунт</a></div>
+  </div>
+</section>
+<div class="checker2"></div>
+
+</main>
+<div id="site-foot"></div>
+</body>
+</html>

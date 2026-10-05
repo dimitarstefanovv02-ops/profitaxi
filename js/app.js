@@ -12,6 +12,9 @@ import { shiftEditorView } from './views/shift.js';
 import { statsView } from './views/stats.js';
 import { costsView } from './views/costs.js';
 import { profileView } from './views/profile.js';
+import { reservationsView } from './views/reservations.js';
+import { inviteView } from './views/invite.js';
+import { showDueSheet } from './notify.js';
 
 applyTheme();
 
@@ -19,6 +22,7 @@ const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forg
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/onboarding': onboardingView,
+  '/reservations': reservationsView, '/invite': inviteView,
 };
 // път, икона, надпис, цвят на страницата, цвят на текста върху него
 const TABS = [
@@ -65,9 +69,9 @@ function render() {
   if (!view) return go('/home', true);
 
   const ctx = { go, route, user, data: store.myData(), rerender: render };
-  const tab = TABS.some(([p]) => p === route.name);
+  const tab = TABS.some(([p]) => p === route.name) || ['/reservations', '/invite'].includes(route.name);
   mount(app, view(ctx), route, tab);
-  if (!notified) { notified = true; checkNotifications(ctx.data); }
+  if (!notified) { notified = true; checkNotifications(ctx.data); if (route.name === '/home') setTimeout(() => showDueSheet(store.myData(), go), 600); }
 }
 let notified = false;
 

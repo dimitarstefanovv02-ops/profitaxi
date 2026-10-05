@@ -1,0 +1,19 @@
+<!doctype html><meta charset="utf-8"><pre id="out"></pre>
+<script type="module">
+import { periodStats, goalProgress } from '../js/calc.js';
+import { todayStr, addDays, startOfMonth, endOfMonth, parseDate, dateStr } from '../js/util.js';
+import * as store from '../js/store.js';
+store.resetDemo();
+store.login('ivan@demo.bg', 'demo123');
+const d = store.myData();
+const out = [];
+const t = todayStr();
+for (let k = 1; k <= 3; k++) {
+  const x = parseDate(startOfMonth(t)); x.setMonth(x.getMonth() - k);
+  const from = dateStr(x), to = endOfMonth(from);
+  const st = periodStats(d, from, to);
+  const fuelW = (st.expByCat.fuel || 0) / ((parseDate(to) - parseDate(from)) / 864e5 + 1) * 7;
+  out.push({ month: from.slice(0, 7), income: Math.round(st.income), net: Math.round(st.net), shifts: st.shifts, hours: Math.round(st.hours), perHour: st.incomePerHour.toFixed(2), netPerHour: st.netPerHour.toFixed(2), fuelWeek: Math.round(fuelW), fixed: Math.round(st.fixedExp), perDay: Math.round(st.net / st.workedDays) });
+}
+window.__r = out; document.getElementById('out').textContent = JSON.stringify(out, null, 1);
+</script>

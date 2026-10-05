@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><pre id="out"></pre>
+<script type="module">
+import { periodStats } from '../js/calc.js';
+import * as store from '../js/store.js';
+store.resetDemo(); store.login('ivan@demo.bg', 'demo123');
+const d = store.myData();
+const st = periodStats(d, '2026-09-01', '2026-09-30');
+const r = { income: st.income, cash: st.cash, card: st.card, app: st.app, tips: st.tips, fuel: st.expByCat.fuel, parking: st.expByCat.parking || 0, fixed: st.fixedByCat, fixedTotal: st.fixedExp, net: st.net, shifts: st.shifts, days: st.workedDays, hours: st.hours, km: st.km, perHour: st.incomePerHour, netPerHour: st.netPerHour, netPerKm: st.netPerKm, fuelPer100: st.fuel };
+window.__r = r; document.getElementById('out').textContent = JSON.stringify(r, null, 1);
+</script>

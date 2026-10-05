@@ -2,7 +2,8 @@
 
 import { h, fill, icon, cx, money, money2, todayStr, fmtDate, parseNum, parseDate } from '../util.js';
 import * as store from '../store.js';
-import { COST_CATS, PERIODS, costCat } from '../constants.js';
+import { COST_CATS, PERIODS, costCat, fixedCats } from '../constants.js';
+import { openCategories } from './categories.js';
 import { monthlyFixed, costMonthly, upcomingReminders, currentKm, activeCosts } from '../calc.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, empty, cardTitle, hero } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
@@ -39,7 +40,9 @@ export function costsView({ go, data }) {
 
     // Постоянни разходи
     h('div', { class: 'month-head' }, h('h2', null, 'Постоянни разходи'),
-      h('button', { class: 'chip page', onclick: () => editCost({}, data) }, icon('plus', 14), 'Добави')),
+      h('div', { class: 'row', style: { gap: '6px' } },
+        h('button', { class: 'chip', onclick: () => openCategories() }, icon('tag', 14), 'Категории'),
+        h('button', { class: 'chip page', onclick: () => editCost({}, data) }, icon('plus', 14), 'Добави'))),
     active.length
       ? h('div', { class: 'card', style: { padding: '4px 16px' } }, active.map((c) => costRow(c, data, go)))
       : empty('wallet', 'Няма постоянни разходи', 'Добави наем, такси, данъци и други, за да виждаш реалната си печалба.'),
@@ -103,8 +106,10 @@ function remRow(r, data, km) {
 function editCost(c, data) {
   const isNew = !c.id;
   const rent = data.profile.carType === 'rent';
-  const d = { name: '', category: rent ? 'license' : 'insurance', amount: 0, period: 'year', dueDate: '', endDate: '', ...c };
-  if (isNew) { d.name = COST_CATS[d.category].label; d.period = COST_CATS[d.category].period || 'month'; }
+  const list = fixedCats(data.profile);
+  const first = list[0] || { key: 'other', ...COST_CATS.other };
+  const d = { name: '', category: first.key, amount: 0, period: 'month', dueDate: '', endDate: '', ...c };
+  if (isNew) { d.name = first.label; d.period = first.period || 'month'; }
   openSheet((close) => {
     const body = h('div', { class: 'form' });
     const nameIn = h('input', { class: 'input', value: d.name, oninput: (e) => { d.name = e.target.value; } });
@@ -112,16 +117,17 @@ function editCost(c, data) {
     const dueIn = h('input', { class: 'input', type: 'date', value: d.dueDate || '' });
     const endIn = h('input', { class: 'input', type: 'date', value: d.endDate || '' });
     const err = h('p', { class: 'err' });
-    const cats = Object.entries(COST_CATS).filter(([, v]) => !v.system && !(rent && v.owner));
+    const cats = list.map((x) => [x.key, x]);
     const draw = () => fill(body,
       isNew && h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Вид'),
         h('div', { class: 'chips', style: { marginBottom: 0 } }, cats.map(([k, v]) =>
           h('button', { type: 'button', class: cx('chip-btn', d.category === k && 'on'), onclick: () => {
-            const auto = !d.name || d.name === COST_CATS[d.category].label;
+            const auto = !d.name || d.name === costCat(d.category).label;
             d.category = k; if (auto) { d.name = v.label; nameIn.value = v.label; }
             d.period = v.period || d.period;
             draw();
-          } }, v.label)))),
+          } }, v.label)),
+          h('button', { type: 'button', class: 'chip-btn', style: { borderStyle: 'dashed', borderColor: 'var(--line)' }, onclick: () => { close(); openCategories(); } }, icon('plus', 14), 'Категория'))),
       field('Име', nameIn),
       field(`Сума ${PERIODS[d.period].label}`, amountIn),
       h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Колко често се плаща'),

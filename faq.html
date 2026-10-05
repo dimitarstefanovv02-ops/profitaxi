@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Въпроси – ProfiTaxi</title>
+  <meta name="description" content="Често задавани въпроси за ProfiTaxi: коли под наем и на лизинг, разходи, напомняния, резервации, покани, данни и абонамент.">
+  <meta name="theme-color" content="#07080B">
+  <meta property="og:title" content="Въпроси – ProfiTaxi">
+  <meta property="og:description" content="Често задавани въпроси за ProfiTaxi: коли под наем и на лизинг, разходи, напомняния, резервации, покани, данни и абонамент.">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/icons/favicon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap&subset=cyrillic">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <script>
+    (function () {
+      // Стари линкове (/#/…) и инсталираното приложение отиват в /app
+      if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
+      if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
+      // Тема преди изрисуване, за да няма премигване
+      var t; try { t = localStorage.getItem('profitaxi.theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <script type="module" src="/js/landing.js"></script>
+</head>
+<body class="site">
+<div id="site-head"></div>
+<main>
+<section class="page-hero">
+  <div class="glow v" style="width:480px;height:480px;right:-180px;top:-160px"></div>
+  <div class="s-wrap">
+    <div class="crumbs rv"><a href="/">Начало</a> / Въпроси</div>
+    <h1 class="rv" style="--d:80ms">Често задавани <span class="y-text y">въпроси</span></h1>
+    <p class="lead rv" style="--d:160ms">Не намираш отговор? Пиши ни на <a class="s-link" href="mailto:support@profitaxi.bg">support@profitaxi.bg</a></p>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:10px">
+  <div class="s-wrap faq" style="max-width:860px">
+
+    <div class="faq-group rv">
+      <h3>Общи</h3>
+      <details><summary>Какво е ProfiTaxi?</summary><p>Мобилно приложение за таксиметрови шофьори, което записва смените, приходите и разходите ти и показва реалната чиста печалба: на смяна, на час, на километър, за месеца и годината. Името идва от Profit (печалба), Taxi (професията) и Profi (професионалист).</p></details>
+      <details><summary>За кои таксиметрови шофьори е подходящо?</summary><p>За всеки шофьор, който кара такси в България: със собствена кола, под наем или на лизинг, на пълно или непълно работно време, с ефир, с приложения или и двете. Не е нужно да разбираш от счетоводство.</p></details>
+      <details><summary>Работи ли във всеки град?</summary><p>Да. София, Пловдив, Варна, Бургас и навсякъде другаде. При регистрация избираш града и компанията си, а ако ги няма в списъка, ги въвеждаш сам.</p></details>
+      <details><summary>Свързано ли е с някоя таксиметрова компания?</summary><p>Не. ProfiTaxi е независимо приложение и работи за шофьора, не за фирмата.</p></details>
+      <details><summary>Трябва ли да разбирам от счетоводство?</summary><p>Не. Въвеждаш суми с големи бутони, а приложението смята всичко. Няма таблици и формули.</p></details>
+      <details><summary>Колко време отнема на ден?</summary><p>Около 10 секунди при старт и 10–20 секунди в края на смяната. Постоянните разходи въвеждаш веднъж.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Кола и разходи</h3>
+      <details><summary>Мога ли да използвам приложението със собствена кола?</summary><p>Да. Избираш „Собствена“ и добавяш разходите на собственик: застраховка, каско, ГО, винетка, преглед, обслужване, гуми, данъци. Всички се разпределят по дни, за да е честна чистата печалба за всеки ден.</p></details>
+      <details><summary>А с кола под наем?</summary><p>Да. Избираш „Под наем“ и въвеждаш наема на ден, седмица или месец. Разходите на собственика (каско, винетка, преглед, сервиз) се скриват, защото не ги плащаш ти.</p></details>
+      <details><summary>А с автомобил на лизинг?</summary><p>Да. Избираш „Лизинг“, въвеждаш вноската и падежа ѝ и получаваш напомняне преди всяко плащане. Останалите разходи на собственик също са налични.</p></details>
+      <details><summary>Мога ли сам да добавям разходи?</summary><p>Да. От „Категории“ добавяш свои категории (например „Гараж“ или „Магистрала“) и скриваш тези, които не ползваш. Важи и за бутоните в смяната, и за постоянните разходи.</p></details>
+      <details><summary>Колата ни е обща с друг шофьор. Как да смятам?</summary><p>Задаваш какъв процент от разходите на колата поемаш ти, например 50%. Приложението смята само твоя дял.</p></details>
+      <details><summary>Плащам ефира на седмица, а понякога на ден. Как се смята?</summary><p>Избираш на ден, седмица или месец. Дневната такса се смята само в дните, в които работиш. Смяната не променя миналите месеци.</p></details>
+      <details><summary>Какво гориво поддържа?</summary><p>Бензин, дизел, бензин и газ, само газ, хибрид и ток. Виждаш разхода си на 100 км и цената на километър.</p></details>
+      <details><summary>Мога ли да въведа данъците като разход?</summary><p>Да, ако искаш. Добавяш ги като постоянен разход с период и падеж. Ако не искаш, просто не ги добавяш.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Печалба и статистика</h3>
+      <details><summary>Как се изчислява чистата печалба?</summary><p>Оборот (кеш, карта, приложения, бакшиш) минус разходите от смяната (гориво, паркинг, автомивка…) минус постоянните разходи, разпределени по дни. Например годишна винетка от 97 € е 0,27 € на ден. Подробно е описано в <a href="/how">Как работи</a>.</p></details>
+      <details><summary>Как работи целта за месеца?</summary><p>Задаваш колко искаш да изкараш чисто. На началния екран виждаш колко си изкарал, колко остава и колко часа още трябва при твоята средна печалба на час.</p></details>
+      <details><summary>Мога ли да видя кои дни и часове са най-печеливши?</summary><p>Да. В „Статистика“ виждаш печалбата на час по дни от седмицата и по часове, както и рекордите си.</p></details>
+      <details><summary>Мога ли да дам отчет на счетоводителя си?</summary><p>Да. Сваляш смените в Excel или правиш PDF отчет за избран период.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Резервации и напомняния</h3>
+      <details><summary>Мога ли да добавям лични резервации?</summary><p>Да. Записваш дата, час, от къде, до къде и име на клиента, а по желание телефон, договорена цена и бележка. Предстоящите се виждат на началния екран. Обаждаш се и отваряш маршрута с едно докосване.</p></details>
+      <details><summary>Как работят напомнянията?</summary><p>За всеки постоянен разход с падеж получаваш напомняне 3, 2 и 1 ден преди плащането и в самия ден. Ако си разрешил известия, идват на телефона. Ако не си или приложението е било затворено, при следващото отваряне виждаш пропуснатите и предстоящите плащания. Напомня и за резервациите днес и утре.</p></details>
+      <details><summary>Какво става след като отбележа „Платено“?</summary><p>Следващият падеж се изчислява автоматично според периода: след седмица, месец, тримесечие или година.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Покани</h3>
+      <details><summary>Как работи програмата с покани?</summary><p>Всеки шофьор има личен код. Когато колеги се регистрират с него, получаваш безплатни месеци: 5 успешни регистрации = 1 безплатен месец, 8 регистрации = 2 безплатни месеца. Прогресът е в раздел „Покани колеги“.</p></details>
+      <details><summary>Къде намирам кода си?</summary><p>В приложението: Профил → Покани колеги. Можеш да копираш кода или да изпратиш готов линк.</p></details>
+      <details><summary>Какво получава колегата, когото каня?</summary><p>Същите 14 дни безплатно и собствен код, с който да кани и той.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Данни и сигурност</h3>
+      <details><summary>Какво става с данните ми?</summary><p>Виждаш ги само ти. Таксиметровата ти компания и другите шофьори нямат достъп до тях. Екипът на ProfiTaxi има достъп за поддръжка и обобщена статистика, както е описано в <a href="/privacy">политиката за поверителност</a>. Можеш да ги свалиш в Excel или да изтриеш акаунта си по всяко време.</p></details>
+      <details><summary>Фирмата ми вижда ли колко изкарвам?</summary><p>Не. Нито фирмата, нито колегите ти виждат твоите суми.</p></details>
+      <details><summary>Мога ли да изтрия акаунта си?</summary><p>Да, от Профил → Изтрий акаунта. Всички смени, разходи и настройки се изтриват.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Устройства и изглед</h3>
+      <details><summary>Мога ли да използвам приложението и от телефон?</summary><p>Да, направено е преди всичко за телефон и за работа с една ръка. Отваряш го в браузъра и го добавяш към началния екран, след което се отваря като обикновено приложение. Работи на iPhone, Android, таблет и компютър.</p></details>
+      <details><summary>Трябва ли да го свалям от App Store или Google Play?</summary><p>Не. Добавяш го към началния екран от браузъра. Получаваш икона и цял екран, без да чакаш изтегляне.</p></details>
+      <details><summary>Има ли Dark Mode?</summary><p>Да. Светла, тъмна или автоматична тема според телефона. Тъмната е удобна за нощни смени. Сайтът също има светла и тъмна тема – бутонът е горе вдясно.</p></details>
+    </div>
+
+    <div class="faq-group rv">
+      <h3>Абонамент</h3>
+      <details><summary>Колко струва?</summary><p>9,99 € на месец или 99 € на година. Първите 14 дни са безплатни. Виж <a href="/pricing">Цена</a>.</p></details>
+      <details><summary>Трябва ли да въвеждам карта, за да пробвам?</summary><p>Не. Регистрираш се с имейл и парола и ползваш всичко 14 дни безплатно.</p></details>
+      <details><summary>Мога ли да прекратя абонамента си?</summary><p>Да, по всяко време и без неустойки. Абонаментът важи до края на платения период, а данните ти остават, ако решиш да се върнеш.</p></details>
+    </div>
+  </div>
+</section>
+<section class="final">
+  <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
+  <div class="s-wrap rv zoom">
+    <img src="/icons/icon-192.png" width="88" height="88" alt="">
+    <h2>Карай за печалба. Не само за оборот.</h2>
+    <p>14 дни безплатно. Без карта. Започваш за минута.</p>
+    <div class="cta-row"><a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай безплатно</a><a class="s-btn s-btn-line s-btn-lg" href="/app#/login">Имам акаунт</a></div>
+  </div>
+</section>
+<div class="checker2"></div>
+
+</main>
+<div id="site-foot"></div>
+</body>
+</html>

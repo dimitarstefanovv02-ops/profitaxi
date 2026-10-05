@@ -4,12 +4,12 @@
 // се заменя с истинска база (напр. Supabase) без промени по интерфейса.
 
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
-import { CAR_TYPES, COST_CATS, COMPANIES, OTHER } from './constants.js';
+import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './constants.js';
 
-const KEY = 'profitaxi.v4'; // нов ключ за всяка несъвместима версия на данните
+const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 4;
+const VERSION = 5;
 const listeners = new Set();
 let db = null;
 
@@ -18,13 +18,15 @@ function load() {
   try { db = JSON.parse(localStorage.getItem(KEY)); } catch { db = null; }
   if (db && db.version > VERSION) { location.reload(); return db; } // друг раздел вече е с по-нова версия
   if (!db || db.version !== VERSION) { db = seed(); persist(); }
+  registerAllCustom();
   return db;
 }
+function registerAllCustom() { Object.values(db.profiles).forEach((p) => registerCustomCats(p.customCats)); }
 function persist() { localStorage.setItem(KEY, JSON.stringify(db)); }
 function commit() { persist(); listeners.forEach((fn) => fn()); }
 export const onChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export function resetDemo() { localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
-['profitaxi.v1', 'profitaxi.v2'].forEach((k) => localStorage.removeItem(k)); // стари демо данни
+['profitaxi.v1', 'profitaxi.v2', 'profitaxi.v4'].forEach((k) => localStorage.removeItem(k)); // стари демо данни
 
 // Синхронизация между отворени раздели
 // Само чете – никога не записва в отговор на друг раздел, за да няма безкрайно презаписване
@@ -33,6 +35,7 @@ window.addEventListener('storage', (e) => {
   let next; try { next = JSON.parse(e.newValue); } catch { return; }
   if (!next || next.version !== VERSION) { if (next && next.version > VERSION) location.reload(); return; }
   db = next;
+  registerAllCustom();
   listeners.forEach((fn) => fn());
 });
 
@@ -84,7 +87,11 @@ export function register(f) {
   load();
   const err = validateAccount(f);
   if (err) return { error: err };
+  const code = (f.refCode || '').trim().toUpperCase();
+  const referrer = code ? db.users.find((x) => x.refCode === code && x.role === 'driver') : null;
+  if (code && !referrer) return { error: 'Няма такъв код за покана. Провери го или остави полето празно.' };
   const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
+  if (referrer) { u.referredBy = referrer.id; applyReferralRewards(referrer); }
   localStorage.setItem(SESSION_KEY, u.id);
   commit();
   return { user: clone(u) };
@@ -95,12 +102,14 @@ function newDriver({ name, email, password, phone = '', city, company, trialDays
     id: uid(), role: 'driver', name: name.trim(), email: email.trim(), password, phone, city: city.trim(), company: company.trim(),
     status: 'active', createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(),
     subscription: { plan, validUntil: addDays(today, trialDays) },
+    refCode: makeRefCode(name), referredBy: null, refMonths: 0,
   };
   db.users.push(u);
   db.profiles[u.id] = {
     onboarded: false, carType: 'own', fuel: 'petrol_lpg',
     leasing: { amount: 0 }, rent: { amount: 0, period: 'week' },
     dispatch: { mode: 'none', amount: 0 }, sharePct: 100, monthlyGoal: 2000, notify: false,
+    customCats: [], hiddenCats: [], car: { code: '', plate: '', model: '' }, photo: null, carPhoto: null,
     ...profile,
   };
   return u;
@@ -131,6 +140,7 @@ function wipeUser(id) {
   db.shifts = db.shifts.filter((x) => x.userId !== id);
   db.costs = db.costs.filter((x) => x.userId !== id);
   db.reminders = db.reminders.filter((x) => x.userId !== id);
+  db.reservations = db.reservations.filter((x) => x.userId !== id);
 }
 function me() { load(); const id = localStorage.getItem(SESSION_KEY); return db.users.find((x) => x.id === id && x.role === 'driver'); }
 function myId() { const u = me(); if (!u) throw new Error('not signed in'); return u.id; }
@@ -148,6 +158,7 @@ function userData(id) {
     shifts: clone(db.shifts.filter((s) => s.userId === id)).sort((a, b) => b.start.localeCompare(a.start)),
     costs: clone(db.costs.filter((c) => c.userId === id)),
     reminders: clone(db.reminders.filter((r) => r.userId === id)),
+    reservations: clone(db.reservations.filter((r) => r.userId === id)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)),
   };
 }
 export function lastKm() {
@@ -237,6 +248,70 @@ export function markReminderDone(rid, currentKm = 0) {
   else db.reminders = db.reminders.filter((x) => x !== r);
   commit();
 }
+// ================= Лични резервации =================
+export function saveReservation(r) {
+  const id = myId();
+  const x = { ...clone(r), userId: id };
+  if (!x.id) { x.id = uid(); x.createdAt = new Date().toISOString(); }
+  const i = db.reservations.findIndex((y) => y.id === x.id);
+  if (i >= 0) { if (db.reservations[i].userId !== id) return null; db.reservations[i] = x; } else db.reservations.push(x);
+  commit(); return clone(x);
+}
+export function deleteReservation(rid) { const id = myId(); db.reservations = db.reservations.filter((r) => !(r.id === rid && r.userId === id)); commit(); }
+export function setReservationDone(rid, done) { const id = myId(); const r = db.reservations.find((x) => x.id === rid && x.userId === id); if (r) { r.done = !!done; commit(); } }
+
+// ================= Категории разходи =================
+// kind: 'shift' (по време на смяна), 'fixed' (периодичен) или 'both'
+export function addCustomCat(label, kind = 'both') {
+  const id = myId(); const p = db.profiles[id];
+  const name = String(label || '').trim();
+  if (!name) return { error: 'Въведи име на категорията' };
+  p.customCats = p.customCats || [];
+  if (p.customCats.some((c) => c.label.toLowerCase() === name.toLowerCase())) return { error: 'Вече има такава категория' };
+  const cat = { id: 'u_' + uid(), label: name, kind };
+  p.customCats.push(cat);
+  registerCustomCats(p.customCats);
+  commit(); return { cat };
+}
+export function removeCustomCat(cid) { const p = db.profiles[myId()]; p.customCats = (p.customCats || []).filter((c) => c.id !== cid); commit(); }
+// key: 's:fuel' за смяна, 'f:casco' за периодичен
+export function toggleCat(key) {
+  const p = db.profiles[myId()];
+  const set = new Set(p.hiddenCats || []);
+  if (set.has(key)) set.delete(key); else set.add(key);
+  p.hiddenCats = [...set]; commit();
+}
+
+// ================= Покани (referral) =================
+const TRANSLIT = { а: 'A', б: 'B', в: 'V', г: 'G', д: 'D', е: 'E', ж: 'ZH', з: 'Z', и: 'I', й: 'Y', к: 'K', л: 'L', м: 'M', н: 'N', о: 'O', п: 'P', р: 'R', с: 'S', т: 'T', у: 'U', ф: 'F', х: 'H', ц: 'TS', ч: 'CH', ш: 'SH', щ: 'SHT', ъ: 'A', ь: 'Y', ю: 'YU', я: 'YA' };
+function makeRefCode(name) {
+  const first = String(name || 'TAXI').trim().split(/\s+/)[0].toLowerCase();
+  const base = ([...first].map((ch) => TRANSLIT[ch] ?? (/[a-z0-9]/.test(ch) ? ch.toUpperCase() : '')).join('') || 'TAXI').slice(0, 8);
+  let code;
+  do { code = `${base}-${Math.random().toString(36).slice(2, 6).toUpperCase().replace(/[O0I1]/g, 'X')}`; } while (db?.users?.some((u) => u.refCode === code));
+  return code;
+}
+export const REF_TIERS = [{ count: 5, months: 1 }, { count: 8, months: 2 }];
+// Награди: 5 регистрирани = 1 безплатен месец, 8 = общо 2. Добавят се към абонамента.
+function applyReferralRewards(referrer) {
+  const count = db.users.filter((x) => x.referredBy === referrer.id).length;
+  const earned = REF_TIERS.filter((t) => count >= t.count).reduce((m, t) => Math.max(m, t.months), 0);
+  const add = earned - (referrer.refMonths || 0);
+  if (add > 0) {
+    const base = referrer.subscription.validUntil > todayStr() ? referrer.subscription.validUntil : todayStr();
+    referrer.subscription.validUntil = addDays(base, 30 * add);
+    referrer.refMonths = earned;
+  }
+}
+export function myReferrals() {
+  const u = me(); if (!u) return null;
+  const invited = db.users.filter((x) => x.referredBy === u.id).map((x) => ({ name: x.name.split(' ')[0] + ' ' + (x.name.split(' ')[1] || '').slice(0, 1) + '.', date: x.createdAt.slice(0, 10) })).sort((a, b) => b.date.localeCompare(a.date));
+  const count = invited.length;
+  const next = REF_TIERS.find((t) => count < t.count) || null;
+  return { code: u.refCode, invited, count, months: u.refMonths || 0, next, tiers: REF_TIERS };
+}
+export const refExists = (code) => { load(); return db.users.some((x) => x.refCode === String(code || '').trim().toUpperCase()); };
+
 export function deleteReminder(rid) { const id = myId(); db.reminders = db.reminders.filter((r) => !(r.id === rid && r.userId === id)); commit(); }
 
 // Обновява профила. Настройките за кола и ефир се превръщат в постоянни
@@ -336,15 +411,12 @@ const LAST = ['Петров', 'Димитров', 'Колева', 'Ангело�
 const LAT = { 'Иван': 'ivan', 'Георги': 'georgi', 'Мария': 'maria', 'Стоян': 'stoyan', 'Николай': 'nikolay', 'Димитър': 'dimitar', 'Петър': 'petar', 'Христо': 'hristo', 'Тодор': 'todor', 'Елена': 'elena', 'Красимир': 'krasimir', 'Васил': 'vasil', 'Атанас': 'atanas', 'Росен': 'rosen', 'Пламен': 'plamen', 'Йордан': 'yordan', 'Светлин': 'svetlin', 'Милена': 'milena', 'Борислав': 'borislav', 'Стефан': 'stefan', 'Калоян': 'kaloyan', 'Ангел': 'angel' };
 
 function seed() {
-  db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], settings: { trialDays: 14, price: 9.99 } };
+  db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: 9.99 } };
   const today = todayStr();
   db.users.push({ id: 'admin', role: 'admin', name: 'Администратор', email: 'admin@profitaxi.bg', password: 'admin123', status: 'active', createdAt: new Date().toISOString() });
 
   // Основните демо профили – фиксирани, за да могат да се пробват
   const fixed = [
-    { name: 'Иван Петров', email: 'ivan@demo.bg', city: 'Пловдив', company: 'ONE Такси – 032 22 22', seed: 11, days: 150, plan: 'paid', valid: 20,
-      profile: { carType: 'own', fuel: 'petrol_lpg', dispatch: { mode: 'weekly', amount: 40 }, monthlyGoal: 2500 },
-      style: { workProb: 0.84, night: 0.35, rate: 0.95, kmMin: 170, kmMax: 300 } },
     { name: 'Георги Димитров', email: 'georgi@demo.bg', city: 'Пловдив', company: 'Еко Такси 6155', seed: 23, days: 120, plan: 'paid', valid: 45,
       profile: { carType: 'rent', fuel: 'diesel', rent: { amount: 140, period: 'week' }, dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1800 },
       style: { workProb: 0.9, night: 0.6, rate: 0.9, kmMin: 200, kmMax: 340 } },
@@ -391,8 +463,69 @@ function seed() {
     });
   }
 
+  const ivan = seedPersona(today);
   for (const d of [...fixed, ...extra]) seedDriver(d, today);
+  // Шестима колеги са се регистрирали с кода на Иван → 1 спечелен месец, 6 от 8 към втория
+  db.users.filter((u) => u.role === 'driver' && u.id !== ivan.id).slice(4, 10).forEach((u) => { u.referredBy = ivan.id; });
+  ivan.refMonths = 1;
   return db;
+}
+
+// Демо шофьорът за пробване и за снимките на сайта. Измислен човек, кола и фирма.
+// Сметката е реалистична: около 3100 € оборот и около 2000 € чисто на месец.
+//   Постоянни: ефир 40 €/седм., автомивка 20 €/седм., данъци 260, обслужване 60, застраховки и др. ≈ 670 €/мес
+//   Гориво: ≈ 20 € на смяна ≈ 100 €/седм. ≈ 440 €/мес
+//   22 смени × 9,5 ч × ≈ 14,8 €/ч ≈ 3100 € оборот
+function seedPersona(today) {
+  const r = rng(2026);
+  const days = 150;
+  const startDay = addDays(today, -days);
+  const u = newDriver({ name: 'Иван Петров', email: 'ivan@demo.bg', password: 'demo123', phone: '0888 214 214', city: 'София', company: 'Lumen Taxi', trialDays: 0, plan: 'paid',
+    profile: { onboarded: true, carType: 'own', fuel: 'hybrid', dispatch: { mode: 'weekly', amount: 40 }, monthlyGoal: 2000,
+      car: { code: '214', plate: 'СВ 4827 КТ', model: 'Toyota Corolla Hybrid' }, photo: '/img/demo-avatar.svg', carPhoto: '/img/demo-car.jpg' } });
+  u.createdAt = new Date(startDay + 'T09:00:00').toISOString();
+  u.subscription = { plan: 'paid', validUntil: addDays(today, 20), paidSince: addDays(startDay, 14) };
+  u.refCode = 'IVAN-214';
+  const add = (c) => db.costs.push({ id: uid(), userId: u.id, startDate: startDay, endDate: null, dueDate: null, payments: [], ...c });
+  add({ system: 'dispatch', name: 'Ефир / диспечер', category: 'dispatch', amount: 40, period: 'week', perWorkDay: false });
+  add({ name: 'Автомивка (абонамент)', category: 'wash', amount: 20, period: 'week' });
+  add({ name: 'Данъци и осигуровки', category: 'taxes', amount: 260, period: 'month', dueDate: addDays(today, 18) });
+  add({ name: 'Обслужване', category: 'service', amount: 60, period: 'month' });
+  add({ name: 'Гражданска отговорност', category: 'insurance', amount: 120, period: 'quarter', dueDate: addDays(today, 5) });
+  add({ name: 'Винетка', category: 'vignette', amount: 97, period: 'year', dueDate: addDays(today, 14) });
+  add({ name: 'Технически преглед', category: 'inspection', amount: 120, period: 'year', dueDate: addDays(today, 40) });
+  add({ name: 'Телефон и интернет', category: 'phone', amount: 20, period: 'month', dueDate: addDays(today, 9) });
+  add({ name: 'Таксиметров апарат', category: 'meter', amount: 12, period: 'month' });
+  let km = 241380;
+  for (let i = days; i >= 1; i--) {
+    const day = addDays(today, -i);
+    const wd = (new Date(day + 'T12:00:00').getDay() + 6) % 7;
+    const work = wd <= 4 ? r() < 0.93 : wd === 5 ? r() < 0.45 : false;
+    if (!work) continue;
+    const evening = r() < 0.3;
+    const start = new Date(day + 'T00:00:00'); start.setHours(evening ? 15 : 7, Math.floor(r() * 4) * 15);
+    const hours = 8.5 + r() * 2;
+    const end = new Date(start.getTime() + hours * 3600000);
+    const k = Math.round(hours * (19.5 + r() * 3));
+    const rate = 14.0 * (wd === 4 ? 1.1 : wd === 5 ? 1.15 : 1) * (0.92 + r() * 0.16);
+    const gross = hours * rate;
+    const tips = round2(gross * (0.02 + r() * 0.02));
+    const rest = gross - tips;
+    const card = round2(rest * (0.26 + r() * 0.08)), app = round2(rest * (0.1 + r() * 0.06));
+    const income = { cash: round2(rest - card - app), card, app, tips };
+    const qty = round2(k * 0.074 * (0.95 + r() * 0.1));
+    const expenses = [{ id: uid(), category: 'fuel', fuelType: 'petrol', amount: round2(qty * 1.36), qty }];
+    if (r() < 0.15) expenses.push({ id: uid(), category: 'parking', amount: 2 });
+    db.shifts.push({ id: uid(), userId: u.id, start: start.toISOString(), end: end.toISOString(), kmStart: km, kmEnd: km + k, income, expenses, note: '' });
+    km += k + Math.floor(r() * 6);
+  }
+  db.reminders.push({ id: uid(), userId: u.id, title: 'Смяна на масло', dueKm: km + 1350, everyKm: 10000, dueDate: null, repeat: 'none' });
+  const res = (o) => db.reservations.push({ id: uid(), userId: u.id, phone: '', price: null, note: '', done: false, createdAt: new Date().toISOString(), ...o });
+  res({ date: addDays(today, 1), time: '05:30', from: 'ж.к. Младост 1, бл. 12', to: 'Летище София, Терминал 2', client: 'Г-жа Николова', phone: '0887 112 233', price: 25, note: 'Полет в 07:40, два куфара' });
+  res({ date: addDays(today, 3), time: '18:00', from: 'хотел „Маринела“', to: 'Централна гара', client: 'Мартин', price: 15 });
+  res({ date: addDays(today, 6), time: '09:00', from: 'НДК', to: 'Банско, хотел „Гранд“', client: 'Семейство Илиеви', phone: '0899 456 789', price: 140, note: 'Детско столче' });
+  res({ date: addDays(today, -4), time: '06:15', from: 'бул. „България“ 51', to: 'Летище София, Терминал 1', client: 'Г-н Стоянов', price: 22, done: true });
+  return u;
 }
 
 function seedDriver(d, today) {

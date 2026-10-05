@@ -45,6 +45,8 @@ export function registerView({ go }) {
   const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg' });
   const phone = input({ type: 'tel', autocomplete: 'tel', inputmode: 'tel', placeholder: '08xx xxx xxx' });
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
+  const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
+  const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const cc = cityCompanyPicker();
   let carType = '';
   const carBox = h('div');
@@ -68,7 +70,7 @@ export function registerView({ go }) {
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
-    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType });
+    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value });
     if (r.error) { err.textContent = r.error; return; }
     toast('Акаунтът е създаден');
     go('/onboarding');
@@ -84,7 +86,8 @@ export function registerView({ go }) {
         field('Име', name, null, true),
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
-        field('Телефон', phone, 'По желание')),
+        field('Телефон', phone, 'По желание'),
+        field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
       group('target', 'Къде караш', cc.el),
       group('car', 'Колата е', carBox),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),

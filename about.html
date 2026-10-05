@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Какво е ProfiTaxi</title>
+  <meta name="description" content="Profit + Taxi + Profi. Защо създадохме ProfiTaxi и как помага на таксиметровия шофьор да знае колко реално печели.">
+  <meta name="theme-color" content="#07080B">
+  <meta property="og:title" content="Какво е ProfiTaxi">
+  <meta property="og:description" content="Profit + Taxi + Profi. Защо създадохме ProfiTaxi и как помага на таксиметровия шофьор да знае колко реално печели.">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="/icons/favicon-64.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&family=Unbounded:wght@500;600;700&display=swap&subset=cyrillic">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <script>
+    (function () {
+      // Стари линкове (/#/…) и инсталираното приложение отиват в /app
+      if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
+      if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
+      // Тема преди изрисуване, за да няма премигване
+      var t; try { t = localStorage.getItem('profitaxi.theme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+  <script type="module" src="/js/landing.js"></script>
+</head>
+<body class="site">
+<div id="site-head"></div>
+<main>
+<section class="page-hero">
+  <div class="glow v" style="width:480px;height:480px;right:-180px;top:-160px"></div>
+  <div class="s-wrap">
+    <div class="crumbs rv"><a href="/">Начало</a> / Какво е ProfiTaxi</div>
+    <h1 class="rv" style="--d:80ms">Изкарването на пари е<br>само <span class="y-text y">половината</span>.</h1>
+    <p class="lead rv" style="--d:160ms">ProfiTaxi е личният финансов помощник на таксиметровия шофьор. Записваш смените и разходите си за секунди и винаги знаеш колко реално печелиш.</p>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:20px">
+  <div class="s-wrap">
+    <div class="name-split stagger">
+      <div class="ns p" style="--c:#12A15E"><b>Profit</b><span>Печалбата. Не оборотът, а това, което остава.</span></div>
+      <div class="ns t" style="--c:var(--y)"><b>Taxi</b><span>Професията. Смените, километрите, клиентите.</span></div>
+      <div class="ns f" style="--c:var(--v)"><b>Profi</b><span>Професионалистът, който знае цифрите си.</span></div>
+    </div>
+    <blockquote class="quote2 rv">
+      <p>Създадохме ProfiTaxi, защото работата като таксиметров шофьор може да бъде много доходоносна, но изкарването на пари е само половината от уравнението.</p>
+      <p>Също толкова важни са отчетността, проследяването на разходите, предстоящите плащания, очакваните приходи и реалната чиста печалба. Повечето шофьори пазят това в главата си, в тефтер или никъде.</p>
+      <p><b>Ние го направихме на 10 секунди на ден.</b></p>
+      <footer>Екипът на ProfiTaxi</footer>
+    </blockquote>
+  </div>
+</section>
+
+<section class="sec alt">
+  <div class="s-wrap">
+    <div class="sec-head rv"><span class="eyebrow">Защо</span><h2>Добрият ден не винаги е печеливш ден.</h2></div>
+    <div class="compare">
+      <div class="cmp-card rv">
+        <h3>Без ProfiTaxi</h3>
+        <div class="myth">
+          <div><i>×</i>Броиш оборота и мислиш, че това е заплатата.</div>
+          <div><i>×</i>Каското, винетката и ГО идват „изневиделица“.</div>
+          <div><i>×</i>Не знаеш дали нощната смяна си струва.</div>
+          <div><i>×</i>Резервациите са в бележки, чатове и в главата ти.</div>
+        </div>
+      </div>
+      <div class="cmp-card rv from-r">
+        <h3>С ProfiTaxi</h3>
+        <div class="myth good">
+          <div><i>✓</i>Виждаш чистата печалба след всяка смяна.</div>
+          <div><i>✓</i>Годишните такси са разпределени по дни и имат напомняне.</div>
+          <div><i>✓</i>Знаеш кои дни и часове носят най-много на час.</div>
+          <div><i>✓</i>Резервациите и падежите са на началния екран.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="s-wrap two-col">
+    <div class="sec-head rv"><span class="eyebrow">Един ден с ProfiTaxi</span><h2>10 секунди сутрин, 10 секунди вечер.</h2><p>Не е счетоводна програма. Не е Excel. Приложение, направено за човек, който е зад волана по 10 часа.</p></div>
+    <div class="timeline stagger">
+      <div class="tl"><b>07:00 · Старт</b><span>Едно докосване и смяната тръгва. Виждаш днешната резервация за летището.</span></div>
+      <div class="tl"><b>13:20 · Гориво</b><span>Зареждаш. Записваш сумата с големия бутон „Гориво“.</span></div>
+      <div class="tl"><b>17:30 · Стоп</b><span>Въвеждаш кеш, карта, приложения и бакшиш. Километрите и часовете се смятат.</span></div>
+      <div class="tl"><b>17:31 · Чисто</b><span>„Днес остават 96 €. До целта за месеца: 425 € или около 46 часа.“</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="sec alt">
+  <div class="s-wrap">
+    <div class="sec-head c rv"><span class="eyebrow">Принципи</span><h2>В какво вярваме</h2></div>
+    <div class="f-grid stagger">
+      <div class="f-card"><span class="f-ic" data-ic="bolt" style="--c:#F5A524"></span><h3>Минимум въвеждане</h3><p>Ако нещо отнема повече от 2 докосвания, го правим по-просто.</p></div>
+      <div class="f-card"><span class="f-ic" data-ic="eye" style="--c:#12A15E"></span><h3>Истински числа</h3><p>Без украсяване. Всеки разход се вижда, включително годишните.</p></div>
+      <div class="f-card"><span class="f-ic" data-ic="lock" style="--c:#8B5CF6"></span><h3>Твоите данни са твои</h3><p>Фирмата ти и колегите ти не виждат нищо. Можеш да ги свалиш или изтриеш по всяко време.</p></div>
+      <div class="f-card"><span class="f-ic" data-ic="pin" style="--c:#3B82F6"></span><h3>Независими</h3><p>Не сме свързани с никоя таксиметрова фирма. Работим за шофьора.</p></div>
+    </div>
+  </div>
+</section>
+<section class="final">
+  <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
+  <div class="s-wrap rv zoom">
+    <img src="/icons/icon-192.png" width="88" height="88" alt="">
+    <h2>Карай за печалба. Не само за оборот.</h2>
+    <p>14 дни безплатно. Без карта. Започваш за минута.</p>
+    <div class="cta-row"><a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай безплатно</a><a class="s-btn s-btn-line s-btn-lg" href="/app#/login">Имам акаунт</a></div>
+  </div>
+</section>
+<div class="checker2"></div>
+
+</main>
+<div id="site-foot"></div>
+</body>
+</html>

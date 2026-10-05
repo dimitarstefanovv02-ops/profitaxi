@@ -7,6 +7,8 @@ import { carBlock, fuelBlock, dispatchBlock, shareBlock, goalBlock } from './car
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { cityCompanyPicker } from './cityPicker.js';
+import { openCategories, pickImage } from './categories.js';
+import { upcomingReservations } from './reservations.js';
 import { exportCsv } from './stats.js';
 
 export function profileView({ go, user, data }) {
@@ -18,19 +20,11 @@ export function profileView({ go, user, data }) {
     const sub = user.subscription;
     const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
     fill(root,
-      hero(
-        h('div', { class: 'hero-top' },
-          h('div', { class: 'row gap' },
-            h('div', { class: 'avatar', style: { width: '58px', height: '58px', fontSize: '1.15rem', background: '#fff', color: '#0E6F66' } }, user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')),
-            h('div', { style: { minWidth: 0 } },
-              h('h1', { style: { fontSize: '1.25rem' } }, user.name),
-              h('div', { class: 'hero-sub', style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, user.email))),
-          h('button', { class: 'hero-btn', 'aria-label': 'Редактирай профила', onclick: () => editAccount(user) }, icon('edit', 20))),
-        h('div', { class: 'hero-chips' },
-          h('span', { class: 'hero-chip' }, icon('target', 14), user.city || 'без град'),
-          h('span', { class: 'hero-chip' }, icon('car', 14), user.company || 'без фирма'),
-          h('span', { class: 'hero-chip' }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`))),
-
+      profileCover(user, d),
+      h('div', { class: 'quick-links' },
+        h('a', { class: 'ql', href: '#/reservations' }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-blue)' } }, icon('calendar', 20)), h('b', null, 'Резервации'), h('span', null, `${upcomingCount(data)} предстоящи`)),
+        h('a', { class: 'ql', href: '#/invite' }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-pink)' } }, icon('gift', 20)), h('b', null, 'Покани колеги'), h('span', null, refLabel())),
+        h('button', { class: 'ql', onclick: () => openCategories() }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-orange)' } }, icon('tag', 20)), h('b', null, 'Категории'), h('span', null, 'разходи'))),
       h('section', { class: 'card' }, cardTitle('car', 'Кола'), carBlock(d, draw),
         d.carType === 'rent' && h('p', { class: 'auto-note' }, icon('key', 15), 'При кола под наем застраховки, винетка, преглед и сервиз не се смятат. Плаща ги собственикът.')),
       h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
@@ -58,6 +52,39 @@ export function profileView({ go, user, data }) {
   return root;
 }
 
+const upcomingCount = (data) => upcomingReservations(data.reservations || []).length;
+const refLabel = () => { const r = store.myReferrals(); return r ? `${r.count} поканени` : ''; };
+
+// Горната част: снимка на колата като корица, профилна снимка, име и данни за колата
+function profileCover(user, d) {
+  const car = d.car || {};
+  const initials = user.name.split(' ').map((x) => x[0]).slice(0, 2).join('');
+  const sub = user.subscription;
+  const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
+  const setPhoto = async (key) => {
+    const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400 });
+    if (!img) return;
+    try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); }
+    catch { toast('Снимката е твърде голяма', 'err'); }
+  };
+  return h('section', { class: 'cover' },
+    h('div', { class: 'cover-img', style: d.carPhoto ? { backgroundImage: `url("${d.carPhoto}")` } : null },
+      h('button', { class: 'cover-btn', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), d.carPhoto ? 'Смени' : 'Снимка на колата'),
+      car.code && h('span', { class: 'cover-code' }, h('small', null, 'Код'), car.code)),
+    h('div', { class: 'cover-body' },
+      h('button', { class: 'cover-avatar', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
+        d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials),
+        h('i', null, icon('camera', 14))),
+      h('div', { class: 'cover-info' },
+        h('h1', null, user.name),
+        h('div', { class: 'cover-car' }, car.model || 'Добави модел на колата', car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate))),
+      h('button', { class: 'icon-btn', 'aria-label': 'Редактирай профила', onclick: () => editAccount(user, d) }, icon('edit', 20))),
+    h('div', { class: 'cover-chips' },
+      h('span', { class: 'chip' }, icon('pin', 14), user.city || 'без град'),
+      h('span', { class: 'chip' }, icon('car', 14), user.company || 'без фирма'),
+      h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
+}
+
 const listBtn = (ic, label, onclick, arrow) => h('button', { class: 'list-btn', onclick }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, label), arrow && icon('right', 18));
 
 function notifyRow(d) {
@@ -75,20 +102,31 @@ function notifyRow(d) {
     } }));
 }
 
-function editAccount(user) {
+function editAccount(user, profile) {
+  const car = { code: '', plate: '', model: '', ...(profile?.car || {}) };
   openSheet((close) => {
     const name = h('input', { class: 'input', value: user.name });
     const phone = h('input', { class: 'input', type: 'tel', value: user.phone || '' });
+    const code = h('input', { class: 'input', value: car.code, placeholder: 'напр. 214' });
+    const plate = h('input', { class: 'input', value: car.plate, placeholder: 'напр. СВ 1234 АВ', style: { textTransform: 'uppercase' } });
+    const model = h('input', { class: 'input', value: car.model, placeholder: 'напр. Toyota Corolla Hybrid' });
     const cc = cityCompanyPicker({ city: user.city, company: user.company });
     const err = h('p', { class: 'err' });
     return h('div', { class: 'form' },
       sheetHead('Моите данни', close),
-      field('Име', name), field('Телефон', phone), cc.el, err,
+      field('Име', name, null, true), field('Телефон', phone),
+      h('h3', { style: { margin: '6px 0 0', fontSize: '.95rem' } }, 'Колата'),
+      h('div', { class: 'grid2' }, field('Код на колата', code, 'Номерът ти във фирмата'), field('Рег. номер', plate)),
+      field('Модел', model),
+      cc.el, err,
       h('button', { class: 'btn btn-page btn-lg', onclick: () => {
         const v = cc.value();
+        if (!name.value.trim()) { err.textContent = 'Въведи име'; return; }
         if (!v.city) { err.textContent = 'Избери град'; return; }
         if (!v.company) { err.textContent = 'Избери фирма'; return; }
-        store.updateAccount({ name: name.value, phone: phone.value, ...v }); close(); toast('Запазено');
+        store.updateAccount({ name: name.value, phone: phone.value, ...v });
+        store.updateProfile({ car: { code: code.value.trim(), plate: plate.value.trim().toUpperCase(), model: model.value.trim() } });
+        close(); toast('Запазено');
       } }, 'Запази'));
   }, { tall: true });
 }

@@ -3,7 +3,8 @@
 
 import { h, fill, icon, cx, money, uid, toLocalInput, fromLocalInput, fmtDateLong, isoToDateStr, round2, fmtDuration } from '../util.js';
 import * as store from '../store.js';
-import { INCOME_TYPES, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat } from '../constants.js';
+import { INCOME_TYPES, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat, shiftCats } from '../constants.js';
+import { openCategories } from './categories.js';
 import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
 import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
 
@@ -58,8 +59,9 @@ export function shiftEditorView(ctx) {
       // Разходи
       h('section', { class: 'card' },
         cardTitle('fuel', 'Разходи', h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
-        h('div', { class: 'quick' }, Object.entries(EXPENSE_CATS).map(([k, c]) =>
-          h('button', { style: { '--qc': c.color }, onclick: () => (k === 'fuel' ? editFuel() : editExpense({ category: k })) }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label))),
+        h('div', { class: 'quick' }, shiftCats(profile).map((c) =>
+          h('button', { style: { '--qc': c.color }, onclick: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })) }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label)),
+          h('button', { class: 'quick-edit', onclick: () => openCategories() }, h('span', { class: 'q-ic' }, icon('tag', 21)), 'Категории')),
         draft.expenses.length > 0 && h('div', { class: 'exp-list' }, draft.expenses.map((e) =>
           h('div', { class: 'exp-item', style: { '--qc': expenseCat(e.category).color } },
             h('span', { class: 'e-ic' }, icon(expenseCat(e.category).icon, 17)),
@@ -122,7 +124,7 @@ export function shiftEditorView(ctx) {
     let label = e.label || '';
     openNumpad({
       title: expenseCat(e.category).label,
-      top: ['other', 'service', 'fine'].includes(e.category) ? () => h('input', { class: 'input', style: { marginBottom: '12px' }, placeholder: 'Описание (по желание)', value: label, oninput: (ev) => { label = ev.target.value; } }) : null,
+      top: ['other', 'service', 'repair', 'tires', 'fine'].includes(e.category) ? () => h('input', { class: 'input', style: { marginBottom: '12px' }, placeholder: 'Описание (по желание)', value: label, oninput: (ev) => { label = ev.target.value; } }) : null,
       fields: [{ key: 'v', label: 'Сума', value: e.amount || '' }],
       actions: [{ label: isNewE ? 'Добави' : 'Запиши', primary: true, run: ({ v }) => {
         if (!v) return;

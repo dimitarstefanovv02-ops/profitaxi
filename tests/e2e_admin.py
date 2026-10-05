@@ -61,7 +61,8 @@ async def main():
         await d.reload(); await d.wait_for_timeout(500)
         ok('След „Пусни достъпа“ шофьорът влиза нормално', 'Започвам смяна' in await d.inner_text('#app') or 'Приключих' in await d.inner_text('#app'))
         # Изтекъл пробен период
-        await d.click('.avatar'); await d.wait_for_timeout(300); await d.click('text=Изход'); await d.wait_for_timeout(300)
+        await d.wait_for_timeout(900); await d.keyboard.press('Escape'); await d.wait_for_timeout(400)
+        await d.goto(base+'/app#/profile'); await d.wait_for_timeout(500); await d.click('text=Изход'); await d.wait_for_timeout(300)
         await d.fill('input[type=email]','stoyan@demo.bg'); await d.fill('input[type=password]','demo123'); await d.click('button[type=submit]'); await d.wait_for_timeout(500)
         ok('Изтекъл абонамент вижда „Абонаментът изтече“', 'Абонаментът изтече' in await d.inner_text('#app'))
         # Нова парола от админа
@@ -86,7 +87,7 @@ async def main():
         await d2.fill('input[autocomplete=name]','Проба'); await d2.fill('input[type=email]','proba@test.bg'); await d2.fill('input[type=password]','123456')
         await d2.select_option('select >> nth=0','Нова Загора'); await d2.wait_for_timeout(150); await d2.select_option('select >> nth=1','Ирис Такси')
         await d2.click('text=Собствена'); await d2.click('input[type=checkbox]'); await d2.click('button[type=submit]'); await d2.wait_for_timeout(500)
-        days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v4'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")
+        days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")
         ok('Пробният период от настройките (30 дни) важи при регистрация', days==30, days)
         # Всички страници без грешки, при всички периоди
         for label in ['Общ преглед','Градове и фирми','Ефир, наеми, работа','Абонаменти']:

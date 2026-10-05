@@ -82,7 +82,7 @@ async def main():
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(400)
         await pg.goto(base+'/app#/shift/new'); await pg.wait_for_timeout(300)
         await pg.click('text=Разходите от предишната смяна'); await pg.wait_for_timeout(200)
-        ok('Копиране на разходите от предишната смяна', 'Миене' in await T('.exp-list').inner_text())
+        ok('Копиране на разходите от предишната смяна', 'Автомивка' in await T('.exp-list').inner_text())
         await pg.click('.back'); await pg.wait_for_timeout(300)
         # --- Невалидни данни ---
         await pg.goto(base+'/app#/shift/new'); await pg.wait_for_timeout(300)

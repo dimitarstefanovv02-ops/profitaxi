@@ -29,36 +29,70 @@ export const INCOME_TYPES = {
   tips: { label: 'Бакшиш', icon: 'heart', color: 'var(--c-amber)' },
 };
 
-// Разходи по време на смяна – само неща, свързани с таксито
+// Разходи по време на смяна – само неща, свързани с таксито.
+// Шофьорът може да скрива вградените и да добавя свои категории.
 export const EXPENSE_CATS = {
   fuel: { label: 'Гориво', icon: 'fuel', color: 'var(--c-orange)' },
-  wash: { label: 'Миене', icon: 'wash', color: 'var(--c-sky)' },
+  wash: { label: 'Автомивка', icon: 'wash', color: 'var(--c-sky)' },
   parking: { label: 'Паркинг', icon: 'parking', color: 'var(--c-blue)' },
-  service: { label: 'Сервиз', icon: 'wrench', color: 'var(--c-slate)' },
+  service: { label: 'Обслужване', icon: 'wrench', color: 'var(--c-slate)' },
+  repair: { label: 'Ремонт', icon: 'tool', color: 'var(--c-red)' },
+  tires: { label: 'Гуми', icon: 'tire', color: 'var(--c-gray)' },
   fine: { label: 'Глоба', icon: 'alert', color: 'var(--c-red)' },
   other: { label: 'Друго', icon: 'more', color: 'var(--c-gray)' },
 };
-export const expenseCat = (k) => EXPENSE_CATS[k] || { label: 'Друго', icon: 'more', color: 'var(--c-gray)' };
 
-// Постоянни разходи. owner: само при собствена кола или лизинг
-// (при кола под наем ги плаща собственикът)
+// Постоянни (периодични) разходи. owner: само при собствена кола или лизинг
+// (при кола под наем ги плаща собственикът). system: идват от профила.
 export const COST_CATS = {
-  dispatch: { label: 'Ефир / диспечер', icon: 'phone', system: true, color: 'var(--c-violet)' },
-  leasing: { label: 'Лизинг', icon: 'car', system: true, car: true, color: 'var(--c-blue)' },
+  dispatch: { label: 'Ефир / диспечер', icon: 'radio', system: true, color: 'var(--c-violet)' },
+  leasing: { label: 'Лизингова вноска', icon: 'doc', system: true, car: true, color: 'var(--c-blue)' },
   rent: { label: 'Наем на колата', icon: 'key', system: true, car: true, color: 'var(--c-blue)' },
+  fuel: { label: 'Гориво', icon: 'fuel', period: 'week', color: 'var(--c-orange)' },
+  wash: { label: 'Автомивка', icon: 'wash', period: 'week', color: 'var(--c-sky)' },
   insurance: { label: 'Гражданска отговорност', icon: 'shield', car: true, owner: true, period: 'year', color: 'var(--c-teal)' },
   casco: { label: 'Каско', icon: 'shield', car: true, owner: true, period: 'year', color: 'var(--c-teal)' },
+  insure: { label: 'Застраховка', icon: 'shield', period: 'year', color: 'var(--c-teal)' },
   vignette: { label: 'Винетка', icon: 'road', car: true, owner: true, period: 'year', color: 'var(--c-green)' },
   inspection: { label: 'Технически преглед', icon: 'gauge', car: true, owner: true, period: 'year', color: 'var(--c-sky)' },
+  service: { label: 'Обслужване', icon: 'wrench', car: true, owner: true, period: 'month', color: 'var(--c-slate)' },
+  repair: { label: 'Ремонти', icon: 'tool', car: true, owner: true, period: 'month', color: 'var(--c-red)' },
+  tires: { label: 'Гуми', icon: 'tire', car: true, owner: true, period: 'year', color: 'var(--c-gray)' },
   meter: { label: 'Таксиметров апарат', icon: 'receipt', car: true, owner: true, period: 'month', color: 'var(--c-amber)' },
-  service: { label: 'Сервиз и гуми', icon: 'wrench', car: true, owner: true, period: 'month', color: 'var(--c-slate)' },
   license: { label: 'Разрешително', icon: 'doc', period: 'year', color: 'var(--c-orange)' },
+  parking: { label: 'Паркинг', icon: 'parking', period: 'month', color: 'var(--c-blue)' },
   phone: { label: 'Телефон и интернет', icon: 'phone', period: 'month', color: 'var(--c-violet)' },
-  taxes: { label: 'Данъци и осигуровки', icon: 'doc', period: 'month', color: 'var(--c-red)' },
+  taxes: { label: 'Данъци и осигуровки', icon: 'bank', period: 'month', color: 'var(--c-red)' },
   accountant: { label: 'Счетоводител', icon: 'receipt', period: 'month', color: 'var(--c-pink)' },
-  other: { label: 'Друго', icon: 'more', period: 'month', color: 'var(--c-gray)' },
+  other: { label: 'Други', icon: 'more', period: 'month', color: 'var(--c-gray)' },
 };
-export const costCat = (k) => COST_CATS[k] || COST_CATS.other;
+
+// Собствени категории на шофьорите (ключ „u_…“). Регистрират се при зареждане на данните,
+// за да се показват с правилното име навсякъде, вкл. в админ панела.
+const CUSTOM = {};
+const CUSTOM_COLORS = ['var(--c-pink)', 'var(--c-teal)', 'var(--c-amber)', 'var(--c-violet)', 'var(--c-sky)', 'var(--c-green)'];
+export function registerCustomCats(list = []) {
+  list.forEach((c, i) => { CUSTOM[c.id] = { label: c.label, icon: 'tag', color: CUSTOM_COLORS[i % CUSTOM_COLORS.length], custom: true }; });
+}
+export const expenseCat = (k) => EXPENSE_CATS[k] || CUSTOM[k] || { label: 'Друго', icon: 'more', color: 'var(--c-gray)' };
+export const costCat = (k) => COST_CATS[k] || CUSTOM[k] || COST_CATS.other;
+
+// Видимите категории за шофьора: вградените без скритите + собствените
+export function shiftCats(profile = {}) {
+  const hidden = new Set(profile.hiddenCats || []);
+  const out = Object.entries(EXPENSE_CATS).filter(([k]) => !hidden.has('s:' + k) && k !== 'other').map(([k, v]) => ({ key: k, ...v }));
+  (profile.customCats || []).filter((c) => c.kind !== 'fixed').forEach((c) => out.push({ key: c.id, ...expenseCat(c.id) }));
+  out.push({ key: 'other', ...EXPENSE_CATS.other });
+  return out;
+}
+export function fixedCats(profile = {}) {
+  const hidden = new Set(profile.hiddenCats || []);
+  const rent = profile.carType === 'rent';
+  const out = Object.entries(COST_CATS).filter(([k, v]) => !v.system && !(rent && v.owner) && !hidden.has('f:' + k) && k !== 'other').map(([k, v]) => ({ key: k, ...v }));
+  (profile.customCats || []).filter((c) => c.kind !== 'shift').forEach((c) => out.push({ key: c.id, ...costCat(c.id), period: 'month' }));
+  out.push({ key: 'other', ...COST_CATS.other });
+  return out;
+}
 
 export const PERIODS = {
   day: { label: 'на ден', short: 'ден', every: 'всеки ден' },

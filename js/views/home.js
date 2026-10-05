@@ -6,6 +6,8 @@ import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { roadProgress, openNumpad, stat, tone, toast, cardTitle } from '../ui.js';
 import { quoteFor } from '../quotes.js';
+import { upcomingReservations, reservationRow, editReservation } from './reservations.js';
+import { inviteCard } from './invite.js';
 
 let quoteSeed = 0;
 const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
@@ -43,7 +45,7 @@ export function homeView({ go, user, data }) {
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),
-      h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials)),
+      data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials)),
 
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
@@ -61,6 +63,9 @@ export function homeView({ go, user, data }) {
       icon('bell', 22),
       h('div', { class: 'alert-text' }, h('b', null, r.title), reminderText(r)),
       icon('right', 18))),
+
+    // Лични резервации
+    reservationsCard(data),
 
     // Тази седмица
     weekCard(data),
@@ -81,10 +86,21 @@ export function homeView({ go, user, data }) {
       h('div', { class: 'tip-ic', style: { background: 'color-mix(in srgb, var(--c-red) 15%, var(--surface))', color: 'var(--c-red)' } }, icon('flame', 22)),
       h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`))),
 
+    // Покани
+    store.myReferrals() && inviteCard(store.myReferrals()),
+
     // Последни смени
     recent.length > 0 && h('div', { class: 'card', style: { marginTop: '14px' } },
       cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
       recent.map((s) => shiftRow(data, s))));
+}
+
+function reservationsCard(data) {
+  const up = upcomingReservations(data.reservations || []).slice(0, 3);
+  return h('div', { class: 'card', style: { marginTop: '14px' } },
+    cardTitle('calendar', 'Предстоящи резервации', h('a', { class: 'link', href: '#/reservations' }, up.length ? 'Всички' : 'Отвори', icon('right', 16))),
+    up.length ? up.map((r) => reservationRow(r, { compact: true }))
+      : h('button', { class: 'btn btn-ghost btn-block', onclick: () => editReservation({}) }, icon('plus', 18), 'Запиши лична резервация'));
 }
 
 function greeting() {

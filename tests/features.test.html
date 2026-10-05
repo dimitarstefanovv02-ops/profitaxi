@@ -1,0 +1,89 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ProfiTaxi – тестове: резервации, покани, категории</title>
+<pre id="out">Running…</pre>
+<script type="module">
+import * as store from '../js/store.js';
+import { shiftCats, fixedCats, expenseCat } from '../js/constants.js';
+import { todayStr, addDays } from '../js/util.js';
+const results = [];
+const ok = (name, cond, extra = '') => results.push(`${cond ? 'PASS' : 'FAIL'}  ${name}${extra ? '  [' + extra + ']' : ''}`);
+try {
+  store.resetDemo();
+  const base = { password: 'secret1', city: 'София', company: 'Тест Такси', carType: 'own' };
+  const reg = (n, extra = {}) => store.register({ ...base, name: `Шофьор ${n}`, email: `t${n}-${Date.now()}@x.bg`, ...extra });
+
+  // ---------- Покани ----------
+  const a = reg('А');
+  const refA = store.myReferrals();
+  ok('Нов шофьор има код за покана', /^[A-Z]+-[A-Z0-9]{4}$/.test(refA.code), refA.code);
+  ok('Започва с 0 поканени и 0 месеца', refA.count === 0 && refA.months === 0);
+  ok('Следващата награда е 5 → 1 месец', refA.next?.count === 5 && refA.next?.months === 1);
+  const untilA = a.user.subscription.validUntil;
+  const bad = reg('X', { refCode: 'NOPE-0000' });
+  ok('Невалиден код дава грешка', !!bad.error && bad.error.includes('код'));
+  for (let i = 1; i <= 4; i++) reg('Б' + i, { refCode: refA.code.toLowerCase() });
+  store.login(a.user.email, 'secret1');
+  let r = store.myReferrals();
+  ok('4 покани: още няма награда', r.count === 4 && r.months === 0 && store.currentUser().subscription.validUntil === untilA);
+  reg('Б5', { refCode: refA.code });
+  store.login(a.user.email, 'secret1'); r = store.myReferrals();
+  ok('5 покани = 1 безплатен месец', r.count === 5 && r.months === 1, `${r.count}/${r.months}`);
+  ok('Абонаментът е удължен с 30 дни', store.currentUser().subscription.validUntil === addDays(untilA, 30), store.currentUser().subscription.validUntil);
+  ok('Следващата награда е 8 → 2 месеца', r.next?.count === 8);
+  for (let i = 6; i <= 8; i++) reg('Б' + i, { refCode: refA.code });
+  store.login(a.user.email, 'secret1'); r = store.myReferrals();
+  ok('8 покани = 2 безплатни месеца общо', r.count === 8 && r.months === 2, `${r.count}/${r.months}`);
+  ok('Абонаментът е удължен общо с 60 дни', store.currentUser().subscription.validUntil === addDays(untilA, 60));
+  ok('След 8 няма следваща награда', r.next === null);
+  reg('Б9', { refCode: refA.code });
+  store.login(a.user.email, 'secret1'); r = store.myReferrals();
+  ok('9-та покана не дава трети месец', r.count === 9 && r.months === 2 && store.currentUser().subscription.validUntil === addDays(untilA, 60));
+  ok('Списъкът с поканени е съкратен (име + инициал)', r.invited.every((x) => /^Шофьор Б\d\.?$|^Шофьор .\.$/.test(x.name) || x.name.endsWith('.')), r.invited[0]?.name);
+
+  // ---------- Резервации ----------
+  const t1 = addDays(todayStr(), 1);
+  const res = store.saveReservation({ date: t1, time: '05:30', from: 'Младост 1', to: 'Летище', client: 'Г-жа Николова', price: 25 });
+  ok('Резервацията се записва с id', !!res?.id);
+  ok('Вижда се в моите данни', store.myData().reservations.some((x) => x.id === res.id));
+  store.saveReservation({ ...res, time: '06:00' });
+  ok('Редакция не дублира', store.myData().reservations.filter((x) => x.id === res.id).length === 1 && store.myData().reservations.find((x) => x.id === res.id).time === '06:00');
+  store.setReservationDone(res.id, true);
+  ok('Отбелязване като изпълнена', store.myData().reservations.find((x) => x.id === res.id).done === true);
+  // друг шофьор не я вижда и не може да я изтрие
+  const other = reg('Друг');
+  ok('Друг шофьор не вижда чужда резервация', !store.myData().reservations.some((x) => x.id === res.id));
+  store.deleteReservation(res.id);
+  ok('Хакнат ъпдейт на чужда резервация се отказва', store.saveReservation({ ...res, client: 'Хак' }) === null);
+  store.login(a.user.email, 'secret1');
+  ok('Чуждото изтриване не я маха', store.myData().reservations.some((x) => x.id === res.id && x.client === 'Г-жа Николова'));
+  store.deleteReservation(res.id);
+  ok('Собственикът я изтрива', !store.myData().reservations.some((x) => x.id === res.id));
+
+  // ---------- Категории ----------
+  let p = store.getProfile();
+  ok('По подразбиране „Гориво“ е бутон в смяната', shiftCats(p).some((c) => c.key === 'fuel'));
+  store.toggleCat('s:fuel'); p = store.getProfile();
+  ok('Скриване на „Гориво“ от смяната', !shiftCats(p).some((c) => c.key === 'fuel'));
+  store.toggleCat('s:fuel'); p = store.getProfile();
+  ok('Показване отново', shiftCats(p).some((c) => c.key === 'fuel'));
+  store.toggleCat('f:casco'); p = store.getProfile();
+  ok('Скриване на „Каско“ от постоянните', !fixedCats(p).some((c) => c.key === 'casco'));
+  const g = store.addCustomCat('Магистрала', 'shift');
+  ok('Добавяне на своя категория за смяна', !!g.cat && shiftCats(store.getProfile()).some((c) => c.key === g.cat.id));
+  ok('Своята категория за смяна не е в постоянните', !fixedCats(store.getProfile()).some((c) => c.key === g.cat.id));
+  ok('Името се показва', expenseCat(g.cat.id).label === 'Магистрала');
+  ok('Дубликат се отказва', !!store.addCustomCat('магистрала', 'shift').error);
+  ok('Празно име се отказва', !!store.addCustomCat('  ', 'shift').error);
+  const gar = store.addCustomCat('Гараж', 'fixed');
+  ok('Своя постоянна категория', fixedCats(store.getProfile()).some((c) => c.key === gar.cat.id));
+  store.removeCustomCat(g.cat.id);
+  ok('Премахване на своя категория', !shiftCats(store.getProfile()).some((c) => c.key === g.cat.id));
+  ok('„Други“ винаги е последна', shiftCats(store.getProfile()).at(-1).key === 'other' && fixedCats(store.getProfile()).at(-1).key === 'other');
+  const rentP = { ...store.getProfile(), carType: 'rent' };
+  ok('При кола под наем няма разходи на собственик', !fixedCats(rentP).some((c) => ['casco', 'vignette', 'inspection'].includes(c.key)));
+} catch (e) { results.push('FAIL  exception ' + e.message + '\n' + e.stack); }
+store.resetDemo();
+document.getElementById('out').textContent = results.join('\n');
+window.__results = results;
+</script>
