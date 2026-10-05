@@ -124,7 +124,9 @@ async def main():
         # --- Профил ---
         await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)
         await pg.click('.seg-btn:has-text("Седмица")'); await pg.click('.tile:has-text("Такса")'); await pg.keyboard.type('40'); await pg.click('text=Готово')
-        await pg.click('.save-bar .btn'); await pg.wait_for_timeout(500)
+        await pg.click('.save-bar .btn'); await pg.wait_for_timeout(400)
+        ok('При смяна на ефира пита от кога важи', 'От кога важи' in await T('.sheet').inner_text())
+        await pg.click('.sheet .btn-primary'); await pg.wait_for_timeout(500)
         await pg.goto(base+'/app#/costs'); await pg.wait_for_timeout(300)
         ok('Смяна на ефира на 40 €/седм. от профила', '40 € на седмица' in await T('#app').inner_text())
         await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)

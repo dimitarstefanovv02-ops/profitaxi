@@ -316,24 +316,24 @@ export function deleteReminder(rid) { const id = myId(); db.reminders = db.remin
 
 // Обновява профила. Настройките за кола и ефир се превръщат в постоянни
 // разходи, които важат ОТ ДНЕС – старите отчети остават непроменени.
-export function updateProfile(patch) {
+export function updateProfile(patch, { from } = {}) {
   const id = myId();
-  applyProfile(id, patch);
+  applyProfile(id, patch, from);
   commit();
 }
-function applyProfile(id, patch) {
+function applyProfile(id, patch, from) {
   const p = db.profiles[id];
   Object.assign(p, clone(patch));
   syncSystemCost(id, 'dispatch', p.dispatch.mode !== 'none' && p.dispatch.amount > 0
     ? { name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' }
-    : null);
+    : null, from);
   syncSystemCost(id, 'leasing', p.carType === 'leasing' && p.leasing.amount > 0
-    ? { name: 'Лизингова вноска', category: 'leasing', amount: p.leasing.amount, period: 'month' } : null);
+    ? { name: 'Лизингова вноска', category: 'leasing', amount: p.leasing.amount, period: 'month' } : null, from);
   syncSystemCost(id, 'rent', p.carType === 'rent' && p.rent.amount > 0
-    ? { name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period, perWorkDay: false } : null);
+    ? { name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period, perWorkDay: false } : null, from);
   // При кола под наем застраховки, винетка, преглед и т.н. са грижа на собственика
   if (p.carType === 'rent') {
-    const today = todayStr();
+    const today = from || todayStr();
     for (const c of db.costs) {
       if (c.userId !== id || !COST_CATS[c.category]?.owner || (c.endDate && c.endDate < today)) continue;
       if (c.startDate >= today) c.endDate = addDays(c.startDate, -1); else c.endDate = addDays(today, -1);
@@ -341,16 +341,18 @@ function applyProfile(id, patch) {
     }
   }
 }
-function syncSystemCost(userId, system, desired) {
-  const today = todayStr();
-  const current = db.costs.find((c) => c.userId === userId && c.system === system && (!c.endDate || c.endDate >= today));
+// Ефир, наем и лизинг се пазят като постоянни разходи с начална дата.
+// from: от кой ден важи новата стойност (по подразбиране днес). Ако е назад във времето,
+// старите стойности се отрязват до предишния ден, за да няма двойно броене.
+function syncSystemCost(userId, system, desired, from = todayStr()) {
+  const mine = (c) => c.userId === userId && c.system === system;
+  const current = db.costs.find((c) => mine(c) && (!c.endDate || c.endDate >= todayStr()));
   const same = current && desired && current.amount === desired.amount && current.period === desired.period && !!current.perWorkDay === !!desired.perWorkDay;
-  if (same) { current.name = desired.name; return; }
-  if (current) {
-    if (current.startDate >= today) db.costs = db.costs.filter((c) => c !== current);
-    else current.endDate = addDays(today, -1);
-  }
-  if (desired) db.costs.push({ id: uid(), userId, system, startDate: today, endDate: null, dueDate: null, payments: [], ...desired });
+  if (same && current.startDate <= from) { current.name = desired.name; return; }
+  if (!current && !desired) return;
+  db.costs = db.costs.filter((c) => !(mine(c) && c.startDate >= from));
+  db.costs.forEach((c) => { if (mine(c) && (!c.endDate || c.endDate >= from)) c.endDate = addDays(from, -1); });
+  if (desired) db.costs.push({ id: uid(), userId, system, startDate: from, endDate: null, dueDate: null, payments: [], ...desired });
 }
 
 // ================= Администратор =================

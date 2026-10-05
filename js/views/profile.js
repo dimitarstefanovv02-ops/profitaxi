@@ -1,6 +1,6 @@
 // Профил: акаунт, град и фирма, кола, гориво, ефир, цел, известия, тема, данни
 
-import { h, fill, icon, cx, money, todayStr, fmtDate } from '../util.js';
+import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, parseDate } from '../util.js';
 import * as store from '../store.js';
 import { CAR_TYPES, FUELS } from '../constants.js';
 import { carBlock, fuelBlock, dispatchBlock, shareBlock, goalBlock } from './carSettings.js';
@@ -33,8 +33,11 @@ export function profileView({ go, user, data }) {
       h('section', { class: 'card' }, cardTitle('target', 'Цел'), goalBlock(d, draw)),
 
       dirty && h('div', { class: 'save-bar', style: { bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom))' } },
-        h('div', { class: 'sum' }, h('span', null, 'Има промени'), h('div', { class: 'small muted' }, 'Важат от днес нататък')),
-        h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.updateProfile(d); toast('Настройките са запазени'); } }, icon('check', 20), 'Запази')),
+        h('div', { class: 'sum' }, h('span', null, 'Има промени'), h('div', { class: 'small muted' }, costChanged(orig, d) ? 'Ще избереш от кога важат' : 'Запази ги')),
+        h('button', { class: 'btn btn-page btn-lg', onclick: () => {
+          const save = (from) => { store.updateProfile(d, { from }); toast('Настройките са запазени'); };
+          if (costChanged(orig, d)) askFrom(save); else save();
+        } }, icon('check', 20), 'Запази')),
 
       h('section', { class: 'card' }, cardTitle('bell', 'Известия'), notifyRow(d)),
       h('section', { class: 'card' }, cardTitle('sun', 'Изглед'), segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); }, { page: true })),
@@ -50,6 +53,22 @@ export function profileView({ go, user, data }) {
   };
   draw();
   return root;
+}
+
+// Промени в наема, лизинга, ефира или вида кола – те стават постоянни разходи с начална дата
+const costChanged = (orig, d) => { const o = JSON.parse(orig); return ['carType', 'rent', 'leasing', 'dispatch'].some((k) => JSON.stringify(o[k]) !== JSON.stringify(d[k])); };
+function askFrom(onPick) {
+  const today = todayStr(), m0 = startOfMonth(today), month = MONTHS[parseDate(today).getMonth()];
+  openSheet((close) => {
+    const date = h('input', { class: 'input', type: 'date', value: m0, max: today });
+    const pick = (from) => { close(); onPick(from); };
+    return h('div', { class: 'form' },
+      sheetHead('От кога важи промяната?', close, 'Наемът, лизингът и ефирът се смятат от тази дата'),
+      h('button', { class: 'btn btn-primary btn-lg btn-block', onclick: () => pick(m0) }, icon('calendar', 20), `От 1 ${month} (целия месец)`),
+      today !== m0 && h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => pick(today) }, `От днес, ${fmtDate(today)}`),
+      h('div', { class: 'row gap' }, date, h('button', { class: 'btn btn-outline', onclick: () => date.value && pick(date.value > today ? today : date.value) }, 'От дата')),
+      h('p', { class: 'muted small' }, 'Дните преди тази дата остават със старите стойности.'));
+  });
 }
 
 const upcomingCount = (data) => upcomingReservations(data.reservations || []).length;

@@ -168,6 +168,8 @@ export function shiftEditorView(ctx) {
   function save() {
     if (draft.end && new Date(draft.end) <= new Date(draft.start)) { toast('Краят трябва да е след началото', 'err'); return; }
     if (draft.kmEnd > 0 && draft.kmEnd < draft.kmStart) { toast('Провери километража', 'err'); return; }
+    if (draft.end && new Date(draft.end) - new Date() > 10 * 60000) { toast('Краят на смяната е в бъдещето. Провери датата.', 'err'); return; }
+    if (draft.end && (new Date(draft.end) - new Date(draft.start)) / 3600000 > 24) { toast('Смяната е над 24 часа. Провери началото и края.', 'err'); return; }
     const saved = store.saveShift(draft);
     const ended = wasActive && saved.end;
     draft = null; draftKey = null;
