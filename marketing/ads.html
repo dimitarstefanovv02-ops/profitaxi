@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<title>ProfiTaxi – реклами</title>
+<style>
+  :root { --y: #FFC21A; --v: #8B5CF6; --v2: #C084FC; --g: #22C55E; --r: #F0445A; --ink: #F4F5F8; --mut: #9AA3B2; --card: #12141C; --line: #22262F; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #222; font-family: 'Inter', sans-serif; color: var(--ink); display: flex; flex-direction: column; gap: 40px; padding: 40px; align-items: center; }
+  .ad { width: 1080px; height: 1350px; position: relative; overflow: hidden; background: #07080B; padding: 72px 72px 64px; display: flex; flex-direction: column; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+  .glow.v { background: rgba(139, 92, 246, .55); }
+  .glow.y { background: rgba(255, 194, 26, .35); }
+  .ad > *:not(.glow):not(.checker) { position: relative; z-index: 1; }
+  .brand { display: flex; align-items: center; gap: 18px; font-family: 'Inter Display'; font-weight: 800; font-size: 44px; letter-spacing: -.02em; }
+  .brand img { width: 76px; height: 76px; border-radius: 20px; box-shadow: 0 12px 30px -10px rgba(0,0,0,.8); }
+  .brand b { color: var(--y); font-weight: 800; }
+  h1 { font-family: 'Inter Display'; font-weight: 900; letter-spacing: -.035em; line-height: 1.02; }
+  .y { color: var(--y); }
+  .vv { color: var(--v2); }
+  .hl { position: relative; white-space: nowrap; }
+  .hl::after { content: ''; position: absolute; left: -4px; right: -4px; bottom: 6px; height: 22px; background: var(--y); z-index: -1; border-radius: 6px; }
+  .sub { font-size: 36px; line-height: 1.35; color: var(--mut); font-weight: 500; }
+  .cta { white-space: nowrap; display: inline-flex; align-items: center; gap: 16px; background: var(--y); color: #1A1300; font-weight: 800; font-size: 38px; padding: 28px 44px; border-radius: 28px; box-shadow: 0 24px 50px -18px rgba(255, 176, 0, .9); }
+  .url { font-size: 28px; color: var(--mut); font-weight: 600; }
+  .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+  .phone { width: 430px; aspect-ratio: 390 / 844; border-radius: 64px; padding: 12px; background: linear-gradient(160deg, #3A414F, #0B0D12 60%); box-shadow: 0 60px 100px -40px rgba(0,0,0,.95), 0 0 0 2px rgba(255,255,255,.08) inset, 0 0 120px -20px rgba(139,92,246,.6); }
+  .phone img { width: 100%; height: 100%; object-fit: cover; object-position: top; border-radius: 52px; display: block; }
+  .checker { position: absolute; left: 0; right: 0; height: 22px; background: conic-gradient(#FFC21A 25%, #07080B 0 50%, #FFC21A 0 75%, #07080B 0) 0 0 / 44px 44px; z-index: 2; }
+  .chip { display: inline-flex; align-items: center; gap: 12px; padding: 14px 24px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); font-size: 30px; font-weight: 700; color: var(--ink); }
+  .chip i { width: 14px; height: 14px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 6px rgba(255,194,26,.2); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 40px; padding: 40px 44px; box-shadow: 0 40px 80px -40px rgba(0,0,0,.9); }
+  .row { display: flex; justify-content: space-between; align-items: baseline; font-size: 38px; font-weight: 600; padding: 18px 0; border-bottom: 2px dashed var(--line); font-variant-numeric: tabular-nums; }
+  .row b { font-weight: 800; }
+  .row.m b { color: var(--r); }
+  .total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 22px; }
+  .total span { font-size: 40px; font-weight: 800; }
+  .total b { font-family: 'Inter Display'; font-size: 96px; font-weight: 900; letter-spacing: -.02em; word-spacing: .1em; color: var(--g); }
+  .tag { display: inline-block; font-size: 26px; font-weight: 800; color: var(--v2); background: rgba(139,92,246,.16); padding: 10px 18px; border-radius: 999px; }
+</style>
+</head>
+<body>
+
+<!-- 1. Основното послание -->
+<div class="ad" id="ad1">
+  <div class="glow v" style="width:700px;height:700px;right:-260px;top:-200px"></div>
+  <div class="glow y" style="width:520px;height:520px;left:-260px;bottom:-200px"></div>
+  <div class="brand"><img src="../icons/icon-512.png" alt=""><span>Profi<b>Taxi</b></span></div>
+  <h1 style="font-size:104px;margin-top:60px">Знаеш колко изкарваш.<br>Знаеш ли колко <span class="y">ти&nbsp;остава?</span></h1>
+  <p class="sub" style="margin-top:34px;max-width:900px">Оборотът лъже. ProfiTaxi вади горивото, ефира, наема и всички такси и ти показва <b style="color:#fff">реалната чиста печалба</b>.</p>
+  <div style="display:flex;gap:40px;align-items:flex-end;margin-top:auto">
+    <div style="flex:1;display:flex;flex-direction:column;gap:22px;padding-bottom:6px">
+      <span class="cta" style="align-self:flex-start;font-size:36px">Пробвай безплатно</span>
+      <p class="url">14 дни · без карта · profitaxi.vercel.app</p>
+    </div>
+    <div class="phone" style="width:380px;margin-bottom:-250px"><img src="../img/screen-home-dark.jpg" alt=""></div>
+  </div>
+</div>
+
+<!-- 2. От оборот до чисто -->
+<div class="ad" id="ad2">
+  <div class="glow v" style="width:640px;height:640px;left:-220px;top:-220px"></div>
+  <div class="glow y" style="width:420px;height:420px;right:-160px;bottom:120px"></div>
+  <div class="brand"><img src="../icons/icon-512.png" alt=""><span>Profi<b>Taxi</b></span></div>
+  <h1 style="font-size:92px;margin-top:56px">3 145 € оборот.<br><span class="y">Колко остават?</span></h1>
+  <div class="card" style="margin-top:48px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:30px;font-weight:700;color:var(--mut)">Септември · реален пример</span><span class="tag">23 смени</span></div>
+    <div class="row"><span>Оборот</span><b>3 145 €</b></div>
+    <div class="row m"><span>Гориво</span><b>−460 €</b></div>
+    <div class="row m"><span>Ефир</span><b>−171 €</b></div>
+    <div class="row m"><span>Данъци</span><b>−260 €</b></div>
+    <div class="row m"><span>Автомивка, сервиз, ГО…</span><b>−243 €</b></div>
+    <div class="total"><span>Чисто</span><b>2 011 €</b></div>
+  </div>
+  <div class="foot">
+    <p class="sub" style="font-size:34px">36% от оборота <b style="color:#fff">не са твои.</b><br>Знай го, преди да ги похарчиш.</p>
+    <span class="cta" style="font-size:34px;padding:26px 36px">Пробвай безплатно</span>
+  </div>
+</div>
+
+<!-- 3. Разходите -->
+<div class="ad" id="ad3">
+  <div class="glow y" style="width:620px;height:620px;right:-240px;top:-160px"></div>
+  <div class="glow v" style="width:560px;height:560px;left:-240px;bottom:-160px"></div>
+  <div class="brand"><img src="../icons/icon-512.png" alt=""><span>Profi<b>Taxi</b></span></div>
+  <div style="display:flex;gap:44px;margin-top:56px;flex:1">
+    <div style="flex:1;display:flex;flex-direction:column;gap:22px">
+      <h1 style="font-size:84px">Наемът.<br>Ефирът.<br>Горивото.<br>Винетката.<br><span class="y">Каското.</span></h1>
+      <p class="sub" style="margin-top:12px">Всичко на едно място, разпределено по дни. С напомняне <b style="color:#fff">3, 2 и 1 ден</b> преди падеж.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px"><span class="chip"><i></i>Своя кола</span><span class="chip"><i></i>Под наем</span><span class="chip"><i></i>Лизинг</span></div>
+    </div>
+    <div class="phone" style="width:370px;flex:none;align-self:flex-start;margin-top:30px"><img src="../img/screen-costs-dark.jpg" alt=""></div>
+  </div>
+  <div class="foot" style="margin-top:40px"><span class="cta">Пробвай 14 дни безплатно</span></div>
+</div>
+
+<!-- 4. Покани -->
+<div class="ad" id="ad4" style="background:radial-gradient(120% 90% at 100% 0%, rgba(192,132,252,.55), transparent 55%), linear-gradient(150deg, #1E0D47, #4C1D95 55%, #7C3AED)">
+  <div class="brand"><img src="../icons/icon-512.png" alt=""><span>Profi<b>Taxi</b></span></div>
+  <h1 style="font-size:104px;margin-top:70px">Колегите ти<br>плащат<br><span class="y">абонамента.</span></h1>
+  <p class="sub" style="color:rgba(255,255,255,.82);margin-top:34px;max-width:860px">Всеки шофьор има личен код за покана. Колегите се регистрират с него, а ти караш безплатно.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:56px">
+    <div style="background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:40px;padding:40px">
+      <div style="font-family:'Inter Display';font-weight:900;font-size:150px;line-height:1;color:var(--y)">5</div>
+      <div style="font-size:40px;font-weight:800;margin-top:12px">колеги</div>
+      <div style="font-size:34px;color:rgba(255,255,255,.8);margin-top:8px">= 1 безплатен месец</div>
+    </div>
+    <div style="background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:40px;padding:40px">
+      <div style="font-family:'Inter Display';font-weight:900;font-size:150px;line-height:1;color:var(--y)">8</div>
+      <div style="font-size:40px;font-weight:800;margin-top:12px">колеги</div>
+      <div style="font-size:34px;color:rgba(255,255,255,.8);margin-top:8px">= 2 безплатни месеца</div>
+    </div>
+  </div>
+  <div class="foot"><span class="cta">Вземи своя код</span><span class="url" style="color:rgba(255,255,255,.75)">profitaxi.vercel.app</span></div>
+</div>
+
+<!-- 5. Шегата -->
+<div class="ad" id="ad5">
+  <div class="glow v" style="width:760px;height:760px;left:50%;top:-340px;margin-left:-380px"></div>
+  <div class="checker" style="bottom:0"></div>
+  <div class="brand"><img src="../icons/icon-512.png" alt=""><span>Profi<b>Taxi</b></span></div>
+  <div style="margin-top:90px;display:flex;flex-direction:column;gap:30px">
+    <span class="tag" style="font-size:30px;align-self:flex-start">Таксиметров тест</span>
+    <h1 style="font-size:96px">Знаеш колко ти струва<br>един километър?</h1>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:64px">
+    <div class="card" style="padding:44px">
+      <div style="font-family:'Inter Display';font-weight:900;font-size:70px;letter-spacing:-.03em;color:var(--y)">Да.</div>
+      <div style="font-size:36px;font-weight:700;margin-top:16px;line-height:1.3">Ти си<br><span style="font-family:'Inter Display';font-weight:900;font-size:50px">Profi<span class="y">Taxi</span></span></div>
+    </div>
+    <div class="card" style="padding:44px">
+      <div style="font-family:'Inter Display';font-weight:900;font-size:70px;letter-spacing:-.03em;color:var(--mut)">Не.</div>
+      <div style="font-size:36px;font-weight:700;margin-top:16px;line-height:1.3">Ти си<br><span style="font-family:'Inter Display';font-weight:900;font-size:50px;white-space:nowrap">Amateur<s style="color:var(--mut);text-decoration-color:var(--r);text-decoration-thickness:6px">Taxi</s> 😂</span></div>
+    </div>
+  </div>
+  <p class="sub" style="margin-top:44px">Оправя се за 10 секунди на ден.</p>
+  <div class="foot" style="margin-bottom:22px"><span class="cta">Стани Profi – 14 дни безплатно</span></div>
+</div>
+
+</body>
+</html>
