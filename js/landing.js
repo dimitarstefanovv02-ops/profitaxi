@@ -128,7 +128,7 @@ if (document.documentElement.classList.contains('intro') && intro) {
   };
   intro.addEventListener('animationend', (e) => { if (e.animationName === 'introOut') finish(); });
   intro.addEventListener('click', finish);
-  setTimeout(finish, 3200); // за всеки случай
+  setTimeout(finish, 4200); // за всеки случай
 } else {
   intro?.remove();
   startReveal();
@@ -163,3 +163,83 @@ document.querySelectorAll('.price-switch button').forEach((btn) => btn.addEventL
 
 // ---------- Стари линкове към приложението ----------
 if (location.hash.startsWith('#/')) location.replace('/app' + location.hash);
+
+// ---------- Визуални ефекти на всяка страница ----------
+// Пътят горе (колкото си прочел), сияние в шапките, светлина под курсора по картите,
+// 3D наклон на телефоните, думите в заглавието изплуват една по една.
+(() => {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // 1) Път с такси: показва докъде си стигнал в страницата
+  const road = document.createElement('div');
+  road.className = 'fx-road';
+  road.innerHTML = '<i class="fx-road-fill"></i><span class="fx-taxi"><svg viewBox="60 140 420 240" width="34" height="20" aria-hidden="true"><rect x="262" y="150" width="84" height="34" rx="9" fill="#A78BFA"/><path d="M70 302c0-22 13-38 35-42l58-10 50-52c11-11 26-18 42-18h86c17 0 33 8 44 21l36 45 26 6c20 5 34 22 34 43v20c0 11-9 20-20 20H88c-10 0-18-8-18-18z" fill="#FFC21A"/><path d="M226 246l30-36c5-6 12-9 20-9h38v45z M330 201h20c9 0 17 4 22 11l26 34h-68z" fill="#0B0B0F"/><circle cx="150" cy="330" r="42" fill="#0B0B0F"/><circle cx="372" cy="330" r="42" fill="#0B0B0F"/><circle cx="150" cy="330" r="18" fill="#fff"/><circle cx="372" cy="330" r="18" fill="#fff"/></svg></span>';
+  document.body.appendChild(road);
+  const onScroll = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    const p = max > 0 ? Math.min(1, Math.max(0, scrollY / max)) : 0;
+    road.style.setProperty('--p', p.toFixed(4));
+    road.classList.toggle('on', scrollY > 40);
+  };
+  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', onScroll); onScroll();
+
+  // 2) Лилаво сияние, което бавно се движи в горната част на всяка страница
+  document.querySelectorAll('.hero2, .page-hero').forEach((el) => {
+    const a = document.createElement('div'); a.className = 'fx-aurora'; a.setAttribute('aria-hidden', 'true');
+    a.innerHTML = '<i></i><i></i><i></i>';
+    el.prepend(a);
+  });
+  addEventListener('scroll', () => document.documentElement.style.setProperty('--sy', String(Math.min(scrollY, 900))), { passive: true });
+
+  // 3) Думите в главното заглавие изплуват една по една
+  document.querySelectorAll('.hero2 h1, .page-hero h1').forEach((h1) => {
+    let n = 0;
+    const walk = (node) => {
+      [...node.childNodes].forEach((c) => {
+        if (c.nodeType === 3) {
+          // Препинателен знак веднага след дума в друг елемент (напр. „остава?“) не бива да пада на нов ред
+          const lead = c.textContent.match(/^[^\s\w\u0400-\u04FF]+/);
+          if (lead && c.previousSibling && c.previousSibling.nodeType === 1) {
+            const wrap = document.createElement('span'); wrap.style.whiteSpace = 'nowrap';
+            const prev = c.previousSibling; prev.replaceWith(wrap); wrap.append(prev);
+            const pun = document.createElement('span'); pun.className = 'fx-w'; pun.style.setProperty('--wi', n++); pun.textContent = lead[0]; wrap.append(pun);
+            c.textContent = c.textContent.slice(lead[0].length);
+          }
+          const parts = c.textContent.split(/(\s+)/);
+          const frag = document.createDocumentFragment();
+          parts.forEach((t) => {
+            if (!t) return;
+            if (/^\s+$/.test(t)) { frag.append(t); return; }
+            const s = document.createElement('span'); s.className = 'fx-w'; s.style.setProperty('--wi', n++); s.textContent = t; frag.append(s);
+          });
+          c.replaceWith(frag);
+        } else if (c.nodeType === 1 && !c.matches('br')) walk(c);
+      });
+    };
+    walk(h1); h1.classList.add('fx-words');
+  });
+
+  if (!fine) return; // следващите ефекти са само за мишка
+
+  // 4) Светлина под курсора по картите
+  const cards = '.f-card, .step3, .step4, .faq details, .price-card2, .metric, .cmp-card, .tl, .roi, .more-box, .bill';
+  document.addEventListener('pointermove', (e) => {
+    const c = e.target.closest?.(cards); if (!c) return;
+    const r = c.getBoundingClientRect();
+    c.style.setProperty('--mx', `${e.clientX - r.left}px`); c.style.setProperty('--my', `${e.clientY - r.top}px`);
+    c.classList.add('fx-lit');
+  }, { passive: true });
+  document.addEventListener('pointerout', (e) => { const c = e.target.closest?.(cards); if (c && !c.contains(e.relatedTarget)) c.classList.remove('fx-lit'); });
+
+  // 5) 3D наклон на телефоните
+  document.querySelectorAll('.phone2').forEach((ph) => {
+    ph.classList.add('fx-tilt');
+    ph.addEventListener('pointermove', (e) => {
+      const r = ph.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      ph.style.setProperty('--rx', `${(-y * 10).toFixed(2)}deg`); ph.style.setProperty('--ry', `${(x * 12).toFixed(2)}deg`);
+    });
+    ph.addEventListener('pointerleave', () => { ph.style.setProperty('--rx', '0deg'); ph.style.setProperty('--ry', '0deg'); });
+  });
+})();

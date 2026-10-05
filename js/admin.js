@@ -58,7 +58,7 @@ function sidebar(active) {
   const a = store.adminUser();
   const n = store.admin.drivers().length;
   return h('aside', { class: 'adm-side' },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi'), h('span', { class: 'adm-badge' }, 'Админ')),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')), h('span', { class: 'adm-badge' }, 'Админ')),
     h('nav', { class: 'adm-nav' }, NAV.map(([p, ic, label]) =>
       h('a', { href: '#' + p, class: cx((active === p || PARENT[active] === p) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n)))),
     h('div', { class: 'adm-side-foot' },
@@ -76,7 +76,7 @@ function loginView() {
   const pw = h('input', { class: 'input', type: 'password', autocomplete: 'current-password' });
   const err = h('p', { class: 'err' });
   return h('div', { class: 'auth', style: { maxWidth: '420px', margin: '0 auto' } },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'ProfiTaxi')),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi'))),
     h('div', { class: 'auth-hero' }, h('h1', null, 'Администрация'), h('p', null, 'Вход само за администратори.')),
     h('form', { class: 'form', onsubmit: (e) => { e.preventDefault(); const r = store.adminLogin(email.value, pw.value); if (r.error) { err.textContent = r.error; return; } render(); } },
       field('Имейл', email), field('Парола', pw), err,
@@ -198,7 +198,9 @@ function scopeBar() {
   all.filter((d) => d.user.city === scope.city).forEach((d) => { compCount[d.user.company] = (compCount[d.user.company] || 0) + 1; });
   const companies = Object.keys(compCount).sort((a, b) => compCount[b] - compCount[a] || a.localeCompare(b, 'bg'));
   const n = all.filter(inScope).length;
-  return h('div', { class: 'scope-bar' },
+  const bar = h('div', { class: cx('scope-bar', scopeOpen && 'open') },
+    h('button', { class: 'scope-chip', type: 'button', 'aria-expanded': String(scopeOpen), onclick: () => { scopeOpen = !scopeOpen; bar.classList.toggle('open', scopeOpen); } },
+      icon('target', 18), h('b', null, scopeLabel()), h('span', null, `${n} ${n === 1 ? 'шофьор' : 'шофьори'}`), icon('down', 16)),
     h('div', { class: 'scope-ic' }, icon('target', 18)),
     h('label', { class: 'scope-field' }, h('span', null, 'Град'),
       h('select', { class: 'input', onchange: (e) => { scope.city = e.target.value; scope.company = ''; render(); } },
@@ -210,7 +212,9 @@ function scopeBar() {
         companies.map((c) => h('option', { value: c, selected: scope.company === c }, `${c} (${compCount[c]})`)))),
     h('div', { class: 'scope-sum' }, h('b', null, scopeLabel()), h('span', null, `${n} ${n === 1 ? 'шофьор' : 'шофьори'}`),
       scope.city && h('button', { class: 'chip', onclick: () => { scope.city = ''; scope.company = ''; render(); } }, icon('x', 14), 'Изчисти')));
+  return bar;
 }
+let scopeOpen = false;
 
 // ---------- Показатели на шофьор за пазарния анализ ----------
 function driverMetrics(d, st, days) {
@@ -514,19 +518,18 @@ function drivers() {
       (!q || [d.user.name, d.user.email, d.user.phone, d.user.company, d.user.city].join(' ').toLowerCase().includes(q)));
     const sorters = { net: (a, b) => b.st.net - a.st.net, name: (a, b) => a.d.user.name.localeCompare(b.d.user.name, 'bg'), recent: (a, b) => (b.last?.start || '').localeCompare(a.last?.start || ''), sub: (a, b) => a.d.user.subscription.validUntil.localeCompare(b.d.user.subscription.validUntil), reg: (a, b) => b.d.user.createdAt.localeCompare(a.d.user.createdAt) };
     list.sort(sorters[listState.sort]);
-    fill(listEl, list.length ? table(['Шофьор', 'Град и фирма', 'Кола', 'Статус', 'Абонамент до', 'Последна смяна', 'Чисто този месец'],
+    fill(listEl, list.length ? table(['Шофьор', 'Град, фирма и кола', 'Статус', 'Абонамент до', 'Последна смяна', 'Чисто (месец)'],
       list.map(({ d, s, st, last }) => ({
         href: '#/driver/' + d.user.id,
         cells: [
           h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, d.user.email)),
-          h('span', { class: 'who-cell' }, h('b', { style: { fontWeight: 600 } }, d.user.city), h('span', null, d.user.company)),
-          h('span', { class: 'small' }, `${CAR_TYPES[d.profile.carType]?.label}, ${FUELS[d.profile.fuel]?.label}`),
+          h('span', { class: 'who-cell' }, h('b', { style: { fontWeight: 600 } }, `${d.user.city}, ${d.user.company}`), h('span', null, `${CAR_TYPES[d.profile.carType]?.label}, ${FUELS[d.profile.fuel]?.label}`)),
           h('span', { class: cx('chip', s.cls) }, s.label),
           fmtDate(d.user.subscription.validUntil, { year: true }),
           last ? fmtDate(shiftDate(last)) : '—',
           h('b', { class: tone(st.net) }, money(st.net)),
         ],
-      })), { rightFrom: 6 }) : empty('users', 'Няма намерени шофьори', 'Промени търсенето или филтъра.'),
+      })), { rightFrom: 5 }) : empty('users', 'Няма намерени шофьори', 'Промени търсенето или филтъра.'),
       // на телефон: карти вместо широка таблица
       list.length > 0 && h('div', { class: 'drv-cards' }, list.map(({ d, s, st, last }) => h('a', { class: 'drv-card', href: '#/driver/' + d.user.id },
         h('span', { class: 'drv-av' }, d.user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')),

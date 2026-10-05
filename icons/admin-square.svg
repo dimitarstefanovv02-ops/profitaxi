@@ -1,30 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
-    <linearGradient id="abg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4F46E5"/><stop offset=".55" stop-color="#7C3AED"/><stop offset="1" stop-color="#C026D3"/></linearGradient>
-    <linearGradient id="aarea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".55"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
-    <radialGradient id="adot" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFD84D" stop-opacity=".9"/><stop offset="1" stop-color="#FFD84D" stop-opacity="0"/></radialGradient>
-    <clipPath id="asq"><rect width="512" height="512" rx="0"/></clipPath>
+    <linearGradient id="pbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9F7AEA"/><stop offset="1" stop-color="#5B21B6"/></linearGradient>
+    <linearGradient id="pcar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE066"/><stop offset=".55" stop-color="#FFC21A"/><stop offset="1" stop-color="#F2A100"/></linearGradient>
+    <radialGradient id="pglow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".18"/><stop offset="1" stop-color="#8B5CF6" stop-opacity="0"/></radialGradient>
+    <pattern id="pchk" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#FFFFFF"/><rect width="7" height="7" fill="#7C3AED"/><rect x="7" y="7" width="7" height="7" fill="#7C3AED"/></pattern>
+    <clipPath id="psq"><rect width="512" height="512" rx="0"/></clipPath>
   </defs>
-  <g clip-path="url(#asq)">
-    <rect width="512" height="512" fill="url(#abg)"/>
-    <circle cx="440" cy="60" r="170" fill="#FFFFFF" opacity=".08"/>
-    <circle cx="40" cy="500" r="150" fill="#000000" opacity=".12"/>
-    <text x="256" y="104" text-anchor="middle" font-family="'Inter Display', Inter, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="70" letter-spacing="-2" fill="#FFFFFF">ProfiTaxi</text>
-    <g transform="translate(256 268) scale(0.7) translate(-256 -256)">
-    <!-- стъклена карта -->
-    <rect x="72" y="96" width="368" height="320" rx="44" fill="#FFFFFF" opacity=".14"/>
-    <rect x="72" y="96" width="368" height="320" rx="44" fill="none" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="3"/>
-    <!-- мрежа -->
-    <g stroke="#FFFFFF" stroke-opacity=".22" stroke-width="3" stroke-dasharray="2 12" stroke-linecap="round"><path d="M108 196h296M108 266h296M108 336h296"/></g>
-    <!-- стълбчета на заден план -->
-    <g fill="#FFFFFF" opacity=".28"><rect x="124" y="306" width="34" height="74" rx="10"/><rect x="186" y="276" width="34" height="104" rx="10"/><rect x="248" y="290" width="34" height="90" rx="10"/><rect x="310" y="236" width="34" height="144" rx="10"/></g>
-    <!-- растяща линия с площ -->
-    <path d="M110 330C150 322 170 296 204 300s58 10 86-26 48-62 74-86l30-30V380H110z" fill="url(#aarea)"/>
-    <path d="M110 330C150 322 170 296 204 300s58 10 86-26 48-62 74-86l30-30" fill="none" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
-    <!-- светеща точка -->
-    <circle cx="394" cy="158" r="44" fill="url(#adot)"/>
-    <circle cx="394" cy="158" r="20" fill="#FFC21A" stroke="#FFFFFF" stroke-width="8"/>
+  <g clip-path="url(#psq)">
+    <rect width="512" height="512" fill="url(#pbg)"/>
+    <ellipse cx="270" cy="300" rx="250" ry="170" fill="url(#pglow)"/>
+    <g transform="translate(18,6)">
+      <!-- линии на скоростта -->
+      <g stroke="#FFFFFF" stroke-opacity=".7" stroke-linecap="round">
+        <path d="M10 258h58" stroke-width="16"/><path d="M26 300h40" stroke-width="16"/><path d="M0 342h52" stroke-width="16"/>
+      </g>
+      <!-- табела на покрива -->
+      <rect x="244" y="150" width="84" height="34" rx="9" fill="url(#pchk)"/>
+      <rect x="244" y="150" width="84" height="34" rx="9" fill="none" stroke="#0B0B0F" stroke-width="5"/>
+      <!-- каросерия -->
+      <path d="M70 324c0-22 13-38 35-42l58-10 50-52c11-11 26-18 42-18h86c17 0 33 8 44 21l36 45 26 6c20 5 34 22 34 43v20c0 11-9 20-20 20H88c-10 0-18-8-18-18z" transform="translate(0,-22)" fill="url(#pcar)"/>
+      <g transform="translate(0,-22)">
+        <!-- прозорци -->
+        <path d="M226 268l30-36c5-6 12-9 20-9h38v45z" fill="#0B0B0F"/>
+        <path d="M330 223h20c9 0 17 4 22 11l26 34h-68z" fill="#0B0B0F"/>
+        <path d="M150 302h296" stroke="#C98400" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+        <path d="M322 270v64" stroke="#C98400" stroke-width="4" opacity=".45"/>
+        <path d="M74 300h26c5 0 8 4 7 9l-2 6H72z" fill="#A78BFA"/>
+        <path d="M424 288h16c8 0 14 6 14 14v4h-30z" fill="#FFFBEA"/>
+        <!-- гуми -->
+        <circle cx="150" cy="352" r="42" fill="#0B0B0F"/><circle cx="150" cy="352" r="22" fill="#FFFFFF"/><circle cx="150" cy="352" r="9" fill="#7C3AED"/>
+        <circle cx="372" cy="352" r="42" fill="#0B0B0F"/><circle cx="372" cy="352" r="22" fill="#FFFFFF"/><circle cx="372" cy="352" r="9" fill="#7C3AED"/>
+      </g>
     </g>
-    <text x="256" y="462" text-anchor="middle" font-family="'Inter Display', Inter, 'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-weight="900" font-size="78" letter-spacing="-1" fill="#FFC21A">Stats</text>
+    <rect x="146" y="418" width="220" height="56" rx="16" fill="#0B0B0F"/>
+    <text x="256" y="458" text-anchor="middle" font-family="'Inter Display', Inter, Arial, sans-serif" font-weight="900" font-size="34" letter-spacing="3" fill="#FFC21A">АДМИН</text>
   </g>
 </svg>

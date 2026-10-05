@@ -35,11 +35,31 @@
 </head>
 <body class="site">
 <div id="intro" aria-hidden="true">
+  <div class="intro-road"></div>
   <div class="intro-in">
-    <div class="intro-logo"><span class="intro-ring"></span><img src="/icons/icon-192.png" alt="" width="112" height="112"></div>
-    <div class="intro-word"><span><i>Profi</i></span><span><b>Taxi</b></span></div>
-    <div class="intro-bar"><i></i></div>
+    <div class="intro-car"><svg class="intro-svg" viewBox="40 120 470 280" aria-hidden="true">
+        <defs>
+          <linearGradient id="icar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE066"/><stop offset=".55" stop-color="#FFC21A"/><stop offset="1" stop-color="#F2A100"/></linearGradient>
+          <linearGradient id="ibeam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFF6D0" stop-opacity=".75"/><stop offset="1" stop-color="#FFF6D0" stop-opacity="0"/></linearGradient>
+          <pattern id="ichk" width="14" height="14" patternUnits="userSpaceOnUse"><rect width="14" height="14" fill="#fff"/><rect width="7" height="7" fill="#7C3AED"/><rect x="7" y="7" width="7" height="7" fill="#7C3AED"/></pattern>
+        </defs>
+        <path class="intro-beam" d="M448 288 L700 230 L700 360 Z" fill="url(#ibeam)"/>
+        <g class="intro-speed" stroke="#A78BFA" stroke-linecap="round" stroke-width="14"><path d="M-40 236h90"/><path d="M-10 278h60"/><path d="M-60 320h96"/></g>
+        <g class="intro-body">
+          <rect class="intro-sign" x="262" y="150" width="84" height="34" rx="9" fill="url(#ichk)" stroke="#0B0B0F" stroke-width="5"/>
+          <path d="M70 302c0-22 13-38 35-42l58-10 50-52c11-11 26-18 42-18h86c17 0 33 8 44 21l36 45 26 6c20 5 34 22 34 43v20c0 11-9 20-20 20H88c-10 0-18-8-18-18z" fill="url(#icar)"/>
+          <path d="M226 246l30-36c5-6 12-9 20-9h38v45z M330 201h20c9 0 17 4 22 11l26 34h-68z" fill="#0B0B0F"/>
+          <path d="M150 280h296" stroke="#C98400" stroke-width="5" stroke-linecap="round" opacity=".55"/>
+          <path d="M74 278h26c5 0 8 4 7 9l-2 6H72z" fill="#A78BFA"/>
+          <path d="M424 266h16c8 0 14 6 14 14v4h-30z" fill="#FFFBEA"/>
+        </g>
+        <g class="intro-wheel" style="transform-origin:150px 330px"><circle cx="150" cy="330" r="42" fill="#0B0B0F"/><circle cx="150" cy="330" r="22" fill="#fff"/><path d="M150 310v40M130 330h40" stroke="#7C3AED" stroke-width="6"/></g>
+        <g class="intro-wheel" style="transform-origin:372px 330px"><circle cx="372" cy="330" r="42" fill="#0B0B0F"/><circle cx="372" cy="330" r="22" fill="#fff"/><path d="M372 310v40M352 330h40" stroke="#7C3AED" stroke-width="6"/></g>
+      </svg></div>
+    <div class="intro-word"><i style="--i:0">P</i><i style="--i:1">r</i><i style="--i:2">o</i><i style="--i:3">f</i><i style="--i:4">i</i><b style="--i:5">T</b><b style="--i:6">a</b><b style="--i:7">x</b><b style="--i:8">i</b></div>
+    <div class="intro-tag">Карай за печалба. Не само за оборот.</div>
   </div>
+  <div class="intro-skip">Натисни, за да продължиш</div>
 </div>
 <div id="site-head"></div>
 <main>
@@ -82,9 +102,9 @@
       <h2>Три стъпки. Без счетоводство.</h2>
     </div>
     <div class="steps3 stagger">
-      <div class="step3"><div class="step3-txt"><span class="n">1</span><h3>Кажи какви са ти разходите</h3><p>Ефир, наем или лизинг, застраховки. Веднъж, за 2 минути.</p></div><div class="phone2 sm"><img src="/img/screen-costs-dark.jpg" data-light="/img/screen-costs-light.jpg" data-dark="/img/screen-costs-dark.jpg" alt="Постоянните разходи с падежи" width="390" height="844" loading="lazy"></div></div>
-      <div class="step3"><div class="step3-txt"><span class="n">2</span><h3>Запиши смяната</h3><p>Кеш, карта и гориво с големи бутони. 10 секунди.</p></div><div class="phone2 sm"><img src="/img/screen-numpad-dark.jpg" data-light="/img/screen-numpad-light.jpg" data-dark="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума с големи бутони" width="390" height="844" loading="lazy"></div></div>
-      <div class="step3"><div class="step3-txt"><span class="n">3</span><h3>Виж колко ти остава</h3><p>Чисто за деня и месеца и колко часа още до целта ти.</p></div><div class="phone2 sm"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Началният екран с чистата печалба" width="390" height="844" loading="lazy"></div></div>
+      <div class="step3"><div class="step3-txt"><span class="n">1</span><h3>Кажи какви са ти разходите</h3><p>Ефир, наем или лизинг, застраховки. Веднъж, за 2 минути.</p></div><div class="step-shot top"><img src="/img/screen-costs-dark.jpg" data-light="/img/screen-costs-light.jpg" data-dark="/img/screen-costs-dark.jpg" alt="Постоянните разходи с падежи" width="390" height="844" loading="lazy"></div></div>
+      <div class="step3"><div class="step3-txt"><span class="n">2</span><h3>Запиши смяната</h3><p>Кеш, карта и гориво с големи бутони. 10 секунди.</p></div><div class="step-shot bottom"><img src="/img/screen-numpad-dark.jpg" data-light="/img/screen-numpad-light.jpg" data-dark="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума с големи бутони" width="390" height="844" loading="lazy"></div></div>
+      <div class="step3"><div class="step3-txt"><span class="n">3</span><h3>Виж колко ти остава</h3><p>Чисто за деня и месеца и колко часа още до целта ти.</p></div><div class="step-shot top"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Началният екран с чистата печалба" width="390" height="844" loading="lazy"></div></div>
     </div>
     <div class="link-row c rv">
       <a class="s-btn s-btn-line" href="/features">Всички функции</a>
@@ -118,14 +138,15 @@
         <p class="s-muted" style="text-align:center;margin-top:10px;font-size:.95rem">Без карта. Без обвързване.</p>
       </div>
 
-      <details class="roi more-box rv from-r"><summary>Защо си заслужава</summary><div class="more-in">
+      <div class="roi rv">
+        <h3>Сметката е проста</h3>
         <div class="roi-row"><span>Абонамент на месец</span><b>3,99 €</b></div>
         <div class="roi-row"><span>Един среден курс</span><b>≈ 5 €</b></div>
         <div class="roi-row"><span>На ден</span><b>0,13 €</b></div>
         <div class="roi-row"><span>Пропусната такса или глоба</span><b>50–200 €</b></div>
         <div class="roi-row"><span>Час, в който караш на загуба</span><b>?</b></div>
         <p class="s-muted" style="margin-top:12px;line-height:1.55">Ако ProfiTaxi ти покаже само една смяна на загуба или едно забравено плащане, вече се е изплатил.</p>
-      </div></details>
+      </div>
     </div>
     <div class="sec-foot c"><a class="s-btn s-btn-line" href="/pricing">Цена и абонамент</a></div>
   </div>

@@ -110,7 +110,8 @@ export function shiftEditorView(ctx) {
 
       // Лента за запис
       h('div', { class: 'save-bar' },
-        h('div', { class: 'sum' }, h('span', null, 'Чисто за смяната'), h('b', { class: net >= 0 ? 'pos' : 'neg' }, money(net))),
+        (inc > 0 || draft.expenses.length) ? h('div', { class: 'sum' }, h('span', null, 'Чисто за смяната'), h('b', { class: net >= 0 ? 'pos' : 'neg' }, money(net)))
+          : h('div', { class: 'sum' }, h('span', null, 'Чисто за смяната'), h('span', { class: 'hint' }, 'Въведи кеш и карта')),
         h('button', { class: 'btn btn-primary btn-lg', onclick: () => save() }, icon('check', 20), !draft.end ? 'Запази' : wasActive ? 'Приключи' : 'Запази')));
   }
 

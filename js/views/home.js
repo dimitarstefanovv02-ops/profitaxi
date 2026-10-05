@@ -40,8 +40,8 @@ export function homeView({ go, user, data }) {
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
 
-    // 1. Колко ти остава този месец
-    meter(g, month),
+    // 1. Колко ти остава този месец (първия ден – какво да направи)
+    data.shifts.length ? meter(g, month) : firstDay(),
 
     // 2. Главното действие: смяната
     active ? liveShift(active, go) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
@@ -112,6 +112,17 @@ function reservationsCard(data) {
 function greeting() {
   const hr = new Date().getHours();
   return hr >= 5 && hr < 11 ? 'Добро утро' : hr >= 11 && hr < 18 ? 'Добър ден' : 'Добър вечер';
+}
+
+function firstDay() {
+  return h('section', { class: 'first-day', 'aria-label': 'Първи стъпки' },
+    h('div', { class: 'fd-ic' }, icon('flame', 26)),
+    h('h2', null, 'Добре дошъл в ProfiTaxi!'),
+    h('p', null, 'Запиши първата си смяна и тук ще видиш колко ти остава чисто.'),
+    h('ol', { class: 'fd-steps' },
+      h('li', null, 'Натисни „Започни смяна“ отдолу'),
+      h('li', null, 'В края въведи кеш, карта и гориво'),
+      h('li', null, 'Виж колко ти остава за деня и месеца')));
 }
 
 function meter(g, month) {

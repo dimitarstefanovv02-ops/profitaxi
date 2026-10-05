@@ -219,3 +219,23 @@ export function more(label, ...children) {
     h('summary', null, h('span', null, label), icon('down', 18)),
     h('div', { class: 'more-body' }, ...children));
 }
+
+// Конфети за награда (жълто, лилаво, бяло). Само ако човекът не е избрал „намалено движение“.
+export function celebrate(n = 40) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const box = document.createElement('div'); box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
+  const colors = ['#FFC21A', '#8B5CF6', '#A78BFA', '#FFFFFF', '#FFE066'];
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('i');
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.background = colors[i % colors.length];
+    p.style.setProperty('--x', `${(Math.random() - .5) * 160}px`);
+    p.style.setProperty('--r', `${(Math.random() - .5) * 1440}deg`);
+    p.style.setProperty('--d', `${Math.random() * .35}s`);
+    p.style.setProperty('--t', `${1.3 + Math.random() * .9}s`);
+    if (i % 3 === 0) { p.style.width = '7px'; p.style.height = '7px'; p.style.borderRadius = '50%'; }
+    box.append(p);
+  }
+  document.body.append(box);
+  setTimeout(() => box.remove(), 2600);
+}

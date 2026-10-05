@@ -2,7 +2,7 @@
 // Това е моментът, в който шофьорът вижда стойността: колко остана реално от днес.
 
 import { h, icon, money, money2, fmtDuration, fmtNum } from '../util.js';
-import { openSheet } from '../ui.js';
+import { openSheet, celebrate } from '../ui.js';
 import { shiftIncome, shiftHours, shiftKm, shiftNetAfterFixed, goalProgress } from '../calc.js';
 
 export function showShiftResult(data, shiftId) {
@@ -22,6 +22,9 @@ export function showShiftResult(data, shiftId) {
     : diff <= -0.05 ? { cls: 'down', text: `${Math.round(-diff * 100)}% под средното ти на час`, ic: 'chart' }
     : { cls: 'eq', text: 'Колкото средното ти на час', ic: 'check' };
 
+  // Награда: вибрация и конфети (повече, ако целта е изпълнена)
+  try { navigator.vibrate?.(g.done ? [40, 60, 40] : 35); } catch { /* */ }
+  if (net > 0) setTimeout(() => celebrate(g.done ? 90 : 36), 180);
   openSheet((close) => h('div', { class: 'result' },
     h('div', { class: 'result-head' },
       h('span', { class: 'result-badge' }, icon('flame', 16), 'Смяната приключи'),

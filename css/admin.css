@@ -254,3 +254,18 @@ body.admin .btn-ghost.act-del { border-color: var(--neg); color: #fff; backgroun
 /* Менюто: лилава черта вляво при посочване */
 .adm-nav a:not(.on):hover { box-shadow: inset 3px 0 0 var(--violet); }
 .adm-side { border-right: 1px solid rgba(139, 92, 246, .25); }
+/* Филтърът град/фирма: на телефон – един чип, който се разгъва */
+.scope-chip { display: none; }
+@media (max-width: 719px) {
+  .scope-bar { padding: 8px; gap: 8px; }
+  .scope-bar > :not(.scope-chip) { display: none; }
+  .scope-bar.open > :not(.scope-chip):not(.scope-ic) { display: flex; }
+  .scope-bar.open .scope-field { display: grid; width: 100%; }
+  .scope-chip { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 6px 10px; border-radius: 12px; font-size: .95rem; color: var(--text); }
+  .scope-chip .ic:first-child { color: var(--violet); }
+  .scope-chip span { color: var(--muted); margin-left: auto; font-size: .88rem; }
+  .scope-bar.open .scope-chip .ic:last-child { transform: rotate(180deg); }
+}
+/* Таблицата с шофьорите се побира */
+.tbl .who-cell span { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+@media (max-width: 719px) { .kpi-head { flex-wrap: wrap; row-gap: 4px; } .kpi-head .trend-chip { margin-left: 0; } }

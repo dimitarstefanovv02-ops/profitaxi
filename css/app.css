@@ -859,3 +859,42 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .sub-back { color: var(--violet); }
 .section-title { justify-content: flex-start; }
 .home-links + .next, .home-links + .card { margin-top: 14px; }
+.brand-name b { color: var(--violet); font-weight: inherit; }
+.adm-side .brand-name b { color: #A78BFA; }
+
+/* ======================================================================
+   ЧЕТИМОСТ И ПАЛЕЦ (за шофьор в кола): дребният текст поне 15 px,
+   бутоните поне 44 px; по-компактна карта „Чисто за месеца“.
+   ====================================================================== */
+body:not(.admin) .small, body:not(.admin) small, body:not(.admin) .stat-sub, body:not(.admin) .next-sub,
+body:not(.admin) .big-link > .grow > span, body:not(.admin) .home-link small, body:not(.admin) .muted.small,
+body:not(.admin) .auto-note, body:not(.admin) .shift-meta, body:not(.admin) .cost-sub, body:not(.admin) .res-sub,
+body:not(.admin) .stat-label, body:not(.admin) .meter-label, body:not(.admin) .meter-note, body:not(.admin) .tile-label,
+body:not(.admin) .next-when span, body:not(.admin) .chip, body:not(.admin) .date { font-size: max(.94rem, 15px); }
+body:not(.admin) .nav a { font-size: .8rem; }
+body:not(.admin) .home-link small { white-space: normal; }
+.btn-sm, .next-actions .btn-sm { min-height: 44px; padding: 8px 14px; font-size: .95rem; }
+.exp-item .icon-btn { width: 44px; height: 44px; }
+.more > summary { min-height: 52px; }
+/* Компактна карта на месеца */
+.meter { padding: 20px 16px 14px; }
+.meter-value { font-size: clamp(2.3rem, 11vw, 3rem); margin: 4px 0 2px; }
+.meter .road { margin-top: 12px; height: 30px; }
+.meter .road-car { width: 30px; height: 30px; }
+.meter-hours { margin-top: 10px; }
+.meter-more summary { padding-top: 8px; }
+/* Първият ден: вместо нули – какво да направи */
+.first-day { border: 1.5px solid var(--v-strong); border-radius: var(--r-xl); padding: 20px 18px; background: var(--surface); box-shadow: 0 0 0 4px var(--v-glow); }
+.first-day h2 { font-family: var(--display); font-size: 1.45rem; margin: 10px 0 6px; letter-spacing: -.02em; }
+.first-day p { color: var(--muted); margin: 0 0 14px; font-size: 1rem; }
+.fd-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
+.fd-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; counter-reset: fd; }
+.fd-steps li { display: flex; gap: 12px; align-items: center; font-weight: 600; font-size: 1rem; }
+.fd-steps li::before { counter-increment: fd; content: counter(fd); flex: none; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: var(--v-soft); color: var(--violet); font-weight: 800; }
+/* Празна смяна: без червен минус */
+.save-bar .sum .hint { display: block; font-weight: 700; color: var(--muted); font-size: 1rem; }
+/* Награда: конфети */
+.confetti { position: fixed; inset: 0; pointer-events: none; z-index: 200; overflow: hidden; }
+.confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: .95; animation: confFall var(--t, 1.6s) cubic-bezier(.2, .6, .4, 1) var(--d, 0s) forwards; }
+@keyframes confFall { 0% { transform: translate(0, 0) rotate(0); } 100% { transform: translate(var(--x, 0), 105vh) rotate(var(--r, 540deg)); opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .confetti { display: none; } }

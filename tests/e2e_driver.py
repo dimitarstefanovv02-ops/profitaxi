@@ -54,10 +54,12 @@ async def main():
         ok('Под наем не може да се добави винетка/застраховка', not any(x in chips for x in ['Винетка','Гражданска отговорност','Каско','Технически преглед']), chips)
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
         await pg.goto(base+'/app#/home'); await pg.wait_for_timeout(300)
+        ok('Първия ден вместо нули има „Добре дошъл“ с 3 стъпки', await T('.first-day').count()==1 and await T('.meter').count()==0)
         # --- Смяна ---
-        await pg.click('text=Започни смяна'); await pg.keyboard.type('250000'); await pg.click('text=Старт'); await pg.wait_for_timeout(500)
+        await pg.click('.shift-cta'); await pg.keyboard.type('250000'); await pg.click('text=Старт'); await pg.wait_for_timeout(500)
         ok('Активна смяна с таймер', await T('[data-timer]').count()==1)
         await pg.click('text=Отчет'); await pg.wait_for_timeout(300)
+        ok('Празна смяна: без червен минус, а „Въведи кеш и карта“', 'Въведи кеш и карта' in await T('.save-bar').inner_text())
         await pg.click('.tile >> nth=0'); await pg.keyboard.type('100'); await pg.click('.np-actions >> text=Запиши'); await pg.wait_for_timeout(150)
         await pg.click('.tile >> nth=0'); await pg.keyboard.type('20,5'); await pg.click('.np-actions >> text=+ Добави'); await pg.wait_for_timeout(150)
         cash = await T('.tile >> nth=0').inner_text()
