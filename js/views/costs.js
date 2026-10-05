@@ -65,6 +65,17 @@ function notifyBox(data) {
     } }, 'Включи'));
 }
 
+// Изтриване: от този месец (не се смята изобщо за него) или от днес
+function askDelete(d) {
+  const today = todayStr(), m0 = today.slice(0, 8) + '01';
+  const pick = (from, close) => { close(); store.deleteCost(d.id, { from }); toast('Разходът е изтрит'); };
+  openSheet((close) => h('div', { class: 'form' },
+    sheetHead(`Да изтрия ли „${d.name}“?`, close, 'Миналите месеци остават същите'),
+    h('button', { class: 'btn btn-danger btn-lg btn-block', onclick: () => pick(m0, close) }, icon('trash', 20), 'Изтрий и за този месец'),
+    today !== m0 && h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => pick(today, close) }, 'Спри го от днес'),
+    h('p', { class: 'muted small' }, '„За този месец“ – ако не го плащаш изобщо. „От днес“ – ако си го плащал досега и спираш.')));
+}
+
 // Наем, лизинг и ефир идват от профила: тук може да се смени от кога важат
 function systemCost(c, go) {
   openSheet((close) => h('div', { class: 'form' },
@@ -161,7 +172,7 @@ function editCost(c, data) {
       sheetHead(isNew ? 'Нов постоянен разход' : 'Постоянен разход', close),
       body,
       h('div', { class: 'row gap' },
-        !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { close(); confirmSheet({ title: 'Да изтрия ли разхода?', text: 'Ще спре да се смята от днес. Миналите месеци остават същите.', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCost(d.id); toast('Разходът е изтрит'); } }); } }, icon('trash', 20)),
+        !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { close(); askDelete(d); } }, icon('trash', 20)),
         h('button', { class: 'btn btn-page btn-lg grow', onclick: save }, 'Запази')));
   }, { tall: true });
 }

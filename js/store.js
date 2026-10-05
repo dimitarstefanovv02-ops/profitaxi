@@ -193,12 +193,13 @@ export function saveCost(cost) {
   if (i >= 0) { if (db.costs[i].userId !== id) return; db.costs[i] = c; } else db.costs.push(c);
   commit();
 }
-export function deleteCost(cid) {
+// from: от кой ден разходът спира да се смята (по подразбиране днес; „този месец“ = 1-во число).
+// Миналите месеци не се пренаписват. Ако разходът започва от тази дата или по-късно, се трие изцяло.
+export function deleteCost(cid, { from = todayStr() } = {}) {
   const id = myId();
   const c = db.costs.find((x) => x.id === cid && x.userId === id);
   if (!c) return;
-  // Спираме разхода от днес нататък, за да не се пренаписват старите месеци
-  if (c.startDate < todayStr()) { c.endDate = addDays(todayStr(), -1); c.dueDate = null; }
+  if (c.startDate < from) { c.endDate = addDays(from, -1); c.dueDate = null; }
   else db.costs = db.costs.filter((x) => x !== c);
   commit();
 }
