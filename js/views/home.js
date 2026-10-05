@@ -51,20 +51,20 @@ export function homeView({ go, user, data }) {
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
 
-    // 1. Какво следва: следващият курс и следващото плащане – с бутоните за тях
-    nextUp(data, go),
-
-    // 2. Главното действие
-    active ? liveShift(active, go) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започвам смяна'),
+    // 1. Главното действие: смяната
+    active ? liveShift(active, go) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
     !active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
 
-    // 3. Месецът: само чистото и колко остава; останалото е в „Подробности“
+    // 2. Колко ти остава този месец
     meter(g, month),
+
+    // 3. Какво следва: курс и плащане с бутоните за тях
+    nextUp(data, go),
 
     quote,
 
-    // 4. Допълнителното – скрито, отваря се с едно натискане
-    more('Седмицата, най-добрите часове и месецът',
+    // Всичко останало – на едно натискане
+    more('Покажи повече: седмицата, часовете, последните смени',
       weekCard(data),
       ti.hasData && bestToday(ti),
       h('div', { class: 'grid2', style: { marginTop: '14px' } },
@@ -74,15 +74,10 @@ export function homeView({ go, user, data }) {
         stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' })),
       rec.current >= 2 && h('div', { class: 'card tip', style: { marginTop: '14px' } },
         h('div', { class: 'tip-ic' }, icon('flame', 22)),
-        h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`)))),
-
-    // Последни смени
-    recent.length > 0 && h('div', { class: 'card', style: { marginTop: '14px' } },
-      cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
-      recent.slice(0, 2).map((s) => shiftRow(data, s))),
-
-    // Покани
-    store.myReferrals() && inviteCard(store.myReferrals()));
+        h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`))),
+      recent.length > 0 && h('div', { class: 'card', style: { marginTop: '14px' } },
+        cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
+        recent.slice(0, 3).map((s) => shiftRow(data, s)))));
 }
 
 // „Следващо“: най-близкият курс и най-спешното плащане (просрочените са първи)

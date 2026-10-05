@@ -59,7 +59,7 @@ async def main():
         ok('Спрян шофьор вижда „Достъпът е спрян“', 'Достъпът е спрян' in await d.inner_text('#app'))
         await a.click('text=Пусни достъпа'); await a.wait_for_timeout(500)
         await d.reload(); await d.wait_for_timeout(500)
-        ok('След „Пусни достъпа“ шофьорът влиза нормално', 'Започвам смяна' in await d.inner_text('#app') or 'Приключих' in await d.inner_text('#app'))
+        ok('След „Пусни достъпа“ шофьорът влиза нормално', 'Започни смяна' in await d.inner_text('#app') or 'Приключих' in await d.inner_text('#app'))
         # Изтекъл пробен период
         await d.wait_for_timeout(900); await d.keyboard.press('Escape'); await d.wait_for_timeout(400)
         await d.goto(base+'/app#/profile'); await d.wait_for_timeout(500); await d.click('text=Изход'); await d.wait_for_timeout(300)

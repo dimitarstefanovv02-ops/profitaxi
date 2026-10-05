@@ -773,3 +773,33 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .tour-dots i.on { width: 18px; background: var(--accent); }
 .tour-btns { display: flex; justify-content: space-between; gap: 8px; }
 .tour-btns .btn { min-height: 44px; }
+
+/* ---------- Опростено меню и централни екрани ---------- */
+.nav.nav-3 { grid-template-columns: repeat(3, 1fr); }
+.nav.nav-3 a { font-size: .78rem; }
+.nav.nav-3 .nav-ic { width: 60px; height: 34px; }
+.sub-back { margin: -4px 0 8px -6px; }
+.page-title { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 4px 0 14px; }
+.page-title h1 { font-size: 1.6rem; }
+.month-sum { padding: 20px; }
+.ms-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 1.05rem; color: var(--muted); }
+.ms-row b { color: var(--text); font-family: var(--display); font-weight: 600; }
+.ms-total { display: flex; justify-content: space-between; align-items: baseline; border-top: 1px solid var(--line); margin-top: 8px; padding-top: 12px; }
+.ms-total span { font-weight: 700; font-size: 1.1rem; }
+.ms-total b { font-family: var(--display); font-size: 2.1rem; letter-spacing: -.03em; color: var(--accent-text); }
+.ms-total b.neg { color: var(--neg); }
+.month-sum .muted { margin-top: 8px; }
+.big-links { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.big-link { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: var(--r-md); background: var(--surface); border: 1px solid var(--line); text-decoration: none; color: inherit; text-align: left; width: 100%; }
+.big-link:active { transform: scale(.99); }
+.big-link .bl-ic { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; background: var(--surface-2); flex: none; }
+.big-link b { display: block; font-size: 1rem; }
+.big-link .grow > span { display: block; font-size: .84rem; color: var(--muted); margin-top: 2px; }
+.big-link > .ic:last-child { color: var(--faint); }
+.big-link.as-row .theme-toggle { width: 44px; height: 44px; }
+.me-group .section-title { margin-top: 22px; }
+.me-group .big-links { margin-top: 0; }
+
+.more-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; font-weight: 700; color: var(--muted); padding: 6px 2px; }
+.quick.quick-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.quick .quick-more { border: 1px dashed var(--line); }

@@ -17,7 +17,7 @@ async def main():
             ctx = await b.new_context(viewport={'width': w, 'height': 900}); await ctx.add_init_script("try { localStorage.setItem('profitaxi.adminTour', 'done') } catch (e) {}"); pg = await ctx.new_page()
             await pg.goto('http://localhost:8765/app'); await pg.evaluate("localStorage.clear(); localStorage.setItem('profitaxi.dueShown', (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date()))"); await pg.goto('http://localhost:8765/app')
             await pg.fill('input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(600)
-            pages = [('/app', r) for r in ['#/home', '#/shifts', '#/stats', '#/costs', '#/profile', '#/shift/new']]
+            pages = [('/app', r) for r in ['#/home', '#/money', '#/me', '#/shifts', '#/stats', '#/costs', '#/profile', '#/calendar', '#/shift/new']]
             await pg.evaluate("localStorage.setItem('profitaxi.asession','admin'); localStorage.setItem('profitaxi.dueShown', (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date()))")
             pages += [(u, '') for u in ['/', '/about', '/features', '/how', '/pricing', '/faq']]
             pages += [('/admin.html', r) for r in ['#/overview', '#/geo', '#/market', '#/drivers', '#/subs', '#/new', '#/settings']]

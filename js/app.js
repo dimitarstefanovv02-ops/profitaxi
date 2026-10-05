@@ -14,6 +14,8 @@ import { costsView } from './views/costs.js';
 import { profileView } from './views/profile.js';
 import { reservationsView } from './views/reservations.js';
 import { inviteView } from './views/invite.js';
+import { moneyView } from './views/money.js';
+import { meView } from './views/me.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
@@ -25,15 +27,16 @@ const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
+  '/money': moneyView, '/me': meView,
 };
-// път, икона, надпис, цвят на страницата, цвят на текста върху него
+// Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
 const TABS = [
-  ['/home', 'home', 'Начало', '#FFC21A', '#1C1500'],
-  ['/shifts', 'list', 'Смени', '#3D7BFF', '#fff'],
-  ['/stats', 'chart', 'Статистика', '#8B5CF6', '#fff'],
-  ['/costs', 'wallet', 'Разходи', '#FF6A3D', '#fff'],
-  ['/profile', 'user', 'Профил', '#14B8A6', '#fff'],
+  ['/home', 'home', 'Днес'],
+  ['/money', 'wallet', 'Пари'],
+  ['/me', 'user', 'Аз'],
 ];
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/calendar': '/me', '/reservations': '/me', '/invite': '/me' };
+const PARENT_LABEL = { '/money': 'Пари', '/me': 'Аз' };
 
 export const go = (path, replace) => {
   const url = '#' + path;
@@ -71,7 +74,7 @@ function render() {
   if (!view) return go('/home', true);
 
   const ctx = { go, route, user, data: store.myData(), rerender: render };
-  const tab = TABS.some(([p]) => p === route.name) || ['/reservations', '/invite', '/calendar'].includes(route.name);
+  const tab = TABS.some(([p]) => p === route.name) || !!PARENT[route.name];
   mount(app, view(ctx), route, tab);
   // Разходка: веднъж след регистрация или когато е пусната от Профил → Помощ
   let tourNow = false; try { tourNow = sessionStorage.getItem('profitaxi.tourNow') === '1'; } catch { /* */ }
@@ -87,6 +90,9 @@ let notified = false;
 function mount(app, el, route, withNav) {
   const keepScroll = route.raw === lastRaw;
   const y = window.scrollY;
+  // Подстраниците имат връщане към „своя“ бутон от менюто
+  const parent = PARENT[route.name];
+  if (parent && el.classList?.contains('screen')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent }, icon('left', 20), PARENT_LABEL[parent]));
   clear(app).appendChild(el);
   if (withNav) app.appendChild(nav(route.name));
   if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
@@ -95,9 +101,10 @@ function mount(app, el, route, withNav) {
 }
 
 function nav(active) {
-  return h('nav', { class: 'nav', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label, c, ink]) =>
-    h('a', { href: '#' + path, class: cx(active === path && 'on'), 'aria-current': active === path ? 'page' : null, style: { '--n-c': c, '--n-ink': ink } },
-      h('span', { class: 'nav-ic' }, icon(ic, 21)), label)));
+  const cur = PARENT[active] || active;
+  return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
+    h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
+      h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
 }
 
 function lockView(user, access) {

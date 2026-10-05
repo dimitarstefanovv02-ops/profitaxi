@@ -12,7 +12,7 @@ import { upcomingReservations } from './reservations.js';
 import { exportCsv } from './stats.js';
 import { emailQueue, EMAIL_DEFAULTS, EMAIL_PAY_OPTIONS, EMAIL_RES_OPTIONS } from '../calc.js';
 
-export function profileView({ go, user, data }) {
+export function profileView({ go, user, data, route }) {
   const root = h('div', { class: 'screen', 'data-page': 'profile' });
   const d = store.getProfile();
   const orig = JSON.stringify(d);
@@ -21,11 +21,7 @@ export function profileView({ go, user, data }) {
     const sub = user.subscription;
     const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
     fill(root,
-      profileCover(user, d),
-      h('div', { class: 'quick-links' },
-        h('a', { class: 'ql', href: '#/calendar' }, h('span', { class: 'ql-ic' }, icon('calendar', 20)), h('b', null, 'Календар'), h('span', null, `${upcomingCount(data)} курса напред`)),
-        h('a', { class: 'ql', href: '#/invite' }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-pink)' } }, icon('gift', 20)), h('b', null, 'Покани колеги'), h('span', null, refLabel())),
-        h('button', { class: 'ql', onclick: () => openCategories() }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-orange)' } }, icon('tag', 20)), h('b', null, 'Категории'), h('span', null, 'разходи'))),
+      h('div', { class: 'page-title' }, h('h1', null, 'Кола, цел и настройки')),
       h('section', { class: 'card' }, cardTitle('car', 'Кола'), carBlock(d, draw),
         d.carType === 'rent' && h('p', { class: 'auto-note' }, icon('key', 15), 'При кола под наем застраховки, винетка, преглед и сервиз не се смятат. Плаща ги собственикът.')),
       h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
@@ -45,7 +41,7 @@ export function profileView({ go, user, data }) {
           if (costChanged(orig, d)) askFrom(save); else save();
         } }, icon('check', 20), 'Запази')),
 
-      h('section', { class: 'card' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)),
+      h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)),
       h('section', { class: 'card' }, cardTitle('sun', 'Изглед'), segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); }, { page: true })),
 
       h('section', { class: 'card', style: { padding: '8px 18px' } },
@@ -59,6 +55,7 @@ export function profileView({ go, user, data }) {
       h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, 'ProfiTaxi, демо версия. Данните се пазят на това устройство.'));
   };
   draw();
+  if (route?.query?.get('s') === 'notify') setTimeout(() => root.querySelector('#notify')?.scrollIntoView({ block: 'start' }), 80);
   return root;
 }
 
@@ -82,7 +79,7 @@ const upcomingCount = (data) => upcomingReservations(data.reservations || []).le
 const refLabel = () => { const r = store.myReferrals(); return r ? `${r.count} поканени` : ''; };
 
 // Горната част: снимка на колата като корица, профилна снимка, име и данни за колата
-function profileCover(user, d) {
+export function profileCover(user, d) {
   const car = d.car || {};
   const initials = user.name.split(' ').map((x) => x[0]).slice(0, 2).join('');
   const sub = user.subscription;

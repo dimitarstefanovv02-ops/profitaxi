@@ -10,6 +10,7 @@ import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate
 import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
 
 let draft = null;      // чернова на отворената смяна
+let showAllIncome = false, moreOpen = false;
 let draftKey = null;
 
 export function shiftEditorView(ctx) {
@@ -18,6 +19,7 @@ export function shiftEditorView(ctx) {
   const key = route.raw;
   if (draftKey !== key || !draft) {
     draftKey = key;
+    showAllIncome = false; moreOpen = false;
     if (id === 'new') {
       const now = new Date(); now.setMinutes(0, 0, 0);
       const start = new Date(now.getTime() - 10 * 3600000);
@@ -41,6 +43,10 @@ export function shiftEditorView(ctx) {
     const sameDay = data.shifts.filter((s) => s.end && s.id !== draft.id && shiftDate(s) === day).length + 1;
     const fixedShare = fixedForDay(data.costs, profile, day, true) / sameDay;
     const net = inc - exp - fixedShare;
+    const cats = shiftCats(profile);
+    const kmBad = draft.kmEnd > 0 && draft.kmEnd < draft.kmStart;
+    const timeBad = !!draft.end && new Date(draft.end) <= new Date(draft.start);
+    let moreBox;
 
     fill(root, 
       h('div', { class: 'top' },
@@ -49,20 +55,21 @@ export function shiftEditorView(ctx) {
       h('h1', null, isNew ? 'Нова смяна' : wasActive ? (draft.end ? 'Приключваш смяната' : 'Текуща смяна') : 'Смяна'),
       h('p', { class: 'muted', style: { margin: '4px 0 16px' } }, fmtDateLong(day)),
 
-      // Приходи
+      // Колко взе: кеш и карта винаги; приложения и бакшиш – с „+“
       h('section', { class: 'card' },
-        cardTitle('coins', 'Приходи', h('b', { class: 'num pos' }, money(inc))),
-        h('div', { class: 'tiles' }, Object.entries(INCOME_TYPES).map(([k, t]) =>
+        cardTitle('coins', 'Колко взе', h('b', { class: 'num' }, money(inc))),
+        h('div', { class: 'tiles' }, Object.entries(INCOME_TYPES).filter(([k]) => k === 'cash' || k === 'card' || showAllIncome || draft.income[k]).map(([k, t]) =>
           h('button', { class: 'tile', style: { '--tc': t.color }, onclick: () => editIncome(k) },
             h('span', { class: 'tile-top' }, h('span', { class: 'ic-chip' }, icon(t.icon, 16)), t.label),
-            h('span', { class: cx('tile-val', !draft.income[k] && 'zero') }, money(draft.income[k], draft.income[k] % 1 ? 2 : 0)))))),
+            h('span', { class: cx('tile-val', !draft.income[k] && 'zero') }, money(draft.income[k], draft.income[k] % 1 ? 2 : 0))))),
+        !showAllIncome && !(draft.income.app && draft.income.tips) && h('button', { class: 'more-link', onclick: () => { showAllIncome = true; draw(); } }, icon('plus', 16), 'Приложения и бакшиш')),
 
-      // Разходи
+      // Колко похарчи: гориво, автомивка, паркинг; другото – в „Друг разход“
       h('section', { class: 'card' },
-        cardTitle('fuel', 'Разходи', h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
-        h('div', { class: 'quick' }, shiftCats(profile).map((c) =>
-          h('button', { style: { '--qc': c.color }, onclick: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })) }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label)),
-          h('button', { class: 'quick-edit', onclick: () => openCategories() }, h('span', { class: 'q-ic' }, icon('tag', 21)), 'Категории')),
+        cardTitle('fuel', 'Колко похарчи', h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
+        h('div', { class: 'quick quick-4' },
+          cats.slice(0, 3).map((c) => h('button', { style: { '--qc': c.color }, onclick: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })) }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label)),
+          h('button', { class: 'quick-more', onclick: otherExpense }, h('span', { class: 'q-ic' }, icon('plus', 21)), 'Друг разход')),
         draft.expenses.length > 0 && h('div', { class: 'exp-list' }, draft.expenses.map((e) =>
           h('div', { class: 'exp-item', style: { '--qc': expenseCat(e.category).color } },
             h('span', { class: 'e-ic' }, icon(expenseCat(e.category).icon, 17)),
@@ -71,33 +78,35 @@ export function shiftEditorView(ctx) {
               e.category === 'fuel' && e.qty > 0 && h('div', { class: 'det' }, `${String(e.qty).replace('.', ',')} ${FUEL_TYPES[e.fuelType]?.unit || 'л'}, ${money(e.amount / e.qty, 2)}/${FUEL_TYPES[e.fuelType]?.unit || 'л'}`)),
             h('span', { class: 'amt' }, money(e.amount, e.amount % 1 ? 2 : 0)),
             h('button', { class: 'icon-btn', 'aria-label': 'Премахни', onclick: () => { draft.expenses = draft.expenses.filter((x) => x !== e); draw(); } }, icon('x', 18))))),
-        h('button', { class: 'btn btn-outline btn-block', style: { marginTop: '12px' }, onclick: copyLast }, icon('copy', 18), 'Разходите от предишната смяна'),
-        fixedShare > 0 && h('p', { class: 'auto-note' }, icon('wallet', 15), `Постоянни разходи за деня: ${money(fixedShare, 2)} (смятат се сами)`)),
+        fixedShare > 0 && h('p', { class: 'auto-note' }, icon('wallet', 15), `Наемът, ефирът и другите постоянни разходи се смятат сами (${money(fixedShare, 2)} за деня).`)),
 
-      // Километри
-      h('section', { class: 'card' },
-        cardTitle('gauge', 'Километри', h('b', { class: 'num' }, `${shiftKm(draft)} км`)),
-        h('div', { class: 'km-row' },
-          kmTile('Начало', draft.kmStart, () => editKm('kmStart')),
-          kmTile('Край', draft.kmEnd, () => editKm('kmEnd'))),
-        draft.kmEnd > 0 && draft.kmEnd < draft.kmStart && h('p', { class: 'err', style: { marginTop: '8px' } }, 'Крайният километраж е по-малък от началния')),
-
-      // Време
-      h('section', { class: 'card' },
-        cardTitle('clock', 'Време', h('b', { class: 'num' }, fmtDuration(shiftHours(draft)))),
-        h('div', { class: 'time-row' },
-          h('label', { class: 'time-in' }, h('span', null, 'Начало'),
-            h('input', { type: 'datetime-local', value: toLocalInput(draft.start), onchange: (e) => { if (e.target.value) { draft.start = fromLocalInput(e.target.value); draw(); } } })),
-          h('label', { class: 'time-in' }, h('span', null, 'Край'),
-            draft.end
-              ? h('input', { type: 'datetime-local', value: toLocalInput(draft.end), onchange: (e) => { if (e.target.value) { draft.end = fromLocalInput(e.target.value); draw(); } } })
-              : h('button', { style: { textAlign: 'left', fontWeight: 600, padding: '2px 0' }, onclick: () => { draft.end = new Date().toISOString(); draw(); } }, 'Карам още. Приключи сега'))),
-        draft.end && new Date(draft.end) <= new Date(draft.start) && h('p', { class: 'err', style: { marginTop: '8px' } }, 'Краят трябва да е след началото')),
-
-      // Бележка
-      h('section', { class: 'card' },
-        h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Бележка'),
-          h('input', { class: 'input', placeholder: 'По желание', value: draft.note || '', oninput: (e) => { draft.note = e.target.value; } }))),
+      // Всичко останало – разгъва се
+      moreBox = h('details', { class: 'more', open: moreOpen || kmBad || timeBad || (wasActive && !!draft.end), ontoggle: (e) => { moreOpen = e.target.open; } },
+        h('summary', null, h('span', null, 'Още: километри, време, бележка'), icon('down', 18)),
+        h('div', { class: 'more-body' },
+          h('button', { class: 'btn btn-outline btn-block', style: { marginTop: '12px' }, onclick: copyLast }, icon('copy', 18), 'Разходите от предишната смяна'),
+          // Километри
+          h('section', { class: 'card', style: { marginTop: '12px' } },
+            cardTitle('gauge', 'Километри', h('b', { class: 'num' }, `${shiftKm(draft)} км`)),
+            h('div', { class: 'km-row' },
+              kmTile('Начало', draft.kmStart, () => editKm('kmStart')),
+              kmTile('Край', draft.kmEnd, () => editKm('kmEnd'))),
+            kmBad && h('p', { class: 'err', style: { marginTop: '8px' } }, 'Крайният километраж е по-малък от началния')),
+          // Време
+          h('section', { class: 'card' },
+            cardTitle('clock', 'Време', h('b', { class: 'num' }, fmtDuration(shiftHours(draft)))),
+            h('div', { class: 'time-row' },
+              h('label', { class: 'time-in' }, h('span', null, 'Начало'),
+                h('input', { type: 'datetime-local', value: toLocalInput(draft.start), onchange: (e) => { if (e.target.value) { draft.start = fromLocalInput(e.target.value); draw(); } } })),
+              h('label', { class: 'time-in' }, h('span', null, 'Край'),
+                draft.end
+                  ? h('input', { type: 'datetime-local', value: toLocalInput(draft.end), onchange: (e) => { if (e.target.value) { draft.end = fromLocalInput(e.target.value); draw(); } } })
+                  : h('button', { style: { textAlign: 'left', fontWeight: 600, padding: '2px 0' }, onclick: () => { draft.end = new Date().toISOString(); draw(); } }, 'Карам още. Приключи сега'))),
+            timeBad && h('p', { class: 'err', style: { marginTop: '8px' } }, 'Краят трябва да е след началото')),
+          // Бележка
+          h('section', { class: 'card' },
+            h('label', { class: 'field' }, h('span', { class: 'field-label' }, 'Бележка'),
+              h('input', { class: 'input', placeholder: 'По желание', value: draft.note || '', oninput: (e) => { draft.note = e.target.value; } }))))),
 
       // Лента за запис
       h('div', { class: 'save-bar' },
@@ -109,6 +118,15 @@ export function shiftEditorView(ctx) {
     h('span', { class: 'tile-top' }, h('span', { class: 'ic-chip' }, icon('gauge', 16)), label),
     h('span', { class: cx('tile-val', !v && 'zero') }, v ? v.toLocaleString('bg-BG') : '—'));
 
+  // Останалите видове разходи + управление на категориите
+  function otherExpense() {
+    const rest = shiftCats(profile).slice(3);
+    openSheet((close) => h('div', null,
+      sheetHead('Друг разход', close, 'Избери вид'),
+      h('div', { class: 'quick' },
+        rest.map((c) => h('button', { style: { '--qc': c.color }, onclick: () => { close(); editExpense({ category: c.key }); } }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label)),
+        h('button', { class: 'quick-edit', onclick: () => { close(); openCategories(); } }, h('span', { class: 'q-ic' }, icon('tag', 21)), 'Категории'))));
+  }
   function editIncome(k) {
     const cur = draft.income[k];
     const actions = cur > 0
