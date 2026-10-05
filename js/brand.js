@@ -23,11 +23,10 @@ export const collabMark = () => h('a', { class: 'collab', href: ONE.base, 'aria-
   h('img', { class: 'collab-lockup on-light', src: '/icons/one-lockup.svg', alt: 'One × ProfiTaxi' }),
   h('img', { class: 'collab-lockup on-dark', src: '/icons/one-lockup-dark.svg', alt: 'One × ProfiTaxi' }));
 
-// Тънка лента горе на всяка страница – напомня за партньорството
+// Тънка лента горе на всяка страница – напомня за партньорството (логото One | ProfiTaxi)
 export const collabBar = () => h('div', { class: 'collab-bar', role: 'banner' },
-  h('img', { src: '/icons/one-collab-mark.svg', alt: '', width: 45, height: 30 }),
-  h('span', { class: 'cb-word' }, h('b', { class: 'cb-one' }, 'ONE'), h('i', null, '×'), h('b', null, 'PROFI', h('em', null, 'TAXI'))),
-  h('small', null, 'партньори'));
+  h('img', { class: 'cb-lockup on-light', src: '/icons/one-lockup.svg', alt: 'One × ProfiTaxi, партньори' }),
+  h('img', { class: 'cb-lockup on-dark', src: '/icons/one-lockup-dark.svg', alt: 'One × ProfiTaxi, партньори' }));
 
 // Въвеждащ ефект (като на сайта, в цветовете на One): графиката расте, таксито с табела One
 // се изкачва по линията, след него хвърчат пари, горе излиза печалбата, а заедно с линията
