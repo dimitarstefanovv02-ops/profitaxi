@@ -32,7 +32,7 @@
   "rewrites": [
     {
       "source": "/app/onetaxi",
-      "destination": "/onetaxi.html"
+      "destination": "/onetaxi"
     }
   ],
   "redirects": [
