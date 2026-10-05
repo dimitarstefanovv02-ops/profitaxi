@@ -486,3 +486,25 @@ html.intro #intro::before { display: none; }
 .more-plain > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--s-ink); border-bottom: 2px solid var(--y); padding-bottom: 2px; }
 .more-plain > summary::-webkit-details-marker { display: none; }
 .more-plain > div { margin-top: 12px; }
+
+/* ===== Опростена начална страница: 3 стъпки със снимки, ред с връзки, ред за поканите ===== */
+.steps3 { display: grid; gap: 16px; }
+.step3 { background: var(--s-card); border-radius: 28px; box-shadow: var(--s-shadow); padding: 24px 22px 0; display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
+.step3 .n { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 1.15rem; background: var(--y); color: var(--y-ink); }
+.step3 h3 { font-size: clamp(1.25rem, 2.8vw, 1.45rem); margin: 16px 0 8px; letter-spacing: -.025em; }
+.step3 p { color: var(--s-muted); line-height: 1.55; font-size: 1.06rem; margin: 0; }
+.step3 .phone2 { margin: 0 auto -120px; width: min(250px, 66vw); box-shadow: 0 30px 60px -30px rgba(0,0,0,.6); }
+.step3 { padding-bottom: 0; }
+.step3::after { content: ''; display: block; height: 0; }
+.steps3 .step3 { max-height: 560px; }
+.link-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.link-row.c { justify-content: center; }
+.invite-line { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; text-align: center; margin: 26px auto 0; font-size: 1.08rem; color: var(--s-muted); }
+.invite-line b { color: var(--s-ink); }
+.invite-line a { color: var(--s-ink); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.invite-line svg { color: var(--y-text, var(--y)); }
+@media (min-width: 900px) { .steps3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.price-wrap.solo { grid-template-columns: minmax(0, 1fr) !important; max-width: 520px; margin: 0 auto; }
+.invite-line { display: block; max-width: 520px; line-height: 1.6; margin-top: 30px; }
+.invite-line > span[data-ic], .invite-line > svg { display: inline-block; vertical-align: -4px; margin-right: 6px; }
+.invite-line > span[data-ic] svg { vertical-align: -4px; }
