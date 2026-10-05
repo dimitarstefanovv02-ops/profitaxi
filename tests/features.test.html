@@ -82,6 +82,30 @@ try {
     ok('Нова сума от 1-во число замества старата за месеца', Math.abs(rentOf() - 700 / dim * days) < 0.05, rentOf().toFixed(2));
   }
 
+  // ---------- Имейл напомняния ----------
+  {
+    const { emailQueue } = await import('../js/calc.js');
+    reg('Имейл');
+    const t1 = addDays(todayStr(), 2);
+    const res = store.saveReservation({ date: t1, time: '10:00', from: 'А', to: 'Б', client: 'Тест', phone: '0888' });
+    ok('Изключени по подразбиране – няма опашка', emailQueue(store.myData()).length === 0);
+    store.updateProfile({ emailReminders: { on: true, pay: [1], res: [1440, 120] } });
+    let q = emailQueue(store.myData()).filter((x) => x.kind === 'res');
+    ok('Курс: 2 напомняния (ден и 2 часа преди)', q.length === 2, q.map((x) => x.sendAt).join(', '));
+    ok('Ключовете зависят от часа', q.every((x) => x.key.includes(`${t1}T10:00`)));
+    store.markEmailSent([q[0].key]);
+    q = emailQueue(store.myData()).filter((x) => x.kind === 'res');
+    ok('Изпратеното не се повтаря', q.length === 1 && !q.some((x) => x.key === store.getProfile().emailSent[0]));
+    store.saveReservation({ ...res, time: '12:00' });
+    q = emailQueue(store.myData()).filter((x) => x.kind === 'res');
+    ok('Смяна на часа → нови напомняния за новия час', q.length === 2 && q.every((x) => x.key.includes('T12:00')));
+    store.deleteReservation(res.id);
+    ok('Изтрит курс → няма напомняния', emailQueue(store.myData()).filter((x) => x.kind === 'res').length === 0);
+    const { calendarEvents } = await import('../js/calc.js');
+    const ev = calendarEvents(store.myData(), todayStr(), addDays(todayStr(), 400));
+    ok('Календар: събития по ред на датата', ev.every((e, i) => !i || ev[i - 1].date <= e.date));
+  }
+
   // ---------- Категории ----------
   let p = store.getProfile();
   ok('По подразбиране „Гориво“ е бутон в смяната', shiftCats(p).some((c) => c.key === 'fuel'));

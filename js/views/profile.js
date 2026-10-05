@@ -10,6 +10,7 @@ import { cityCompanyPicker } from './cityPicker.js';
 import { openCategories, pickImage } from './categories.js';
 import { upcomingReservations } from './reservations.js';
 import { exportCsv } from './stats.js';
+import { emailQueue, EMAIL_DEFAULTS, EMAIL_PAY_OPTIONS, EMAIL_RES_OPTIONS } from '../calc.js';
 
 export function profileView({ go, user, data }) {
   const root = h('div', { class: 'screen', 'data-page': 'profile' });
@@ -22,7 +23,7 @@ export function profileView({ go, user, data }) {
     fill(root,
       profileCover(user, d),
       h('div', { class: 'quick-links' },
-        h('a', { class: 'ql', href: '#/reservations' }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-blue)' } }, icon('calendar', 20)), h('b', null, 'Резервации'), h('span', null, `${upcomingCount(data)} предстоящи`)),
+        h('a', { class: 'ql', href: '#/calendar' }, h('span', { class: 'ql-ic' }, icon('calendar', 20)), h('b', null, 'Календар'), h('span', null, `${upcomingCount(data)} курса напред`)),
         h('a', { class: 'ql', href: '#/invite' }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-pink)' } }, icon('gift', 20)), h('b', null, 'Покани колеги'), h('span', null, refLabel())),
         h('button', { class: 'ql', onclick: () => openCategories() }, h('span', { class: 'ql-ic', style: { '--qc': 'var(--c-orange)' } }, icon('tag', 20)), h('b', null, 'Категории'), h('span', null, 'разходи'))),
       h('section', { class: 'card' }, cardTitle('car', 'Кола'), carBlock(d, draw),
@@ -35,16 +36,22 @@ export function profileView({ go, user, data }) {
       dirty && h('div', { class: 'save-bar', style: { bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom))' } },
         h('div', { class: 'sum' }, h('span', null, 'Има промени'), h('div', { class: 'small muted' }, costChanged(orig, d) ? 'Ще избереш от кога важат' : 'Запази ги')),
         h('button', { class: 'btn btn-page btn-lg', onclick: () => {
-          const save = (from) => { store.updateProfile(d, { from }); toast('Настройките са запазени'); };
+          const save = (from) => {
+            // записваме само променените полета, за да не презапишем снимки или имейл настройки, сменени междувременно
+            const o = JSON.parse(orig); const patch = {};
+            Object.keys(d).forEach((k) => { if (JSON.stringify(d[k]) !== JSON.stringify(o[k])) patch[k] = d[k]; });
+            store.updateProfile(patch, { from }); toast('Настройките са запазени');
+          };
           if (costChanged(orig, d)) askFrom(save); else save();
         } }, icon('check', 20), 'Запази')),
 
-      h('section', { class: 'card' }, cardTitle('bell', 'Известия'), notifyRow(d)),
+      h('section', { class: 'card' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)),
       h('section', { class: 'card' }, cardTitle('sun', 'Изглед'), segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); }, { page: true })),
 
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('download', 'Свали всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() })),
         listBtn('print', 'Отчет в PDF', () => go('/stats'), true),
+        listBtn('sparkle', 'Помощ: кратка разходка', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }, true),
         listBtn('lock', 'Смяна на паролата', changePw),
         h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност и условия')),
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
@@ -105,6 +112,31 @@ function profileCover(user, d) {
 }
 
 const listBtn = (ic, label, onclick, arrow) => h('button', { class: 'list-btn', onclick }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, label), arrow && icon('right', 18));
+
+// Напомняния по имейл: включване, кога преди събитието и преглед на следващите
+function emailBlock(user, redraw) {
+  const p = store.getProfile();
+  const cfg = { ...EMAIL_DEFAULTS, ...(p.emailReminders || {}) };
+  const save = (patch) => { store.updateProfile({ emailReminders: { ...cfg, ...patch } }); redraw(); };
+  const toggleIn = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]).sort((a, b) => b - a);
+  const queue = cfg.on ? emailQueue(store.myData()).slice(0, 3) : [];
+  return h('div', { class: 'email-rem' },
+    h('div', { class: 'setting', style: { padding: 0, marginTop: '16px' } },
+      h('div', { class: 'grow' },
+        h('div', { class: 'setting-title' }, 'Напомняния по имейл ', h('span', { class: 'chip warn', style: { padding: '2px 8px', fontSize: '.72rem' } }, 'скоро')),
+        h('div', { class: 'setting-sub' }, `На ${user.email}`)),
+      h('button', { class: cx('toggle', cfg.on && 'on'), role: 'switch', 'aria-checked': String(cfg.on), 'aria-label': 'Напомняния по имейл', onclick: () => save({ on: !cfg.on }) })),
+    cfg.on && h('div', null,
+      h('p', { class: 'small muted', style: { margin: '12px 0 6px' } }, 'Плащания – колко дни преди падежа:'),
+      h('div', { class: 'chip-row' }, EMAIL_PAY_OPTIONS.map(([v, l]) => h('button', { class: cx('chip-btn', cfg.pay.includes(v) && 'on'), onclick: () => save({ pay: toggleIn(cfg.pay, v) }) }, l))),
+      h('p', { class: 'small muted', style: { margin: '12px 0 6px' } }, 'Курсове – колко време преди:'),
+      h('div', { class: 'chip-row' }, EMAIL_RES_OPTIONS.map(([v, l]) => h('button', { class: cx('chip-btn', cfg.res.includes(v) && 'on'), onclick: () => save({ res: toggleIn(cfg.res, v) }) }, l))),
+      h('div', { class: 'info-box', style: { marginTop: '12px' } }, icon('alert', 18),
+        h('span', null, 'Изпращането по имейл още ', h('b', null, 'не е включено'), ' – ще тръгне, когато свържем сървъра. Дотогава напомнянията идват в приложението и като известия на телефона.')),
+      queue.length > 0 && h('div', { style: { marginTop: '10px' } },
+        h('p', { class: 'small muted', style: { marginBottom: '4px' } }, 'Следващи имейли (преглед):'),
+        queue.map((q) => h('div', { class: 'email-q' }, h('b', null, q.subject), h('span', null, q.sendAt.replace('T', ' ')))))));
+}
 
 function notifyRow(d) {
   const perm = notifyPermission();

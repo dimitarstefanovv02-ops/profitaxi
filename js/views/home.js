@@ -4,9 +4,9 @@
 import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx } from '../util.js';
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
-import { roadProgress, openNumpad, stat, tone, toast, cardTitle } from '../ui.js';
+import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, more } from '../ui.js';
 import { quoteFor } from '../quotes.js';
-import { upcomingReservations, reservationRow, editReservation } from './reservations.js';
+import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl } from './reservations.js';
 import { inviteCard } from './invite.js';
 
 let quoteSeed = 0;
@@ -45,54 +45,73 @@ export function homeView({ go, user, data }) {
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),
-      data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials)),
+      h('div', { class: 'row gap' }, themeToggle(),
+        data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials))),
 
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
 
-    quote,
+    // 1. Какво следва: следващият курс и следващото плащане – с бутоните за тях
+    nextUp(data, go),
 
-    meter(g, month),
-
-    // Смяна
+    // 2. Главното действие
     active ? liveShift(active, go) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започвам смяна'),
     !active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
 
-    // Напомняния
-    reminders.slice(0, 2).map((r) => h('a', { class: cx('alert', ((r.daysLeft ?? 99) < 0 || (r.kmLeft ?? 1) < 0) && 'bad'), href: '#/costs' },
-      icon('bell', 22),
-      h('div', { class: 'alert-text' }, h('b', null, r.title), reminderText(r)),
-      icon('right', 18))),
+    // 3. Месецът: само чистото и колко остава; останалото е в „Подробности“
+    meter(g, month),
 
-    // Лични резервации
-    reservationsCard(data),
+    quote,
 
-    // Тази седмица
-    weekCard(data),
-
-    // Най-добрите часове за днес
-    ti.hasData && bestToday(ti),
-
-    // Месецът накратко
-    h('h2', { class: 'section-title' }, `${month[0].toUpperCase() + month.slice(1)} накратко`),
-    h('div', { class: 'grid2' },
-      stat('На час', money2(g.stats.netPerHour), { icon: 'clock', color: 'var(--c-blue)', cls: 'stat-card', sub: 'чисто' }),
-      stat('На км', money2(g.stats.netPerKm), { icon: 'road', color: 'var(--c-teal)', cls: 'stat-card', sub: 'чисто' }),
-      stat('Смени', String(g.stats.shifts), { icon: 'calendar', color: 'var(--c-violet)', cls: 'stat-card', sub: `${fmtDuration(g.stats.hours)} общо` }),
-      stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', color: 'var(--c-orange)', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' })),
-
-    // Серия
-    rec.current >= 2 && h('div', { class: 'card tip', style: { marginTop: '14px' } },
-      h('div', { class: 'tip-ic', style: { background: 'color-mix(in srgb, var(--c-red) 15%, var(--surface))', color: 'var(--c-red)' } }, icon('flame', 22)),
-      h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`))),
-
-    // Покани
-    store.myReferrals() && inviteCard(store.myReferrals()),
+    // 4. Допълнителното – скрито, отваря се с едно натискане
+    more('Седмицата, най-добрите часове и месецът',
+      weekCard(data),
+      ti.hasData && bestToday(ti),
+      h('div', { class: 'grid2', style: { marginTop: '14px' } },
+        stat('На час', money2(g.stats.netPerHour), { icon: 'clock', cls: 'stat-card', sub: 'чисто' }),
+        stat('На км', money2(g.stats.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' }),
+        stat('Смени', String(g.stats.shifts), { icon: 'calendar', cls: 'stat-card', sub: `${fmtDuration(g.stats.hours)} общо` }),
+        stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' })),
+      rec.current >= 2 && h('div', { class: 'card tip', style: { marginTop: '14px' } },
+        h('div', { class: 'tip-ic' }, icon('flame', 22)),
+        h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`)))),
 
     // Последни смени
     recent.length > 0 && h('div', { class: 'card', style: { marginTop: '14px' } },
       cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
-      recent.map((s) => shiftRow(data, s))));
+      recent.slice(0, 2).map((s) => shiftRow(data, s))),
+
+    // Покани
+    store.myReferrals() && inviteCard(store.myReferrals()));
+}
+
+// „Следващо“: най-близкият курс и най-спешното плащане (просрочените са първи)
+function nextUp(data, go) {
+  const res = upcomingReservations(data.reservations || []);
+  const pays = upcomingReminders(data, 14).filter((r) => r.daysLeft != null || (r.kmLeft != null && r.kmLeft <= 0))
+    .sort((a, b) => (a.daysLeft ?? -1) - (b.daysLeft ?? -1));
+  const r = res[0], p = pays[0];
+  const late = p && ((p.daysLeft ?? 0) < 0 || (p.kmLeft ?? 1) <= 0);
+  return h('section', { class: 'card next', 'aria-label': 'Следващо' },
+    cardTitle('calendar', 'Следващо', h('a', { class: 'link', href: '#/calendar' }, 'Календар', icon('right', 16))),
+    r ? h('div', { class: 'next-item' },
+      h('div', { class: 'next-when' }, h('b', null, r.time), h('span', null, whenLabel(r))),
+      h('div', { class: 'grow', style: { minWidth: 0 } },
+        h('b', { class: 'next-title' }, r.client || 'Резервация', r.price ? h('span', { class: 'muted' }, ` · ${money(r.price)}`) : null),
+        h('span', { class: 'next-sub' }, `${r.from} → ${r.to}`),
+        h('div', { class: 'next-actions' },
+          r.phone && h('a', { class: 'btn btn-ghost btn-sm', href: 'tel:' + r.phone.replace(/\s/g, '') }, icon('call', 16), 'Обади се'),
+          h('a', { class: 'btn btn-ghost btn-sm', href: mapsUrl(r), target: '_blank', rel: 'noopener' }, icon('route', 16), 'Маршрут'),
+          h('button', { class: 'btn btn-ghost btn-sm', onclick: () => editReservation(r) }, 'Отвори'))))
+      : h('button', { class: 'next-empty', onclick: () => editReservation({}) }, icon('plus', 18), 'Няма предстоящи курсове. Запиши резервация'),
+    p && h('div', { class: cx('next-item', 'pay', late && 'late') },
+      h('div', { class: 'next-when' }, icon(late ? 'alert' : 'bell', 20)),
+      h('div', { class: 'grow', style: { minWidth: 0 } },
+        h('b', { class: 'next-title' }, p.title),
+        h('span', { class: 'next-sub' }, reminderText(p)),
+        pays.length > 1 && h('span', { class: 'next-sub' }, `+${pays.length - 1} още в следващите 2 седмици`)),
+      p.kind === 'cost' ? h('button', { class: 'btn btn-primary btn-sm', onclick: () => { store.markCostPaid(p.ref.id); toast('Отбелязано като платено'); } }, icon('check', 16), 'Платено')
+        : h('button', { class: 'btn btn-ghost btn-sm', onclick: () => go('/costs') }, 'Отвори')));
 }
 
 function reservationsCard(data) {
@@ -117,13 +136,16 @@ function meter(g, month) {
       ? h('div', { class: 'meter-goal' }, g.done ? h('span', null, `Целта от ${money(g.goal)} е постигната. Браво!`) : h('span', null, 'Остават ', h('b', null, money(g.remaining)), ` до ${money(g.goal)}`))
       : h('a', { class: 'meter-goal', href: '#/profile' }, 'Задай цел за месеца'),
     g.goal > 0 && roadProgress(g.pct),
-    g.goal > 0 && !g.done && h('div', { class: 'meter-grid' },
-      h('div', { class: 'meter-cell' }, h('span', null, 'Още работа'), h('b', { class: 'hl' }, hours != null ? `~${Math.ceil(hours)} ч` : '—')),
-      h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
-      h('div', { class: 'meter-cell' }, h('span', null, 'Прогноза'), h('b', null, money(g.forecast)))),
-    g.goal > 0 && !g.done && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко часа и смени остават до целта ще сметнем след първата ти смяна.')),
-    g.goal > 0 && !g.done && hours != null && h('div', { class: 'meter-note' }, icon('alert', 14),
-      h('span', null, `Наемът, ефирът и другите месечни разходи (${money(g.monthFixed)}) са извадени изцяло. Часовете са по ${money2(g.ratePerHour)} на час от смените.`)));
+    g.goal > 0 && !g.done && hours != null && h('div', { class: 'meter-hours' }, icon('clock', 16), h('span', null, 'Още около ', h('b', null, `${Math.ceil(hours)} ч`), ' работа до целта')),
+    g.goal > 0 && !g.done && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко часа остават до целта ще сметнем след първата ти смяна.')),
+    g.goal > 0 && !g.done && hours != null && h('details', { class: 'meter-more' },
+      h('summary', null, 'Подробности', icon('down', 16)),
+      h('div', { class: 'meter-grid' },
+        h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
+        h('div', { class: 'meter-cell' }, h('span', null, 'Прогноза'), h('b', null, money(g.forecast))),
+        h('div', { class: 'meter-cell' }, h('span', null, 'На час'), h('b', null, money2(g.ratePerHour)))),
+      h('div', { class: 'meter-note' }, icon('alert', 14),
+        h('span', null, `Наемът, ефирът и другите месечни разходи (${money(g.monthFixed)}) са извадени изцяло. Часовете са по ${money2(g.ratePerHour)} на час от смените.`))));
 }
 
 function weekCard(data) {

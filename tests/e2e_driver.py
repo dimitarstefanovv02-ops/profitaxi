@@ -35,6 +35,16 @@ async def main():
         await pg.click('.seg-btn:has-text("На ден")'); await pg.click('.tile'); await pg.keyboard.type('10'); await pg.click('text=Готово')
         await pg.click('text=Напред'); await pg.click('text=Започни'); await pg.wait_for_timeout(500)
         ok('След настройката → начален екран', '#/home' in pg.url)
+        # --- Разходка след регистрация ---
+        await pg.wait_for_timeout(700)
+        ok('Разходка при първото влизане', await T('.tour').count()==1)
+        await pg.click('.tour-btns .btn-primary'); await pg.wait_for_timeout(250)
+        ok('Разходка: Напред показва стъпка 2', '2 от' in await T('.tour-step').inner_text())
+        await pg.click('.tour-btns .btn-ghost'); await pg.wait_for_timeout(250)
+        ok('Разходка: Назад връща на стъпка 1', '1 от' in await T('.tour-step').inner_text())
+        await pg.click('.tour-skip'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/stats'); await pg.goto(base+'/app#/home'); await pg.wait_for_timeout(900)
+        ok('След „Пропусни“ не се показва пак', await T('.tour').count()==0)
         await pg.goto(base+'/app#/costs'); await pg.wait_for_timeout(400)
         body = await T('#app').inner_text()
         ok('Наем 140 €/седм. и ефир 10 €/ден са в постоянните разходи', 'Наем на колата' in body and 'Ефир / диспечер' in body)
@@ -43,8 +53,8 @@ async def main():
         chips = await T('.sheet .chip-btn').all_inner_texts()
         ok('Под наем не може да се добави винетка/застраховка', not any(x in chips for x in ['Винетка','Гражданска отговорност','Каско','Технически преглед']), chips)
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
-        # --- Смяна ---
         await pg.goto(base+'/app#/home'); await pg.wait_for_timeout(300)
+        # --- Смяна ---
         await pg.click('text=Започвам смяна'); await pg.keyboard.type('250000'); await pg.click('text=Старт'); await pg.wait_for_timeout(500)
         ok('Активна смяна с таймер', await T('[data-timer]').count()==1)
         await pg.click('text=Отчет'); await pg.wait_for_timeout(300)

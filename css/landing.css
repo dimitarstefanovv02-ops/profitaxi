@@ -1,7 +1,7 @@
 /* ProfiTaxi – маркетингов сайт. Черно и жълто, премерени лилави сияния, светла и тъмна тема. */
 
 .site {
-  --s-bg: #F4F5F8; --s-bg2: #ECEEF3; --s-card: #FFFFFF; --s-ink: #0B0D12; --s-muted: #5A6372; --s-faint: #8A93A2; --s-line: #E2E5EC;
+  --s-bg: #FFFFFF; --s-bg2: #F5F5F3; --s-card: #FFFFFF; --s-ink: #0A0A0B; --s-muted: #55585F; --s-faint: #8A8D94; --s-line: #E4E4E0;
   --y: #FFC21A; --y-deep: #E8A400; --y-ink: #1A1300; --v: #8B5CF6; --v2: #C084FC; --v-soft: rgba(139, 92, 246, .12);
   --s-shadow: 0 1px 2px rgba(11, 13, 18, .05), 0 24px 48px -28px rgba(11, 13, 18, .28);
   --s-glow: .55; --s-wrap: 1180px;
@@ -413,3 +413,76 @@ html.intro body { overflow: hidden; }
 @keyframes introGlow { from { opacity: 0; transform: scale(.5); } to { opacity: 1; transform: none; } }
 @keyframes introOut { to { clip-path: inset(0 0 100% 0); visibility: hidden; } }
 @media (max-width: 479px) { .intro-word { font-size: 2.1rem; } }
+
+
+/* ================= Обратна връзка: по-малко цветове, без градиентни фонове, светла и тъмна тема =================
+   Жълто – само бутони, активни състояния и ключови числа; бяло/черно/сиво – основа; лилаво – само фини контури. */
+.site { --y-text: #8F6400; --v-line: rgba(124, 92, 224, .3); }
+:root[data-theme="dark"] .site { --y-text: #FFC21A; --v-line: rgba(167, 139, 250, .32); }
+.glow { display: none !important; }
+:root[data-theme="light"] .site .y, :root[data-theme="light"] .site .y-text, :root[data-theme="light"] .s-brand b, :root[data-theme="light"] .ns.t b { color: var(--y-text); }
+.s-icon-btn { border: 1px solid var(--s-line); background: var(--s-card); }
+/* Карти: тънък контур вместо сенки; при посочване – лилав */
+.metric, .cmp-card, .ns, .quote2, .f-card, .step4, .tl, .roi, .faq details, .res-demo > div, .formula span, .kick, .sc-tabs button, .marquee span, .more-box { box-shadow: none; border: 1px solid var(--s-line); }
+.f-card:hover, .step4:hover { transform: translateY(-2px); box-shadow: none; border-color: var(--v-line); }
+.faq details[open] { box-shadow: none; border-color: var(--v-line); }
+.metric::after, .price-card2::before, .quote2::before { display: none; }
+.eyebrow { color: var(--s-muted); }
+.eyebrow::before { background: var(--y); }
+/* Иконки и етикети – едноцветни */
+.f-ic { color: var(--s-ink); background: var(--s-bg2); border: 1px solid var(--s-line); }
+.tag2 { color: var(--s-ink); background: transparent; border: 1px solid var(--v-line); }
+.f-card .new { background: transparent; color: var(--v); border: 1px solid var(--v-line); }
+.step4 .t { color: var(--s-muted); background: transparent; border: 1px solid var(--v-line); }
+.bill-title em { background: transparent; color: var(--v); border: 1px solid var(--v-line); }
+.float-chip i { background: var(--y); color: var(--y-ink); }
+/* Числа: разходите неутрални, чистото – жълто (тъмна) / тъмно-златно (светла) */
+.bill-row.m b, .wf-row b { color: var(--s-ink); }
+.bill-row.m b { color: var(--s-muted); }
+.bill-total b, .wf-row.total b, .metric:first-child b { color: var(--y-text); }
+.wf-row .bar span { background: var(--s-faint); }
+.wf-row .bar span[style*="--c:var(--y)"] { background: var(--y); }
+.wf-row.total .bar span { background: var(--y) !important; }
+.myth div { background: transparent; border: 1px solid var(--s-line); }
+.myth div i { background: var(--s-ink); color: var(--s-bg); }
+.myth.good div i { background: var(--y); color: var(--y-ink); }
+.ns::before { background: var(--y); }
+.ns.p b, .ns.f b { color: var(--s-ink); }
+.res-demo time { background: var(--s-bg2); color: var(--s-ink); }
+.res-demo em { color: var(--s-ink); }
+.ticks2 li::before { background-color: rgba(255, 194, 26, .22); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238F6400' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.price-switch button em { color: var(--s-muted); }
+.price-card2 { box-shadow: none; border: 2px solid var(--y); }
+.marquee span:nth-child(5n+1) { background: var(--s-card); color: var(--s-ink); }
+.formula span.res { background: var(--y); color: var(--y-ink); }
+.s-btn-y, .s-btn-y:hover { box-shadow: none; }
+.s-btn-line:hover { border-color: var(--v-line); box-shadow: none; }
+.timeline::before { background: var(--s-line); }
+.tl::before, .tl:nth-child(n+3)::before { background: var(--y); }
+.phone2 { background: #16181D; box-shadow: 0 30px 60px -30px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .08) inset; }
+/* Тъмните ленти са плътно черни и в двете теми – без сияния */
+.sec.ink, .final { background: #07080B; }
+.final img { box-shadow: none; }
+.ref-box { background: var(--s-card); color: var(--s-ink); border: 1px solid var(--v-line); box-shadow: none; }
+.ref-box p { color: var(--s-muted); }
+.ref-box .eyebrow { color: var(--s-muted) !important; }
+.tier { background: var(--s-bg2); border: 1px solid var(--s-line); backdrop-filter: none; }
+.tier b { color: var(--y-text); }
+.tier small { color: var(--s-muted); }
+.tease { background: transparent; }
+:root[data-theme="light"] .tease { color: var(--y-text); border-color: #D9A100; }
+html.intro #intro::before { display: none; }
+
+/* Разгъваеми блокове „Покажи още“ – второстепенното е скрито, но на едно натискане */
+.more-box { margin-top: 14px; border-radius: 18px; background: var(--s-card); }
+.more-box > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px 18px; font-weight: 700; }
+.more-box > summary::-webkit-details-marker { display: none; }
+.more-box > summary::after { content: ''; width: 10px; height: 10px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg) translateY(-3px); transition: transform .2s; }
+.more-box[open] > summary::after { transform: rotate(-135deg) translateY(-3px); }
+.more-box[open] { border-color: var(--v-line); }
+.more-box > .more-in { padding: 0 16px 16px; }
+.more-box .f-grid, .more-box .faq { margin-top: 2px; }
+.more-plain { margin-top: 12px; }
+.more-plain > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--s-ink); border-bottom: 2px solid var(--y); padding-bottom: 2px; }
+.more-plain > summary::-webkit-details-marker { display: none; }
+.more-plain > div { margin-top: 12px; }

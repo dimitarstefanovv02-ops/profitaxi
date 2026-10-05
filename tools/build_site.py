@@ -18,7 +18,8 @@ PAGES = {
 def img(m):
   shot, alt, *rest = m.group(1).split('|')
   lazy = '' if rest and rest[0] == 'eager' else ' loading="lazy"'
-  return f'<img src="/img/screen-{shot}-dark.jpg" alt="{alt}" width="390" height="844"{lazy}>'
+  return (f'<img src="/img/screen-{shot}-dark.jpg" data-light="/img/screen-{shot}-light.jpg" '
+          f'data-dark="/img/screen-{shot}-dark.jpg" alt="{alt}" width="390" height="844"{lazy}>')
 for name, (title, desc) in PAGES.items():
   body = (src / f'{name}.html').read_text().replace('{{PRICE}}', price).replace('{{JOKE}}', joke).replace('{{FINAL}}', final)
   body = re.sub(r'\{\{IMG:([^}]+)\}\}', img, body)

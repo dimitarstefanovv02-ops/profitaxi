@@ -12,6 +12,15 @@ export function applyTheme(pref) {
 }
 export function setTheme(p) { localStorage.setItem('profitaxi.theme', p); applyTheme(p); }
 export const getTheme = () => localStorage.getItem('profitaxi.theme') || 'auto';
+export const isDark = () => { const p = getTheme(); return p === 'dark' || (p === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); };
+// Видим бутон за светла/тъмна тема (запомня избора; без избор – по телефона)
+export function themeToggle(onChange) {
+  const btn = h('button', { class: 'icon-btn theme-toggle', type: 'button' });
+  const paint = () => { const d = isDark(); btn.replaceChildren(icon(d ? 'sun' : 'moon', 20)); btn.setAttribute('aria-label', d ? 'Светла тема' : 'Тъмна тема'); btn.title = d ? 'Светла тема' : 'Тъмна тема'; };
+  btn.addEventListener('click', () => { setTheme(isDark() ? 'light' : 'dark'); paint(); onChange?.(); });
+  paint();
+  return btn;
+}
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme());
 
 // ---------- Тост ----------
@@ -203,3 +212,10 @@ const queueFit = () => { if (fitQueued) return; fitQueued = true; requestAnimati
 new MutationObserver(queueFit).observe(document.documentElement, { childList: true, subtree: true });
 window.addEventListener('resize', queueFit);
 document.fonts?.ready?.then(queueFit);
+
+// Разгъваем блок „Покажи подробности“ – допълнителните числа стоят скрити, докато не се отворят
+export function more(label, ...children) {
+  return h('details', { class: 'more' },
+    h('summary', null, h('span', null, label), icon('down', 18)),
+    h('div', { class: 'more-body' }, ...children));
+}

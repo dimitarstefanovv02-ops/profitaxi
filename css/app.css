@@ -34,7 +34,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #07080B; --surface: #111319; --surface-2: #191C24; --surface-3: #242833; --line: #1E222C;
+    --bg: #08090B; --surface: #131418; --surface-2: #1B1D22; --surface-3: #26282F; --line: #26282E;
     --text: #EEF2F7; --muted: #9AA5B5; --faint: #6B7685;
     --accent-soft: #3A3113; --pos: #34D399; --pos-soft: #12301F; --neg: #FF6B7D; --neg-soft: #3A1C23;
     --road: #0B0D12; --shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 12px 30px -16px rgba(0,0,0,.7);
@@ -42,7 +42,7 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg: #07080B; --surface: #111319; --surface-2: #191C24; --surface-3: #242833; --line: #1E222C;
+  --bg: #08090B; --surface: #131418; --surface-2: #1B1D22; --surface-3: #26282F; --line: #26282E;
   --text: #EEF2F7; --muted: #9AA5B5; --faint: #6B7685;
   --accent-soft: #3A3113; --pos: #34D399; --pos-soft: #12301F; --neg: #FF6B7D; --neg-soft: #3A1C23;
   --road: #0B0D12; --shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 12px 30px -16px rgba(0,0,0,.7);
@@ -615,3 +615,161 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .info-box { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-2); color: var(--muted); line-height: 1.45; }
 .info-box .ic { color: var(--accent); flex: none; margin-top: 1px; }
 .info-box b { color: var(--text); }
+
+
+/* ======================================================================
+   ЕДИННА СИСТЕМА (обратна връзка от тестове):
+   жълто = главни бутони, активни състояния и ключови числа;
+   бяло / черно / сиви нюанси = основа; малко лилаво само за фини контури;
+   без градиенти по фоновете; зелено/червено/жълто само за успех/грешка/предупреждение.
+   ====================================================================== */
+:root { --violet: #7C5CE0; --v-line: rgba(124, 92, 224, .28); --accent-text: #8A6100; --ring: rgba(10, 10, 12, .12); }
+:root[data-theme="dark"] { --violet: #A78BFA; --v-line: rgba(167, 139, 250, .28); --accent-text: #FFC21A; --ring: rgba(255, 255, 255, .1); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --violet: #A78BFA; --v-line: rgba(167, 139, 250, .28); --accent-text: #FFC21A; --ring: rgba(255, 255, 255, .1); } }
+/* Категориите вече не са дъга от цветове */
+:root, [data-page] {
+  --c-green: var(--accent); --c-amber: var(--accent); --c-orange: var(--accent);
+  --c-violet: var(--violet); --c-pink: var(--violet);
+  --c-blue: var(--muted); --c-sky: var(--muted); --c-teal: var(--muted); --c-slate: var(--muted); --c-gray: var(--faint); --c-red: var(--neg);
+  --pc: var(--accent); --pc-ink: var(--accent-ink); --pc-soft: var(--surface-2);
+}
+.card, .stat-card, .live, .cost-row, .shift-row, .res-row, .cover, .ql, .tile { border: 1px solid var(--line); box-shadow: none; }
+.card:focus-within { border-color: var(--v-line); }
+/* Иконки в заглавията и списъците – неутрални */
+.t-ic, .list-btn .l-ic, .empty-ic, .ql-ic, .cost-ic, .mini-ic, .kpi-ic { background: var(--surface-2) !important; color: var(--text) !important; }
+[data-page="home"] .t-ic { color: var(--text); }
+:focus-visible { outline-color: var(--violet); }
+/* Шапки на страниците: плътна черна карта, без сияния; числото е жълто */
+.hero { background: #0E0F12; box-shadow: none; border: 1px solid var(--v-line); color: #F3F4F6; }
+.hero::before, .hero::after { display: none; }
+.hero-btn { background: rgba(255, 255, 255, .08); color: #F3F4F6; }
+.hero-chip { background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .1); }
+.meter { box-shadow: none; border: 1px solid var(--v-line); }
+.meter::after { display: none; }
+.road-fill { background: var(--accent); }
+.avatar, .cover-avatar { background: var(--accent); }
+.quote { background: var(--surface); border: 1px solid var(--line); }
+.quote-ic { color: var(--text); background: var(--surface-2); box-shadow: none; }
+.shift-cta { box-shadow: none; }
+.week-bar.pos { background: var(--accent); }
+.week-bar.neg { background: var(--neg); }
+.bar.pos, .bars.violet .bar.pos { fill: var(--accent); }
+.bar.hl { fill: var(--text); }
+.win-rank, .win:nth-child(1) .win-rank, .win:nth-child(2) .win-rank, .win:nth-child(3) .win-rank { background: var(--surface-2); color: var(--text); }
+.win:nth-child(1) .win-rank { background: var(--accent); color: var(--accent-ink); }
+.wd-row .wd-fill { background: var(--surface-3); }
+.wd-row.best .wd-fill, .hours span.best { background: var(--accent); }
+.hours span { background: var(--surface-3); }
+.day-badge, .day-badge.night { background: var(--surface-2); }
+.res-when { background: var(--surface-2); }
+.res-when span { color: var(--muted); }
+.due-row.res { background: var(--surface-2); }
+.notify-box { background: var(--surface-2); }
+.invite-card { background: var(--surface); border: 1px solid var(--v-line); }
+.invite-ic { background: var(--accent); color: var(--accent-ink); }
+.inv-track span, .ladder-track span, .result-bar span { background: var(--accent); }
+.ladder-step.on i { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.cover-img { background: #0E0F12 center / cover no-repeat; }
+.cover-img::after { background: rgba(0, 0, 0, .18); }
+.tip-ic { background: var(--surface-2); color: var(--text); }
+.chip.page { background: var(--surface-2); color: var(--text); }
+.trend.up { background: var(--surface-2); color: var(--pos); }
+/* Предупреждения остават жълти, грешките – червени, успехът – зелен (само там) */
+.alert { border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ---------- Разгъваеми блокове и „Следващо“ ---------- */
+.more { margin-top: 14px; }
+.more > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); font-weight: 700; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary .ic { transition: transform .2s; color: var(--muted); }
+.more[open] > summary .ic { transform: rotate(180deg); }
+.more[open] > summary { border-color: var(--v-line); }
+.more-body > .card:first-child, .more-body > a.card:first-child { margin-top: 12px; }
+.next { margin-bottom: 4px; }
+.next-item { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line); }
+.next-item:first-of-type { border-top: 0; padding-top: 2px; }
+.next-when { width: 58px; flex: none; text-align: center; padding: 8px 4px; border-radius: 14px; background: var(--surface-2); display: grid; place-items: center; }
+.next-when b { font-family: var(--display); font-size: 1.02rem; }
+.next-when span { font-size: .7rem; color: var(--muted); font-weight: 700; }
+.next-item.pay .next-when { color: var(--accent-text); background: var(--accent-soft); height: 48px; }
+.next-item.late .next-when { color: var(--neg); background: var(--neg-soft); }
+.next-title { display: block; font-size: .98rem; }
+.next-sub { display: block; font-size: .84rem; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.next-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+.next-actions .btn-sm { min-height: 36px; padding: 6px 10px; }
+.next-empty { display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px; border-radius: var(--r-md); background: var(--surface-2); color: var(--muted); font-weight: 600; }
+.meter-hours { display: flex; align-items: center; gap: 8px; margin-top: 14px; color: #C9D1DC; font-size: .95rem; }
+.meter-hours b { color: var(--accent); font-family: var(--display); }
+.meter-more { margin-top: 10px; }
+.meter-more > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; color: #A9B3C1; font-size: .85rem; font-weight: 700; }
+.meter-more > summary::-webkit-details-marker { display: none; }
+.meter-more[open] > summary .ic { transform: rotate(180deg); }
+.theme-toggle { width: 46px; height: 46px; border-radius: 15px; }
+
+/* ---------- Календар ---------- */
+.cal-nav { display: flex; align-items: center; gap: 8px; margin: 2px 0 10px; }
+.cal-nav b { flex: 1; text-align: center; font-size: 1.02rem; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .78rem; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
+.cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.dot-res { background: var(--accent); }
+.dot.dot-pay { background: var(--text); }
+.dot.dot-late { background: var(--neg); }
+.dot.dot-rem { background: var(--violet); }
+.dot.dot-shift { background: var(--faint); }
+.cal-month { padding: 12px 10px; }
+.cal-head, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.cal-head span { text-align: center; font-size: .72rem; font-weight: 700; color: var(--muted); padding-bottom: 6px; }
+.cal-day { aspect-ratio: 1 / 1.05; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-weight: 700; border: 1px solid transparent; min-height: 40px; }
+.cal-day.out { color: var(--faint); }
+.cal-day.today .cal-num { background: var(--accent); color: var(--accent-ink); }
+.cal-day.sel { border-color: var(--v-line); background: var(--surface-2); }
+.cal-num { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: .9rem; }
+.cal-dots { display: flex; gap: 3px; height: 8px; }
+.cal-dots .dot { width: 6px; height: 6px; }
+.cal-agenda-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cal-ev { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 11px 0; border-top: 1px solid var(--line); }
+.cal-agenda-head + .cal-ev, .cal-wday-head + .cal-ev, .card > .cal-ev:first-child { border-top: 0; }
+.cal-ev-ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--surface-2); color: var(--text); }
+.cal-ev.res .cal-ev-ic { background: var(--accent); color: var(--accent-ink); }
+.cal-ev.late .cal-ev-ic { background: var(--neg-soft); color: var(--neg); }
+.cal-ev.rem .cal-ev-ic { color: var(--violet); }
+.cal-ev.done { opacity: .55; }
+.cal-ev-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cal-ev-main b { font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev-main span { font-size: .8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev-amt { font-family: var(--display); font-weight: 600; font-size: .92rem; white-space: nowrap; }
+.cal-ev > .ic:last-child { color: var(--faint); }
+.cal-week { display: flex; flex-direction: column; gap: 8px; }
+.cal-wday { padding: 12px 14px; }
+.cal-wday + .cal-wday { margin-top: 0; }
+.cal-wday.today { border-color: var(--accent); }
+.cal-wday-head { display: flex; justify-content: space-between; width: 100%; font-size: .9rem; }
+.cal-wday-head span { color: var(--muted); font-weight: 700; }
+.cal-group .card { padding: 6px 16px; }
+@media (min-width: 720px) { .cal-day { aspect-ratio: auto; min-height: 64px; } }
+
+/* Положителните суми са обикновен текст; червено остава само за загуба */
+.pos, b.pos, .num.pos { color: var(--text); }
+.hero .pos, .meter .pos { color: inherit; }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.email-q { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: .85rem; }
+.email-q span { color: var(--muted); white-space: nowrap; }
+
+/* ---------- Разходка (onboarding) ---------- */
+.tour { position: fixed; inset: 0; z-index: 200; }
+.tour-shade { position: absolute; inset: 0; }
+.tour.center .tour-shade { background: rgba(0, 0, 0, .62); }
+.tour-hole { position: fixed; border-radius: 18px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, .62); border: 2px solid var(--accent); pointer-events: none; transition: all .25s ease; }
+.tour-card { position: fixed; background: var(--surface); color: var(--text); border-radius: 22px; padding: 18px; border: 1px solid var(--v-line); box-shadow: 0 30px 60px -20px rgba(0, 0, 0, .6); transition: top .25s ease, left .25s ease; }
+.tour-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.tour-step { font-size: .78rem; font-weight: 700; color: var(--muted); }
+.tour-skip { font-size: .85rem; font-weight: 700; color: var(--muted); padding: 6px 4px; }
+.tour-card h3 { font-size: 1.12rem; margin-bottom: 6px; }
+.tour-card p { color: var(--muted); line-height: 1.5; font-size: .95rem; }
+.tour-dots { display: flex; gap: 5px; margin: 14px 0 12px; }
+.tour-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--surface-3); transition: width .2s; }
+.tour-dots i.on { width: 18px; background: var(--accent); }
+.tour-btns { display: flex; justify-content: space-between; gap: 8px; }
+.tour-btns .btn { min-height: 44px; }

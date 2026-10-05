@@ -14,6 +14,8 @@ import { costsView } from './views/costs.js';
 import { profileView } from './views/profile.js';
 import { reservationsView } from './views/reservations.js';
 import { inviteView } from './views/invite.js';
+import { calendarView } from './views/calendar.js';
+import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
 
 applyTheme();
@@ -22,7 +24,7 @@ const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forg
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/onboarding': onboardingView,
-  '/reservations': reservationsView, '/invite': inviteView,
+  '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
 };
 // път, икона, надпис, цвят на страницата, цвят на текста върху него
 const TABS = [
@@ -69,8 +71,15 @@ function render() {
   if (!view) return go('/home', true);
 
   const ctx = { go, route, user, data: store.myData(), rerender: render };
-  const tab = TABS.some(([p]) => p === route.name) || ['/reservations', '/invite'].includes(route.name);
+  const tab = TABS.some(([p]) => p === route.name) || ['/reservations', '/invite', '/calendar'].includes(route.name);
   mount(app, view(ctx), route, tab);
+  // Разходка: веднъж след регистрация или когато е пусната от Профил → Помощ
+  let tourNow = false; try { tourNow = sessionStorage.getItem('profitaxi.tourNow') === '1'; } catch { /* */ }
+  if (route.name === '/home' && (tourNow || ctx.data.profile.tour === 'pending')) {
+    try { sessionStorage.removeItem('profitaxi.tourNow'); } catch { /* */ }
+    notified = true;
+    setTimeout(() => { if (location.hash.startsWith('#/home')) startTour(DRIVER_TOUR, { onDone: () => { if (store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
+  }
   if (!notified) { notified = true; checkNotifications(ctx.data); if (route.name === '/home') setTimeout(() => showDueSheet(store.myData(), go), 600); }
 }
 let notified = false;
@@ -113,7 +122,7 @@ setInterval(() => { const u = store.currentUser(); if (u && store.accessState(u)
 
 let pending = false;
 window.addEventListener('hashchange', render);
-const busy = () => { const a = document.activeElement; return !!document.querySelector('.sheet-wrap') || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
+const busy = () => { const a = document.activeElement; return !!document.querySelector('.sheet-wrap, .tour') || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
 store.onChange(() => { if (busy()) pending = true; else render(); });
 document.addEventListener('focusout', () => setTimeout(() => { if (pending && !busy()) { pending = false; render(); } }, 0));
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
@@ -122,3 +131,5 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 render();
+
+addEventListener('hashchange', () => closeTour());

@@ -3,7 +3,7 @@
 import { h, icon, cx, money, money2, todayStr, addDays, startOfWeek, startOfMonth, endOfMonth, parseDate, MONTHS, MONTHS_SHORT, fmtDate, fmtNum, fmtNum1, fmtDuration, WD_SHORT, dateStr, minStr, fmtTime } from '../util.js';
 import { periodStats, series, timeInsights, records, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, shiftNetAfterFixed, shiftProfit } from '../calc.js';
 import { INCOME_TYPES, FUEL_TYPES, expenseCat, costCat } from '../constants.js';
-import { segmented, barChart, shareRows, stat, tone, cardTitle, hero, empty } from '../ui.js';
+import { segmented, barChart, shareRows, stat, tone, cardTitle, hero, empty , more} from '../ui.js';
 
 // Състояние на избрания период (пази се между отварянията)
 const state = { unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() };
@@ -90,10 +90,8 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
       barChart(pts, { highlight: chartUnit === 'day' ? todayStr() : todayStr().slice(0, 8) + '01' })),
 
     h('div', { class: 'grid2', style: { marginTop: '14px' } },
-      stat('На час', money2(st.netPerHour), { icon: 'clock', color: 'var(--c-blue)', cls: 'stat-card', sub: `приход ${money2(st.incomePerHour)}/ч` }),
-      stat('На км', money2(st.netPerKm), { icon: 'road', color: 'var(--c-teal)', cls: 'stat-card', sub: `разход ${money2(st.costPerKm)}/км` }),
-      stat('Часове', fmtDuration(st.hours), { icon: 'clock', color: 'var(--c-violet)', cls: 'stat-card', sub: st.shifts ? `~${fmtDuration(st.avgShiftHours)} на смяна` : '' }),
-      stat('Километри', fmtNum(st.km), { icon: 'gauge', color: 'var(--c-orange)', cls: 'stat-card', sub: st.shifts ? `~${money(st.avgShiftIncome)} приход на смяна` : '' })),
+      stat('На час', money2(st.netPerHour), { icon: 'clock', cls: 'stat-card', sub: 'чисто' }),
+      stat('На км', money2(st.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' })),
 
     unit === 'day' && dayShifts.length > 0 && h('section', { class: 'card', style: { marginTop: '14px' } },
       cardTitle('list', 'Смени за деня'),
@@ -102,16 +100,21 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
         h('b', { class: tone(shiftNetAfterFixed(data, s)) }, money(shiftNetAfterFixed(data, s)))))),
 
     h('section', { class: 'card', style: { marginTop: '14px' } },
-      cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(st.income))),
-      stackBar(incomeItems, st.income),
-      shareRows(incomeItems, st.income)),
-
-    h('section', { class: 'card' },
       cardTitle('wallet', 'Разходи', h('b', { class: 'num' }, money(st.totalExp))),
       h('div', { class: 'grid2', style: { marginBottom: '14px' } },
         stat('От смените', money(st.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(st.fixedExp), { icon: 'calendar', color: 'var(--c-blue)' })),
       shareRows(expItems, st.totalExp)),
 
+    more('Покажи подробности: приходи, часове, гориво, рекорди',
+    h('div', { class: 'grid2', style: { marginTop: '12px' } },
+      stat('Часове', fmtDuration(st.hours), { icon: 'clock', cls: 'stat-card', sub: st.shifts ? `~${fmtDuration(st.avgShiftHours)} на смяна` : '' }),
+      stat('Километри', fmtNum(st.km), { icon: 'gauge', cls: 'stat-card', sub: st.shifts ? `~${money(st.avgShiftIncome)} приход на смяна` : '' }),
+      stat('Приход на час', money2(st.incomePerHour), { icon: 'coins', cls: 'stat-card' }),
+      stat('Разход на км', money2(st.costPerKm), { icon: 'fuel', cls: 'stat-card' })),
+    h('section', { class: 'card', style: { marginTop: '14px' } },
+      cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(st.income))),
+      stackBar(incomeItems, st.income),
+      shareRows(incomeItems, st.income)),
     Object.keys(st.fuel).length > 0 && h('section', { class: 'card' },
       cardTitle('fuel', 'Гориво'),
       h('div', { class: 'grid2' }, Object.entries(st.fuel).map(([t, f]) =>
@@ -119,7 +122,7 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
           { icon: t === 'electric' ? 'bolt' : 'fuel', color: 'var(--c-orange)', sub: f.per100 ? `на 100 км, ${money(f.amount)} общо` : 'въведи количество за разход на 100 км' })))),
 
     timeCard(tiAll, usePeriod),
-    recordsCard(rec, admin));
+    recordsCard(rec, admin)));
 }
 
 function stackBar(items, total) {

@@ -4,7 +4,7 @@ import { h, fill, icon, cx, money, todayStr, addDays, fmtDateLong, fmtDate, pars
 import * as store from '../store.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, empty, hero, cardTitle } from '../ui.js';
 
-const mapsUrl = (r) => `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(r.from)}&destination=${encodeURIComponent(r.to)}`;
+export const mapsUrl = (r) => `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(r.from)}&destination=${encodeURIComponent(r.to)}`;
 export const upcomingReservations = (list) => { const t = todayStr(); return list.filter((r) => !r.done && r.date >= t).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)); };
 export function whenLabel(r) {
   const t = todayStr();

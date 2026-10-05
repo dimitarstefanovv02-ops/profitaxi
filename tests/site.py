@@ -24,7 +24,7 @@ with sync_playwright() as p:
                 # превърти до долу, за да се появят всички елементи
                 pg.evaluate("async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } }")
                 pg.wait_for_timeout(900)
-                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', f'{u} {w} always dark')
+                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == theme, f'{u} {w} theme follows system')
                 sw = pg.evaluate("document.documentElement.scrollWidth")
                 check(sw <= w, f'{u} {w} {theme} horizontal scroll {sw}')
                 wide = pg.evaluate("[...document.querySelectorAll('main h1, main h2, main h3, main p, .s-btn, .sc-tabs')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.textContent.trim().slice(0, 30))")
@@ -36,9 +36,10 @@ with sync_playwright() as p:
                 check(not broken, f'{u} broken images {broken}')
                 ics = pg.evaluate("[...document.querySelectorAll('[data-ic]')].filter(e => !e.querySelector('svg')).length")
                 check(ics == 0, f'{u} icons missing')
-                if True:
-                    srcs = pg.evaluate("[...document.querySelectorAll('img[data-dark]')].map(i => i.getAttribute('src'))")
-                    check(all('-dark' in s for s in srcs), f'{u} dark screenshots')
+                srcs = pg.evaluate("[...document.querySelectorAll('img[data-dark]')].map(i => i.getAttribute('src'))")
+                check(all(f'-{theme}' in s for s in srcs), f'{u} {theme} screenshots')
+                grads = pg.evaluate("[...document.querySelectorAll('.site *')].filter(e => getComputedStyle(e).backgroundImage.includes('gradient') && !e.matches('.checker2, .checker2 *, .intro-bar i, select')).map(e => e.className).slice(0, 5)")
+                check(not grads, f'{u} {theme} no gradient backgrounds: {grads}')
                 if shots and w in (390, 1280):
                     pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(200)
                     pg.screenshot(path=f'{shots}/site{u.replace("/", "_") or "_"}-{w}-{theme}.png', full_page=True)
@@ -57,8 +58,17 @@ with sync_playwright() as p:
     # Взаимодействия
     ctx = b.new_context(viewport={'width': 390, 'height': 844}, color_scheme='light'); ctx.add_init_script("try { sessionStorage.setItem('profitaxi.intro', '1') } catch (e) {}"); pg = ctx.new_page()
     pg.goto(BASE + '/'); pg.wait_for_load_state('networkidle')
-    check(pg.locator('#theme-btn').count() == 0, 'no theme toggle')
+    check(pg.locator('#theme-btn').count() == 1, 'theme toggle visible')
+    pg.click('#theme-btn')
+    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'toggle → dark')
+    pg.reload(); pg.wait_for_load_state('networkidle')
+    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'theme remembered')
     check(pg.evaluate("localStorage.getItem('profitaxi.theme')") is None, 'site does not touch app theme')
+    pg.click('#theme-btn')
+    # второстепенното е скрито, но се отваря
+    check(pg.locator('details.more-box').count() >= 3, 'collapsible blocks on home')
+    pg.locator('details.more-box summary').first.scroll_into_view_if_needed(); pg.locator('details.more-box summary').first.click()
+    check(pg.evaluate("document.querySelector('details.more-box').open"), 'collapsible opens')
     check('шегата' in pg.locator('.tease').inner_text(), 'tease at top')
     check('AmateurTaxi' in pg.locator('.punch').inner_text().replace('\n', ''), 'joke at bottom')
     check(pg.locator('.tap-hint svg').count() == 1, 'tap hint with icon')

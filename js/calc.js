@@ -270,3 +270,86 @@ export function weekStrip(data, anchor = todayStr()) {
 }
 
 export const weekdayOf = weekdayIdx;
+
+// ---------- Календар: резервации, падежи на плащания, напомняния и смени за период ----------
+function addPeriodDue(date, period, anchorDay) {
+  const d = parseDate(date);
+  if (period === 'day') d.setDate(d.getDate() + 1);
+  else if (period === 'week') d.setDate(d.getDate() + 7);
+  else {
+    const add = period === 'month' ? 1 : period === 'quarter' ? 3 : 12;
+    const day = anchorDay || d.getDate();
+    d.setDate(1); d.setMonth(d.getMonth() + add);
+    d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  }
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+export function calendarEvents(data, from, to) {
+  const out = [];
+  const today = todayStr();
+  for (const r of data.reservations || []) {
+    if (r.date >= from && r.date <= to) out.push({ kind: 'res', id: 'res-' + r.id, date: r.date, time: r.time || '', title: r.client || 'Резервация', sub: `${r.from} → ${r.to}`, amount: r.price || 0, done: !!r.done, ref: r });
+  }
+  for (const c of activeCosts(data.costs)) {
+    if (!c.dueDate) continue;
+    let d = c.dueDate, guard = 0;
+    while (d <= to && guard++ < 400) {
+      if (c.endDate && d > c.endDate) break;
+      if (d >= from) out.push({ kind: 'pay', id: `pay-${c.id}-${d}`, date: d, time: '', title: c.name, amount: c.amount, late: d < today, first: d === c.dueDate, ref: c });
+      if (!c.period || c.period === 'once') break;
+      d = addPeriodDue(d, c.period, c.dueDay);
+    }
+  }
+  for (const r of data.reminders || []) {
+    if (r.dueDate && r.dueDate >= from && r.dueDate <= to) out.push({ kind: 'rem', id: 'rem-' + r.id, date: r.dueDate, time: '', title: r.title, late: r.dueDate < today, ref: r });
+  }
+  for (const s of data.shifts) {
+    if (!s.end) continue;
+    const d = shiftDate(s);
+    if (d >= from && d <= to) {
+      const st = new Date(s.start);
+      out.push({ kind: 'shift', id: 'shift-' + s.id, date: d, time: `${String(st.getHours()).padStart(2, '0')}:${String(st.getMinutes()).padStart(2, '0')}`, title: 'Смяна', amount: shiftNetAfterFixed(data, s), hours: shiftHours(s), ref: s });
+    }
+  }
+  const rank = { pay: 0, rem: 1, res: 2, shift: 3 };
+  return out.sort((a, b) => a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00') || rank[a.kind] - rank[b.kind]);
+}
+
+// ---------- Напомняния по имейл ----------
+// Настройки по подразбиране: изключени; плащания – 3 и 1 ден преди и в деня; курсове – ден и 2 часа преди.
+export const EMAIL_DEFAULTS = { on: false, pay: [3, 1, 0], res: [1440, 120] };
+export const EMAIL_PAY_OPTIONS = [[7, '7 дни'], [3, '3 дни'], [2, '2 дни'], [1, '1 ден'], [0, 'в деня']];
+export const EMAIL_RES_OPTIONS = [[1440, '1 ден'], [180, '3 часа'], [120, '2 часа'], [60, '1 час'], [30, '30 мин']];
+const pad2 = (n) => String(n).padStart(2, '0');
+const localIso = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+// Опашка с имейли за изпращане. Всеки имейл има постоянен ключ, който зависи от датата/часа на събитието:
+// – промяна на курс или падеж → ключът се сменя и старото напомняне изчезва само;
+// – изтрит или изпълнен курс / платено плащане → напомнянето изчезва;
+// – вече изпратените ключове (sent) никога не се връщат → без дублиране.
+export function emailQueue(data, { now = new Date(), horizonDays = 14, sent = data.profile?.emailSent || [] } = {}) {
+  const cfg = { ...EMAIL_DEFAULTS, ...(data.profile?.emailReminders || {}) };
+  if (!cfg.on) return [];
+  const done = new Set(sent);
+  const out = [];
+  const nowIso = localIso(now);
+  const until = new Date(now); until.setDate(until.getDate() + horizonDays);
+  const today = localIso(now).slice(0, 10);
+  for (const e of calendarEvents(data, today, localIso(until).slice(0, 10))) {
+    if (e.kind === 'pay' && e.first && !e.late) {
+      for (const days of cfg.pay) {
+        const at = parseDate(e.date); at.setDate(at.getDate() - days); at.setHours(9, 0, 0, 0);
+        const key = `pay:${e.ref.id}:${e.date}:${days}`;
+        if (!done.has(key) && localIso(at) >= nowIso.slice(0, 10) + 'T00:00') out.push({ key, kind: 'pay', sendAt: localIso(at), subject: `Напомняне: ${e.title}${days ? ` след ${days === 1 ? '1 ден' : `${days} дни`}` : ' днес'}`, body: `${e.title} – ${e.amount} €, падеж ${e.date}.`, refId: e.ref.id });
+      }
+    }
+    if (e.kind === 'res' && !e.done && e.time) {
+      const start = new Date(`${e.date}T${e.time}`);
+      for (const mins of cfg.res) {
+        const at = new Date(start.getTime() - mins * 60000);
+        const key = `res:${e.ref.id}:${e.date}T${e.time}:${mins}`;
+        if (!done.has(key) && at > now) out.push({ key, kind: 'res', sendAt: localIso(at), subject: `Курс в ${e.time}: ${e.title}`, body: `${e.date} ${e.time} – ${e.sub}${e.ref.phone ? `, тел. ${e.ref.phone}` : ''}.`, refId: e.ref.id });
+      }
+    }
+  }
+  return out.sort((a, b) => a.sendAt.localeCompare(b.sendAt));
+}

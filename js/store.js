@@ -92,6 +92,7 @@ export function register(f) {
   if (code && !referrer) return { error: 'Няма такъв код за покана. Провери го или остави полето празно.' };
   const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
   if (referrer) { u.referredBy = referrer.id; applyReferralRewards(referrer); }
+  db.profiles[u.id].tour = 'pending'; // кратка разходка при първото влизане
   localStorage.setItem(SESSION_KEY, u.id);
   commit();
   return { user: clone(u) };
@@ -249,6 +250,14 @@ export function markReminderDone(rid, currentKm = 0) {
   else db.reminders = db.reminders.filter((x) => x !== r);
   commit();
 }
+// ================= Имейл напомняния =================
+// Изпратените ключове се пазят, за да не се праща едно и също два пъти (ползва се от сървъра при свързване)
+export function markEmailSent(keys) {
+  const p = db.profiles[myId()]; const set = new Set(p.emailSent || []);
+  keys.forEach((k) => set.add(k));
+  p.emailSent = [...set].slice(-500); commit();
+}
+
 // ================= Лични резервации =================
 export function saveReservation(r) {
   const id = myId();
