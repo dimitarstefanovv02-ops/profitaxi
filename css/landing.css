@@ -391,7 +391,7 @@
    горе излиза печалбата, после името; накрая таксито излита и „дърпа“ завесата ===== */
 #intro { display: none; }
 html.intro #intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(120% 80% at 50% 55%, #1A1430 0%, #07080B 62%); cursor: pointer; overflow: hidden;
-  animation: introOut .7s cubic-bezier(.7, 0, .3, 1) 4s forwards; }
+  animation: introOut .7s cubic-bezier(.7, 0, .3, 1) 5.1s forwards; }
 html.intro body { overflow: hidden; }
 .intro-in { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(820px, 94vw); }
 .ic-scene { position: relative; width: 100%; }
@@ -408,9 +408,9 @@ html.intro body { overflow: hidden; }
   color: #0D4026; font: 900 12px/17px Inter, sans-serif; text-align: center; box-shadow: 0 4px 10px rgba(0, 0, 0, .35); animation: icFly var(--t) cubic-bezier(.15, .7, .4, 1) forwards; }
 .ic-money .coin { position: absolute; width: 18px; height: 18px; margin: -9px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #FFF1A8, #FFC21A 55%, #C98A00); border: 1.5px solid #9A6A00; animation: icFly var(--t) cubic-bezier(.15, .7, .4, 1) forwards; }
 .intro-word { display: flex; font-family: var(--display); font-weight: 800; font-size: clamp(2.6rem, 11vw, 4.6rem); letter-spacing: -.045em; line-height: 1; color: #fff; margin-top: 4px; }
-.intro-word i, .intro-word b { display: inline-block; font-style: normal; font-weight: 800; opacity: 0; animation: introLetter .5s cubic-bezier(.2, .9, .25, 1.3) calc(2.95s + var(--i) * 55ms) both; }
+.intro-word i, .intro-word b { display: inline-block; font-style: normal; font-weight: 800; opacity: 0; animation: introLetter .5s cubic-bezier(.2, .9, .25, 1.3) calc(.75s + var(--i) * 60ms) both; }
 .intro-word b { color: #A78BFA; }
-.intro-tag { color: #C9C3E6; font-weight: 600; font-size: 1.05rem; opacity: 0; animation: introFade .5s ease-out 3.5s both; }
+.intro-tag { color: #C9C3E6; font-weight: 600; font-size: 1.1rem; opacity: 0; animation: introFade .5s ease-out 1.35s both; }
 .intro-skip { position: absolute; bottom: 24px; left: 0; right: 0; text-align: center; color: rgba(255, 255, 255, .35); font-size: .85rem; font-weight: 600; opacity: 0; animation: introFade .4s ease-out 1s both; }
 @keyframes icBar { to { transform: scaleY(1); } }
 @keyframes icLine { to { stroke-dashoffset: 0; } }

@@ -129,14 +129,14 @@ if (document.documentElement.classList.contains('intro') && intro) {
   };
   intro.addEventListener('animationend', (e) => { if (e.animationName === 'introOut') finish(); });
   intro.addEventListener('click', finish);
-  setTimeout(finish, 5600); // за всеки случай
+  setTimeout(finish, 6600); // за всеки случай
 
   const path = intro.querySelector('#ic-path'), car = intro.querySelector('.ic-car'), money = intro.querySelector('.ic-money');
   const svg = intro.querySelector('.ic-svg'), peak = intro.querySelector('.ic-peak'), num = intro.querySelector('.ic-num');
   if (path && car) {
     const len = path.getTotalLength();
     const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-    const T0 = 650, DUR = 2300, OFF = 3950; // изкачване и излитане (ms от началото)
+    const T0 = 650, DUR = 2300, OFF = 4800; // изкачване и излитане (ms от началото)
     const t0 = performance.now();
     let lastSpawn = 0, popped = false;
     const spawn = (x, y, ang) => {
@@ -161,7 +161,7 @@ if (document.documentElement.classList.contains('intro') && intro) {
         car.style.opacity = '1';
         let p, offX = 0;
         if (el < T0 + DUR) p = ease((el - T0) / DUR);
-        else { p = 1; offX = el > OFF ? Math.pow((el - OFF) / 600, 2) * 900 : 0; }
+        else { p = 1; offX = el > OFF ? Math.pow((el - OFF) / 500, 2) * 900 : 0; }
         const a = path.getPointAtLength(p * len), b = path.getPointAtLength(Math.min(len, p * len + 2));
         const ang = Math.atan2(b.y - a.y, b.x - a.x);
         car.setAttribute('transform', `translate(${a.x + offX} ${a.y - (offX ? offX * .25 : 0)}) rotate(${(offX ? -18 : ang * 180 / Math.PI).toFixed(2)})`);
@@ -171,7 +171,7 @@ if (document.documentElement.classList.contains('intro') && intro) {
         if (num) num.textContent = `+${String(Math.round(2011 * ease(k))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} €`;
         if (!popped && el > T0 + DUR * .55) { popped = true; peak.classList.add('on'); }
       }
-      if (el < 4800) requestAnimationFrame(tick);
+      if (el < 5900) requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }

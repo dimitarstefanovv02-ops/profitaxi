@@ -5,11 +5,22 @@ import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, M
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, more } from '../ui.js';
-import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl } from './reservations.js';
+import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
+import { calendarView } from './calendar.js';
+
+// Кой панел е отворен на място в „Днес“: календарът или резервациите (като „Покажи повече“)
+let openPanel = null;
+
+// Вгражда страница в „Днес“: без отделен екран, без „Назад“ и плаващ бутон
+function embedded(el) {
+  el.classList.remove('screen'); el.classList.add('embed');
+  el.querySelectorAll(':scope > .back, :scope > .sub-back, :scope > .fab').forEach((x) => x.remove());
+  return el;
+}
 
 const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
 
-export function homeView({ go, user, data }) {
+export function homeView({ go, user, data, rerender }) {
   const today = todayStr();
   const g = goalProgress(data);
   const active = data.shifts.find((s) => !s.end);
@@ -26,6 +37,14 @@ export function homeView({ go, user, data }) {
     actions: [{ label: 'Старт', primary: true, run: ({ km }) => { store.startShift(km); toast('Смяната започна. Успешен път!'); } }],
   });
 
+  const togglePanel = (k, scroll) => {
+    openPanel = openPanel === k ? null : k;
+    if (rerender) rerender(); else go('/home');
+    if (openPanel && scroll) setTimeout(() => document.getElementById('home-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+  };
+  const panelBtn = (k, ic, title, sub) => h('button', { class: cx('home-link', openPanel === k && 'on'), 'aria-expanded': String(openPanel === k), onclick: () => togglePanel(k) },
+    h('span', { class: 'hl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), h('small', null, sub)), h('span', { class: 'hl-chev' }, icon('down', 18)));
+  homeView.openCalendar = () => { if (openPanel !== 'cal') togglePanel('cal', true); };
   const recent = data.shifts.filter((s) => s.end).slice(0, 3);
   const resCount = upcomingReservations(data.reservations || []).length;
 
@@ -49,8 +68,11 @@ export function homeView({ go, user, data }) {
 
     // 3. Календар и лични резервации – с едно натискане
     h('div', { class: 'home-links' },
-      h('a', { class: 'home-link', href: '#/calendar' }, h('span', { class: 'hl-ic' }, icon('calendar', 22)), h('span', null, h('b', null, 'Календар'), h('small', null, 'Всичко по дни'))),
-      h('a', { class: 'home-link', href: '#/reservations' }, h('span', { class: 'hl-ic' }, icon('route', 22)), h('span', null, h('b', null, 'Резервации'), h('small', null, resCount ? `${resCount} предстоящи` : 'Запиши курс')))),
+      panelBtn('cal', 'calendar', 'Календар', 'Всичко по дни'),
+      panelBtn('res', 'route', 'Резервации', resCount ? `${resCount} предстоящи` : 'Запиши курс')),
+    openPanel && h('div', { class: 'home-panel', id: 'home-panel' },
+      openPanel === 'cal' ? embedded(calendarView({ go, data })) : embedded(reservationsView({ data })),
+      h('button', { class: 'btn btn-ghost btn-block home-panel-close', onclick: () => togglePanel(openPanel) }, h('span', { class: 'flip' }, icon('down', 18)), 'Скрий')),
 
     // 4. Какво следва: курс и плащане с бутоните за тях
     nextUp(data, go),
@@ -80,7 +102,7 @@ function nextUp(data, go) {
   const r = res[0], p = pays[0];
   const late = p && ((p.daysLeft ?? 0) < 0 || (p.kmLeft ?? 1) <= 0);
   return h('section', { class: 'card next', 'aria-label': 'Следващо' },
-    cardTitle('calendar', 'Следващо', h('a', { class: 'link', href: '#/calendar' }, 'Календар', icon('right', 16))),
+    cardTitle('calendar', 'Следващо', h('button', { class: 'link', onclick: () => homeView.openCalendar?.() }, 'Календар', icon('down', 16))),
     r ? h('div', { class: 'next-item' },
       h('div', { class: 'next-when' }, h('b', null, r.time), h('span', null, whenLabel(r))),
       h('div', { class: 'grow', style: { minWidth: 0 } },

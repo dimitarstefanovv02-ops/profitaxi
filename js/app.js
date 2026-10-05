@@ -65,7 +65,7 @@ function render() {
     return mount(app, view({ go }), route, false);
   }
   if (PUBLIC[route.name]) return go('/home', true);
-  // /onetaxi е само за шофьорите на One Taxi
+  // /app/onetaxi е само за шофьорите на One Taxi
   if (!isBrandUser(user)) return mount(app, notBrandView(), route, false);
 
   const access = store.accessState(user);

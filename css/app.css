@@ -904,3 +904,18 @@ body:not(.admin) .home-link small { white-space: normal; }
 .info-row b { display: block; font-weight: 600; word-break: break-word; }
 .info-row .l-ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--v-soft); color: var(--violet); flex: none; }
 [data-page="profile"] .page-title + .cover { margin-top: 4px; }
+/* Днес: Календар и Резервации се разгъват на място (като „Покажи повече“) */
+.home-link { cursor: pointer; text-align: left; font: inherit; width: 100%; }
+.home-link .hl-chev { margin-left: auto; color: var(--muted); transition: transform .2s; display: grid; }
+.home-link.on { border-color: var(--v-strong); box-shadow: 0 0 0 3px var(--v-glow); }
+.home-link.on .hl-chev { transform: rotate(180deg); color: var(--violet); }
+.home-panel { margin-top: 12px; animation: panelIn .28s cubic-bezier(.2, .8, .2, 1); }
+.home-panel > .embed { padding: 0; }
+.home-panel > .embed > .page-title:first-child { margin-top: 0; }
+.home-panel-close { margin-top: 10px; }
+.flip { display: grid; transform: rotate(180deg); }
+@keyframes panelIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .home-panel { animation: none; } }
+.home-link { position: relative; padding-right: 34px; }
+.home-link .hl-chev { position: absolute; right: 10px; top: 50%; margin-top: -9px; }
+.home-link.on .hl-chev { transform: rotate(180deg); }
