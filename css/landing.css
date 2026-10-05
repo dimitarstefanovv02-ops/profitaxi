@@ -67,8 +67,8 @@
 /* ---------- Начало (hero) ---------- */
 .hero2 { position: relative; overflow: hidden; padding: 26px 0 70px; }
 .hero2 .s-wrap { position: relative; z-index: 1; display: grid; gap: 44px; }
-.kick { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; font-size: .84rem; font-weight: 700; background: var(--s-card); box-shadow: var(--s-shadow); color: var(--s-muted); }
-.kick i { width: 8px; height: 8px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 4px rgba(255,194,26,.22); }
+.kick { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: 999px; font-size: clamp(1rem, 2.6vw, 1.15rem); font-weight: 700; background: var(--s-card); box-shadow: var(--s-shadow); color: var(--s-muted); }
+.kick i { width: 10px; height: 10px; border-radius: 50%; background: var(--y); box-shadow: 0 0 0 4px rgba(255,194,26,.22); }
 .hero2 h1 { font-size: clamp(2.35rem, 9.6vw, 4.2rem); margin: 20px 0 20px; font-weight: 700; }
 .hero2 h1 .line2 { display: block; }
 .hero2 h1 mark { background: none; color: inherit; position: relative; white-space: nowrap; }
@@ -106,8 +106,8 @@
 .sec.alt { background: var(--s-bg2); }
 .sec.ink { background: #07080B; color: #F3F4F7; --s-card: #12141C; --s-line: #1F2330; --s-muted: #9AA3B2; --s-ink: #F3F4F7; --s-bg: #07080B; --s-bg2: #12141C; }
 .sec > .s-wrap { position: relative; z-index: 1; }
-.eyebrow { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: .88rem; color: var(--v); margin-bottom: 14px; }
-.eyebrow::before { content: ''; width: 18px; height: 2px; background: currentColor; border-radius: 2px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: clamp(1.05rem, 2.8vw, 1.3rem); letter-spacing: .01em; color: var(--v2); margin-bottom: 16px; }
+.eyebrow::before { content: ''; width: 26px; height: 3px; background: currentColor; border-radius: 2px; }
 .sec-head { max-width: 780px; margin-bottom: 40px; }
 .sec-head.c { margin-left: auto; margin-right: auto; text-align: center; }
 .sec-head h2 { font-size: clamp(1.9rem, 6vw, 3.1rem); }
@@ -192,7 +192,7 @@
 .step4 .n { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; font-family: var(--display); font-weight: 700; font-size: 1.15rem; background: var(--y); color: var(--y-ink); }
 .step4 h3 { font-size: 1.15rem; margin: 16px 0 8px; letter-spacing: -.025em; }
 .step4 p { color: var(--s-muted); line-height: 1.55; }
-.step4 .t { position: absolute; top: 22px; right: 22px; font-size: .78rem; font-weight: 700; color: var(--v); background: var(--v-soft); padding: 4px 9px; border-radius: 999px; }
+.step4 .t { position: absolute; top: 22px; right: 22px; font-size: .9rem; font-weight: 700; color: var(--v); background: var(--v-soft); padding: 4px 9px; border-radius: 999px; }
 
 /* Покани */
 .ref-box { position: relative; overflow: hidden; border-radius: 30px; padding: 30px 24px; color: #fff; background: radial-gradient(120% 120% at 100% 0%, rgba(192,132,252,.55), transparent 55%), linear-gradient(140deg, #2A1360, #5B21B6 55%, #8B5CF6); box-shadow: 0 40px 80px -40px rgba(91,33,182,.8); display: grid; gap: 24px; }
@@ -257,7 +257,7 @@
 .feat h2 { font-size: clamp(1.7rem, 5.4vw, 2.6rem); margin: 6px 0 16px; }
 .feat p { color: var(--s-muted); font-size: 1.07rem; line-height: 1.65; }
 .feat .phone2 { margin: 0 auto; }
-.tag2 { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 800; padding: 6px 12px; border-radius: 999px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
+.tag2 { display: inline-flex; align-items: center; gap: 8px; font-size: clamp(1rem, 2.6vw, 1.15rem); font-weight: 800; padding: 8px 15px; border-radius: 999px; color: var(--c); background: color-mix(in srgb, var(--c) 14%, transparent); }
 
 /* Таймлайн „един ден“ */
 .timeline { position: relative; display: grid; gap: 12px; padding-left: 26px; }
@@ -286,7 +286,7 @@
 .page-hero { position: relative; overflow: hidden; padding: 40px 0 50px; }
 .page-hero .s-wrap { position: relative; z-index: 1; max-width: 900px; }
 .page-hero h1 { font-size: clamp(2.3rem, 8vw, 4.2rem); margin: 6px 0 18px; }
-.crumbs { font-size: .88rem; font-weight: 700; color: var(--s-muted); }
+.crumbs { font-size: 1.02rem; font-weight: 700; color: var(--s-muted); }
 .crumbs a { color: inherit; text-decoration: none; }
 .crumbs a:hover { color: var(--s-ink); }
 
@@ -323,6 +323,23 @@
 .phones-row .phone2 img { border-radius: 30px; }
 .phones-row .phone2:nth-child(2) { margin-top: 40px; }
 .lead-big { font-size: clamp(1.4rem, 4.2vw, 2rem); font-family: var(--display); letter-spacing: -.03em; line-height: 1.25; font-weight: 600; }
+
+/* Закачка горе и шегата най-долу */
+.tease { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 16px; border-radius: 16px; font-weight: 700; font-size: clamp(.98rem, 2.6vw, 1.1rem); color: var(--y); background: rgba(255,194,26,.08); border: 1px dashed rgba(255,194,26,.45); }
+.tease i { font-style: normal; display: inline-block; }
+@media (prefers-reduced-motion: no-preference) { .tease i { animation: nudge 1.6s ease-in-out infinite; } }
+@keyframes nudge { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+.tap-hint { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 12px; font-weight: 700; color: var(--y); font-size: 1rem; }
+.tap-hint svg { width: 20px; height: 20px; }
+@media (prefers-reduced-motion: no-preference) { .tap-hint svg { animation: nudge 1.6s ease-in-out infinite; } }
+.final .punch { font-family: var(--display); font-weight: 700; letter-spacing: -.03em; font-size: clamp(1.7rem, 6vw, 3rem); line-height: 1.2; color: #F3F4F7; max-width: 22em; margin: 0 auto; }
+.final .punch b { color: var(--y); }
+.punch s { color: #9AA3B2; }
+
+.final .joke-label { display: flex; justify-content: center; font-size: clamp(1.2rem, 3.4vw, 1.5rem); margin-bottom: 20px; }
+.joke-cta { margin: 56px auto 0; padding-top: 44px; border-top: 1px solid #1F2330; max-width: 640px; }
+.joke-cta h3 { font-size: clamp(1.4rem, 4.4vw, 2rem); }
+.final .joke-cta img { margin-bottom: 18px; }
 
 /* ---------- По-широки екрани ---------- */
 @media (min-width: 480px) { .hide-xs { display: inline-flex; } }

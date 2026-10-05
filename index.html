@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg">
+<html lang="bg" data-theme="dark" style="color-scheme:dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -22,10 +22,8 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
-      // Тема преди изрисуване, за да няма премигване
-      var t; try { t = localStorage.getItem('profitaxi.theme'); } catch (e) {}
-      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
+      // Сайтът е само в тъмна тема
+      document.documentElement.setAttribute('data-theme', 'dark');
     })();
   </script>
   <script type="module" src="/js/landing.js"></script>
@@ -40,6 +38,7 @@
   <div class="glow y" style="width:420px;height:420px;left:-180px;bottom:-140px"></div>
   <div class="s-wrap">
     <div>
+      <div class="tease rv">Прочети цялата страница, за да схванеш шегата най-долу <i>↓</i></div><br>
       <span class="kick rv"><i></i>За таксиметрови шофьори в България</span>
       <h1 class="rv" style="--d:80ms">Знаеш колко изкарваш.<span class="line2">Но знаеш ли колко <mark>ти остава</mark>?</span></h1>
       <p class="lead rv" style="--d:160ms">ProfiTaxi вади от оборота горивото, ефира, наема, автомивката и всички такси и ти показва истинската чиста печалба. От всяка смяна, всеки ден, всеки месец.</p>
@@ -50,7 +49,7 @@
       <div class="trust rv" style="--d:320ms"><span>Без карта</span><span>Регистрация за 1 минута</span><span>Отчет за смяна за 10 секунди</span></div>
     </div>
     <div class="hero-vis rv zoom" style="--d:200ms">
-      <div class="phone2 float"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Начален екран на ProfiTaxi с чистата печалба за месеца" width="390" height="844"></div>
+      <div class="phone2 float"><img src="/img/screen-home-dark.jpg" alt="Начален екран на ProfiTaxi с чистата печалба за месеца" width="390" height="844"></div>
       <div class="bill">
         <div class="bill-title">Септември <em>реален пример</em></div>
         <div class="bill-row"><span>Оборот</span><b>3 145 €</b></div>
@@ -122,14 +121,14 @@
   <div class="s-wrap two-col">
     <div class="sec-head rv" style="margin-bottom:24px">
       <span class="eyebrow">Какво е ProfiTaxi</span>
-      <h2>Три думи в едно име.</h2>
+      <h2>Три думи, обединени в една идея.</h2>
       <p>ProfiTaxi помага на таксиметровия шофьор не просто да работи повече, а да знае колко реално печели и къде отиват парите му.</p>
     </div>
     <div>
       <div class="name-split stagger">
-        <div class="ns p" style="--c:#12A15E"><b>Profit</b><span>печалбата, която остава</span></div>
-        <div class="ns t" style="--c:var(--y)"><b>Taxi</b><span>професията ти</span></div>
-        <div class="ns f" style="--c:var(--v)"><b>Profi</b><span>като професионалист</span></div>
+        <div class="ns t" style="--c:var(--y)"><b>Taxi</b><span>Професията</span></div>
+        <div class="ns p" style="--c:#12A15E"><b>Profit</b><span>Печалбата, която ти остава</span></div>
+        <div class="ns f" style="--c:var(--v)"><b>Profi</b><span>Професионалистът, който знае цифрите си</span></div>
       </div>
       <blockquote class="quote2 rv">
         <p>Създадохме ProfiTaxi, защото таксито може да бъде много доходоносна работа, но изкарването на пари е само половината от уравнението.</p>
@@ -173,6 +172,7 @@
           <span class="eyebrow">Виж приложението</span>
           <h2>Направено за телефон. За една ръка.</h2>
         </div>
+        <p class="tap-hint rv"><span data-ic="pointer" data-size="20"></span>Цъкни бутончетата, за да видиш различните екрани</p>
         <div class="sc-tabs rv" role="tablist">
           <button type="button" role="tab" data-shot="home" data-caption="Колко си изкарал чисто този месец, колко остава до целта и предстоящите резервации и плащания.">Начало</button>
           <button type="button" role="tab" data-shot="shifts" data-caption="Всяка смяна с оборот, разходи, часове, километри и чиста печалба.">Смени</button>
@@ -182,9 +182,9 @@
           <button type="button" role="tab" data-shot="reservations" data-caption="Лични резервации с час, адреси, клиент и договорена цена. Обаждане и маршрут с едно докосване.">Резервации</button>
         </div>
         <p class="sc-caption" aria-live="polite"></p>
-        <div class="sec-foot"><a class="s-btn s-btn-y" href="/app#/register">Пробвай безплатно</a><a class="s-btn s-btn-line" href="/features">Разгледай функциите</a></div>
+        <div class="sec-foot"><a class="s-btn s-btn-line" href="/features">Разгледай функциите</a></div>
       </div>
-      <div class="sc-phone rv zoom"><div class="phone2"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Екран от приложението" width="390" height="844" loading="lazy"></div></div>
+      <div class="sc-phone rv zoom"><div class="phone2"><img src="/img/screen-home-dark.jpg" alt="Екран от приложението" width="390" height="844" loading="lazy"></div></div>
     </div>
   </div>
 </section>
@@ -219,8 +219,8 @@
       </div>
     </div>
     <div class="phones-row rv from-r">
-      <div class="phone2"><img src="/img/screen-reservations-dark.jpg" data-light="/img/screen-reservations-light.jpg" data-dark="/img/screen-reservations-dark.jpg" alt="Списък с лични резервации" width="390" height="844" loading="lazy"></div>
-      <div class="phone2"><img src="/img/screen-profile-dark.jpg" data-light="/img/screen-profile-light.jpg" data-dark="/img/screen-profile-dark.jpg" alt="Профил на шофьора със снимка на колата" width="390" height="844" loading="lazy"></div>
+      <div class="phone2"><img src="/img/screen-reservations-dark.jpg" alt="Списък с лични резервации" width="390" height="844" loading="lazy"></div>
+      <div class="phone2"><img src="/img/screen-profile-dark.jpg" alt="Профил на шофьора със снимка на колата" width="390" height="844" loading="lazy"></div>
     </div>
   </div>
 </section>
@@ -278,7 +278,7 @@
   <div class="s-wrap">
     <div class="sec-head c rv">
       <span class="eyebrow">Цена</span>
-      <h2>По-малко от един курс на месец.</h2>
+      <h2>Колкото два курса на месец.</h2>
       <p>14 дни безплатно. После продължаваш само ако ти помага.</p>
     </div>
     <div class="price-wrap">
@@ -301,7 +301,7 @@
       <div class="roi rv from-r">
         <h3>Защо си заслужава</h3>
         <div class="roi-row"><span>Абонамент на месец</span><b>9,99 €</b></div>
-        <div class="roi-row"><span>Един среден курс</span><b>≈ 12 €</b></div>
+        <div class="roi-row"><span>Един среден курс</span><b>≈ 5 €</b></div>
         <div class="roi-row"><span>Пропусната такса или глоба</span><b>50–200 €</b></div>
         <div class="roi-row"><span>Час, в който караш на загуба</span><b>?</b></div>
         <p class="s-muted" style="margin-top:12px;line-height:1.55">Ако ProfiTaxi ти покаже само една смяна на загуба или едно забравено плащане, вече се е изплатил.</p>
@@ -330,10 +330,14 @@
 <section class="final">
   <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
   <div class="s-wrap rv zoom">
-    <img src="/icons/icon-192.png" width="88" height="88" alt="">
-    <h2>Карай за печалба. Не само за оборот.</h2>
-    <p>14 дни безплатно. Без карта. Започваш за минута.</p>
-    <div class="cta-row"><a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай безплатно</a><a class="s-btn s-btn-line s-btn-lg" href="/app#/login">Имам акаунт</a></div>
+    <span class="eyebrow joke-label">Забавната част:</span>
+    <p class="punch">Ако след прочетеното все още мислиш, че не ти е нужно ProfiTaxi, отвори подробните статии от менюто или остани завинаги <span style="white-space:nowrap"><b>AmateurTaxi</b> 😂😂😂</span></p>
+    <div class="joke-cta">
+      <img src="/icons/icon-192.png" width="72" height="72" alt="">
+      <h3>Карай за печалба. Не само за оборот.</h3>
+      <p>14 дни безплатно. Без карта. Започваш за минута.</p>
+      <div class="cta-row"><a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай безплатно</a><a class="s-btn s-btn-line s-btn-lg" href="/app#/login">Имам акаунт</a></div>
+    </div>
   </div>
 </section>
 <div class="checker2"></div>

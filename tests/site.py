@@ -13,7 +13,7 @@ shots = sys.argv[1] if len(sys.argv) > 1 else None
 with sync_playwright() as p:
     b = p.chromium.launch()
     for w, hgt in [(390, 844), (820, 1180), (1280, 900)]:
-        for theme in ['light', 'dark']:
+        for theme in ['light', 'dark']:  # системната тема на телефона не трябва да влияе: сайтът е винаги тъмен
             ctx = b.new_context(viewport={'width': w, 'height': hgt}, color_scheme=theme)
             pg = ctx.new_page(); errs = []
             pg.on('pageerror', lambda e: errs.append(str(e)))
@@ -23,7 +23,7 @@ with sync_playwright() as p:
                 # превърти до долу, за да се появят всички елементи
                 pg.evaluate("async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } }")
                 pg.wait_for_timeout(900)
-                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == theme, f'{u} {w} theme')
+                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', f'{u} {w} always dark')
                 sw = pg.evaluate("document.documentElement.scrollWidth")
                 check(sw <= w, f'{u} {w} {theme} horizontal scroll {sw}')
                 wide = pg.evaluate("[...document.querySelectorAll('main h1, main h2, main h3, main p, .s-btn, .sc-tabs')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.textContent.trim().slice(0, 30))")
@@ -35,7 +35,7 @@ with sync_playwright() as p:
                 check(not broken, f'{u} broken images {broken}')
                 ics = pg.evaluate("[...document.querySelectorAll('[data-ic]')].filter(e => !e.querySelector('svg')).length")
                 check(ics == 0, f'{u} icons missing')
-                if theme == 'dark':
+                if True:
                     srcs = pg.evaluate("[...document.querySelectorAll('img[data-dark]')].map(i => i.getAttribute('src'))")
                     check(all('-dark' in s for s in srcs), f'{u} dark screenshots')
                 if shots and w in (390, 1280):
@@ -46,11 +46,11 @@ with sync_playwright() as p:
     # Взаимодействия
     ctx = b.new_context(viewport={'width': 390, 'height': 844}, color_scheme='light'); pg = ctx.new_page()
     pg.goto(BASE + '/'); pg.wait_for_load_state('networkidle')
-    pg.click('#theme-btn')
-    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'toggle → dark')
-    check('-dark' in pg.locator('.hero-vis img').get_attribute('src'), 'hero image swaps to dark')
-    pg.reload(); pg.wait_for_load_state('networkidle')
-    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'theme remembered')
+    check(pg.locator('#theme-btn').count() == 0, 'no theme toggle')
+    check(pg.evaluate("localStorage.getItem('profitaxi.theme')") is None, 'site does not touch app theme')
+    check('шегата' in pg.locator('.tease').inner_text(), 'tease at top')
+    check('AmateurTaxi' in pg.locator('.punch').inner_text().replace('\n', ''), 'joke at bottom')
+    check(pg.locator('.tap-hint svg').count() == 1, 'tap hint with icon')
     pg.click('#menu-btn'); check(pg.locator('#drawer').is_visible(), 'drawer opens')
     pg.click('#menu-btn')
     pg.locator('[data-showcase]').scroll_into_view_if_needed()

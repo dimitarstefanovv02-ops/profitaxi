@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg">
+<html lang="bg" data-theme="dark" style="color-scheme:dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -22,10 +22,8 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
-      // Тема преди изрисуване, за да няма премигване
-      var t; try { t = localStorage.getItem('profitaxi.theme'); } catch (e) {}
-      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
+      // Сайтът е само в тъмна тема
+      document.documentElement.setAttribute('data-theme', 'dark');
     })();
   </script>
   <script type="module" src="/js/landing.js"></script>
@@ -100,7 +98,7 @@
       <h3>Устройства и изглед</h3>
       <details><summary>Мога ли да използвам приложението и от телефон?</summary><p>Да, направено е преди всичко за телефон и за работа с една ръка. Отваряш го в браузъра и го добавяш към началния екран, след което се отваря като обикновено приложение. Работи на iPhone, Android, таблет и компютър.</p></details>
       <details><summary>Трябва ли да го свалям от App Store или Google Play?</summary><p>Не. Добавяш го към началния екран от браузъра. Получаваш икона и цял екран, без да чакаш изтегляне.</p></details>
-      <details><summary>Има ли Dark Mode?</summary><p>Да. Светла, тъмна или автоматична тема според телефона. Тъмната е удобна за нощни смени. Сайтът също има светла и тъмна тема – бутонът е горе вдясно.</p></details>
+      <details><summary>Има ли Dark Mode?</summary><p>Да. Светла, тъмна или автоматична тема според телефона. Тъмната е удобна за нощни смени.</p></details>
     </div>
 
     <div class="faq-group rv">

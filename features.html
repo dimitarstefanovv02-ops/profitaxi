@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg">
+<html lang="bg" data-theme="dark" style="color-scheme:dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -22,10 +22,8 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
-      // Тема преди изрисуване, за да няма премигване
-      var t; try { t = localStorage.getItem('profitaxi.theme'); } catch (e) {}
-      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', t);
+      // Сайтът е само в тъмна тема
+      document.documentElement.setAttribute('data-theme', 'dark');
     })();
   </script>
   <script type="module" src="/js/landing.js"></script>
@@ -51,7 +49,7 @@
         <h2>Колко ти остава. С един поглед.</h2>
         <p>Чистата печалба за деня и месеца, напредъкът към целта и колко часа още трябват. Под нея: днешните резервации и предстоящите плащания.</p>
       </div>
-      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Начален екран" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-home-dark.jpg" alt="Начален екран" width="390" height="844" loading="lazy"></div></div>
     </div>
 
     <div class="feat rev">
@@ -60,7 +58,7 @@
         <h2>Смяната се записва за 10 секунди.</h2>
         <p>Старт и стоп с едно докосване. Сумите въвеждаш на голяма цифрова клавиатура: кеш, карта, приложения, бакшиш. Горивото, автомивката и паркингът са бутони. Разходите от предишната смяна се копират с едно докосване.</p>
       </div>
-      <div class="rv"><div class="phone2 sm"><img src="/img/screen-numpad-dark.jpg" data-light="/img/screen-numpad-light.jpg" data-dark="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv"><div class="phone2 sm"><img src="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума" width="390" height="844" loading="lazy"></div></div>
     </div>
 
     <div class="feat">
@@ -70,7 +68,7 @@
         <p>Гориво, ефир, наем, лизингова вноска, автомивка, обслужване, ремонти, гуми, застраховка, каско, ГО, винетка, данъци, паркинг и други. Добавяш свои категории и скриваш тези, които не ползваш.</p>
         <p style="margin-top:12px">Всеки постоянен разход има период (ден, седмица, месец, тримесечие, година) и падеж. ProfiTaxi го разпределя по дни, за да е честна чистата печалба за всеки ден.</p>
       </div>
-      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-costs-dark.jpg" data-light="/img/screen-costs-light.jpg" data-dark="/img/screen-costs-dark.jpg" alt="Постоянни разходи" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-costs-dark.jpg" alt="Постоянни разходи" width="390" height="844" loading="lazy"></div></div>
     </div>
 
     <div class="feat rev">
@@ -95,7 +93,7 @@
         <h2>Лични резервации на едно място.</h2>
         <p>Дата, час, от адрес, до адрес и име на клиента. По желание телефон, договорена цена и бележка. Предстоящите са на началния екран. Обаждане и маршрут с едно докосване, „Изпълнена“ – когато приключиш.</p>
       </div>
-      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-reservations-dark.jpg" data-light="/img/screen-reservations-light.jpg" data-dark="/img/screen-reservations-dark.jpg" alt="Резервации" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-reservations-dark.jpg" alt="Резервации" width="390" height="844" loading="lazy"></div></div>
     </div>
 
     <div class="feat rev">
@@ -104,7 +102,7 @@
         <h2>Кога се печели най-много.</h2>
         <p>Ден, седмица, месец, тримесечие и година. Оборот срещу чисто, печалба на час и на километър, разход на гориво на 100 км. Рекорди и кои дни и часове от седмицата носят най-много. Отчет в Excel или PDF.</p>
       </div>
-      <div class="rv"><div class="phone2 sm"><img src="/img/screen-stats-dark.jpg" data-light="/img/screen-stats-light.jpg" data-dark="/img/screen-stats-dark.jpg" alt="Статистика" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv"><div class="phone2 sm"><img src="/img/screen-stats-dark.jpg" alt="Статистика" width="390" height="844" loading="lazy"></div></div>
     </div>
 
     <div class="feat">
@@ -113,7 +111,7 @@
         <h2>Твоят профил. Твоята кола.</h2>
         <p>Профилна снимка, име, код на колата, регистрационен номер и модел. Снимката на колата стои като корица. Тук избираш и собственост: своя, под наем или на лизинг.</p>
       </div>
-      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-profile-dark.jpg" data-light="/img/screen-profile-light.jpg" data-dark="/img/screen-profile-dark.jpg" alt="Профил" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv from-r"><div class="phone2 sm"><img src="/img/screen-profile-dark.jpg" alt="Профил" width="390" height="844" loading="lazy"></div></div>
     </div>
 
     <div class="feat rev">
@@ -122,7 +120,7 @@
         <h2>Покани колеги, карай безплатно.</h2>
         <p>Личен код за покана. Виждаш колко колеги са се регистрирали, колко остават до следващата награда и колко месеца си спечелил. 5 регистрации = 1 безплатен месец, 8 = 2 безплатни месеца.</p>
       </div>
-      <div class="rv"><div class="phone2 sm"><img src="/img/screen-invite-dark.jpg" data-light="/img/screen-invite-light.jpg" data-dark="/img/screen-invite-dark.jpg" alt="Покани колеги" width="390" height="844" loading="lazy"></div></div>
+      <div class="rv"><div class="phone2 sm"><img src="/img/screen-invite-dark.jpg" alt="Покани колеги" width="390" height="844" loading="lazy"></div></div>
     </div>
   </div>
 </section>

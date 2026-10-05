@@ -105,7 +105,7 @@ function reservationsCard(data) {
 
 function greeting() {
   const hr = new Date().getHours();
-  return hr < 5 ? 'Лека нощ' : hr < 11 ? 'Добро утро' : hr < 18 ? 'Здравей' : 'Добър вечер';
+  return hr >= 5 && hr < 11 ? 'Добро утро' : hr >= 11 && hr < 18 ? 'Добър ден' : 'Добър вечер';
 }
 
 function meter(g, month) {

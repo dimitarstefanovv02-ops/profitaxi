@@ -12,16 +12,9 @@ const PAGES = [
 ];
 const here = location.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
 
-// ---------- Тема ----------
-const THEME_KEY = 'profitaxi.theme';
-const sysDark = () => matchMedia('(prefers-color-scheme: dark)').matches;
-function currentTheme() { let t; try { t = localStorage.getItem(THEME_KEY); } catch { /* */ } return t === 'light' || t === 'dark' ? t : (sysDark() ? 'dark' : 'light'); }
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  document.querySelectorAll('img[data-light]').forEach((img) => { img.src = img.dataset[t] || img.src; });
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', t === 'dark' ? '#07080B' : '#F4F5F8');
-}
-applyTheme(currentTheme());
+// ---------- Тема: сайтът е само тъмен ----------
+document.documentElement.setAttribute('data-theme', 'dark');
+const currentTheme = () => 'dark';
 
 // ---------- Шапка и долна част ----------
 const icons = {
@@ -38,7 +31,6 @@ if (head) {
       <a class="s-brand" href="/" aria-label="ProfiTaxi – начало"><img src="/icons/icon-192.png" alt="" width="48" height="48"><span>Profi<b>Taxi</b></span></a>
       <nav class="s-nav" aria-label="Страници">${PAGES.map(([u, l]) => `<a href="${u}"${here === u ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
       <div class="s-head-cta">
-        <button class="s-icon-btn" id="theme-btn" type="button" aria-label="Смени темата"></button>
         <a class="s-btn s-btn-ghost hide-xs" href="/app#/login">Вход</a>
         <a class="s-btn s-btn-y" href="/app#/register">Пробвай<span class="hide-sm">&nbsp;безплатно</span></a>
         <button class="s-icon-btn s-menu-btn" id="menu-btn" type="button" aria-label="Меню" aria-expanded="false">${icons.menu}</button>
@@ -66,16 +58,6 @@ if (foot) {
     <div class="s-wrap s-foot-bottom"><span>© 2026 ProfiTaxi</span><span>Сумите на сайта са примерни, от демо профил.</span></div>
   </footer>`;
 }
-
-// Бутон за тема
-const themeBtn = document.getElementById('theme-btn');
-const paintThemeBtn = () => { if (themeBtn) { const t = currentTheme(); themeBtn.innerHTML = t === 'dark' ? icons.sun : icons.moon; themeBtn.setAttribute('aria-label', t === 'dark' ? 'Светла тема' : 'Тъмна тема'); } };
-paintThemeBtn();
-themeBtn?.addEventListener('click', () => {
-  const next = currentTheme() === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem(THEME_KEY, next); } catch { /* */ }
-  applyTheme(next); paintThemeBtn();
-});
 
 // Мобилно меню
 const menuBtn = document.getElementById('menu-btn'), drawer = document.getElementById('drawer');

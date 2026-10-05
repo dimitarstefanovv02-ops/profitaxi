@@ -6,6 +6,7 @@ src = root / 'site'
 head = (src / '_head.html').read_text()
 price = (src / '_price.html').read_text()
 final = (src / '_final.html').read_text()
+joke = (src / '_final_joke.html').read_text()
 PAGES = {
   'index': ('ProfiTaxi – знаеш ли колко ти остава?', 'Приложение за таксиметрови шофьори: реалната чиста печалба след гориво, ефир, наем и всички такси. Смени за 10 секунди, напомняния, резервации. 14 дни безплатно.'),
   'about': ('Какво е ProfiTaxi', 'Profit + Taxi + Profi. Защо създадохме ProfiTaxi и как помага на таксиметровия шофьор да знае колко реално печели.'),
@@ -17,10 +18,9 @@ PAGES = {
 def img(m):
   shot, alt, *rest = m.group(1).split('|')
   lazy = '' if rest and rest[0] == 'eager' else ' loading="lazy"'
-  return (f'<img src="/img/screen-{shot}-dark.jpg" data-light="/img/screen-{shot}-light.jpg" '
-          f'data-dark="/img/screen-{shot}-dark.jpg" alt="{alt}" width="390" height="844"{lazy}>')
+  return f'<img src="/img/screen-{shot}-dark.jpg" alt="{alt}" width="390" height="844"{lazy}>'
 for name, (title, desc) in PAGES.items():
-  body = (src / f'{name}.html').read_text().replace('{{PRICE}}', price).replace('{{FINAL}}', final)
+  body = (src / f'{name}.html').read_text().replace('{{PRICE}}', price).replace('{{FINAL_JOKE}}', joke).replace('{{FINAL}}', final)
   body = re.sub(r'\{\{IMG:([^}]+)\}\}', img, body)
   html = head.replace('{{TITLE}}', title).replace('{{DESC}}', desc) + body + '<div id="site-foot"></div>\n</body>\n</html>\n'
   assert '{{' not in html, name
