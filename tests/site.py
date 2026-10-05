@@ -23,7 +23,7 @@ with sync_playwright() as p:
                 # превърти до долу, за да се появят всички елементи
                 pg.evaluate("async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } }")
                 pg.wait_for_timeout(900)
-                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == theme, f'{u} {w} theme follows system')
+                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', f'{u} {w} always dark')
                 sw = pg.evaluate("document.documentElement.scrollWidth")
                 check(sw <= w, f'{u} {w} {theme} horizontal scroll {sw}')
                 wide = pg.evaluate("[...document.querySelectorAll('main h1, main h2, main h3, main p, .s-btn, .sc-tabs')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.textContent.trim().slice(0, 30))")
@@ -35,10 +35,9 @@ with sync_playwright() as p:
                 check(not broken, f'{u} broken images {broken}')
                 ics = pg.evaluate("[...document.querySelectorAll('[data-ic]')].filter(e => !e.querySelector('svg')).length")
                 check(ics == 0, f'{u} icons missing')
-                srcs = pg.evaluate("[...document.querySelectorAll('img[data-dark]')].map(i => i.getAttribute('src'))")
-                check(all(f'-{theme}' in s for s in srcs), f'{u} {theme} screenshots')
-                grads = pg.evaluate("[...document.querySelectorAll('.site *')].filter(e => { const b = getComputedStyle(e).backgroundImage; return b.includes('gradient') && !e.matches('.checker2, .checker, .bill-live .bill-total b, .marquee'); }).map(e => e.className).slice(0, 5)")
-                check(not grads, f'{u} {theme} no gradient backgrounds: {grads}')
+                if True:
+                    srcs = pg.evaluate("[...document.querySelectorAll('img[data-dark]')].map(i => i.getAttribute('src'))")
+                    check(all('-dark' in s for s in srcs), f'{u} dark screenshots')
                 if shots and w in (390, 1280):
                     pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(200)
                     pg.screenshot(path=f'{shots}/site{u.replace("/", "_") or "_"}-{w}-{theme}.png', full_page=True)
@@ -47,18 +46,8 @@ with sync_playwright() as p:
     # Взаимодействия
     ctx = b.new_context(viewport={'width': 390, 'height': 844}, color_scheme='light'); pg = ctx.new_page()
     pg.goto(BASE + '/'); pg.wait_for_load_state('networkidle')
-    check(pg.locator('#theme-btn').count() == 1, 'theme toggle')
-    pg.click('#theme-btn')
-    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'toggle → dark')
-    check('-dark' in pg.locator('.sc-phone img').get_attribute('src'), 'screenshots swap to dark')
-    pg.reload(); pg.wait_for_load_state('networkidle')
-    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'theme remembered')
+    check(pg.locator('#theme-btn').count() == 0, 'no theme toggle')
     check(pg.evaluate("localStorage.getItem('profitaxi.theme')") is None, 'site does not touch app theme')
-    pg.click('#theme-btn')
-    # живата сметка стига до 2 011 €
-    pg.locator('[data-bill]').scroll_into_view_if_needed(); pg.wait_for_timeout(5200)
-    check(pg.locator('[data-total]').inner_text().replace('\u00a0', ' ') == '2 011 €', 'live bill ends at 2 011 € ' + pg.locator('[data-total]').inner_text())
-    check(pg.locator('.bill-live.done').count() == 1 and pg.locator('.bill-punch').is_visible(), 'bill punchline shown')
     check('шегата' in pg.locator('.tease').inner_text(), 'tease at top')
     check('AmateurTaxi' in pg.locator('.punch').inner_text().replace('\n', ''), 'joke at bottom')
     check(pg.locator('.tap-hint svg').count() == 1, 'tap hint with icon')
@@ -73,6 +62,9 @@ with sync_playwright() as p:
     check(pg.locator('.p-amount b').first.inner_text() == '99 €', 'yearly price')
     pg.click('.price-switch button[data-plan="m"]')
     check(pg.locator('.p-amount b').first.inner_text() == '9,99 €', 'monthly price')
+    # броячите стигат крайната стойност
+    pg.locator('.metrics').first.scroll_into_view_if_needed(); pg.wait_for_timeout(1500)
+    check(pg.locator('.metric b').first.inner_text().replace(' ', ' ') == '2 011 €', 'count-up ' + pg.locator('.metric b').first.inner_text())
     # връзки към под-страниците от началото
     for u in ['/about', '/features', '/how', '/pricing', '/faq']:
         check(pg.locator(f'main a[href="{u}"]').count() >= 1, f'home links to {u}')

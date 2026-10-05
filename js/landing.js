@@ -12,16 +12,9 @@ const PAGES = [
 ];
 const here = location.pathname.replace(/\.html$/, '').replace(/\/$/, '') || '/';
 
-// ---------- Тема: светла / тъмна (собствен ключ, за да не пипа темата на приложението) ----------
-const THEME_KEY = 'profitaxi.siteTheme';
-const sysDark = () => matchMedia('(prefers-color-scheme: dark)').matches;
-function currentTheme() { let t; try { t = localStorage.getItem(THEME_KEY); } catch { /* */ } return t === 'light' || t === 'dark' ? t : (sysDark() ? 'dark' : 'light'); }
-function applyTheme(t) {
-  document.documentElement.setAttribute('data-theme', t);
-  document.querySelectorAll('img[data-light]').forEach((img) => { const src = img.dataset[t]; if (src && img.getAttribute('src') !== src) img.src = src; });
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', t === 'dark' ? '#0A0A0B' : '#FFFFFF');
-}
-applyTheme(currentTheme());
+// ---------- Тема: сайтът е само тъмен ----------
+document.documentElement.setAttribute('data-theme', 'dark');
+const currentTheme = () => 'dark';
 
 // ---------- Шапка и долна част ----------
 const icons = {
@@ -38,7 +31,6 @@ if (head) {
       <a class="s-brand" href="/" aria-label="ProfiTaxi – начало"><img src="/icons/icon-192.png" alt="" width="48" height="48"><span>Profi<b>Taxi</b></span></a>
       <nav class="s-nav" aria-label="Страници">${PAGES.map(([u, l]) => `<a href="${u}"${here === u ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav>
       <div class="s-head-cta">
-        <button class="s-icon-btn" id="theme-btn" type="button" aria-label="Смени темата"></button>
         <a class="s-btn s-btn-ghost hide-xs" href="/app#/login">Вход</a>
         <a class="s-btn s-btn-y" href="/app#/register">Пробвай<span class="hide-sm">&nbsp;безплатно</span></a>
         <button class="s-icon-btn s-menu-btn" id="menu-btn" type="button" aria-label="Меню" aria-expanded="false">${icons.menu}</button>
@@ -66,16 +58,6 @@ if (foot) {
     <div class="s-wrap s-foot-bottom"><span>© 2026 ProfiTaxi</span><span>Сумите на сайта са примерни, от демо профил.</span></div>
   </footer>`;
 }
-
-// Бутон за тема
-const themeBtn = document.getElementById('theme-btn');
-const paintThemeBtn = () => { if (themeBtn) { const t = currentTheme(); themeBtn.innerHTML = t === 'dark' ? icons.sun : icons.moon; themeBtn.setAttribute('aria-label', t === 'dark' ? 'Светла тема' : 'Тъмна тема'); } };
-paintThemeBtn();
-themeBtn?.addEventListener('click', () => {
-  const next = currentTheme() === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem(THEME_KEY, next); } catch { /* */ }
-  applyTheme(next); paintThemeBtn();
-});
 
 // Мобилно меню
 const menuBtn = document.getElementById('menu-btn'), drawer = document.getElementById('drawer');
@@ -115,35 +97,6 @@ const io = 'IntersectionObserver' in window && !reduce ? new IntersectionObserve
 }), { rootMargin: '0px 0px -10% 0px', threshold: 0.12 }) : null;
 document.querySelectorAll('.stagger').forEach((g) => [...g.children].forEach((c, i) => { c.classList.add('rv'); c.style.setProperty('--d', `${i * 90}ms`); }));
 document.querySelectorAll('.rv, .count-block').forEach((el) => { if (io) io.observe(el); else { el.classList.add('in'); el.querySelectorAll('[data-count]').forEach(countUp); } });
-
-// ---------- „Живата“ сметка в началото: разходите се вадят един по един ----------
-document.querySelectorAll('[data-bill]').forEach((bill) => {
-  const rows = [...bill.querySelectorAll('.bill-row.m')];
-  const tot = bill.querySelector('[data-total]');
-  const start = Number(tot.dataset.total);
-  const end = rows.reduce((a, r) => a - Number(r.dataset.v), start);
-  if (reduce) { tot.textContent = `${fmt(end)} €`; bill.classList.add('done'); return; }
-  let timers = [];
-  const play = () => {
-    timers.forEach(clearTimeout); timers = [];
-    bill.classList.remove('done'); bill.classList.add('play');
-    rows.forEach((r) => r.classList.remove('show'));
-    let cur = start; tot.textContent = `${fmt(cur)} €`;
-    rows.forEach((r, i) => timers.push(setTimeout(() => {
-      r.classList.add('show');
-      const from = cur, to = cur - Number(r.dataset.v), t0 = performance.now(); cur = to;
-      const anim = (t) => { const p = Math.min(1, (t - t0) / 450); tot.textContent = `${fmt(Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))))} €`; if (p < 1) requestAnimationFrame(anim); };
-      requestAnimationFrame(anim);
-    }, 600 + i * 650)));
-    timers.push(setTimeout(() => bill.classList.add('done'), 600 + rows.length * 650 + 200));
-  };
-  bill.classList.add('play');
-  tot.textContent = `${fmt(start)} €`;
-  const seen = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { seen.disconnect(); play(); } }, { threshold: 0.4 });
-  seen.observe(bill);
-  bill.title = 'Пусни пак';
-  bill.addEventListener('click', play);
-});
 
 // ---------- Витрина със снимки на приложението ----------
 document.querySelectorAll('[data-showcase]').forEach((box) => {
