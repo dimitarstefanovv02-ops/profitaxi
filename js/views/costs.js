@@ -80,9 +80,9 @@ function askDelete(d) {
 function systemCost(c, go) {
   openSheet((close) => h('div', { class: 'form' },
     sheetHead(c.name, close, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),
-    h('div', { class: 'info-box' }, icon('calendar', 18), h('span', null, 'Смята се от ', h('b', null, fmtDate(c.startDate, { year: true })), '. Сумата се сменя от Профил.')),
+    h('div', { class: 'info-box' }, icon('calendar', 18), h('span', null, 'Смята се от ', h('b', null, fmtDate(c.startDate, { year: true })), '. Сумата се сменя от „Колата и ефирът“.')),
     h('button', { class: 'btn btn-primary btn-lg btn-block', onclick: () => { close(); askFrom((from) => { store.updateProfile({}, { from }); toast(`Смята се от ${fmtDate(from)}`); }); } }, icon('calendar', 20), 'Смени от кога важи'),
-    h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => { close(); go('/profile'); } }, icon('edit', 20), 'Промени сумата')));
+    h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => { close(); go('/car'); } }, icon('edit', 20), 'Промени сумата')));
 }
 
 function costRow(c, data, go) {

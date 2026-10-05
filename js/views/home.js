@@ -5,7 +5,6 @@ import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, M
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, more } from '../ui.js';
-import { BRAND } from '../brand.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl } from './reservations.js';
 
 const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
@@ -35,7 +34,7 @@ export function homeView({ go, user, data }) {
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),
-      h('div', { class: 'row gap' }, BRAND && h('img', { class: 'one-mini', src: '/icons/one-red.svg', alt: 'One Taxi', width: 40, height: 40 }), themeToggle(),
+      h('div', { class: 'row gap' }, themeToggle(),
         data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials))),
 
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
@@ -133,7 +132,7 @@ function meter(g, month) {
     h('div', { class: cx('meter-value', g.net < 0 && 'neg') }, money(g.net)),
     g.goal > 0
       ? h('div', { class: 'meter-goal' }, g.done ? h('span', null, `Целта от ${money(g.goal)} е постигната. Браво!`) : h('span', null, 'Остават ', h('b', null, money(g.remaining)), ` до ${money(g.goal)}`))
-      : h('a', { class: 'meter-goal', href: '#/profile' }, 'Задай цел за месеца'),
+      : h('a', { class: 'meter-goal', href: '#/car' }, 'Задай цел за месеца'),
     g.goal > 0 && roadProgress(g.pct),
     g.goal > 0 && !g.done && hours != null && h('div', { class: 'meter-hours' }, icon('clock', 16), h('span', null, 'Още около ', h('b', null, `${Math.ceil(hours)} ч`), ' работа до целта')),
     g.goal > 0 && !g.done && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко часа остават до целта ще сметнем след първата ти смяна.')),

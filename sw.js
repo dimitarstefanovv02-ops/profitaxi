@@ -1,5 +1,5 @@
 // ProfiTaxi – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v22';
+const VERSION = 'profitaxi-v23';
 const SHELL = [
   '/app', '/app.html', '/css/app.css', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',
@@ -7,7 +7,7 @@ const SHELL = [
   '/js/views/stats.js', '/js/views/costs.js', '/js/views/profile.js', '/js/views/carSettings.js', '/js/views/cityPicker.js',
   '/js/views/reservations.js', '/js/views/invite.js', '/js/views/categories.js', '/js/views/shiftResult.js', '/js/views/calendar.js', '/js/tour.js', '/js/views/money.js', '/js/views/me.js',
   '/js/quotes.js', '/js/notify.js', '/js/brand.js',
-  '/onetaxi', '/onetaxi.html', '/css/one.css', '/manifest-one.webmanifest', '/icons/one-192.png', '/icons/one-favicon-64.png', '/icons/one-red.svg',
+  '/onetaxi', '/onetaxi.html', '/css/one.css', '/manifest-one.webmanifest', '/icons/one-192.png', '/icons/one-favicon-64.png', '/icons/one-red.svg', '/icons/one-collab-mark.svg', '/icons/icon.svg',
 ];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {

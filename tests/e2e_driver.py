@@ -142,7 +142,9 @@ async def main():
             await pg.click(f'.seg-btn >> nth={["day","week","month","year","custom"].index(u)}'); await pg.wait_for_timeout(250)
         ok('Всички периоди в статистиката се отварят без грешка', not errs, errs[:2])
         # --- Профил ---
-        await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)
+        await pg.goto(base+'/app#/car'); await pg.wait_for_timeout(300)
+        ctxt = await T('#app').inner_text()
+        ok('„Колата и ефирът“ е отделна страница с вид кола, гориво и ефир', all(x in ctxt for x in ['Колата е','Гориво','Ефир / диспечер']))
         await pg.click('.seg-btn:has-text("Седмица")'); await pg.click('.tile:has-text("Такса")'); await pg.keyboard.type('40'); await pg.click('text=Готово')
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(400)
         ok('При смяна на ефира пита от кога важи', 'От кога важи' in await T('.sheet').inner_text())
@@ -150,6 +152,8 @@ async def main():
         await pg.goto(base+'/app#/costs'); await pg.wait_for_timeout(300)
         ok('Смяна на ефира на 40 €/седм. от профила', '40 € на седмица' in await T('#app').inner_text())
         await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)
+        txt = await T('#app').inner_text()
+        ok('„Моят профил“ е само личното: данни, снимки, отчети, парола, помощ, изход', all(x in txt for x in ['Лични данни','Снимки','Отчет в PDF','Всички смени (Excel)','Смяна на паролата','Поверителност','Общи условия','Изход']) and 'Ефир / диспечер' not in txt)
         await pg.click('.seg-btn:has-text("Тъмна")'); await pg.wait_for_timeout(150)
         ok('Тъмна тема се включва', await pg.evaluate('document.documentElement.dataset.theme')=='dark')
         await pg.click('.seg-btn:has-text("Автоматично")')
@@ -163,7 +167,7 @@ async def main():
         await pg.fill('input[type=password]','654321'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(400)
         ok('Вход с новата парола', '#/home' in pg.url)
         # --- Ширина и грешки ---
-        for route in ['home','shifts','stats','costs','profile','shift/new']:
+        for route in ['home','shifts','stats','costs','profile','car','me','money','shift/new']:
             await pg.goto(base+'/app#/'+route); await pg.wait_for_timeout(350)
             w = await pg.evaluate('document.documentElement.scrollWidth')
             if w>390: ok(f'Без хоризонтално превъртане: {route}', False, w)

@@ -898,3 +898,9 @@ body:not(.admin) .home-link small { white-space: normal; }
 .confetti i { position: absolute; top: -12px; width: 9px; height: 14px; border-radius: 2px; opacity: .95; animation: confFall var(--t, 1.6s) cubic-bezier(.2, .6, .4, 1) var(--d, 0s) forwards; }
 @keyframes confFall { 0% { transform: translate(0, 0) rotate(0); } 100% { transform: translate(var(--x, 0), 105vh) rotate(var(--r, 540deg)); opacity: .9; } }
 @media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
+/* „Моят профил“: редове с лични данни */
+.info-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.info-row small { display: block; color: var(--muted); font-size: .85rem; }
+.info-row b { display: block; font-weight: 600; word-break: break-word; }
+.info-row .l-ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--v-soft); color: var(--violet); flex: none; }
+[data-page="profile"] .page-title + .cover { margin-top: 4px; }

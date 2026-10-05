@@ -1,4 +1,5 @@
-// Профил: акаунт, град и фирма, кола, гориво, ефир, цел, известия, тема, данни
+// „Моят профил“ – личното: данни, снимки, известия, отчети, парола, помощ, изход.
+// „Колата и ефирът“ – работата: вид кола, гориво, ефир, споделяне, цел.
 
 import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, parseDate } from '../util.js';
 import * as store from '../store.js';
@@ -10,52 +11,106 @@ import { cityCompanyPicker } from './cityPicker.js';
 import { openCategories, pickImage } from './categories.js';
 import { upcomingReservations } from './reservations.js';
 import { exportCsv } from './stats.js';
+import { BRAND } from '../brand.js';
 import { emailQueue, EMAIL_DEFAULTS, EMAIL_PAY_OPTIONS, EMAIL_RES_OPTIONS } from '../calc.js';
 
 export function profileView({ go, user, data, route }) {
   const root = h('div', { class: 'screen', 'data-page': 'profile' });
-  const d = store.getProfile();
-  const orig = JSON.stringify(d);
   const draw = () => {
-    const dirty = JSON.stringify(d) !== orig;
-    const sub = user.subscription;
-    const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
+    const d = store.getProfile();
     fill(root,
-      h('div', { class: 'page-title' }, h('h1', null, 'Кола, цел и настройки')),
-      h('section', { class: 'card' }, cardTitle('car', 'Кола'), carBlock(d, draw),
-        d.carType === 'rent' && h('p', { class: 'auto-note' }, icon('key', 15), 'При кола под наем застраховки, винетка, преглед и сервиз не се смятат. Плаща ги собственикът.')),
-      h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
-      h('section', { class: 'card' }, cardTitle('phone', 'Ефир / диспечер'), dispatchBlock(d, draw)),
-      h('section', { class: 'card' }, shareBlock(d, draw)),
-      h('section', { class: 'card' }, cardTitle('target', 'Цел'), goalBlock(d, draw)),
+      h('div', { class: 'page-title' }, h('h1', null, 'Моят профил')),
+      profileCover(user, d),
 
-      dirty && h('div', { class: 'save-bar', style: { bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom))' } },
-        h('div', { class: 'sum' }, h('span', null, 'Има промени'), h('div', { class: 'small muted' }, costChanged(orig, d) ? 'Ще избереш от кога важат' : 'Запази ги')),
-        h('button', { class: 'btn btn-page btn-lg', onclick: () => {
-          const save = (from) => {
-            // записваме само променените полета, за да не презапишем снимки или имейл настройки, сменени междувременно
-            const o = JSON.parse(orig); const patch = {};
-            Object.keys(d).forEach((k) => { if (JSON.stringify(d[k]) !== JSON.stringify(o[k])) patch[k] = d[k]; });
-            store.updateProfile(patch, { from }); toast('Настройките са запазени');
-          };
-          if (costChanged(orig, d)) askFrom(save); else save();
-        } }, icon('check', 20), 'Запази')),
+      h('h2', { class: 'section-title' }, 'Лични данни'),
+      h('section', { class: 'card', style: { padding: '8px 18px' } },
+        infoRow('user', 'Име', user.name),
+        infoRow('phone', 'Телефон', user.phone || 'не е въведен'),
+        infoRow('doc', 'Имейл', user.email),
+        infoRow('pin', 'Град и фирма', `${user.city || '—'}, ${user.company || '—'}`),
+        listBtn('edit', 'Промени личните данни', () => editAccount(user), true)),
 
+      h('h2', { class: 'section-title' }, 'Снимки'),
+      h('section', { class: 'card', style: { padding: '8px 18px' } },
+        listBtn('user', d.photo ? 'Смени профилната снимка' : 'Качи профилна снимка', () => setPhoto('photo', draw), true),
+        listBtn('camera', d.carPhoto ? 'Смени снимката на колата' : 'Качи снимка на колата', () => setPhoto('carPhoto', draw), true)),
+
+      h('h2', { class: 'section-title' }, 'Известия и изглед'),
       h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)),
       h('section', { class: 'card' }, cardTitle('sun', 'Изглед'), segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); }, { page: true })),
 
+      h('h2', { class: 'section-title' }, 'Отчети'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
-        listBtn('download', 'Свали всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() })),
-        listBtn('print', 'Отчет в PDF', () => go('/stats'), true),
+        listBtn('print', 'Отчет в PDF', () => { go('/stats'); setTimeout(() => window.print(), 700); }, true),
+        listBtn('download', 'Всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() }))),
+
+      h('h2', { class: 'section-title' }, 'Сигурност и помощ'),
+      h('section', { class: 'card', style: { padding: '8px 18px' } },
+        listBtn('lock', 'Смяна на паролата', changePw, true),
         listBtn('sparkle', 'Помощ: кратка разходка', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }, true),
-        listBtn('lock', 'Смяна на паролата', changePw),
-        h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност и условия')),
+        h('a', { class: 'list-btn', href: 'mailto:support@profitaxi.bg' }, h('span', { class: 'l-ic' }, icon('phone', 18)), h('span', { class: 'grow' }, 'Връзка с нас'), icon('right', 18)),
+        h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност'), icon('right', 18)),
+        h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))),
+
+      h('section', { class: 'card', style: { padding: '8px 18px', marginTop: '14px' } },
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
         h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта'))),
-      h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, 'ProfiTaxi, демо версия. Данните се пазят на това устройство.'));
+      h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, 'Демо версия. Данните се пазят на това устройство.'));
   };
   draw();
   if (route?.query?.get('s') === 'notify') setTimeout(() => root.querySelector('#notify')?.scrollIntoView({ block: 'start' }), 80);
+  return root;
+}
+
+const infoRow = (ic, label, value) => h('div', { class: 'info-row' }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, h('small', null, label), h('b', null, value)));
+
+async function setPhoto(key, redraw) {
+  const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400 });
+  if (!img) return;
+  try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); redraw?.(); }
+  catch { toast('Снимката е твърде голяма', 'err'); }
+}
+
+// „Колата и ефирът“: вид кола (своя / наем / лизинг), данни за колата, гориво, ефир, споделяне, цел
+export function carView({ go, user, data }) {
+  const root = h('div', { class: 'screen', 'data-page': 'car' });
+  const d = store.getProfile();
+  d.car = { code: '', plate: '', model: '', ...(d.car || {}) };
+  const orig = JSON.stringify(d);
+  const carInput = (key, ph, upper) => h('input', { class: 'input', value: d.car[key] || '', placeholder: ph, style: upper ? { textTransform: 'uppercase' } : null,
+    oninput: (e) => { d.car = { ...d.car, [key]: upper ? e.target.value.toUpperCase() : e.target.value }; refreshBar(); } });
+  const bar = h('div');
+  const refreshBar = () => {
+    const dirty = JSON.stringify(d) !== orig;
+    fill(bar, dirty && h('div', { class: 'save-bar', style: { bottom: 'calc(var(--nav-h) + env(safe-area-inset-bottom))' } },
+      h('div', { class: 'sum' }, h('span', null, 'Има промени'), h('div', { class: 'small muted' }, costChanged(orig, d) ? 'Ще избереш от кога важат' : 'Запази ги')),
+      h('button', { class: 'btn btn-page btn-lg', onclick: () => {
+        const save = (from) => {
+          const o = JSON.parse(orig); const patch = {};
+          Object.keys(d).forEach((k) => { if (JSON.stringify(d[k]) !== JSON.stringify(o[k])) patch[k] = d[k]; });
+          store.updateProfile(patch, { from }); toast('Запазено');
+        };
+        if (costChanged(orig, d)) askFrom(save); else save();
+      } }, icon('check', 20), 'Запази')));
+  };
+  const body = h('div');
+  const draw = () => {
+    fill(body,
+      h('section', { class: 'card' }, cardTitle('car', 'Колата е'), carBlock(d, draw),
+        d.carType === 'rent' && h('p', { class: 'auto-note' }, icon('key', 15), 'При кола под наем застраховки, винетка, преглед и сервиз не се смятат. Плаща ги собственикът.')),
+      h('section', { class: 'card' }, cardTitle('doc', 'Данни за колата'),
+        h('div', { class: 'grid2' }, field('Код на колата', carInput('code', 'напр. 214'), 'Номерът ти във фирмата'), field('Рег. номер', carInput('plate', 'СВ 1234 АВ', true))),
+        field('Модел', carInput('model', 'напр. Toyota Corolla Hybrid'))),
+      h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
+      h('section', { class: 'card' }, cardTitle('radio', 'Ефир / диспечер'), dispatchBlock(d, draw)),
+      h('section', { class: 'card' }, shareBlock(d, draw)),
+      h('section', { class: 'card' }, cardTitle('target', 'Цел за месеца'), goalBlock(d, draw)));
+    refreshBar();
+  };
+  draw();
+  fill(root, h('div', { class: 'page-title' }, h('h1', null, 'Колата и ефирът')),
+    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя, под наем или на лизинг, горивото, ефирът и целта ти за месеца.'),
+    body, bar);
   return root;
 }
 
@@ -101,7 +156,7 @@ export function profileCover(user, d) {
       h('div', { class: 'cover-info' },
         h('h1', null, user.name),
         h('div', { class: 'cover-car' }, car.model || 'Добави модел на колата', car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate))),
-      h('button', { class: 'icon-btn', 'aria-label': 'Редактирай профила', onclick: () => editAccount(user, d) }, icon('edit', 20))),
+      h('a', { class: 'icon-btn', 'aria-label': 'Моят профил', href: '#/profile' }, icon('edit', 20))),
     h('div', { class: 'cover-chips' },
       h('span', { class: 'chip' }, icon('pin', 14), user.city || 'без град'),
       h('span', { class: 'chip' }, icon('car', 14), user.company || 'без фирма'),
@@ -150,30 +205,23 @@ function notifyRow(d) {
     } }));
 }
 
-function editAccount(user, profile) {
-  const car = { code: '', plate: '', model: '', ...(profile?.car || {}) };
+function editAccount(user) {
   openSheet((close) => {
     const name = h('input', { class: 'input', value: user.name });
     const phone = h('input', { class: 'input', type: 'tel', value: user.phone || '' });
-    const code = h('input', { class: 'input', value: car.code, placeholder: 'напр. 214' });
-    const plate = h('input', { class: 'input', value: car.plate, placeholder: 'напр. СВ 1234 АВ', style: { textTransform: 'uppercase' } });
-    const model = h('input', { class: 'input', value: car.model, placeholder: 'напр. Toyota Corolla Hybrid' });
-    const cc = cityCompanyPicker({ city: user.city, company: user.company });
+    const cc = BRAND ? null : cityCompanyPicker({ city: user.city, company: user.company });
     const err = h('p', { class: 'err' });
     return h('div', { class: 'form' },
-      sheetHead('Моите данни', close),
+      sheetHead('Лични данни', close),
       field('Име', name, null, true), field('Телефон', phone),
-      h('h3', { style: { margin: '6px 0 0', fontSize: '.95rem' } }, 'Колата'),
-      h('div', { class: 'grid2' }, field('Код на колата', code, 'Номерът ти във фирмата'), field('Рег. номер', plate)),
-      field('Модел', model),
-      cc.el, err,
+      cc ? cc.el : h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Фирмата не се сменя в това издание'))),
+      err,
       h('button', { class: 'btn btn-page btn-lg', onclick: () => {
-        const v = cc.value();
+        const v = cc ? cc.value() : { city: user.city, company: user.company };
         if (!name.value.trim()) { err.textContent = 'Въведи име'; return; }
         if (!v.city) { err.textContent = 'Избери град'; return; }
         if (!v.company) { err.textContent = 'Избери фирма'; return; }
         store.updateAccount({ name: name.value, phone: phone.value, ...v });
-        store.updateProfile({ car: { code: code.value.trim(), plate: plate.value.trim().toUpperCase(), model: model.value.trim() } });
         close(); toast('Запазено');
       } }, 'Запази'));
   }, { tall: true });

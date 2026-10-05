@@ -17,14 +17,14 @@ export function meView({ go, user, data }) {
   const group = (title, ...rows) => h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), h('div', { class: 'big-links' }, ...rows));
   return h('div', { class: 'screen', 'data-page': 'me' },
     profileCover(user, data.profile),
-    group('Колата и парите',
-      row('car', 'Кола, гориво, ефир и цел', 'Наем или лизинг, вид гориво, цел за месеца', null, '#/profile'),
+    group('Профил',
+      row('user', 'Моят профил', 'Лични данни, снимки, парола, отчети, помощ, изход', null, '#/profile')),
+    group('Колата и разходите',
+      row('car', 'Колата и ефирът', 'Своя, наем или лизинг, гориво, ефир, цел за месеца', null, '#/car'),
       row('wallet', 'Постоянни разходи и падежи', payN ? `${payN} плащания в следващите 2 седмици` : 'Наем, ефир, застраховки, данъци', null, '#/costs'),
       row('tag', 'Категории разходи', 'Добави свои, скрий ненужните', () => openCategories())),
     group('Още',
       ref && row('gift', 'Покани колеги', `${ref.count} поканени · 5 = 1 месец безплатно`, null, '#/invite'),
       row('bell', 'Известия и имейли', 'Напомняния за плащания и курсове', null, '#/profile?s=notify'),
-      row('sparkle', 'Помощ: кратка разходка', 'Къде какво има', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }),
-      h('div', { class: 'big-link as-row' }, h('span', { class: 'bl-ic' }, icon('moon', 22)), h('span', { class: 'grow' }, h('b', null, 'Светла / тъмна тема'), h('span', null, 'Натисни бутона вдясно')), themeToggle())),
-    h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, 'Парола, изход и изтриване на акаунта са в „Кола, гориво, ефир и цел“, най-долу.'));
+      h('div', { class: 'big-link as-row' }, h('span', { class: 'bl-ic' }, icon('moon', 22)), h('span', { class: 'grow' }, h('b', null, 'Светла / тъмна тема'), h('span', null, 'Натисни бутона вдясно')), themeToggle())));
 }

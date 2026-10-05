@@ -49,7 +49,7 @@ with sync_playwright() as p:
     ictx = b.new_context(viewport={'width': 390, 'height': 844}); ip = ictx.new_page()
     ip.goto(BASE + '/'); ip.wait_for_timeout(300)
     check(ip.locator('#intro').is_visible(), 'intro visible on first open')
-    ip.wait_for_timeout(3700)
+    ip.wait_for_timeout(5200)
     check(ip.locator('#intro').count() == 0 and not ip.evaluate("document.documentElement.classList.contains('intro')"), 'intro removed after animation')
     ip.wait_for_timeout(300); check(ip.evaluate("document.querySelector('.hero2 h1').classList.contains('in')"), 'hero revealed after intro')
     ip.goto(BASE + '/about'); ip.wait_for_timeout(200)

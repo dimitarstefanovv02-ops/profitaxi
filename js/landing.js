@@ -117,7 +117,8 @@ const io = 'IntersectionObserver' in window && !reduce ? new IntersectionObserve
 document.querySelectorAll('.stagger').forEach((g) => [...g.children].forEach((c, i) => { c.classList.add('rv'); c.style.setProperty('--d', `${i * 90}ms`); }));
 const startReveal = () => document.querySelectorAll('.rv, .count-block').forEach((el) => { if (io) io.observe(el); else { el.classList.add('in'); el.querySelectorAll('[data-count]').forEach(countUp); } });
 
-// Въвеждащ ефект: логото се появява, после завесата се вдига и чак тогава тръгват анимациите на страницата
+// Въвеждащ ефект: графиката расте, таксито се изкачва по линията, след него хвърчат пари,
+// горе излиза печалбата, после името; накрая таксито излита и завесата се вдига
 const intro = document.getElementById('intro');
 if (document.documentElement.classList.contains('intro') && intro) {
   let done = false;
@@ -128,7 +129,52 @@ if (document.documentElement.classList.contains('intro') && intro) {
   };
   intro.addEventListener('animationend', (e) => { if (e.animationName === 'introOut') finish(); });
   intro.addEventListener('click', finish);
-  setTimeout(finish, 4200); // за всеки случай
+  setTimeout(finish, 5600); // за всеки случай
+
+  const path = intro.querySelector('#ic-path'), car = intro.querySelector('.ic-car'), money = intro.querySelector('.ic-money');
+  const svg = intro.querySelector('.ic-svg'), peak = intro.querySelector('.ic-peak'), num = intro.querySelector('.ic-num');
+  if (path && car) {
+    const len = path.getTotalLength();
+    const ease = (t) => (t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const T0 = 650, DUR = 2300, OFF = 3950; // изкачване и излитане (ms от началото)
+    const t0 = performance.now();
+    let lastSpawn = 0, popped = false;
+    const spawn = (x, y, ang) => {
+      const r = svg.getBoundingClientRect(), sx = r.width / 760, sy = r.height / 420;
+      const el = document.createElement('span');
+      const isCoin = Math.random() < .35;
+      el.className = isCoin ? 'coin' : 'bill';
+      if (!isCoin) el.textContent = '€';
+      const back = ang + Math.PI; // назад от посоката на колата
+      const sp = 70 + Math.random() * 120;
+      el.style.left = `${x * sx}px`; el.style.top = `${(y - 6) * sy}px`;
+      el.style.setProperty('--x', `${Math.cos(back) * sp + (Math.random() - .5) * 60}px`);
+      el.style.setProperty('--y', `${Math.sin(back) * sp - 40 - Math.random() * 90}px`);
+      el.style.setProperty('--r', `${(Math.random() - .5) * 720}deg`);
+      el.style.setProperty('--t', `${.9 + Math.random() * .7}s`);
+      money.appendChild(el); setTimeout(() => el.remove(), 1700);
+    };
+    const tick = (now) => {
+      if (done) return;
+      const el = now - t0;
+      if (el >= T0) {
+        car.style.opacity = '1';
+        let p, offX = 0;
+        if (el < T0 + DUR) p = ease((el - T0) / DUR);
+        else { p = 1; offX = el > OFF ? Math.pow((el - OFF) / 600, 2) * 900 : 0; }
+        const a = path.getPointAtLength(p * len), b = path.getPointAtLength(Math.min(len, p * len + 2));
+        const ang = Math.atan2(b.y - a.y, b.x - a.x);
+        car.setAttribute('transform', `translate(${a.x + offX} ${a.y - (offX ? offX * .25 : 0)}) rotate(${(offX ? -18 : ang * 180 / Math.PI).toFixed(2)})`);
+        if (el < T0 + DUR + 150 && now - lastSpawn > 55) { lastSpawn = now; spawn(a.x, a.y, ang); if (Math.random() < .5) spawn(a.x, a.y, ang); }
+        // печалбата горе брои до 2 011 €
+        const k = Math.max(0, Math.min(1, (el - T0) / DUR));
+        if (num) num.textContent = `+${String(Math.round(2011 * ease(k))).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} €`;
+        if (!popped && el > T0 + DUR * .55) { popped = true; peak.classList.add('on'); }
+      }
+      if (el < 4800) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
 } else {
   intro?.remove();
   startReveal();

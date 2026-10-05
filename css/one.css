@@ -108,3 +108,38 @@
 /* Входът: само лека червена следа горе, без силно сияние */
 [data-brand="one"] .auth::before { background: linear-gradient(180deg, rgba(237, 29, 36, .07), transparent); height: 220px; }
 [data-brand="one"][data-theme="dark"] .auth::before { background: linear-gradient(180deg, rgba(237, 29, 36, .12), transparent); }
+/* Лентата One × ProfiTaxi горе на всяка страница */
+.collab-bar { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 10px; padding: calc(env(safe-area-inset-top) + 8px) 16px 8px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border-bottom: 1px solid var(--line); max-width: 560px; margin: 0 auto; }
+.collab-bar img { display: block; height: 28px; width: auto; }
+.collab-bar span { display: inline-flex; align-items: center; gap: 6px; font-weight: 800; font-stretch: 115%; font-size: .98rem; letter-spacing: -.01em; }
+.collab-bar span i { font-style: normal; font-weight: 300; color: var(--faint); }
+.collab-bar em, .collab-text em { font-style: normal; color: var(--one-red); }
+.collab-bar small { margin-left: auto; font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
+.collab .collab-mark { height: 46px; width: auto; display: block; }
+.collab-text b i { font-style: normal; font-weight: 300; color: var(--faint); }
+[data-brand="one"] .collab-bar + .screen { padding-top: 14px; }
+
+/* ===== Въвеждащ ефект One × ProfiTaxi: сливане на двете марки ===== */
+#one-intro { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; background: radial-gradient(120% 70% at 50% 45%, #1A0A0B 0%, #050506 62%); cursor: pointer; transition: opacity .55s ease, transform .55s ease; }
+#one-intro.out { opacity: 0; transform: scale(1.06); pointer-events: none; }
+.oi-stage { display: grid; justify-items: center; gap: 16px; }
+.oi-pair { position: relative; width: 240px; height: 130px; }
+.oi-one, .oi-pt { position: absolute; top: 5px; width: 120px; height: 120px; display: block; }
+.oi-one { left: 18px; z-index: 2; border-radius: 50%; box-shadow: 0 0 0 6px #050506; animation: oiOne 1.3s linear both; }
+.oi-pt { right: 18px; border-radius: 30px; animation: oiPt 1.3s linear both; }
+.oi-flash { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px; border-radius: 50%; background: #fff; opacity: 0; filter: blur(2px);
+  animation: oiFlash .7s ease-out .95s both; z-index: 3; }
+.oi-ring { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px; border-radius: 50%; border: 3px solid #ED1D24; opacity: 0; animation: oiRing 1s cubic-bezier(.2, .8, .2, 1) 1s both; }
+.oi-ring.r2 { border-color: #FFC21A; animation-delay: 1.12s; }
+.oi-word { display: flex; font-family: var(--display); font-weight: 900; font-stretch: 118%; font-size: clamp(2rem, 9vw, 3rem); letter-spacing: -.02em; color: #fff; }
+.oi-word i { font-style: normal; display: inline-block; opacity: 0; animation: oiLetter .5s cubic-bezier(.2, .9, .25, 1.3) calc(1.35s + var(--i) * 40ms) both; }
+.oi-word .oi-x { color: #8E8E98; font-weight: 300; margin: 0 .12em; }
+.oi-word .oi-red { color: #ED1D24; }
+.oi-sub { color: #A1A1AA; font-weight: 600; opacity: 0; animation: oiLetter .5s ease-out 2.05s both; }
+@keyframes oiOne { 0% { transform: translateX(-75vw) rotate(-260deg) scale(.55); animation-timing-function: cubic-bezier(.45, 0, .8, .45); } 72% { transform: translateX(24px) rotate(6deg) scale(1.08); animation-timing-function: ease-out; } 84% { transform: translateX(-6px) scaleX(.93); } 100% { transform: none; } }
+@keyframes oiPt { 0% { transform: translateX(75vw) rotate(30deg) scale(.55); animation-timing-function: cubic-bezier(.45, 0, .8, .45); } 72% { transform: translateX(-24px) rotate(-4deg) scale(1.08); animation-timing-function: ease-out; } 84% { transform: translateX(6px) scaleX(.93); } 100% { transform: none; } }
+@keyframes oiFlash { 0% { opacity: 0; transform: scale(.2); } 25% { opacity: 1; transform: scale(3); } 100% { opacity: 0; transform: scale(9); } }
+@keyframes oiRing { 0% { opacity: 0; transform: scale(.4); } 2% { opacity: .9; } 100% { opacity: 0; transform: scale(2.6); } }
+@keyframes oiLetter { from { opacity: 0; transform: translateY(24px) scale(.7); filter: blur(5px); } to { opacity: 1; transform: none; filter: none; } }

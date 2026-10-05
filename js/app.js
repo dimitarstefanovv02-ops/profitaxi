@@ -11,7 +11,7 @@ import { shiftsView } from './views/shifts.js';
 import { shiftEditorView } from './views/shift.js';
 import { statsView } from './views/stats.js';
 import { costsView } from './views/costs.js';
-import { profileView } from './views/profile.js';
+import { profileView, carView } from './views/profile.js';
 import { reservationsView } from './views/reservations.js';
 import { inviteView } from './views/invite.js';
 import { moneyView } from './views/money.js';
@@ -19,14 +19,14 @@ import { meView } from './views/me.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
-import { BRAND, isBrandUser } from './brand.js';
+import { BRAND, isBrandUser, collabBar, oneIntro } from './brand.js';
 
 applyTheme();
 
 const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forgotView };
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
-  '/costs': costsView, '/profile': profileView, '/onboarding': onboardingView,
+  '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
   '/money': moneyView, '/me': meView,
 };
@@ -36,7 +36,7 @@ const TABS = [
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Аз'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Аз' };
 
 export const go = (path, replace) => {
@@ -97,6 +97,8 @@ function mount(app, el, route, withNav) {
   const parent = PARENT[route.name];
   if (parent && el.classList?.contains('screen')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent }, icon('left', 20), PARENT_LABEL[parent]));
   clear(app).appendChild(el);
+  // One изданието: лентата One × ProfiTaxi горе на всяка вътрешна страница
+  if (BRAND && store.currentUser()) app.prepend(collabBar());
   if (withNav) app.appendChild(nav(route.name));
   if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
   lastRaw = route.raw;
@@ -146,6 +148,7 @@ store.onChange(() => { if (busy()) pending = true; else render(); });
 document.addEventListener('focusout', () => setTimeout(() => { if (pending && !busy()) { pending = false; render(); } }, 0));
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
 
+oneIntro();
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
