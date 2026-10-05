@@ -2,9 +2,8 @@
 import http.server, os, sys
 class H(http.server.SimpleHTTPRequestHandler):
     def translate_path(self, path):
-        if path.split('?')[0].split('#')[0].rstrip('/') == '/app/onetaxi': path = '/onetaxi.html'
         p = super().translate_path(path)
-        if not os.path.exists(p) and os.path.exists(p + '.html'): return p + '.html'
+        if (not os.path.exists(p) or os.path.isdir(p)) and os.path.exists(p.rstrip('/') + '.html'): return p.rstrip('/') + '.html'
         return p
     def log_message(self, *a): pass
 os.chdir(os.path.join(os.path.dirname(__file__), '..'))

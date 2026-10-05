@@ -29,12 +29,6 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/app/onetaxi",
-      "destination": "/onetaxi"
-    }
-  ],
   "redirects": [
     {
       "source": "/onetaxi",
