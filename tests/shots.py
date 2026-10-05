@@ -7,7 +7,7 @@ SHOTS = [('home', '#/home', None), ('shifts', '#/shifts', None), ('stats', '#/st
 async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        for theme in ('dark',):  # сайтът е само тъмен
+        for theme in ('light', 'dark'):
             ctx = await b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, color_scheme=theme, permissions=['notifications'])
             pg = await ctx.new_page()
             await pg.clock.install(time=datetime.datetime(2026, 10, 24, 18, 30))

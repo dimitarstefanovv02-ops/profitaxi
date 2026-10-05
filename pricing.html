@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg" data-theme="dark" style="color-scheme:dark">
+<html lang="bg">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -22,8 +22,10 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
-      // Сайтът е само в тъмна тема
-      document.documentElement.setAttribute('data-theme', 'dark');
+      // Тема преди изрисуване, за да няма премигване
+      var t; try { t = localStorage.getItem('profitaxi.siteTheme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
   <script type="module" src="/js/landing.js"></script>
@@ -32,7 +34,6 @@
 <div id="site-head"></div>
 <main>
 <section class="page-hero">
-  <div class="glow v" style="width:480px;height:480px;right:-180px;top:-160px"></div>
   <div class="s-wrap">
     <div class="crumbs rv"><a href="/">Начало</a> / Цена</div>
     <h1 class="rv" style="--d:80ms">Една цена.<br>Всичко <span class="y-text y">включено</span>.</h1>
@@ -114,7 +115,6 @@
   </div>
 </section>
 <section class="final">
-  <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
   <div class="s-wrap rv zoom">
     <img src="/icons/icon-192.png" width="88" height="88" alt="">
     <h2>Карай за печалба. Не само за оборот.</h2>

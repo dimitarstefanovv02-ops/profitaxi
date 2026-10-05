@@ -1,15 +1,18 @@
 /* ProfiTaxi – маркетингов сайт. Черно и жълто, премерени лилави сияния, светла и тъмна тема. */
 
 .site {
-  --s-bg: #F4F5F8; --s-bg2: #ECEEF3; --s-card: #FFFFFF; --s-ink: #0B0D12; --s-muted: #5A6372; --s-faint: #8A93A2; --s-line: #E2E5EC;
-  --y: #FFC21A; --y-deep: #E8A400; --y-ink: #1A1300; --v: #8B5CF6; --v2: #C084FC; --v-soft: rgba(139, 92, 246, .12);
-  --s-shadow: 0 1px 2px rgba(11, 13, 18, .05), 0 24px 48px -28px rgba(11, 13, 18, .28);
-  --s-glow: .55; --s-wrap: 1180px;
+  /* Палитра: жълто (основно, пестеливо), бяло, черно и малко лилаво само за контури. Без градиенти. */
+  --s-bg: #FFFFFF; --s-bg2: #F6F6F4; --s-card: #FFFFFF; --s-ink: #0A0A0B; --s-muted: #5C5F66; --s-faint: #8C8F96; --s-line: #E6E6E2;
+  --y: #FFC21A; --y-deep: #E8A400; --y-ink: #1A1300; --y-text: #946600;
+  --v: #7C5CE0; --v2: #7C5CE0; --v-line: rgba(124, 92, 224, .35); --v-soft: rgba(124, 92, 224, .08);
+  --s-shadow: 0 1px 2px rgba(10, 10, 11, .04);
+  --s-glow: 0; --s-wrap: 1180px;
   background: var(--s-bg); color: var(--s-ink); font-family: var(--font); overflow-x: hidden;
 }
 :root[data-theme="dark"] .site {
-  --s-bg: #07080B; --s-bg2: #0C0E14; --s-card: #12141C; --s-ink: #F3F4F7; --s-muted: #9AA3B2; --s-faint: #6B7383; --s-line: #1F2330;
-  --v-soft: rgba(139, 92, 246, .16); --s-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 30px 60px -30px rgba(0,0,0,.9); --s-glow: .8;
+  --s-bg: #0A0A0B; --s-bg2: #111113; --s-card: #141416; --s-ink: #F5F5F4; --s-muted: #A1A1A6; --s-faint: #6E6E73; --s-line: #26262A;
+  --y-text: #FFC21A; --v: #A78BFA; --v2: #A78BFA; --v-line: rgba(167, 139, 250, .38); --v-soft: rgba(167, 139, 250, .08);
+  --s-shadow: none;
 }
 .site h1, .site h2, .site h3 { font-family: var(--display); letter-spacing: -.035em; line-height: 1.06; margin: 0; }
 .site p { margin: 0; }
@@ -384,4 +387,94 @@
   .bill-title { font-size: .72rem; }
   .s-brand { font-size: 1.2rem; gap: 10px; }
   .s-brand img { width: 42px; height: 42px; }
+}
+
+
+/* ================= Опростена палитра: без градиенти и цветни фонове ================= */
+.glow { display: none !important; }
+.y, .hero2 h1 .y { color: var(--y-text); }
+:root[data-theme="light"] .site .y-text { color: var(--y-text); }
+.s-brand b, :root[data-theme="light"] .s-brand b { color: var(--y-text); }
+/* Карти: тънък контур, при посочване – лилав */
+.metric, .cmp-card, .ns, .quote2, .f-card, .step4, .tl, .roi, .price-card2, .faq details, .res-demo > div, .formula span, .bill, .float-chip, .kick, .sc-tabs button, .marquee span { box-shadow: none; border: 1px solid var(--s-line); }
+.f-card:hover, .step4:hover, .cmp-card:hover { transform: translateY(-2px); box-shadow: none; border-color: var(--v-line); }
+.faq details[open] { box-shadow: none; border-color: var(--v-line); }
+.metric::after, .price-card2::before, .quote2::before { display: none; }
+/* Надзаглавия: неутрални, с жълта чертичка */
+.eyebrow { color: var(--s-muted); }
+.eyebrow::before { background: var(--y); }
+/* Иконки: едноцветни */
+.f-ic { color: var(--s-ink); background: var(--s-bg2); border: 1px solid var(--s-line); }
+.tag2 { color: var(--s-ink); background: transparent; border: 1px solid var(--v-line); }
+.f-card .new { background: transparent; color: var(--v); border: 1px solid var(--v-line); }
+.step4 .t { color: var(--s-muted); background: transparent; border: 1px solid var(--v-line); }
+.tag { color: var(--v); }
+/* Числа: без червено и зелено */
+.bill-row.m b, .wf-row b { color: var(--s-ink); }
+.bill-row.m b { color: var(--s-muted); }
+.bill-total b, .wf-row.total b, .metric:first-child b, .total b { color: var(--y-text); }
+.bill-title em { background: transparent; color: var(--v); border: 1px solid var(--v-line); }
+.wf-row .bar span { background: var(--s-faint); }
+.wf-row .bar span[style*="--c"] { background: var(--y); }
+.wf-row.total .bar span { background: var(--y) !important; }
+.myth div { background: transparent; border: 1px solid var(--s-line); }
+.myth div i, .myth.good div i { background: var(--s-ink); color: var(--s-bg); }
+.myth.good div i { background: var(--y); color: var(--y-ink); }
+.ns::before { background: var(--y); }
+.ns.p b, .ns.t b, .ns.f b, :root[data-theme="light"] .ns.t b { color: var(--s-ink); }
+.ns.p b { color: var(--y-text); }
+.float-chip i { background: var(--y); color: var(--y-ink); }
+.res-demo time { background: var(--s-bg2); color: var(--s-ink); }
+.res-demo em { color: var(--s-ink); }
+.ticks2 li::before { background-color: rgba(255, 194, 26, .2); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23946600' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E"); }
+.price-switch button em { color: var(--s-muted); }
+.price-card2 { border: 2px solid var(--y); }
+.marquee span:nth-child(5n+1) { background: var(--s-card); color: var(--s-ink); }
+.formula span.res { background: var(--y); color: var(--y-ink); }
+.s-btn-y { box-shadow: none; }
+.s-btn-y:hover { box-shadow: none; filter: brightness(1.04); }
+.s-btn-line:hover { border-color: var(--v-line); box-shadow: none; }
+.timeline::before { background: var(--s-line); }
+.tl::before, .tl:nth-child(n+3)::before { background: var(--y); box-shadow: 0 0 0 4px var(--s-bg); }
+.phone2 { background: #16181D; box-shadow: 0 30px 60px -30px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.08) inset; }
+/* Секции: плоски фонове; тъмните ленти са черни и в двете теми */
+.sec.ink, .final { background: #0A0A0B; }
+.ref-box { background: var(--s-card); color: var(--s-ink); border: 1px solid var(--v-line); box-shadow: none; }
+.ref-box p { color: var(--s-muted); }
+.ref-box .eyebrow { color: var(--s-muted) !important; }
+.tier { background: var(--s-bg2); border: 1px solid var(--s-line); backdrop-filter: none; }
+.tier b { color: var(--y-text); }
+.tier small { color: var(--s-muted); }
+.final img { box-shadow: none; }
+.tease { background: transparent; border: 1px dashed var(--y-deep); color: var(--y-text); }
+.tap-hint { color: var(--y); }
+
+/* ================= Начало: „живата“ сметка, която грабва веднага ================= */
+.hide-mobile { display: none; }
+@media (min-width: 620px) { .hide-mobile { display: inline-flex; } }
+.bill-live { width: 320px; font-size: .98rem; padding: 18px 18px 16px; cursor: pointer; }
+.bill-live .bill-title { font-size: .8rem; }
+.bill-live .bill-row { padding: 7px 0; }
+.bill-live .bill-row.start b { color: var(--s-ink); }
+.bill-live .bill-total b { font-size: 1.9rem; transition: transform .25s; }
+.bill-punch { margin-top: 10px; font-weight: 800; font-size: .95rem; color: var(--s-ink); line-height: 1.35; }
+@media (prefers-reduced-motion: no-preference) {
+  .bill-live.play .bill-row.m { opacity: 0; transform: translateX(-12px); transition: opacity .35s, transform .35s; }
+  .bill-live.play .bill-row.m.show { opacity: 1; transform: none; }
+  .bill-live.play .bill-punch { opacity: 0; transform: translateY(6px); transition: opacity .4s .1s, transform .4s .1s; }
+  .bill-live.play.done .bill-punch { opacity: 1; transform: none; }
+  .bill-live.done .bill-total b { animation: popNum .5s cubic-bezier(.2,.9,.3,1.4); }
+}
+@keyframes popNum { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.bill-live.done .bill-total b { background: linear-gradient(transparent 62%, rgba(255,194,26,.45) 0); padding: 0 4px; }
+@media (max-width: 959px) {
+  .hero2 .hero-vis { min-height: 0; display: block; }
+  .hero2 .hero-phone, .hero2 .float-chip { display: none; }
+  .hero2 .bill-live { position: static; width: 100%; max-width: 460px; margin: 0; font-size: 1.05rem; padding: 20px; }
+  .hero2 .bill-live .bill-total b { font-size: 2.2rem; }
+  .hero2 { padding-bottom: 50px; }
+  .hero2 .s-wrap { gap: 26px; }
+}
+@media (min-width: 960px) {
+  .bill-live { left: -40px; bottom: 30px; width: 330px; }
 }

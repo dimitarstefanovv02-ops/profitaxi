@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="bg" data-theme="dark" style="color-scheme:dark">
+<html lang="bg">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -22,8 +22,10 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
-      // Сайтът е само в тъмна тема
-      document.documentElement.setAttribute('data-theme', 'dark');
+      // Тема преди изрисуване, за да няма премигване
+      var t; try { t = localStorage.getItem('profitaxi.siteTheme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
     })();
   </script>
   <script type="module" src="/js/landing.js"></script>
@@ -34,47 +36,32 @@
 
 <!-- ============ HERO ============ -->
 <section class="hero2">
-  <div class="glow v" style="width:520px;height:520px;right:-160px;top:-120px"></div>
-  <div class="glow y" style="width:420px;height:420px;left:-180px;bottom:-140px"></div>
   <div class="s-wrap">
-    <div>
-      <div class="tease rv">Прочети цялата страница, за да схванеш шегата най-долу <i>↓</i></div><br>
+    <div class="hero-copy">
+      <div class="tease rv">Прочети до края, за да схванеш шегата най-долу <i>↓</i></div><br>
       <span class="kick rv"><i></i>За таксиметрови шофьори в България</span>
       <h1 class="rv" style="--d:80ms">Знаеш колко изкарваш.<span class="line2">Но знаеш ли колко <mark>ти остава</mark>?</span></h1>
-      <p class="lead rv" style="--d:160ms">ProfiTaxi вади от оборота горивото, ефира, наема, автомивката и всички такси и ти показва истинската чиста печалба. От всяка смяна, всеки ден, всеки месец.</p>
+      <p class="lead rv" style="--d:160ms">Записваш смяната за 10 секунди. ProfiTaxi вади горивото, наема, ефира и всички такси и ти казва истината.</p>
       <div class="cta-row rv" style="--d:240ms">
         <a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай 14 дни безплатно</a>
-        <a class="s-btn s-btn-line s-btn-lg" href="/how">Виж как работи</a>
+        <a class="s-btn s-btn-line s-btn-lg hide-mobile" href="/how">Как работи</a>
       </div>
-      <div class="trust rv" style="--d:320ms"><span>Без карта</span><span>Регистрация за 1 минута</span><span>Отчет за смяна за 10 секунди</span></div>
+      <div class="trust rv" style="--d:320ms"><span>Без карта</span><span>1 минута регистрация</span></div>
     </div>
-    <div class="hero-vis rv zoom" style="--d:200ms">
-      <div class="phone2 float"><img src="/img/screen-home-dark.jpg" alt="Начален екран на ProfiTaxi с чистата печалба за месеца" width="390" height="844"></div>
-      <div class="bill">
-        <div class="bill-title">Септември <em>реален пример</em></div>
-        <div class="bill-row"><span>Оборот</span><b>3 145 €</b></div>
-        <div class="bill-row m"><span>Гориво</span><b>−460 €</b></div>
-        <div class="bill-row m"><span>Ефир</span><b>−171 €</b></div>
-        <div class="bill-row m"><span>Автомивка</span><b>−86 €</b></div>
-        <div class="bill-row m"><span>Данъци</span><b>−260 €</b></div>
-        <div class="bill-row m"><span>Други</span><b>−157 €</b></div>
-        <div class="bill-total"><span>Остават</span><b>2 011 €</b></div>
+    <div class="hero-vis">
+      <div class="phone2 float hero-phone"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Начален екран на ProfiTaxi с чистата печалба за месеца" width="390" height="844"></div>
+      <div class="bill bill-live" data-bill>
+        <div class="bill-title">Месецът на един шофьор <em>реален пример</em></div>
+        <div class="bill-row start"><span>Оборот</span><b>3 145 €</b></div>
+        <div class="bill-row m" data-v="460"><span>Гориво</span><b>−460 €</b></div>
+        <div class="bill-row m" data-v="171"><span>Ефир</span><b>−171 €</b></div>
+        <div class="bill-row m" data-v="260"><span>Данъци</span><b>−260 €</b></div>
+        <div class="bill-row m" data-v="86"><span>Автомивка</span><b>−86 €</b></div>
+        <div class="bill-row m" data-v="157"><span>Сервиз, ГО, винетка…</span><b>−157 €</b></div>
+        <div class="bill-total"><span>Остават</span><b data-total="3145">2 011 €</b></div>
+        <p class="bill-punch">1 134 € от оборота не бяха твои. 😬</p>
       </div>
-      <div class="float-chip"><i>€</i><div><b>9,24 €/ч</b><span>чисто на час</span></div></div>
     </div>
-  </div>
-</section>
-
-<!-- ============ МЕТРИКИ ============ -->
-<section class="sec" style="padding-top:20px">
-  <div class="s-wrap">
-    <div class="metrics stagger count-block">
-      <div class="metric"><b data-count="2011" data-suffix=" €">2 011 €</b><span>чиста печалба за месец след всички разходи</span></div>
-      <div class="metric"><b data-count="64" data-suffix="%">64%</b><span>от оборота реално остават в джоба</span></div>
-      <div class="metric"><b data-count="9.24" data-dec="2" data-suffix=" €">9,24 €</b><span>чисто на час, а не 14,46 € оборот</span></div>
-      <div class="metric"><b data-count="10" data-suffix=" сек">10 сек</b><span>за да запишеш цялата смяна</span></div>
-    </div>
-    <p class="s-muted" style="margin-top:14px;font-size:.95rem">Примерен шофьор: собствена хибридна кола, 23 смени за месеца, 217 часа и 4 596 км.</p>
   </div>
 </section>
 
@@ -92,10 +79,6 @@
         <div class="ns f" style="--c:var(--v)"><b>Profi</b><span>Професионалистът, който знае цифрите си</span></div>
         <div class="ns p" style="--c:#12A15E"><b>Profit</b><span>Печалбата, която ти остава</span></div>
       </div>
-      <blockquote class="quote2 rv">
-        <p>Създадохме ProfiTaxi, защото таксито може да бъде много доходоносна работа, но изкарването на пари е само половината от уравнението.</p>
-        <p>Другата половина е да знаеш къде отиват: разходи, предстоящи плащания, очаквани приходи и реалната чиста печалба. Тази половина вече отнема 10 секунди на ден.</p>
-      </blockquote>
       <div class="sec-foot"><a class="s-btn s-btn-line" href="/about">Повече за ProfiTaxi</a></div>
     </div>
   </div>
@@ -118,47 +101,8 @@
   </div>
 </section>
 
-<!-- ============ ПРОБЛЕМЪТ ============ -->
-<section class="sec alt">
-  <div class="glow v" style="width:420px;height:420px;right:-200px;top:10%"></div>
-  <div class="s-wrap">
-    <div class="sec-head rv">
-      <span class="eyebrow">Проблемът</span>
-      <h2>Оборотът лъже.<br>Чистата печалба – не.</h2>
-      <p>В края на смяната броиш парите и денят изглежда добър. Но горивото, ефирът, автомивката, данъците и годишните такси идват по-късно и изяждат голяма част от тях.</p>
-    </div>
-    <div class="compare">
-      <div class="cmp-card rv">
-        <h3>Какво си мислиш <small>без ProfiTaxi</small></h3>
-        <div class="cmp-head-num" style="color:var(--y)">3 145 €</div>
-        <p class="s-muted">„Изкарах над 3 000 € този месец.“</p>
-        <div class="myth">
-          <div><i>×</i>Не знаеш колко струва един километър.</div>
-          <div><i>×</i>Годишните такси те изненадват.</div>
-          <div><i>×</i>Не знаеш кои часове си струват.</div>
-        </div>
-      </div>
-      <div class="cmp-card rv from-r">
-        <h3>Какво реално остава <small>с ProfiTaxi</small></h3>
-        <div class="cmp-head-num" style="color:#12A15E" data-count="2011" data-suffix=" €">2 011 €</div>
-        <div class="wf">
-          <div class="wf-row"><span>Оборот</span><div class="bar"><span style="--w:100%;--c:var(--y)"></span></div><b>3 145 €</b></div>
-          <div class="wf-row"><span>Гориво</span><div class="bar"><span style="--l:85.4%;--w:14.6%;--dd:120ms"></span></div><b>−460 €</b></div>
-          <div class="wf-row"><span>Ефир</span><div class="bar"><span style="--l:80%;--w:5.4%;--dd:220ms"></span></div><b>−171 €</b></div>
-          <div class="wf-row"><span>Автомивка</span><div class="bar"><span style="--l:77.3%;--w:2.7%;--dd:320ms"></span></div><b>−86 €</b></div>
-          <div class="wf-row"><span>Данъци</span><div class="bar"><span style="--l:69%;--w:8.3%;--dd:420ms"></span></div><b>−260 €</b></div>
-          <div class="wf-row"><span>Сервиз, ГО, винетка…</span><div class="bar"><span style="--l:64%;--w:5%;--dd:520ms"></span></div><b>−157 €</b></div>
-          <div class="wf-row total"><span>Чисто</span><div class="bar"><span style="--w:64%;--c:#12A15E;--dd:640ms"></span></div><b>2 011 €</b></div>
-        </div>
-      </div>
-    </div>
-    <div class="sec-foot"><a class="s-link" href="/how">Как се смята чистата печалба →</a></div>
-  </div>
-</section>
-
 <!-- ============ ФУНКЦИИ ============ -->
-<section class="sec">
-  <div class="glow y" style="width:380px;height:380px;left:-160px;top:20%"></div>
+<section class="sec alt">
   <div class="s-wrap">
     <div class="sec-head c rv">
       <span class="eyebrow">Функции</span>
@@ -172,8 +116,6 @@
       <div class="f-card"><span class="f-ic" data-ic="bell" style="--c:#8B5CF6"></span><h3>Напомняния за плащания</h3><p>3, 2 и 1 ден преди падеж и в деня. Ако си пропуснал известие, го виждаш при следващото отваряне.</p></div>
       <div class="f-card"><span class="new">Ново</span><span class="f-ic" data-ic="calendar" style="--c:#3B82F6"></span><h3>Лични резервации</h3><p>Познат за летището в 5:30? Записваш час, адреси, клиент и цена. Виждаш я на началния екран.</p></div>
       <div class="f-card"><span class="f-ic" data-ic="target" style="--c:#F5A524"></span><h3>Цел за месеца</h3><p>Задаваш колко искаш да изкараш чисто. Виждаш колко остава и колко часа още трябва.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="chart" style="--c:#06B6D4"></span><h3>Статистика и рекорди</h3><p>Дни, седмици, месеци, тримесечия и години. Кои дни и часове носят най-много.</p></div>
-      <div class="f-card"><span class="new">Ново</span><span class="f-ic" data-ic="gift" style="--c:#EC4899"></span><h3>Покани и спечели</h3><p>Твой код за покана. 5 колеги = 1 безплатен месец, 8 колеги = 2 безплатни месеца.</p></div>
     </div>
     <div class="sec-foot c"><a class="s-btn s-btn-line" href="/features">Всички функции</a></div>
   </div>
@@ -181,7 +123,6 @@
 
 <!-- ============ ВИТРИНА ============ -->
 <section class="sec ink" style="overflow:hidden">
-  <div class="glow v" style="width:600px;height:600px;right:-200px;top:-100px"></div>
   <div class="s-wrap">
     <div class="showcase" data-showcase>
       <div>
@@ -201,43 +142,7 @@
         <p class="sc-caption" aria-live="polite"></p>
         <div class="sec-foot"><a class="s-btn s-btn-line" href="/features">Разгледай функциите</a></div>
       </div>
-      <div class="sc-phone rv zoom"><div class="phone2"><img src="/img/screen-home-dark.jpg" alt="Екран от приложението" width="390" height="844" loading="lazy"></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ КОЛАТА ============ -->
-<section class="sec">
-  <div class="s-wrap">
-    <div class="sec-head c rv">
-      <span class="eyebrow">Твоята кола</span>
-      <h2>Своя, под наем или на лизинг.</h2>
-      <p>Избираш как караш и ProfiTaxi показва само разходите, които наистина плащаш ти.</p>
-    </div>
-    <div class="f-grid stagger">
-      <div class="f-card"><span class="f-ic" data-ic="car" style="--c:#12A15E"></span><h3>Собствена кола</h3><p>Ти плащаш всичко, затова виждаш всичко.</p><ul><li>Гориво</li><li>Застраховка и каско</li><li>ГО</li><li>Винетка</li><li>Преглед</li><li>Обслужване</li><li>Гуми</li><li>Данъци</li></ul></div>
-      <div class="f-card"><span class="f-ic" data-ic="key" style="--c:#F5A524"></span><h3>Кола под наем</h3><p>Наемът на ден, седмица или месец. Сметките на собственика не те засягат.</p><ul><li>Наем</li><li>Гориво</li><li>Ефир</li><li>Автомивка</li><li class="no">Каско</li><li class="no">Винетка</li></ul></div>
-      <div class="f-card"><span class="f-ic" data-ic="doc" style="--c:#8B5CF6"></span><h3>Кола на лизинг</h3><p>Лизинговата вноска с падеж и напомняне, плюс всички разходи на собственик.</p><ul><li>Лизингова вноска</li><li>Гориво</li><li>Каско</li><li>ГО</li><li>Обслужване</li></ul></div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ РЕЗЕРВАЦИИ ============ -->
-<section class="sec alt" style="overflow:hidden">
-  <div class="glow v" style="width:420px;height:420px;left:-160px;bottom:-100px"></div>
-  <div class="s-wrap feat">
-    <div class="feat-text rv">
-      <span class="tag2" style="--c:#3B82F6"><span class="s-ic-row" data-ic="calendar" data-size="16"></span>Лични резервации</span>
-      <h2>Твоите клиенти. Твоят график.</h2>
-      <p>Постоянен клиент за летището, познат до гарата, договорен курс за събота. Записваш го за 15 секунди и ProfiTaxi ти го напомня на началния екран.</p>
-      <div class="res-demo stagger">
-        <div><time>Утре<b>05:30</b></time><div><strong>Г-жа Николова</strong><span>ж.к. Младост 1 → Летище София, Т2</span></div><em>25 €</em></div>
-        <div><time>Пет<b>09:00</b></time><div><strong>Семейство Илиеви</strong><span>НДК → Банско, хотел „Гранд“</span></div><em>140 €</em></div>
-      </div>
-    </div>
-    <div class="phones-row rv from-r">
-      <div class="phone2"><img src="/img/screen-reservations-dark.jpg" alt="Списък с лични резервации" width="390" height="844" loading="lazy"></div>
-      <div class="phone2"><img src="/img/screen-profile-dark.jpg" alt="Профил на шофьора със снимка на колата" width="390" height="844" loading="lazy"></div>
+      <div class="sc-phone rv zoom"><div class="phone2"><img src="/img/screen-home-dark.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Екран от приложението" width="390" height="844" loading="lazy"></div></div>
     </div>
   </div>
 </section>
@@ -274,7 +179,6 @@
 
 <!-- ============ ШЕГА ============ -->
 <section class="final joke">
-  <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
   <div class="s-wrap rv zoom">
     <span class="eyebrow joke-label">Забавната част:</span>
     <p class="punch">Ако след прочетеното все още мислиш, че не ти е нужно ProfiTaxi, отвори подробните статии от менюто или остани завинаги <span style="white-space:nowrap"><b>Amateur<s>Taxi</s></b> 😂😂😂</span></p>
@@ -283,7 +187,6 @@
 
 <!-- ============ ЦЕНА ============ -->
 <section class="sec">
-  <div class="glow y" style="width:380px;height:380px;right:-120px;top:10%"></div>
   <div class="s-wrap">
     <div class="sec-head c rv">
       <span class="eyebrow">Цена</span>
@@ -327,9 +230,7 @@
     <div class="faq stagger">
       <details><summary>Трябва ли да въвеждам карта, за да пробвам?</summary><p>Не. Регистрираш се с имейл и ползваш всичко 14 дни безплатно.</p></details>
       <details><summary>Фирмата ми или другите шофьори виждат ли колко изкарвам?</summary><p>Не. Данните ти не се виждат от таксиметровата ти фирма или от други шофьори. Достъп има само екипът на ProfiTaxi за поддръжка и обобщена статистика, както е описано в <a href="/privacy">политиката за поверителност</a>.</p></details>
-      <details><summary>Карам кола под наем. Подходящо ли е за мен?</summary><p>Да. Избираш „Под наем“, въвеждаш наема на ден, седмица или месец и той се смята автоматично. Застраховки, винетка и преглед не се показват, защото са грижа на собственика.</p></details>
       <details><summary>Как се изчислява чистата печалба?</summary><p>Оборот (кеш, карта, приложения, бакшиш) минус разходите от смяната (гориво, паркинг, автомивка…) минус постоянните разходи, разпределени по дни. Годишната винетка например се смята като 0,27 € на ден.</p></details>
-      <details><summary>Работи ли на iPhone и Android?</summary><p>Да. Отваряш го в браузъра на телефона и го добавяш към началния екран. После се отваря като обикновено приложение.</p></details>
       <details><summary>Мога ли да спра абонамента?</summary><p>Да, по всяко време, без неустойки. Данните ти остават запазени, ако решиш да се върнеш.</p></details>
     </div>
     <div class="sec-foot c"><a class="s-btn s-btn-line" href="/faq">Всички въпроси</a></div>
@@ -337,7 +238,6 @@
 </section>
 
 <section class="final">
-  <div class="glow v" style="width:560px;height:560px;left:50%;top:-220px;margin-left:-280px"></div>
   <div class="s-wrap rv zoom">
     <img src="/icons/icon-192.png" width="88" height="88" alt="">
     <h2>Карай за печалба. Не само за оборот.</h2>
