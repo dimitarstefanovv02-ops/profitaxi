@@ -66,6 +66,9 @@ async def main():
         await pg.click('.km-row .tile >> nth=1'); await pg.keyboard.type('250210'); await pg.click('.np-actions >> text=Запиши'); await pg.wait_for_timeout(150)
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(500)
         ok('„Приключи“ връща към началото без активна смяна', '#/home' in pg.url and await T('[data-timer]').count()==0)
+        await pg.wait_for_timeout(300)
+        ok('След „Приключи“ излиза картата с резултата', await T('.result-net').count()==1 and '€' in await T('.result-net').inner_text(), await T('.result-net').inner_text() if await T('.result-net').count() else '')
+        await pg.click('.result >> text=Супер'); await pg.wait_for_timeout(400)
         # --- Смени и редакция ---
         await pg.goto(base+'/app#/shifts'); await pg.wait_for_timeout(300)
         rows = await T('.shift-row').count()
@@ -80,6 +83,7 @@ async def main():
         await pg.click('.tile >> nth=0'); await pg.keyboard.type('120'); await pg.click('.np-actions >> text=Запиши')
         await pg.click('.quick button >> nth=1'); await pg.keyboard.type('6'); await pg.click('.np-actions >> text=Добави')
         await pg.click('.save-bar .btn'); await pg.wait_for_timeout(400)
+        if await T('.result').count(): await pg.click('.result >> text=Супер'); await pg.wait_for_timeout(400)
         await pg.goto(base+'/app#/shift/new'); await pg.wait_for_timeout(300)
         await pg.click('text=Разходите от предишната смяна'); await pg.wait_for_timeout(200)
         ok('Копиране на разходите от предишната смяна', 'Автомивка' in await T('.exp-list').inner_text())

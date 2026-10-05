@@ -5,6 +5,7 @@ import { h, fill, icon, cx, money, uid, toLocalInput, fromLocalInput, fmtDateLon
 import * as store from '../store.js';
 import { INCOME_TYPES, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat, shiftCats } from '../constants.js';
 import { openCategories } from './categories.js';
+import { showShiftResult } from './shiftResult.js';
 import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
 import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
 
@@ -170,8 +171,10 @@ export function shiftEditorView(ctx) {
     const saved = store.saveShift(draft);
     const ended = wasActive && saved.end;
     draft = null; draftKey = null;
-    toast(ended ? 'Смяната приключи' : 'Запазено');
     go(ended || isNew || wasActive ? '/home' : '/shifts', true);
+    // приключена смяна → карта с резултата; иначе кратко съобщение
+    if (saved.end && (ended || isNew)) setTimeout(() => showShiftResult(store.myData(), saved.id), 250);
+    else toast('Запазено');
   }
   function del() {
     confirmSheet({ title: 'Изтриване на смяната?', text: 'Приходите и разходите от тази смяна ще бъдат изтрити.', okLabel: 'Изтрий', danger: true,

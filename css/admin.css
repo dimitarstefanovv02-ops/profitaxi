@@ -134,7 +134,7 @@ tr:nth-child(3) .rank { background: linear-gradient(135deg, #F3C49B, #C98A55); c
 @media (max-width: 999px) { .adm-side { position: static; } }
 
 @media (min-width: 1300px) { .adm-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (min-width: 1000px) and (max-width: 1299px) { .adm-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) and (max-width: 1299px) { .adm-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); } .adm-grid.three > :last-child:nth-child(odd) { grid-column: 1 / -1; } .adm-grid.three > :last-child:nth-child(odd) .legend-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; align-content: center; max-width: 620px; } .adm-grid.three > :last-child:nth-child(odd) .donut-wrap { align-items: center; } }
 
 /* Легенди на кръговите диаграми: име вляво, стойност вдясно, пояснение отдолу */
 .donut-wrap { gap: 16px; }
@@ -158,4 +158,22 @@ tr:nth-child(3) .rank { background: linear-gradient(135deg, #F3C49B, #C98A55); c
   .adm-side-foot { position: absolute; top: 14px; right: 16px; }
   .adm-side-foot .icon-btn { width: 38px; height: 38px; }
   .adm-side-foot .btn { font-size: 0; gap: 0; min-height: 38px; padding: 0 11px; flex: none; }
+}
+
+/* Шофьори като карти на телефон */
+.drv-cards { display: none; flex-direction: column; }
+.drv-card { display: flex; align-items: center; gap: 12px; padding: 12px 2px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
+.drv-card:last-child { border-bottom: 0; }
+.drv-av { width: 42px; height: 42px; border-radius: 13px; flex: none; display: grid; place-items: center; font-weight: 800; font-size: .85rem; color: #fff; background: linear-gradient(135deg, #6366F1, #8B5CF6); }
+.drv-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.drv-main > b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drv-main > span { font-size: .82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drv-meta { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.drv-meta .chip { padding: 3px 8px; font-size: .72rem; }
+.drv-net { text-align: right; flex: none; }
+.drv-net b { display: block; font-family: var(--display); font-size: 1rem; }
+.drv-net small { color: var(--faint); font-size: .72rem; }
+@media (max-width: 719px) {
+  .drv-cards { display: flex; }
+  .tbl-wrap:has(+ .drv-cards) { display: none; }
 }
