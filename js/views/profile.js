@@ -57,7 +57,7 @@ export function profileView({ go, user, data }) {
 
 // Промени в наема, лизинга, ефира или вида кола – те стават постоянни разходи с начална дата
 const costChanged = (orig, d) => { const o = JSON.parse(orig); return ['carType', 'rent', 'leasing', 'dispatch'].some((k) => JSON.stringify(o[k]) !== JSON.stringify(d[k])); };
-function askFrom(onPick) {
+export function askFrom(onPick) {
   const today = todayStr(), m0 = startOfMonth(today), month = MONTHS[parseDate(today).getMonth()];
   openSheet((close) => {
     const date = h('input', { class: 'input', type: 'date', value: m0, max: today });

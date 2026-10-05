@@ -8,6 +8,7 @@ import { monthlyFixed, costMonthly, upcomingReminders, currentKm, activeCosts } 
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, empty, cardTitle, hero } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { reminderText } from './home.js';
+import { askFrom } from './profile.js';
 
 export function costsView({ go, data }) {
   const active = activeCosts(data.costs).sort((a, b) => costMonthly(b, data.profile) - costMonthly(a, data.profile));
@@ -64,17 +65,26 @@ function notifyBox(data) {
     } }, 'Включи'));
 }
 
+// Наем, лизинг и ефир идват от профила: тук може да се смени от кога важат
+function systemCost(c, go) {
+  openSheet((close) => h('div', { class: 'form' },
+    sheetHead(c.name, close, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),
+    h('div', { class: 'info-box' }, icon('calendar', 18), h('span', null, 'Смята се от ', h('b', null, fmtDate(c.startDate, { year: true })), '. Сумата се сменя от Профил.')),
+    h('button', { class: 'btn btn-primary btn-lg btn-block', onclick: () => { close(); askFrom((from) => { store.updateProfile({}, { from }); toast(`Смята се от ${fmtDate(from)}`); }); } }, icon('calendar', 20), 'Смени от кога важи'),
+    h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => { close(); go('/profile'); } }, icon('edit', 20), 'Промени сумата')));
+}
+
 function costRow(c, data, go) {
   const cat = costCat(c.category);
   const left = c.dueDate ? Math.round((parseDate(c.dueDate) - parseDate(todayStr())) / 86400000) : null;
-  return h('button', { class: 'cost-row', style: { '--rc': cat.color }, onclick: () => (c.system ? go('/profile') : editCost(c, data)) },
+  return h('button', { class: 'cost-row', style: { '--rc': cat.color }, onclick: () => (c.system ? systemCost(c, go) : editCost(c, data)) },
     h('div', { class: 'cost-ic' }, icon(cat.icon, 20)),
     h('div', { class: 'grow' },
       h('div', { class: 'cost-name' }, c.name),
       h('div', { class: 'cost-det' },
         h('span', null, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),
         c.perWorkDay && h('span', null, 'само работни дни'),
-        c.system && h('span', { class: 'chip', style: { padding: '2px 8px' } }, 'от профила'),
+        c.system && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `от ${fmtDate(c.startDate)}`),
         left != null && h('span', { class: cx('chip', left < 0 ? 'bad' : left <= 7 ? 'warn' : ''), style: { padding: '2px 8px' } }, `плащане ${fmtDate(c.dueDate)}`),
         c.endDate && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `до ${fmtDate(c.endDate, { year: true })}`))),
     h('div', { class: 'cost-amt' }, h('b', null, money(costMonthly(c, data.profile))), h('span', null, 'на месец')));
