@@ -13,7 +13,7 @@ export function shiftsView({ go, data }) {
   const done = data.shifts.filter((s) => s.end);
   const active = data.shifts.find((s) => !s.end);
   const today = todayStr();
-  const month = periodStats(data, startOfMonth(today), today);
+  const month = periodStats(data, startOfMonth(today), endOfMonth(today));
   const nights = done.filter(isNight).length;
 
   const draw = () => {
@@ -38,7 +38,7 @@ export function shiftsView({ go, data }) {
         h('button', { class: 'btn btn-page', onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи смяна')),
       [...groups.entries()].map(([m, items]) => {
         const from = m + '-01';
-        const st = periodStats(data, from, minStr(endOfMonth(from), today));
+        const st = periodStats(data, from, endOfMonth(from));
         return h('div', null,
           h('div', { class: 'month-head' },
             h('h2', null, `${MONTHS[parseDate(from).getMonth()]} ${from.slice(0, 4)}`),

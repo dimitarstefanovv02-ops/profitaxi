@@ -75,6 +75,10 @@ try {
     ok('„От 1-во число“ смята наема за целия месец до днес', Math.abs(rentOf() - 600 / dim * days) < 0.05, rentOf().toFixed(2));
     ok('Няма двоен наем след повторно запазване', store.myData().costs.filter((c) => c.system === 'rent' && (!c.endDate || c.endDate >= t)).length === 1);
     store.updateProfile({ carType: 'rent', rent: { amount: 700, period: 'month' } }, { from: m0 });
+    const { endOfMonth } = await import('../js/util.js');
+    const fullRent = periodStats(store.myData(), m0, endOfMonth(t)).fixedByCat.rent || 0;
+    ok('Статистика „този месец“ вади целия наем (700 €)', Math.abs(fullRent - 700) < 0.05, fullRent.toFixed(2));
+    ok('Следващият месец още не се смята', (periodStats(store.myData(), addDays(endOfMonth(t), 1), addDays(endOfMonth(t), 20)).fixedByCat.rent || 0) === 0);
     ok('Нова сума от 1-во число замества старата за месеца', Math.abs(rentOf() - 700 / dim * days) < 0.05, rentOf().toFixed(2));
   }
 

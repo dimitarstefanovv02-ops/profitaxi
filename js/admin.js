@@ -1,6 +1,6 @@
 // ProfiTaxi – админ панел. Отделен вход на /admin. Шофьорите нямат връзка към него.
 
-import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, eachDay, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, dateStr } from './util.js';
+import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, eachDay, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, endOfMonth, dateStr } from './util.js';
 import * as store from './store.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, getTheme, setTheme, shareRows, cardTitle } from './ui.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
@@ -474,7 +474,7 @@ function drivers() {
   const root = h('div');
   const today = todayStr();
   const mFrom = startOfMonth(today);
-  const all = scoped().map((d) => ({ d, s: subState(d.user), st: periodStats(d, mFrom, today), last: lastShift(d) }));
+  const all = scoped().map((d) => ({ d, s: subState(d.user), st: periodStats(d, mFrom, endOfMonth(today)), last: lastShift(d) }));
   const listEl = h('div');
   function drawList() {
     const q = listState.q.trim().toLowerCase();

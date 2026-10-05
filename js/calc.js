@@ -60,7 +60,9 @@ export function periodStats(data, from, to) {
   const today = todayStr();
   const inP = shifts.filter((s) => { const d = shiftDate(s); return d >= from && d <= to && s.end; });
   const workedSet = new Set(inP.map(shiftDate));
-  const fixedTo = minStr(to, today);
+  // Постоянните разходи (наем, ефир, данъци…) се броят за целия текущ месец, защото са платени
+  // или дължими за него, но не и за бъдещи месеци. Затова „Октомври“ показва целия наем от 600 €.
+  const fixedTo = minStr(to, endOfMonth(today));
   const days = from <= fixedTo ? eachDay(from, fixedTo) : [];
   let fixed = 0;
   for (const d of days) fixed += fixedForDay(costs, profile, d, workedSet.has(d));
