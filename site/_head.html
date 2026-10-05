@@ -24,9 +24,19 @@
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
       // Сайтът е само в тъмна тема
       document.documentElement.setAttribute('data-theme', 'dark');
+      // Въвеждащ ефект с логото – веднъж на посещение
+      var seen; try { seen = sessionStorage.getItem('profitaxi.intro'); } catch (e) {}
+      if (!seen && !matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.classList.add('intro');
     })();
   </script>
   <script type="module" src="/js/landing.js"></script>
 </head>
 <body class="site">
+<div id="intro" aria-hidden="true">
+  <div class="intro-in">
+    <div class="intro-logo"><span class="intro-ring"></span><img src="/icons/icon-192.png" alt="" width="112" height="112"></div>
+    <div class="intro-word"><span><i>Profi</i></span><span><b>Taxi</b></span></div>
+    <div class="intro-bar"><i></i></div>
+  </div>
+</div>
 <div id="site-head"></div>

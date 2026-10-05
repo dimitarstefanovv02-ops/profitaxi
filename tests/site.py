@@ -15,6 +15,7 @@ with sync_playwright() as p:
     for w, hgt in [(390, 844), (820, 1180), (1280, 900)]:
         for theme in ['light', 'dark']:  # системната тема на телефона не трябва да влияе: сайтът е винаги тъмен
             ctx = b.new_context(viewport={'width': w, 'height': hgt}, color_scheme=theme)
+            ctx.add_init_script("try { sessionStorage.setItem('profitaxi.intro', '1') } catch (e) {}")
             pg = ctx.new_page(); errs = []
             pg.on('pageerror', lambda e: errs.append(str(e)))
             pg.on('console', lambda m: m.type == 'error' and 'Failed to load resource' not in m.text and errs.append(m.text))
@@ -43,8 +44,18 @@ with sync_playwright() as p:
                     pg.screenshot(path=f'{shots}/site{u.replace("/", "_") or "_"}-{w}-{theme}.png', full_page=True)
             check(not errs, f'{w} {theme} js errors {errs}')
             ctx.close()
+    # Въвеждащият ефект: показва се веднъж, после изчезва
+    ictx = b.new_context(viewport={'width': 390, 'height': 844}); ip = ictx.new_page()
+    ip.goto(BASE + '/'); ip.wait_for_timeout(300)
+    check(ip.locator('#intro').is_visible(), 'intro visible on first open')
+    ip.wait_for_timeout(2800)
+    check(ip.locator('#intro').count() == 0 and not ip.evaluate("document.documentElement.classList.contains('intro')"), 'intro removed after animation')
+    ip.wait_for_timeout(300); check(ip.evaluate("document.querySelector('.hero2 h1').classList.contains('in')"), 'hero revealed after intro')
+    ip.goto(BASE + '/about'); ip.wait_for_timeout(200)
+    check(ip.locator('#intro').count() == 0, 'intro not repeated in the same visit')
+    ictx.close()
     # Взаимодействия
-    ctx = b.new_context(viewport={'width': 390, 'height': 844}, color_scheme='light'); pg = ctx.new_page()
+    ctx = b.new_context(viewport={'width': 390, 'height': 844}, color_scheme='light'); ctx.add_init_script("try { sessionStorage.setItem('profitaxi.intro', '1') } catch (e) {}"); pg = ctx.new_page()
     pg.goto(BASE + '/'); pg.wait_for_load_state('networkidle')
     check(pg.locator('#theme-btn').count() == 0, 'no theme toggle')
     check(pg.evaluate("localStorage.getItem('profitaxi.theme')") is None, 'site does not touch app theme')

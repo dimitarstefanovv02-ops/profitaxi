@@ -96,7 +96,24 @@ const io = 'IntersectionObserver' in window && !reduce ? new IntersectionObserve
   if (el.matches('[data-count]')) countUp(el);
 }), { rootMargin: '0px 0px -10% 0px', threshold: 0.12 }) : null;
 document.querySelectorAll('.stagger').forEach((g) => [...g.children].forEach((c, i) => { c.classList.add('rv'); c.style.setProperty('--d', `${i * 90}ms`); }));
-document.querySelectorAll('.rv, .count-block').forEach((el) => { if (io) io.observe(el); else { el.classList.add('in'); el.querySelectorAll('[data-count]').forEach(countUp); } });
+const startReveal = () => document.querySelectorAll('.rv, .count-block').forEach((el) => { if (io) io.observe(el); else { el.classList.add('in'); el.querySelectorAll('[data-count]').forEach(countUp); } });
+
+// Въвеждащ ефект: логото се появява, после завесата се вдига и чак тогава тръгват анимациите на страницата
+const intro = document.getElementById('intro');
+if (document.documentElement.classList.contains('intro') && intro) {
+  let done = false;
+  const finish = () => {
+    if (done) return; done = true;
+    try { sessionStorage.setItem('profitaxi.intro', '1'); } catch { /* */ }
+    document.documentElement.classList.remove('intro'); intro.remove(); startReveal();
+  };
+  intro.addEventListener('animationend', (e) => { if (e.animationName === 'introOut') finish(); });
+  intro.addEventListener('click', finish);
+  setTimeout(finish, 3200); // за всеки случай
+} else {
+  intro?.remove();
+  startReveal();
+}
 
 // ---------- Витрина със снимки на приложението ----------
 document.querySelectorAll('[data-showcase]').forEach((box) => {
