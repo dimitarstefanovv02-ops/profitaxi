@@ -19,6 +19,7 @@ import { meView } from './views/me.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
+import { BRAND, isBrandUser } from './brand.js';
 
 applyTheme();
 
@@ -64,6 +65,8 @@ function render() {
     return mount(app, view({ go }), route, false);
   }
   if (PUBLIC[route.name]) return go('/home', true);
+  // /onetaxi е само за шофьорите на One Taxi
+  if (!isBrandUser(user)) return mount(app, notBrandView(), route, false);
 
   const access = store.accessState(user);
   if (access !== 'ok') return mount(app, lockView(user, access), route, false);
@@ -105,6 +108,15 @@ function nav(active) {
   return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
     h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
       h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
+}
+
+function notBrandView() {
+  return h('div', { class: 'lock' },
+    h('img', { src: '/icons/one-red.svg', alt: 'One Taxi', width: 72, height: 72 }),
+    h('h1', null, 'Само за шофьорите на One Taxi'),
+    h('p', { class: 'muted' }, 'Този акаунт не е към One Taxi Пловдив. Влез от обикновеното приложение ProfiTaxi.'),
+    h('a', { class: 'btn btn-primary btn-lg', href: '/app#/home' }, 'Отвори ProfiTaxi'),
+    h('button', { class: 'btn btn-ghost btn-lg', onclick: () => { store.logout(); go('/login'); } }, 'Изход'));
 }
 
 function lockView(user, access) {

@@ -5,8 +5,9 @@ import { INVITES_ON, CAR_TYPES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
+import { BRAND, ONE, collabMark } from '../brand.js';
 
-export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
+export const brand = () => BRAND ? collabMark() : h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
   h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }),
   h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')));
 
@@ -18,14 +19,17 @@ export function loginView({ go }) {
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = (e) => {
     e.preventDefault();
-    const r = store.login(email.value, pw.value);
+    const r = store.login(email.value, pw.value, BRAND ? { company: BRAND.company } : {});
     if (r.error) { err.textContent = r.error; return; }
     go('/home');
   };
-  const fill = () => { email.value = 'ivan@demo.bg'; pw.value = 'demo123'; };
+  const fill = () => { email.value = BRAND ? 'one@demo.bg' : 'ivan@demo.bg'; pw.value = 'demo123'; };
   return h('div', { class: 'auth' },
     brand(),
-    h('div', { class: 'auth-hero' },
+    BRAND ? h('div', { class: 'auth-hero' },
+      h('h1', null, 'Колко ти остава наистина'),
+      h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Само за шофьорите на One Taxi Пловдив.'))
+      : h('div', { class: 'auth-hero' },
       h('h1', null, 'Колко изкарваш наистина'),
       h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
     h('form', { class: 'form', onsubmit: submit },
@@ -35,7 +39,7 @@ export function loginView({ go }) {
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Вход'),
       h('a', { href: '#/forgot', class: 'muted small', style: { textAlign: 'center' } }, 'Забравена парола')),
     h('div', { class: 'demo-box' },
-      h('b', null, 'Демо версия. '), 'Пробвай с готов профил: ivan@demo.bg / demo123. ',
+      h('b', null, 'Демо версия. '), `Пробвай с готов профил: ${BRAND ? 'one@demo.bg' : 'ivan@demo.bg'} / demo123. `,
       h('button', { type: 'button', onclick: fill }, 'Попълни')),
     h('p', { class: 'auth-foot' }, 'Нямаш акаунт? ', h('a', { href: '#/register' }, 'Регистрирай се')));
 }
@@ -47,7 +51,8 @@ export function registerView({ go }) {
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
   const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
-  const cc = cityCompanyPicker();
+  const cc = BRAND ? null : cityCompanyPicker();
+  const code = input({ placeholder: 'Кодът от One Taxi', autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   let carType = '';
   const carBox = h('div');
   const drawCar = () => fill(carBox, h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
@@ -57,7 +62,7 @@ export function registerView({ go }) {
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = (e) => {
     e.preventDefault();
-    const v = cc.value();
+    const v = BRAND ? { city: ONE.city, company: ONE.company } : cc.value();
     // проверки в реда на формата
     const checks = [
       [!name.value.trim(), 'Въведи име'],
@@ -66,6 +71,7 @@ export function registerView({ go }) {
       [!v.city, 'Избери град'],
       [!v.company, 'Избери фирма или напиши името ѝ'],
       [!carType, 'Избери каква е колата'],
+      [BRAND && code.value.trim().toUpperCase() !== ONE.accessCode, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
     ];
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
@@ -75,7 +81,7 @@ export function registerView({ go }) {
     toast('Акаунтът е създаден');
     go('/onboarding');
   };
-  const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic', style: { '--pc': '#FFC21A' } }, icon(ic, 15)), title), ...kids);
+  const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 15)), title), ...kids);
   return h('div', { class: 'auth' },
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),
     h('div', { class: 'auth-hero', style: { margin: '14px 0 20px' } },
@@ -88,7 +94,10 @@ export function registerView({ go }) {
         field('Парола', pw, null, true),
         field('Телефон', phone, 'По желание'),
         INVITES_ON && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
-      group('target', 'Къде караш', cc.el),
+      BRAND ? group('target', 'One Taxi',
+        h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Акаунтът е само за шофьори на One Taxi'))),
+        field('Код от One Taxi', code, 'Дава ти го диспечерът или офисът на One', true))
+        : group('target', 'Къде караш', cc.el),
       group('car', 'Колата е', carBox),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),
       err,

@@ -1,0 +1,110 @@
+/* ======================================================================
+   ProfiTaxi × One Taxi – издание за шофьорите на One Taxi Пловдив.
+   Червено (Coca-Cola red, CMYK 0/100/100/0 ≈ #ED1D24), бяло и черно.
+   Червеното е само за главното действие, активния бутон и малки акценти –
+   основата е бяло/черно, за да не е натрапчиво.
+   Шрифт: Base Neue (ако е инсталиран), иначе Archivo в широк вариант.
+   ====================================================================== */
+:root[data-brand="one"] {
+  --one-red: #ED1D24; --one-red-press: #C8141B; --one-black: #0A0A0C;
+  --accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #C8141B;
+  --violet: #0A0A0C; --v-soft: rgba(10, 10, 12, .06); --v-line: rgba(10, 10, 12, .12); --v-strong: rgba(10, 10, 12, .38); --v-glow: rgba(237, 29, 36, .07);
+  --bg: #F4F4F5; --surface: #FFFFFF; --surface-2: #F1F1F3; --surface-3: #E4E4E7; --line: #E4E4E7;
+  --text: #0A0A0C; --muted: #5C5C66; --faint: #8E8E98;
+  --neg: #B4232A; --neg-soft: #FBE7E8;
+  --road: #0A0A0C;
+  --font: 'Base Neue', 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --display: 'Base Neue', 'Archivo', system-ui, sans-serif;
+  --pc: #ED1D24; --pc-ink: #FFFFFF;
+}
+:root[data-brand="one"][data-theme="dark"] {
+  --bg: #050506; --surface: #121214; --surface-2: #1A1A1D; --surface-3: #252528; --line: #26262A;
+  --text: #F5F5F6; --muted: #A1A1AA; --faint: #6E6E78;
+  --violet: #F5F5F6; --v-soft: rgba(255, 255, 255, .07); --v-line: rgba(255, 255, 255, .12); --v-strong: rgba(255, 255, 255, .34); --v-glow: rgba(237, 29, 36, .10);
+  --accent-soft: #3A1214; --accent-text: #FF5A60; --neg: #FF6B70; --neg-soft: #3A1517;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-brand="one"]:not([data-theme="light"]) {
+    --bg: #050506; --surface: #121214; --surface-2: #1A1A1D; --surface-3: #252528; --line: #26262A;
+    --text: #F5F5F6; --muted: #A1A1AA; --faint: #6E6E78;
+    --violet: #F5F5F6; --v-soft: rgba(255, 255, 255, .07); --v-line: rgba(255, 255, 255, .12); --v-strong: rgba(255, 255, 255, .34); --v-glow: rgba(237, 29, 36, .10);
+    --accent-soft: #3A1214; --accent-text: #FF5A60; --neg: #FF6B70; --neg-soft: #3A1517;
+  }
+}
+:root[data-brand="one"] [data-page] { --pc: #ED1D24; --pc-ink: #FFFFFF; }
+
+/* Шрифтът: заглавия в широк вариант (като Base Neue) */
+[data-brand="one"] body { font-family: var(--font); }
+[data-brand="one"] h1, [data-brand="one"] h2, [data-brand="one"] .brand-name, [data-brand="one"] .meter-value,
+[data-brand="one"] .kpi-value, [data-brand="one"] .stat-value, [data-brand="one"] .hero-num { font-stretch: 115%; letter-spacing: -.01em; }
+[data-brand="one"] .btn { font-stretch: 108%; letter-spacing: .005em; }
+
+/* Главната карта: черна, с тънка червена лента вместо жълто-черния шах */
+[data-brand="one"] .meter, [data-brand="one"] .hero { background: #0A0A0C; border: 1px solid #26262A; box-shadow: 0 18px 40px -26px rgba(0, 0, 0, .7); }
+[data-brand="one"] .meter::before { height: 5px; background: var(--one-red); opacity: 1; }
+[data-brand="one"] .meter-value { color: #FFFFFF; }
+[data-brand="one"] .meter-pct { background: rgba(237, 29, 36, .18); color: #FF8A8E; }
+[data-brand="one"] .road-fill { background: var(--one-red); }
+[data-brand="one"] .meter-hours b, [data-brand="one"] .ms-total b:not(.neg) { color: inherit; }
+[data-brand="one"] .month-sum { border: 1px solid var(--line); box-shadow: none; }
+[data-brand="one"] .ms-total b:not(.neg) { color: var(--text); }
+
+/* Бутони: главният – червен; второстепенните – бяло/черно */
+[data-brand="one"] .btn-primary, [data-brand="one"] .shift-cta { background: var(--one-red); color: #fff; box-shadow: none; }
+[data-brand="one"] .btn-primary:active { background: var(--one-red-press); }
+[data-brand="one"] .btn-ghost { background: var(--surface); border: 1px solid var(--line); }
+[data-brand="one"] .btn-page { background: var(--text); color: var(--bg); }
+
+/* Долното меню: активният бутон червен */
+[data-brand="one"] .nav a.on .nav-ic { background: var(--one-red); color: #fff; box-shadow: none; }
+[data-brand="one"] .nav { border-top: 1px solid var(--line); }
+
+/* Иконки и контури – неутрални, червено само като малък акцент */
+[data-brand="one"] .t-ic, [data-brand="one"] .bl-ic, [data-brand="one"] .ql-ic, [data-brand="one"] .cost-ic, [data-brand="one"] .mini-ic,
+[data-brand="one"] .list-btn .l-ic, [data-brand="one"] .tip-ic, [data-brand="one"] .hl-ic { background: var(--surface-2) !important; color: var(--text) !important; }
+[data-brand="one"] .home-link:nth-child(2) .hl-ic { background: var(--accent-soft) !important; color: var(--accent-text) !important; }
+[data-brand="one"] .section-title::before, [data-brand="one"] .page-title h1::after { background: var(--one-red); box-shadow: none; }
+[data-brand="one"] .more > summary { border-left-color: var(--one-red); }
+[data-brand="one"] .more > summary .ic, [data-brand="one"] .sub-back { color: var(--accent-text); }
+[data-brand="one"] .next-when { background: var(--surface-2); }
+[data-brand="one"] .next-when b { color: var(--text); }
+[data-brand="one"] .avatar, [data-brand="one"] .cover-avatar { background: var(--one-red); color: #fff; }
+[data-brand="one"] .cover-avatar { box-shadow: 0 0 0 3px var(--surface); }
+[data-brand="one"] .first-day { border-color: var(--line); box-shadow: none; }
+[data-brand="one"] .fd-ic { background: var(--one-red); color: #fff; }
+[data-brand="one"] .fd-steps li::before { background: var(--accent-soft); color: var(--accent-text); }
+[data-brand="one"] .bar.pos, [data-brand="one"] .bars.violet .bar.pos { fill: var(--text); }
+[data-brand="one"] .bar.hl { fill: var(--one-red); }
+[data-brand="one"] .week-bar.pos { background: var(--text); }
+[data-brand="one"] .wd-row.best .wd-fill, [data-brand="one"] .hours span.best, [data-brand="one"] .inv-track span, [data-brand="one"] .result-bar span { background: var(--one-red); }
+[data-brand="one"] .seg-btn.on { background: var(--text); color: var(--bg); }
+[data-brand="one"] .trial { background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+[data-brand="one"] :focus-visible { outline-color: var(--one-red); }
+[data-brand="one"] .confetti i:nth-child(5n+2), [data-brand="one"] .confetti i:nth-child(5n+3) { background: #ED1D24 !important; }
+
+/* Марка на входа: One × ProfiTaxi */
+.collab { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+.collab img { display: block; flex: none; }
+.collab .one-logo { width: 46px; height: 46px; }
+.collab .pt-logo { width: 46px; height: 46px; border-radius: 13px; }
+.collab .x { font-weight: 300; font-size: 1.5rem; color: var(--faint); line-height: 1; }
+.collab-text { display: grid; line-height: 1.1; margin-left: 2px; }
+.collab-text b { font-size: 1.12rem; font-stretch: 115%; letter-spacing: -.01em; }
+.collab-text b em { font-style: normal; color: var(--one-red); }
+.collab-text span { font-size: .82rem; color: var(--muted); font-weight: 600; }
+.one-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); font-weight: 700; font-size: .9rem; }
+.one-badge img { width: 26px; height: 26px; }
+.one-note { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); font-size: .95rem; color: var(--muted); }
+.one-note b { color: var(--text); }
+.one-note img { width: 28px; height: 28px; flex: none; }
+.one-locked { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--line); }
+.one-locked img { width: 36px; height: 36px; }
+.one-locked b { display: block; }
+.one-locked span { color: var(--muted); font-size: .92rem; }
+.one-mini { display: block; width: 40px; height: 40px; }
+/* Base Neue, ако е инсталиран на устройството; иначе Archivo */
+@font-face { font-family: 'Base Neue'; src: local('Base Neue'), local('BaseNeue-Regular'), local('Base Neue Regular'); font-weight: 400; }
+@font-face { font-family: 'Base Neue'; src: local('Base Neue Bold'), local('BaseNeue-Bold'); font-weight: 700; }
+/* Входът: само лека червена следа горе, без силно сияние */
+[data-brand="one"] .auth::before { background: linear-gradient(180deg, rgba(237, 29, 36, .07), transparent); height: 220px; }
+[data-brand="one"][data-theme="dark"] .auth::before { background: linear-gradient(180deg, rgba(237, 29, 36, .12), transparent); }

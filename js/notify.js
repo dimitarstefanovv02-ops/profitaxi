@@ -1,3 +1,4 @@
+import { appBase } from './brand.js';
 // Известия за наближаващи плащания: 3, 2 и 1 ден преди падежа и в деня.
 // Работи, когато приложението е отворено или инсталирано на телефона.
 // (Известия при напълно затворено приложение изискват сървър – идва с истинската база.)
@@ -35,7 +36,7 @@ export async function checkNotifications(data) {
     const { title, body } = reminderMessage(r);
     try {
       const reg = await navigator.serviceWorker?.getRegistration?.();
-      if (reg) await reg.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: r.id, data: { url: '/app#/costs' } });
+      if (reg) await reg.showNotification(title, { body, icon: '/icons/icon-192.png', badge: '/icons/icon-192.png', tag: r.id, data: { url: appBase() + '#/costs' } });
       else new Notification(title, { body, icon: '/icons/icon-192.png', tag: r.id });
       sent.add(key);
     } catch { /* браузърът отказа */ }
@@ -47,7 +48,7 @@ export async function checkNotifications(data) {
     const title = `${r.date === today ? 'Днес' : 'Утре'} в ${r.time}: ${r.client}`;
     try {
       const reg = await navigator.serviceWorker?.getRegistration?.();
-      const opts = { body: `${r.from} → ${r.to}`, icon: '/icons/icon-192.png', tag: 'res' + r.id, data: { url: '/app#/reservations' } };
+      const opts = { body: `${r.from} → ${r.to}`, icon: '/icons/icon-192.png', tag: 'res' + r.id, data: { url: appBase() + '#/reservations' } };
       if (reg) await reg.showNotification(title, opts); else new Notification(title, opts);
       sent.add(key);
     } catch { /* */ }

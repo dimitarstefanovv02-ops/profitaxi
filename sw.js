@@ -1,12 +1,13 @@
 // ProfiTaxi – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v21';
+const VERSION = 'profitaxi-v22';
 const SHELL = [
   '/app', '/app.html', '/css/app.css', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',
   '/js/views/auth.js', '/js/views/onboarding.js', '/js/views/home.js', '/js/views/shift.js', '/js/views/shifts.js',
   '/js/views/stats.js', '/js/views/costs.js', '/js/views/profile.js', '/js/views/carSettings.js', '/js/views/cityPicker.js',
   '/js/views/reservations.js', '/js/views/invite.js', '/js/views/categories.js', '/js/views/shiftResult.js', '/js/views/calendar.js', '/js/tour.js', '/js/views/money.js', '/js/views/me.js',
-  '/js/quotes.js', '/js/notify.js',
+  '/js/quotes.js', '/js/notify.js', '/js/brand.js',
+  '/onetaxi', '/onetaxi.html', '/css/one.css', '/manifest-one.webmanifest', '/icons/one-192.png', '/icons/one-favicon-64.png', '/icons/one-red.svg',
 ];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => {
@@ -21,7 +22,7 @@ self.addEventListener('fetch', (e) => {
       const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy));
     }
     return res;
-  }).catch(() => caches.match(req).then((r) => r || caches.match(new URL(req.url).pathname.startsWith('/admin') ? '/admin.html' : '/app.html'))));
+  }).catch(() => caches.match(req).then((r) => r || caches.match((p => p.startsWith('/admin') ? '/admin.html' : p.startsWith('/onetaxi') ? '/onetaxi.html' : '/app.html')(new URL(req.url).pathname)))));
 });
 
 // Натискане на известие отваря приложението на страница Разходи

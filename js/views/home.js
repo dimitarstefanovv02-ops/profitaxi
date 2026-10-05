@@ -5,6 +5,7 @@ import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, M
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, more } from '../ui.js';
+import { BRAND } from '../brand.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl } from './reservations.js';
 
 const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
@@ -34,7 +35,7 @@ export function homeView({ go, user, data }) {
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),
-      h('div', { class: 'row gap' }, themeToggle(),
+      h('div', { class: 'row gap' }, BRAND && h('img', { class: 'one-mini', src: '/icons/one-red.svg', alt: 'One Taxi', width: 40, height: 40 }), themeToggle(),
         data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials))),
 
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),

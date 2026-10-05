@@ -9,7 +9,7 @@ import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './co
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 5;
+const VERSION = 6;
 const listeners = new Set();
 let db = null;
 
@@ -63,10 +63,11 @@ export function currentUser() {
   const u = db.users.find((x) => x.id === id && x.role === 'driver');
   return u ? clone(u) : null;
 }
-export function login(email, password) {
+export function login(email, password, { company } = {}) {
   load();
   const u = db.users.find((x) => norm(x.email) === norm(email) && x.role === 'driver');
   if (!u || u.password !== password) return { error: 'Грешен имейл или парола' };
+  if (company && u.company !== company) return { error: 'Този вход е само за шофьорите на One Taxi. Влез от profitaxi.vercel.app/app.' };
   localStorage.setItem(SESSION_KEY, u.id);
   u.lastLoginAt = new Date().toISOString();
   commit();
@@ -439,6 +440,10 @@ function seed() {
     { name: 'Стоян Ангелов', email: 'stoyan@demo.bg', city: 'Варна', company: 'Триумф Такси / Транстриумф', seed: 41, days: 40, plan: 'trial', valid: -3,
       profile: { carType: 'own', fuel: 'lpg', dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1200 },
       style: { workProb: 0.45, night: 0.5, rate: 0.9, kmMin: 120, kmMax: 220 } },
+    // Демо шофьор за изданието One Taxi (/onetaxi)
+    { name: 'Петър Стоянов', email: 'one@demo.bg', city: 'Пловдив', company: 'ONE Такси – 032 22 22', seed: 61, days: 120, plan: 'paid', valid: 30,
+      profile: { carType: 'own', fuel: 'petrol_lpg', dispatch: { mode: 'weekly', amount: 35 }, monthlyGoal: 1800, car: { code: '117', plate: 'РВ 1170 КА', model: 'Toyota Auris' } },
+      style: { workProb: 0.8, night: 0.35, rate: 0.95, kmMin: 170, kmMax: 280 } },
     { name: 'Николай Иванов', email: 'nikolay@demo.bg', city: 'София', company: 'OK Supertrans', seed: 53, days: 75, plan: 'paid', valid: 120, blocked: true,
       profile: { carType: 'own', fuel: 'electric', dispatch: { mode: 'none', amount: 0 }, monthlyGoal: 2000 },
       style: { workProb: 0.75, night: 0.3, rate: 1.0, kmMin: 160, kmMax: 280 } },
