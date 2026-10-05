@@ -102,7 +102,7 @@ export function shiftEditorView(ctx) {
       // Лента за запис
       h('div', { class: 'save-bar' },
         h('div', { class: 'sum' }, h('span', null, 'Чисто за смяната'), h('b', { class: net >= 0 ? 'pos' : 'neg' }, money(net))),
-        h('button', { class: 'btn btn-primary btn-lg', onclick: save }, icon('check', 20), !draft.end ? 'Запази' : wasActive ? 'Приключи' : 'Запази')));
+        h('button', { class: 'btn btn-primary btn-lg', onclick: () => save() }, icon('check', 20), !draft.end ? 'Запази' : wasActive ? 'Приключи' : 'Запази')));
   }
 
   const kmTile = (label, v, onTap) => h('button', { class: 'tile', style: { '--tc': 'var(--c-teal)' }, onclick: onTap },
@@ -165,11 +165,16 @@ export function shiftEditorView(ctx) {
     draw();
     toast(`Добавени ${copied.length} разхода. Смени сумите, ако трябва.`);
   }
-  function save() {
+  function save(force = false) {
     if (draft.end && new Date(draft.end) <= new Date(draft.start)) { toast('Краят трябва да е след началото', 'err'); return; }
     if (draft.kmEnd > 0 && draft.kmEnd < draft.kmStart) { toast('Провери километража', 'err'); return; }
-    if (draft.end && new Date(draft.end) - new Date() > 10 * 60000) { toast('Краят на смяната е в бъдещето. Провери датата.', 'err'); return; }
-    if (draft.end && (new Date(draft.end) - new Date(draft.start)) / 3600000 > 24) { toast('Смяната е над 24 часа. Провери началото и края.', 'err'); return; }
+    // Необичайна смяна (над 24 часа или с край в бъдещето) – питаме, но позволяваме
+    const longH = draft.end ? (new Date(draft.end) - new Date(draft.start)) / 3600000 : 0;
+    const future = draft.end && new Date(draft.end) - new Date() > 10 * 60000;
+    if (!force && (longH > 24 || future)) {
+      confirmSheet({ title: 'Провери времето', text: `${longH > 24 ? `Смяната е ${Math.round(longH)} часа. ` : ''}${future ? 'Краят е в бъдещето. ' : ''}Да я запишем ли така?`, okLabel: 'Запиши все пак', onOk: () => save(true) });
+      return;
+    }
     const saved = store.saveShift(draft);
     const ended = wasActive && saved.end;
     draft = null; draftKey = null;

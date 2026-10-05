@@ -149,8 +149,13 @@ export function goalProgress(data) {
     const withoutWork = fixedForDay(data.costs, data.profile, d, false);
     fixedLeft += withoutWork + (all - withoutWork) * workRatio; // таксата „на работен ден“ – само за очакваните работни дни
   }
-  const remaining = Math.max(0, goal - st.net);
-  const toEarn = remaining > 0 ? remaining + fixedLeft : 0; // нужна печалба от смени до края на месеца
+  // Целта се гледа като шофьор: наемът, ефирът и другите месечни разходи са за целия месец
+  // (обикновено вече платени), затова се изваждат изцяло още сега, а не ден по ден.
+  // Остава да се изкара разликата до целта с печалбата на час от смените (без постоянните разходи).
+  const monthFixed = st.fixedExp + fixedLeft;
+  const net = st.income - st.varExp - monthFixed;
+  const remaining = Math.max(0, goal - net);
+  const toEarn = remaining; // нужна печалба от смени до края на месеца
   const hoursNeeded = ratePerHour > 0 ? toEarn / ratePerHour : null;
   const shiftsNeeded = hoursNeeded != null ? Math.ceil(hoursNeeded / avgShiftHours) : null;
   const shiftsLeft = Math.max(1, Math.round(remainingDays * workRatio));
@@ -158,10 +163,10 @@ export function goalProgress(data) {
   const avgDaily = elapsed ? st.net / elapsed : 0;
   const forecast = st.net + (st.workedDays ? ((st.income - st.varExp) / Math.max(st.workedDays, 1)) * remainingDays * workRatio - fixedLeft : avgDaily * remainingDays);
   return {
-    goal, net: st.net, pct: goal ? st.net / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
+    goal, net, netToDate: st.net, monthFixed, pct: goal ? net / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
     ratePerHour, hoursNeeded, shiftsNeeded, avgShiftHours, shiftsLeft, needPerShift,
     feasible: hoursNeeded != null && hoursNeeded <= remainingDays * 12,
-    done: goal > 0 && st.net >= goal, stats: st,
+    done: goal > 0 && net >= goal, stats: st,
   };
 }
 
