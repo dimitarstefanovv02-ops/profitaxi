@@ -48,7 +48,7 @@ export function profileView({ go, user, data, route }) {
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('lock', 'Смяна на паролата', changePw, true),
         listBtn('sparkle', 'Помощ: кратка разходка', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }, true),
-        h('a', { class: 'list-btn', href: 'mailto:support@profitaxi.bg' }, h('span', { class: 'l-ic' }, icon('phone', 18)), h('span', { class: 'grow' }, 'Връзка с нас'), icon('right', 18)),
+        h('a', { class: 'list-btn', href: '#/help' }, h('span', { class: 'l-ic' }, icon('inbox', 18)), h('span', { class: 'grow' }, 'Пиши ни'), store.myUnreadTickets() > 0 && h('span', { class: 'chip warn' }, 'Нов отговор'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))),
 

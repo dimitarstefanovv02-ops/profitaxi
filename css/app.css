@@ -940,3 +940,20 @@ body:not(.admin) .home-link small { white-space: normal; }
 .idea .chip { margin-top: 6px; display: inline-flex; }
 .idea-vote { display: grid; justify-items: center; gap: 2px; width: 52px; padding: 8px 0; border-radius: 14px; background: var(--surface-2); color: var(--muted); flex: none; }
 .idea-vote.on { background: var(--v-soft); color: var(--violet); }
+
+/* Пиши ни, преглед като шофьор, защо спря */
+.ticket .thread { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.ticket .bubble { max-width: 88%; padding: 10px 13px; border-radius: 16px; background: var(--surface-2); }
+.ticket .bubble.me { align-self: flex-end; background: var(--accent-soft); border-bottom-right-radius: 5px; }
+.ticket .bubble.them { border-bottom-left-radius: 5px; border: 1px solid var(--v-line, var(--line)); }
+.ticket .bubble p { margin: 0; }
+.ticket .bubble small { display: block; font-size: .72rem; color: var(--muted); margin-top: 4px; }
+.ticket { margin-bottom: 12px; }
+.msg-reply { text-decoration: none; color: inherit; border-color: var(--violet) !important; }
+.preview-bar { position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--violet); color: #fff; font-size: .88rem; }
+.preview-bar .btn { background: #fff; color: #111; }
+.churn { text-align: left; margin-top: 18px; display: grid; gap: 12px; width: 100%; max-width: 420px; }
+.churn-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+.churn-opts .chip { cursor: pointer; border: 1px solid var(--line); font: inherit; font-size: .85rem; }
+.churn-opts .chip.on { background: var(--violet); color: #fff; border-color: transparent; }
+.churn-done { display: flex; gap: 8px; align-items: center; justify-content: center; color: var(--pos); font-weight: 700; margin-top: 16px; }

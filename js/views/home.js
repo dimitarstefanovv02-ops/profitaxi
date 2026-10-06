@@ -141,8 +141,9 @@ function greeting() {
 // Съобщения от ProfiTaxi (или от фирмата) – показват се горе, докато не ги затвориш
 function messagesBox(redraw) {
   const list = store.myMessages().slice(-2);
-  if (!list.length) return null;
-  return h('div', { class: 'msgs' }, list.map((m) => h('div', { class: 'msg' },
+  const replies = store.myUnreadTickets();
+  if (!list.length && !replies) return null;
+  return h('div', { class: 'msgs' }, replies > 0 && h('a', { class: 'msg msg-reply', href: '#/help' }, h('span', { class: 'msg-ic' }, icon('inbox', 18)), h('div', { class: 'grow' }, h('b', null, 'Отговорихме ти'), h('p', null, 'Виж отговора в „Пиши ни“.')), icon('right', 18)), list.map((m) => h('div', { class: 'msg' },
     h('span', { class: 'msg-ic' }, icon('bell', 18)),
     h('div', { class: 'grow' }, h('b', null, m.title), h('p', null, m.text)),
     h('button', { class: 'icon-btn plain', 'aria-label': 'Затвори', onclick: () => { store.readMessage(m.id); redraw(); } }, icon('x', 18)))));

@@ -67,6 +67,8 @@ export function registerView({ go }) {
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
   const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
+  const promoFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('promo') || '';
+  const promo = input({ placeholder: 'напр. START2', value: promoFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const cc = BRAND ? null : cityCompanyPicker();
   const code = input({ placeholder: 'Кодът от One Taxi', autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   let carType = '';
@@ -91,11 +93,12 @@ export function registerView({ go }) {
       [!phone.value.trim(), 'Въведи телефон'],
       [!phoneOk, 'Потвърди телефона с кода от SMS'],
       [BRAND && !!store.checkAccessCode(code.value, ONE.company).error, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
+      [!BRAND && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
     ];
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
-    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : {}) });
+    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : { promo: promo.value }) });
     if (r.error) { err.textContent = r.error; return; }
     toast('Акаунтът е създаден');
     go('/onboarding');
@@ -112,6 +115,7 @@ export function registerView({ go }) {
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
         field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true),
+        !BRAND && field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
         INVITES_ON && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
       BRAND ? group('target', 'One Taxi',
         h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Акаунтът е само за шофьори на One Taxi'))),

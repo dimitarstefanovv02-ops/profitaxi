@@ -17,6 +17,7 @@ import { inviteView } from './views/invite.js';
 import { moneyView } from './views/money.js';
 import { meView } from './views/me.js';
 import { ideasView } from './views/ideas.js';
+import { helpView } from './views/help.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
@@ -29,7 +30,7 @@ const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
-  '/money': moneyView, '/me': meView, '/ideas': ideasView,
+  '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
 const TABS = [
@@ -37,8 +38,8 @@ const TABS = [
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Аз'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
-const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Аз' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/profile', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
+const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Аз', '/profile': 'Моят профил' };
 
 export const go = (path, replace) => {
   const url = '#' + path;
@@ -101,6 +102,7 @@ function mount(app, el, route, withNav) {
   clear(app).appendChild(el);
   // One изданието: лентата One × ProfiTaxi горе на всяка вътрешна страница
   if (BRAND && store.currentUser()) app.prepend(collabBar());
+  if (store.previewMode()) app.prepend(h('div', { class: 'preview-bar' }, icon('eye', 18), h('span', { class: 'grow' }, h('b', null, `Преглед като ${store.currentUser().name}`), ' – само за гледане, промените не се запазват'), h('button', { class: 'btn btn-sm', onclick: () => { store.endPreview(); window.close(); location.href = '/admin'; } }, 'Затвори')));
   if (withNav) app.appendChild(nav(route.name));
   if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
   lastRaw = route.raw;
@@ -108,7 +110,7 @@ function mount(app, el, route, withNav) {
 }
 
 function nav(active) {
-  const cur = PARENT[active] || active;
+  let cur = active; while (PARENT[cur]) cur = PARENT[cur];
   return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
     h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
       h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
@@ -123,6 +125,16 @@ function notBrandView() {
     h('button', { class: 'btn btn-ghost btn-lg', onclick: () => { store.logout(); go('/login'); } }, 'Изход'));
 }
 
+let churnPick = '';
+function churnBox() {
+  if (store.churnAsked()) return h('p', { class: 'churn-done' }, icon('check', 18), 'Благодарим за отговора!');
+  const comment = h('input', { class: 'input', maxlength: 200, placeholder: 'Още нещо? (по желание)' });
+  return h('section', { class: 'card churn' },
+    h('b', null, 'Защо спря? Помагаш ни да станем по-добри.'),
+    h('div', { class: 'churn-opts' }, Object.entries(store.CHURN_REASONS).map(([k, l]) => h('button', { class: cx('chip', churnPick === k && 'on'), onclick: () => { churnPick = k; render(); } }, l))),
+    churnPick && comment,
+    churnPick && h('button', { class: 'btn btn-page btn-block', onclick: () => { store.submitChurn(churnPick, comment.value); churnPick = ''; render(); } }, 'Изпрати'));
+}
 function lockView(user, access) {
   const blocked = access === 'blocked';
   return h('div', { class: 'lock' },
@@ -132,8 +144,13 @@ function lockView(user, access) {
       ? 'Акаунтът ти е временно спрян. Свържи се с нас, за да го активираме отново.'
       : 'Данните ти са запазени. Поднови абонамента, за да продължиш да ги виждаш и въвеждаш.'),
     h('a', { class: 'btn btn-primary btn-lg', href: 'mailto:support@profitaxi.bg' }, icon('phone', 20), 'Свържи се с нас'),
-    h('button', { class: 'btn btn-ghost btn-lg', onclick: () => { store.logout(); go('/login'); } }, 'Изход'));
+    h('button', { class: 'btn btn-ghost btn-lg', onclick: () => { store.logout(); go('/login'); } }, 'Изход'),
+    !blocked && !store.previewMode() && churnBox());
 }
+
+// Грешките в приложението стигат до админа („Контрол → Грешки“)
+window.addEventListener('error', (e) => { if (e.message) store.logError(e.message, parse().name.slice(1)); });
+window.addEventListener('unhandledrejection', (e) => store.logError(e.reason?.message || String(e.reason), parse().name.slice(1)));
 
 // Живите таймери на активната смяна
 function tickTimers() {

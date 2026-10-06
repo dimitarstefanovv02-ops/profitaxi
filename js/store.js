@@ -9,7 +9,7 @@ import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './co
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 9;
+const VERSION = 10;
 const listeners = new Set();
 let db = null;
 
@@ -27,11 +27,24 @@ function load() {
 function ensureExt() {
   db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
+  db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.churn ||= []; db.audit ||= [];
+  db.notDup ||= []; db.reviewed ||= [];
+  db.settings.goal ||= { paid: 100, date: `${new Date().getFullYear() + (new Date().getMonth() >= 9 ? 1 : 0)}-01-31` };
 }
 const digits = (p) => String(p || '').replace(/\D/g, '').replace(/^359/, '0');
 export const normPhone = digits;
 function registerAllCustom() { Object.values(db.profiles).forEach((p) => registerCustomCats(p.customCats)); }
-function persist() { localStorage.setItem(KEY, JSON.stringify(db)); }
+// „Виж като шофьор“: админът отваря приложението с ?preview=<id>. Само за гледане – нищо не се записва.
+let PREVIEW = null;
+try {
+  const q = new URLSearchParams(location.search).get('preview');
+  if (q) sessionStorage.setItem('profitaxi.preview', q);
+  PREVIEW = sessionStorage.getItem('profitaxi.preview');
+  if (PREVIEW && !localStorage.getItem(ADMIN_SESSION_KEY)) { sessionStorage.removeItem('profitaxi.preview'); PREVIEW = null; }
+} catch { PREVIEW = null; }
+export const previewMode = () => !!PREVIEW && !!me();
+export function endPreview() { try { sessionStorage.removeItem('profitaxi.preview'); } catch { /* */ } PREVIEW = null; }
+function persist() { if (PREVIEW) return; localStorage.setItem(KEY, JSON.stringify(db)); }
 function commit() { persist(); listeners.forEach((fn) => fn()); }
 export const onChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export function resetDemo() { localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
@@ -67,7 +80,7 @@ export function trialDaysLeft(user) {
 // ================= Вход на шофьор =================
 export function currentUser() {
   load();
-  const id = localStorage.getItem(SESSION_KEY);
+  const id = PREVIEW || localStorage.getItem(SESSION_KEY);
   const u = db.users.find((x) => x.id === id && x.role === 'driver');
   return u ? clone(u) : null;
 }
@@ -81,7 +94,7 @@ export function login(email, password, { company } = {}) {
   commit();
   return { user: clone(u) };
 }
-export function logout() { localStorage.removeItem(SESSION_KEY); listeners.forEach((fn) => fn()); }
+export function logout() { if (PREVIEW) endPreview(); else localStorage.removeItem(SESSION_KEY); listeners.forEach((fn) => fn()); }
 
 function validateAccount({ name, email, password, city, company, carType }, { skipPassword } = {}) {
   if (!name?.trim()) return 'Въведи име';
@@ -132,16 +145,31 @@ export function register(f) {
   if (code && !referrer) return { error: 'Няма такъв код за покана. Провери го или остави полето празно.' };
   const perr = validatePhone(f.phone); if (perr) return { error: perr };
   if (!phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
-  let accessCode = null;
+  let accessCode = null, promo = null;
   if (f.accessCode != null) { const r = checkAccessCode(f.accessCode, f.company); if (r.error) return { error: r.error }; accessCode = r.code.code; }
+  if (f.promo && String(f.promo).trim()) { const r = checkPromo(f.promo); if (r.error) return { error: r.error }; promo = r.promo; }
   const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
   u.phoneVerified = true;
+  u.source = accessCode ? 'code' : promo ? 'promo' : referrer ? 'invite' : (f.source || 'site');
   if (accessCode) { u.accessCode = accessCode; db.codes.find((x) => x.code === accessCode).uses++; }
+  if (promo) {
+    const pr = db.promos.find((x) => x.code === promo.code); pr.uses++; u.promo = pr.code;
+    if (pr.kind === 'months') u.subscription.validUntil = addDays(u.subscription.validUntil, 30 * pr.value);
+    else u.discount = pr.value; // % отстъпка за първия платен месец
+  }
   if (referrer) { u.referredBy = referrer.id; applyReferralRewards(referrer); }
   db.profiles[u.id].tour = 'pending'; // кратка разходка при първото влизане
   localStorage.setItem(SESSION_KEY, u.id);
   commit();
   return { user: clone(u) };
+}
+// Промо кодове: „2 месеца безплатно“ или „-50% първия месец“, с лимит и срок
+export function checkPromo(code) {
+  load(); const c = db.promos.find((x) => x.code === String(code || '').trim().toUpperCase());
+  if (!c || !c.active) return { error: 'Няма такъв промо код' };
+  if (c.expires && c.expires < todayStr()) return { error: 'Промо кодът е изтекъл' };
+  if (c.limit && c.uses >= c.limit) return { error: 'Промо кодът е използван максимален брой пъти' };
+  return { promo: clone(c) };
 }
 function newDriver({ name, email, password, phone = '', city, company, trialDays = 14, plan = 'trial', profile = {} }) {
   const today = todayStr();
@@ -149,7 +177,7 @@ function newDriver({ name, email, password, phone = '', city, company, trialDays
     id: uid(), role: 'driver', name: name.trim(), email: email.trim(), password, phone, city: city.trim(), company: company.trim(),
     status: 'active', createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(),
     subscription: { plan, validUntil: addDays(today, trialDays) },
-    refCode: makeRefCode(name), referredBy: null, refMonths: 0,
+    refCode: makeRefCode(name), referredBy: null, refMonths: 0, tags: [], source: 'site',
   };
   db.users.push(u);
   db.profiles[u.id] = {
@@ -190,13 +218,17 @@ function wipeUser(id) {
   db.reservations = db.reservations.filter((x) => x.userId !== id);
   if (db.notes) delete db.notes[id];
   if (db.nps) db.nps = db.nps.filter((x) => x.userId !== id);
+  if (db.tickets) db.tickets = db.tickets.filter((x) => x.userId !== id);
+  if (db.payments) db.payments = db.payments.filter((x) => x.userId !== id);
+  if (db.churn) db.churn = db.churn.filter((x) => x.userId !== id);
 }
-function me() { load(); const id = localStorage.getItem(SESSION_KEY); return db.users.find((x) => x.id === id && x.role === 'driver'); }
+function me() { load(); const id = PREVIEW || localStorage.getItem(SESSION_KEY); return db.users.find((x) => x.id === id && x.role === 'driver'); }
 function myId() { const u = me(); if (!u) throw new Error('not signed in'); return u.id; }
 
 // ================= Съобщения, анкета, предложения, функции, използване (шофьор) =================
-const forMe = (t, u) => !t || ((!t.city || t.city === u.city) && (!t.company || t.company === u.company));
-export function myMessages() { const u = me(); if (!u) return []; return clone(db.messages.filter((m) => forMe(m.target, u) && !(m.readBy || []).includes(u.id))); }
+export const forUser = (t, u) => !t || ((!t.city || t.city === u.city) && (!t.company || t.company === u.company) && (!t.userIds || t.userIds.includes(u.id)) && (!t.tag || (u.tags || []).includes(t.tag)));
+const isOut = (m) => !m.sendAt || m.sendAt <= new Date().toISOString(); // насрочените излизат в часа си
+export function myMessages() { const u = me(); if (!u) return []; return clone(db.messages.filter((m) => isOut(m) && forUser(m.target, u) && !(m.readBy || []).includes(u.id))); }
 export function readMessage(id) { const u = me(); const m = db.messages.find((x) => x.id === id); if (u && m) { m.readBy = [...new Set([...(m.readBy || []), u.id])]; commit(); } }
 export function npsDue() {
   const u = me(); if (!u) return false;
@@ -216,8 +248,36 @@ export function flagOn(key) {
   if (!f.on) return false; const u = me(); if (!u) return true;
   if (f.target === 'company') return u.company === f.company;
   if (f.target === 'percent') return hashPct(u.id + key) < (f.percent || 0);
+  if (f.target === 'tag') return (u.tags || []).includes(f.tag);
   return true;
 }
+// ---- Помощ: шофьорът пише, админът отговаря ----
+export const TICKET_TOPICS = { login: 'Вход и парола', pay: 'Абонамент и плащане', shift: 'Въвеждане на смяна', reports: 'Отчети и статистика', other: 'Друго' };
+export function myTickets() { const u = me(); if (!u) return []; return clone(db.tickets.filter((t) => t.userId === u.id)).sort((a, b) => b.at.localeCompare(a.at)); }
+export function sendTicket({ topic, text }) {
+  const u = me(); if (!u || !text?.trim()) return { error: 'Напиши съобщението' };
+  const t = { id: uid(), userId: u.id, name: u.name, city: u.city, company: u.company, topic: TICKET_TOPICS[topic] ? topic : 'other', at: new Date().toISOString(), status: 'open', adminUnread: true, driverUnread: false, thread: [{ by: 'driver', text: text.trim(), at: new Date().toISOString() }] };
+  db.tickets.push(t); commit(); return { ticket: clone(t) };
+}
+export function replyMyTicket(id, text) { const u = me(); const t = db.tickets.find((x) => x.id === id && x.userId === u?.id); if (!t || !text?.trim()) return; t.thread.push({ by: 'driver', text: text.trim(), at: new Date().toISOString() }); t.status = 'open'; t.adminUnread = true; commit(); }
+export function readMyTickets() { const u = me(); if (!u) return; let ch = false; db.tickets.forEach((t) => { if (t.userId === u.id && t.driverUnread) { t.driverUnread = false; ch = true; } }); if (ch) commit(); }
+export const myUnreadTickets = () => { const u = me(); return u ? db.tickets.filter((t) => t.userId === u.id && t.driverUnread).length : 0; };
+// ---- Защо спря: пита се веднъж при изтекъл абонамент ----
+export const CHURN_REASONS = { price: 'Скъпо е', noTime: 'Нямам време да въвеждам', notUseful: 'Не ми е полезно', quit: 'Спрях да карам такси', other_app: 'Ползвам друго', other: 'Друго' };
+export function churnAsked() { const u = me(); return !!u && db.churn.some((x) => x.userId === u.id && x.validUntil === u.subscription?.validUntil); }
+export function submitChurn(reason, comment = '') { const u = me(); if (!u) return; db.churn.push({ id: uid(), userId: u.id, name: u.name, city: u.city, company: u.company, reason, comment: comment.trim(), validUntil: u.subscription?.validUntil, at: new Date().toISOString() }); commit(); }
+// ---- Грешки в приложението (за админа) ----
+export function logError(msg, page = '') {
+  try {
+    load(); const ua = navigator.userAgent;
+    const device = /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'Друго';
+    const browser = /Edg\//.test(ua) ? 'Edge' : /SamsungBrowser/.test(ua) ? 'Samsung' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Друг';
+    const u = me();
+    db.errors.unshift({ id: uid(), msg: String(msg).slice(0, 200), page, userId: u?.id || null, name: u?.name || '—', device, browser, at: new Date().toISOString() });
+    db.errors = db.errors.slice(0, 300); persist();
+  } catch { /* грешка при записа на грешка – пропускаме */ }
+}
+
 // Броим кои страници се отварят (без съдържание – само име на страницата)
 export function trackPage(page) {
   const u = me(); if (!u) return;
@@ -450,79 +510,170 @@ export function adminUser() {
   const u = db.users.find((x) => x.id === id && x.role === 'admin');
   return u ? clone(u) : null;
 }
+export const ADMIN_ROLES = { owner: 'Собственик', support: 'Поддръжка', partner: 'Партньор' };
+export const adminRole = () => adminUser()?.adminRole || 'owner';
 export function adminLogin(email, password) {
   load();
   const u = db.users.find((x) => norm(x.email) === norm(email) && x.role === 'admin');
   if (!u || u.password !== password) return { error: 'Грешен имейл или парола' };
+  // Двуфакторно влизане: след паролата – код по SMS (в демото се показва на екрана)
+  if (db.settings.twoFactor) {
+    const code = String(100000 + Math.floor(Math.random() * 900000));
+    db.sms['admin:' + u.id] = { code, at: Date.now() }; persist();
+    return { twoFactor: true, id: u.id, demoCode: code, phone: u.phone || '' };
+  }
   localStorage.setItem(ADMIN_SESSION_KEY, u.id);
   return { user: clone(u) };
 }
+export function adminVerify2fa(id, code) {
+  load(); const r = db.sms['admin:' + id];
+  if (!r || Date.now() - r.at > 10 * 60000) return { error: 'Кодът е изтекъл. Влез отново.' };
+  if (String(code).trim() !== r.code) return { error: 'Грешен код' };
+  delete db.sms['admin:' + id]; persist();
+  localStorage.setItem(ADMIN_SESSION_KEY, id);
+  return { ok: true };
+}
 export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); }
 function requireAdmin() { if (!adminUser()) throw new Error('admin only'); }
+function requireOwner() { if (adminRole() !== 'owner') throw new Error('owner only'); }
+// Партньорът вижда само шофьорите на своята фирма
+const visible = (u) => { const a = adminUser(); return a?.adminRole !== 'partner' || u.company === a.company; };
+// Дневник на действията: кой админ какво е променил
+function audit(text) { const a = adminUser(); db.audit.unshift({ at: new Date().toISOString(), by: a?.email || '—', text }); db.audit = db.audit.slice(0, 1000); }
+const nameOf = (id) => db.users.find((x) => x.id === id)?.name || '—';
 
 export const admin = {
-  drivers() { requireAdmin(); return clone(db.users.filter((u) => u.role === 'driver')); },
-  driverData(id) { requireAdmin(); return userData(id); },
+  drivers() { requireAdmin(); return clone(db.users.filter((u) => u.role === 'driver' && visible(u))); },
+  driverData(id) { requireAdmin(); const u = db.users.find((x) => x.id === id); return u && visible(u) ? userData(id) : { user: null }; },
   allData() {
     requireAdmin();
-    return db.users.filter((u) => u.role === 'driver').map((u) => userData(u.id));
+    return db.users.filter((u) => u.role === 'driver' && visible(u)).map((u) => userData(u.id));
   },
-  setStatus(id, status) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.status = status; commit(); } },
-  setSubscription(id, validUntil, plan = 'paid') { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.subscription = { ...u.subscription, plan, validUntil }; if (plan === 'paid' && !u.subscription.paidSince) u.subscription.paidSince = todayStr(); commit(); } },
-  extend(id, days) {
+  role: () => adminRole(),
+  setStatus(id, status) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.status = status; audit(`${status === 'blocked' ? 'Спря' : 'Пусна'} достъпа на ${u.name}`); commit(); } },
+  setSubscription(id, validUntil, plan = 'paid') { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.subscription = { ...u.subscription, plan, validUntil }; if (plan === 'paid' && !u.subscription.paidSince) u.subscription.paidSince = todayStr(); audit(`Смени абонамента на ${u.name} до ${validUntil}`); commit(); } },
+  extend(id, days, { silent } = {}) {
     requireAdmin();
     const u = db.users.find((x) => x.id === id); if (!u) return;
     const base = u.subscription && u.subscription.validUntil > todayStr() ? u.subscription.validUntil : todayStr();
     u.subscription = { ...u.subscription, plan: 'paid', validUntil: addDays(base, days), paidSince: u.subscription?.paidSince || todayStr() };
+    if (!silent) audit(`Удължи абонамента на ${u.name} с ${days} дни`);
     commit();
   },
-  resetPassword(id, pw) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.password = pw; commit(); } },
+  resetPassword(id, pw) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.password = pw; audit(`Смени паролата на ${u.name}`); commit(); } },
   createDriver(f) {
     requireAdmin();
     const err = validateAccount(f) || validatePhone(f.phone);
     if (err) return { error: err };
     const u = newDriver({ ...f, trialDays: f.days || 30, plan: 'paid', profile: { carType: f.carType, fuel: f.fuel || 'petrol_lpg' } });
-    u.subscription.paidSince = todayStr();
+    u.subscription.paidSince = todayStr(); u.source = 'admin';
+    audit(`Създаде шофьор ${u.name}`);
     commit(); return { user: clone(u) };
   },
   updateDriver(id, { city, company, phone, name }) {
     requireAdmin(); const u = db.users.find((x) => x.id === id); if (!u) return;
     if (city) u.city = city; if (company) u.company = company; if (phone != null) u.phone = phone; if (name) u.name = name;
+    audit(`Промени данните на ${u.name}`);
     commit();
   },
-  deleteDriver(id) { requireAdmin(); wipeUser(id); commit(); },
+  deleteDriver(id) { requireAdmin(); audit(`Изтри шофьор ${nameOf(id)}`); wipeUser(id); commit(); },
+  setTags(id, tags) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (!u) return; u.tags = [...new Set(tags.map((t) => t.trim()).filter(Boolean))]; audit(`Етикети на ${u.name}: ${u.tags.join(', ') || 'няма'}`); commit(); },
+  addTagMany(ids, tag) { requireAdmin(); const t = tag.trim(); if (!t) return; db.users.filter((u) => ids.includes(u.id)).forEach((u) => { u.tags = [...new Set([...(u.tags || []), t])]; }); audit(`Етикет „${t}“ на ${ids.length} шофьори`); commit(); },
+  allTags() { requireAdmin(); return [...new Set(db.users.flatMap((u) => u.tags || []))].sort((a, b) => a.localeCompare(b, 'bg')); },
   settings() { requireAdmin(); return clone(db.settings); },
-  saveSettings(s) { requireAdmin(); Object.assign(db.settings, s); commit(); },
+  saveSettings(s) { requireAdmin(); Object.assign(db.settings, s); audit(`Промени настройките (${Object.keys(s).join(', ')})`); commit(); },
   // масови действия
-  extendMany(ids, days) { ids.forEach((id) => this.extend(id, days)); },
-  setStatusMany(ids, status) { requireAdmin(); db.users.filter((u) => ids.includes(u.id)).forEach((u) => { u.status = status; }); commit(); },
+  extendMany(ids, days) { ids.forEach((id) => this.extend(id, days, { silent: true })); audit(`+${days} дни за ${ids.length} шофьори`); commit(); },
+  setStatusMany(ids, status) { requireAdmin(); db.users.filter((u) => ids.includes(u.id)).forEach((u) => { u.status = status; }); audit(`${status === 'blocked' ? 'Спря' : 'Пусна'} достъпа на ${ids.length} шофьори`); commit(); },
   // съобщения
-  messages() { requireAdmin(); return clone(db.messages).sort((a, b) => b.at.localeCompare(a.at)); },
-  sendMessage({ title, text, target }) { requireAdmin(); db.messages.push({ id: uid(), title: title.trim(), text: text.trim(), target: target || null, at: new Date().toISOString(), readBy: [] }); commit(); },
-  deleteMessage(id) { requireAdmin(); db.messages = db.messages.filter((m) => m.id !== id); commit(); },
+  messages() { requireAdmin(); return clone(db.messages).sort((a, b) => (b.sendAt || b.at).localeCompare(a.sendAt || a.at)); },
+  sendMessage({ title, text, target, sendAt }) { requireAdmin(); db.messages.push({ id: uid(), title: title.trim(), text: text.trim(), target: target || null, at: new Date().toISOString(), sendAt: sendAt || null, readBy: [] }); audit(`${sendAt ? 'Насрочи' : 'Изпрати'} съобщение „${title.trim()}“`); commit(); },
+  deleteMessage(id) { requireAdmin(); db.messages = db.messages.filter((m) => m.id !== id); audit('Изтри съобщение'); commit(); },
+  reach(target) { requireAdmin(); return db.users.filter((u) => u.role === 'driver' && visible(u) && forUser(target, u)).length; },
+  // помощ (входящи)
+  tickets() { requireAdmin(); return clone(db.tickets.filter((t) => { const u = db.users.find((x) => x.id === t.userId); return !u || visible(u); })).sort((a, b) => (b.thread.at(-1)?.at || b.at).localeCompare(a.thread.at(-1)?.at || a.at)); },
+  replyTicket(id, text) { requireAdmin(); const t = db.tickets.find((x) => x.id === id); if (!t || !text?.trim()) return; t.thread.push({ by: 'admin', name: adminUser().name, text: text.trim(), at: new Date().toISOString() }); t.driverUnread = true; t.adminUnread = false; audit(`Отговори на ${t.name}`); commit(); },
+  readTicket(id) { requireAdmin(); const t = db.tickets.find((x) => x.id === id); if (t && t.adminUnread) { t.adminUnread = false; commit(); } },
+  setTicketStatus(id, status) { requireAdmin(); const t = db.tickets.find((x) => x.id === id); if (t) { t.status = status; t.adminUnread = false; commit(); } },
   // кодове за достъп
-  codes() { requireAdmin(); return clone(db.codes); },
+  codes() { requireAdmin(); return clone(db.codes.filter((c) => adminRole() !== 'partner' || c.company === adminUser().company)); },
   saveCode(c) { requireAdmin(); const code = c.code.trim().toUpperCase(); if (!code) return { error: 'Въведи код' }; const ex = db.codes.find((x) => x.code === code);
-    if (ex && !c.edit) return { error: 'Има такъв код' }; if (ex) Object.assign(ex, { ...c, code }); else db.codes.push({ uses: 0, active: true, ...c, code, at: new Date().toISOString() }); delete db.codes.find((x) => x.code === code).edit; commit(); return { ok: true }; },
-  toggleCode(code) { requireAdmin(); const c = db.codes.find((x) => x.code === code); if (c) { c.active = !c.active; commit(); } },
-  deleteCode(code) { requireAdmin(); db.codes = db.codes.filter((x) => x.code !== code); commit(); },
+    if (ex && !c.edit) return { error: 'Има такъв код' }; if (ex) Object.assign(ex, { ...c, code }); else db.codes.push({ uses: 0, active: true, ...c, code, at: new Date().toISOString() }); delete db.codes.find((x) => x.code === code).edit; audit(`Създаде код ${code}`); commit(); return { ok: true }; },
+  toggleCode(code) { requireAdmin(); const c = db.codes.find((x) => x.code === code); if (c) { c.active = !c.active; audit(`${c.active ? 'Пусна' : 'Спря'} код ${code}`); commit(); } },
+  deleteCode(code) { requireAdmin(); db.codes = db.codes.filter((x) => x.code !== code); audit(`Изтри код ${code}`); commit(); },
+  // промо кодове
+  promos() { requireAdmin(); return clone(db.promos); },
+  savePromo(p) { requireAdmin(); const code = String(p.code || '').trim().toUpperCase(); if (!code) return { error: 'Въведи код' }; if (db.promos.some((x) => x.code === code)) return { error: 'Има такъв код' };
+    if (!(p.value > 0)) return { error: p.kind === 'months' ? 'Въведи брой месеци' : 'Въведи процент' };
+    db.promos.push({ uses: 0, active: true, limit: 0, expires: null, ...p, code, at: new Date().toISOString() }); audit(`Създаде промо код ${code}`); commit(); return { ok: true }; },
+  togglePromo(code) { requireAdmin(); const c = db.promos.find((x) => x.code === code); if (c) { c.active = !c.active; commit(); } },
+  deletePromo(code) { requireAdmin(); db.promos = db.promos.filter((x) => x.code !== code); audit(`Изтри промо код ${code}`); commit(); },
+  // плащания и фактури
+  payments() { requireAdmin(); return clone(db.payments.filter((p) => { const u = db.users.find((x) => x.id === p.userId); return u && visible(u); })).sort((a, b) => b.at.localeCompare(a.at)); },
+  retryPayment(id) { requireAdmin(); const p = db.payments.find((x) => x.id === id); if (!p) return; p.status = 'paid'; p.at = new Date().toISOString(); p.invoice = nextInvoice(); this.extend(p.userId, 30, { silent: true }); audit(`Платено отново: ${nameOf(p.userId)}`); commit(); },
+  remind(userIds, title, text) { requireAdmin(); db.messages.push({ id: uid(), title, text, target: { userIds }, at: new Date().toISOString(), readBy: [] }); audit(`Напомняне до ${userIds.length} шофьори`); commit(); },
+  // проверки
+  notDup() { requireAdmin(); return [...db.notDup]; },
+  markNotDup(key) { requireAdmin(); db.notDup = [...new Set([...db.notDup, key])]; audit('Отбеляза „не е дубликат“'); commit(); },
+  reviewed() { requireAdmin(); return [...db.reviewed]; },
+  markReviewed(ids) { requireAdmin(); db.reviewed = [...new Set([...db.reviewed, ...ids])].slice(-3000); commit(); },
+  errors() { requireAdmin(); return clone(db.errors); },
+  clearErrors() { requireAdmin(); db.errors = []; audit('Изчисти грешките'); commit(); },
+  churn() { requireAdmin(); return clone(db.churn.filter((c) => { const u = db.users.find((x) => x.id === c.userId); return !u || visible(u); })); },
+  audit() { requireAdmin(); return clone(db.audit); },
+  // админи и роли (само собственикът)
+  admins() { requireAdmin(); return clone(db.users.filter((u) => u.role === 'admin')).map((u) => ({ ...u, password: undefined, adminRole: u.adminRole || 'owner' })); },
+  saveAdmin({ email, name, password, adminRole: r, company }) {
+    requireAdmin(); requireOwner();
+    if (!/^\S+@\S+\.\S+$/.test(email || '')) return { error: 'Невалиден имейл' };
+    if (db.users.some((x) => norm(x.email) === norm(email))) return { error: 'Има акаунт с този имейл' };
+    if ((password || '').length < 6) return { error: 'Паролата трябва да е поне 6 символа' };
+    if (r === 'partner' && !company) return { error: 'Избери фирма за партньора' };
+    db.users.push({ id: uid(), role: 'admin', adminRole: r, company: r === 'partner' ? company : null, name: name?.trim() || email, email: email.trim(), password, status: 'active', createdAt: new Date().toISOString() });
+    audit(`Добави админ ${email} (${ADMIN_ROLES[r]})`); commit(); return { ok: true };
+  },
+  deleteAdmin(id) { requireAdmin(); requireOwner(); if (id === adminUser().id) return; const u = db.users.find((x) => x.id === id && x.role === 'admin'); if (!u) return; db.users = db.users.filter((x) => x !== u); audit(`Премахна админ ${u.email}`); commit(); },
+  // архив
+  exportAll() { requireAdmin(); requireOwner(); return clone(db); },
+  restoreAll(data) {
+    requireAdmin(); requireOwner();
+    if (!data || data.version !== VERSION || !Array.isArray(data.users) || !data.users.some((u) => u.role === 'admin')) return { error: 'Файлът не е архив на ProfiTaxi от тази версия' };
+    const me0 = adminUser(); db = data; ensureExt();
+    if (!db.users.some((u) => u.id === me0.id)) localStorage.removeItem(ADMIN_SESSION_KEY);
+    audit('Възстанови данните от архив'); commit(); return { ok: true };
+  },
   // бележки и дневник на достъпа
   notes(id) { requireAdmin(); return clone(db.notes[id] || []); },
   addNote(id, text) { requireAdmin(); if (!text.trim()) return; (db.notes[id] ||= []).unshift({ text: text.trim(), at: new Date().toISOString(), by: adminUser().email }); commit(); },
-  log(userId, action) { requireAdmin(); const u = db.users.find((x) => x.id === userId); db.accessLog.unshift({ at: new Date().toISOString(), by: adminUser().email, userId, name: u?.name || '—', action }); db.accessLog = db.accessLog.slice(0, 500); persist(); },
+  log(userId, action) { requireAdmin(); if (action === 'delete' || action === 'export') audit(`${action === 'delete' ? 'Изтри данните на' : 'Свали данните на'} ${nameOf(userId)}`); const u = db.users.find((x) => x.id === userId); db.accessLog.unshift({ at: new Date().toISOString(), by: adminUser().email, userId, name: u?.name || '—', action }); db.accessLog = db.accessLog.slice(0, 500); persist(); },
   accessLog() { requireAdmin(); return clone(db.accessLog); },
   exportDriver(id) { requireAdmin(); this.log(id, 'export'); const d = userData(id); return { ...d, notes: db.notes[id] || [], nps: db.nps.filter((x) => x.userId === id), exportedAt: new Date().toISOString() }; },
   // развитие
   usage() { requireAdmin(); return clone(db.usage); },
   nps() { requireAdmin(); return clone(db.nps); },
   ideas() { requireAdmin(); return clone(db.ideas).sort((a, b) => b.votes.length - a.votes.length); },
-  setIdea(id, status) { requireAdmin(); const i = db.ideas.find((x) => x.id === id); if (i) { i.status = status; commit(); } },
+  setIdea(id, status) { requireAdmin(); const i = db.ideas.find((x) => x.id === id); if (i) { const was = i.status; i.status = status; if (status === 'done' && was !== 'done') ideaDone(i); commit(); } },
   flags() { requireAdmin(); return clone(db.flags); },
-  saveFlag(f) { requireAdmin(); const ex = db.flags.find((x) => x.key === f.key); if (ex) Object.assign(ex, f); else db.flags.push(f); commit(); },
+  // Функция, свързана с предложение: щом се пусне, предложението става „Готово“ и гласувалите получават съобщение
+  saveFlag(f) {
+    requireAdmin(); const ex = db.flags.find((x) => x.key === f.key); const wasOn = ex?.on;
+    if (ex) Object.assign(ex, f); else db.flags.push(f);
+    const fl = db.flags.find((x) => x.key === f.key);
+    audit(`Функция „${fl.label}“: ${fl.on ? 'включена' : 'изключена'}`);
+    if (fl.on && !wasOn && fl.ideaId) { const i = db.ideas.find((x) => x.id === fl.ideaId); if (i && i.status !== 'done') { i.status = 'done'; ideaDone(i); } }
+    commit();
+  },
   // известия, които вече са видени
   alertsSeen() { requireAdmin(); return [...db.alertsSeen]; },
   markAlertsSeen(keys) { requireAdmin(); db.alertsSeen = [...new Set([...db.alertsSeen, ...keys])].slice(-2000); commit(); },
 };
+
+function ideaDone(i) {
+  if (!i.votes?.length) return;
+  db.messages.push({ id: uid(), title: 'Твоето предложение е готово', text: `„${i.text}“ вече е в приложението. Благодарим, че гласува!`, target: { userIds: [...i.votes] }, at: new Date().toISOString(), readBy: [] });
+}
+let invoiceNo = 0;
+function nextInvoice() { invoiceNo = Math.max(invoiceNo, ...db.payments.map((p) => Number(String(p.invoice || '').replace(/\D/g, '')) || 0)) + 1; return 'PT-' + String(invoiceNo).padStart(6, '0'); }
 
 // ================= Демо данни =================
 const FIRST = ['Иван', 'Георги', 'Мария', 'Стоян', 'Николай', 'Димитър', 'Петър', 'Христо', 'Тодор', 'Елена', 'Красимир', 'Васил', 'Атанас', 'Росен', 'Пламен', 'Йордан', 'Светлин', 'Милена', 'Борислав', 'Стефан', 'Калоян', 'Ангел'];
@@ -532,7 +683,9 @@ const LAT = { 'Иван': 'ivan', 'Георги': 'georgi', 'Мария': 'maria
 function seed() {
   db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: 3.99 } };
   const today = todayStr();
-  db.users.push({ id: 'admin', role: 'admin', name: 'Администратор', email: 'admin@profitaxi.bg', password: 'admin123', status: 'active', createdAt: new Date().toISOString() });
+  db.users.push({ id: 'admin', role: 'admin', adminRole: 'owner', name: 'Администратор', email: 'admin@profitaxi.bg', password: 'admin123', phone: '0888 000 111', status: 'active', createdAt: new Date().toISOString() });
+  db.users.push({ id: 'admin-support', role: 'admin', adminRole: 'support', name: 'Поддръжка', email: 'support@profitaxi.bg', password: 'support123', status: 'active', createdAt: new Date().toISOString() });
+  db.users.push({ id: 'admin-one', role: 'admin', adminRole: 'partner', company: 'ONE Такси – 032 22 22', name: 'One Taxi', email: 'one@partner.bg', password: 'one123', status: 'active', createdAt: new Date().toISOString() });
 
   // Основните демо профили – фиксирани, за да могат да се пробват
   const fixed = [
@@ -623,6 +776,57 @@ function seedExtra(today) {
   // дубликат за демо: двама шофьори с един и същ телефон и номер на кола
   const a = drivers[8], b = drivers[17];
   if (a && b) { b.phone = a.phone; db.profiles[b.id].car = { ...(db.profiles[b.id].car || {}), plate: 'СВ 1234 АВ' }; db.profiles[a.id].car = { ...(db.profiles[a.id].car || {}), plate: 'СВ 1234 АВ' }; }
+  seedMore(today, drivers, r, ago);
+}
+// Демо: етикети, откъде са дошли, плащания и фактури, промо кодове, помощ, причини за отказ, грешки, странни смени
+function seedMore(today, drivers, r, ago) {
+  const price = db.settings.price;
+  drivers.forEach((u, i) => {
+    u.tags = u.tags || [];
+    u.source = u.accessCode ? 'code' : u.referredBy ? 'invite' : ['site', 'site', 'site', 'promo', 'admin'][i % 5];
+    if (u.source === 'promo') u.promo = 'START2';
+  });
+  const tag = (n, t) => drivers[n] && drivers[n].tags.push(t);
+  tag(0, 'VIP'); tag(0, 'тестер'); tag(3, 'тестер'); tag(6, 'VIP'); tag(11, 'проблемен'); tag(14, 'тестер'); tag(20, 'VIP');
+  drivers.filter((u) => u.company === 'ONE Такси – 032 22 22').forEach((u) => u.tags.push('от One'));
+  // Плащания: всеки месец от началото на платения период; няколко неуспешни
+  let inv = 0; const failedIdx = new Set([2, 9, 16]);
+  drivers.forEach((u, i) => {
+    const s = u.subscription; if (!s.paidSince) return;
+    const end = s.validUntil < today ? s.validUntil : today;
+    for (let d = s.paidSince; d <= end; d = addDays(d, 30)) {
+      db.payments.push({ id: uid(), userId: u.id, amount: price, at: new Date(d + 'T10:00:00').toISOString(), status: 'paid', invoice: 'PT-' + String(++inv).padStart(6, '0'), method: i % 3 ? 'Карта' : 'Apple Pay' });
+    }
+    if (failedIdx.has(i)) db.payments.push({ id: uid(), userId: u.id, amount: price, at: ago(1 + (i % 4)), status: 'failed', reason: ['Недостатъчна наличност', 'Изтекла карта', 'Отказана от банката'][i % 3], method: 'Карта' });
+  });
+  db.promos.push({ code: 'START2', kind: 'months', value: 2, limit: 100, uses: drivers.filter((u) => u.promo === 'START2').length, expires: addDays(today, 60), active: true, note: 'Реклама във Facebook', at: ago(40) });
+  db.promos.push({ code: 'PLOVDIV50', kind: 'percent', value: 50, limit: 50, uses: 7, expires: addDays(today, 25), active: true, note: 'Пловдив, първия месец', at: ago(15) });
+  // Помощ: въпроси от шофьорите
+  const tk = (n, topic, text, d, reply, status = 'open') => { const u = drivers[n]; if (!u) return; const t = { id: uid(), userId: u.id, name: u.name, city: u.city, company: u.company, topic, at: ago(d), status, adminUnread: !reply, driverUnread: !!reply, thread: [{ by: 'driver', text, at: ago(d) }] }; if (reply) t.thread.push({ by: 'admin', name: 'Администратор', text: reply, at: ago(d - 0.2) }); db.tickets.push(t); };
+  tk(4, 'pay', 'Платих, но още пише, че абонаментът изтича. Може ли да проверите?', 0.3);
+  tk(7, 'shift', 'Как да въведа смяна, която е минала през полунощ?', 1.2);
+  tk(12, 'login', 'Забравих си паролата и не идва имейл.', 2.5, 'Изпратих ви нова парола по SMS. Сменете я от „Моят профил“.', 'closed');
+  tk(15, 'reports', 'Може ли отчетът да излиза и по седмици?', 4, 'Да – в „Пари“ избери „Седмица“ горе.', 'closed');
+  tk(19, 'pay', 'Искам фактура на фирма за абонамента.', 0.8);
+  tk(22, 'shift', 'Не мога да добавя бакшиш след като приключа смяната.', 3);
+  // Защо спряха
+  const reasons = ['price', 'noTime', 'quit', 'notUseful', 'price', 'other_app'];
+  drivers.filter((u) => u.subscription.validUntil < today).forEach((u, i) => db.churn.push({ id: uid(), userId: u.id, name: u.name, city: u.city, company: u.company, reason: reasons[i % reasons.length], comment: ['', 'Ще се върна напролет', '', ''][i % 4], validUntil: u.subscription.validUntil, at: ago(1 + i) }));
+  // Грешки в приложението
+  const err = (msg, page, n, dev, br, d) => db.errors.push({ id: uid(), msg, page, userId: drivers[n]?.id, name: drivers[n]?.name || '—', device: dev, browser: br, at: ago(d) });
+  err('Снимката е твърде голяма', 'profile', 5, 'iPhone', 'Safari', 0.5); err('Снимката е твърде голяма', 'profile', 9, 'iPhone', 'Safari', 2);
+  err('Cannot read properties of undefined (reading \'km\')', 'shift', 13, 'Android', 'Samsung', 1); err('Мрежата не е достъпна', 'home', 2, 'Android', 'Chrome', 3);
+  // Странни смени: без километри, 20+ часа, огромен оборот
+  const odd = (n, patch) => { const u = drivers[n]; const sh = db.shifts.filter((x) => x.userId === u?.id && x.end).sort((x, y) => y.start.localeCompare(x.start))[2]; if (sh) patch(sh); };
+  odd(5, (sh) => { sh.kmEnd = sh.kmStart; });
+  odd(10, (sh) => { sh.end = new Date(new Date(sh.start).getTime() + 21.5 * 3600000).toISOString(); });
+  odd(18, (sh) => { sh.income.cash = 2350; });
+  odd(21, (sh) => { sh.kmEnd = sh.kmStart + 960; });
+  // Функция за част от шофьорите, свързана с най-гласуваното предложение
+  const top = db.ideas.find((i) => i.status === 'planned');
+  db.flags.push({ key: 'receipts', label: 'Сканиране на касова бележка', on: false, target: 'percent', percent: 20, ideaId: top?.id || null });
+  db.messages.push({ id: uid(), title: 'Напомняне: техническият преглед', text: 'Проверете датата на прегледа в „Постоянни разходи“.', target: { tag: 'VIP' }, at: ago(0), sendAt: new Date(Date.now() + 2 * 86400000).toISOString(), readBy: [] });
+  db.audit.push({ at: ago(1), by: 'admin@profitaxi.bg', text: 'Създаде промо код PLOVDIV50' }, { at: ago(3), by: 'support@profitaxi.bg', text: 'Отговори на ' + (drivers[12]?.name || '') });
 }
 
 // Демо шофьорът за пробване и за снимките на сайта. Измислен човек, кола и фирма.
