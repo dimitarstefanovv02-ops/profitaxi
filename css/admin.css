@@ -531,3 +531,21 @@ body.admin .btn.arr-toggle.on { background: var(--violet, #7C3AED); color: #fff;
 .att-row .att-main { min-width: 0; }
 .flag-idea { max-width: 100%; min-width: 0; flex-wrap: wrap; }
 .flag-idea select.input { min-width: 0; max-width: 100% !important; }
+
+/* Сигнали – обобщение, бележки със срок, готови отговори, автоматични напомняния */
+.sig-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.sig { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--v-line, var(--line)); text-decoration: none; color: var(--text); }
+.sig small { display: block; color: var(--muted); }
+.sig-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: var(--muted); flex: none; }
+.sig.bad .sig-ic { background: var(--neg-soft); color: var(--neg); } .sig.warn .sig-ic { background: var(--accent-soft); color: var(--text); } .sig.good .sig-ic { background: var(--pos-soft); color: var(--pos); }
+.sig-n { font-family: var(--display); font-size: 1.5rem; }
+.att-row.note .att-ic { background: var(--v-soft, var(--surface-2)); color: var(--violet, #7C3AED); }
+.note-add { align-items: flex-end; flex-wrap: wrap; }
+.note-due { display: grid; gap: 4px; flex: 1 1 180px; }
+.note-row.done p { text-decoration: line-through; color: var(--muted); }
+.quick-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--v-line, var(--line)); background: var(--surface-2); color: var(--text); font: inherit; font-size: .84rem; font-weight: 600; cursor: pointer; }
+.quick:hover { border-color: var(--violet, #7C3AED); color: var(--violet, #7C3AED); }
+.chk-row { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; }
+.chk { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+.chk input { width: 20px; height: 20px; accent-color: var(--violet, #7C3AED); }

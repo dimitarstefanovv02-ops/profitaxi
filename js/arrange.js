@@ -12,14 +12,18 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(L)); } catch
 
 export const arranging = () => document.body.classList.contains('arranging');
 
-// zone('overview', { class: 'stack' }, [['map', node], ['nums', node], ...]) – празните (null) се пропускат
+// zone('overview', { class: 'stack' }, [['map', node], ['nums', node, { hide: true }], ...]) – празните (null) се пропускат.
+// { hide: true } = скрито по подразбиране (докато не го покажеш от „Подреди“)
+const DEF_HID = {};
+const hidOf = (key) => new Set(L[key]?.h ?? DEF_HID[key] ?? []);
 export function zone(key, attrs, items, tag = 'div') {
   const list = items.filter((x) => x && x[1]);
+  DEF_HID[key] = list.filter((x) => x[2]?.hide).map((x) => x[0]);
   const st = L[key] || {};
   const order = st.o || [];
   const pos = (k, i) => { const j = order.indexOf(k); return j >= 0 ? j : order.length + i; };
   const sorted = list.map((x, i) => ({ k: x[0], el: x[1], p: pos(x[0], i) })).sort((a, b) => a.p - b.p);
-  const hidden = new Set(st.h || []);
+  const hidden = hidOf(key);
   sorted.forEach(({ k, el }) => { el.dataset.k = k; el.classList.toggle('arr-hid', hidden.has(k)); });
   const el = h(tag, { ...attrs, 'data-zone': key }, sorted.map((x) => x.el));
   return el;
@@ -35,7 +39,7 @@ function storeZone(z) {
 }
 function toggleHidden(item) {
   const z = item.parentElement; const key = z.dataset.zone, k = item.dataset.k;
-  const set = new Set(L[key]?.h || []);
+  const set = hidOf(key);
   if (set.has(k)) set.delete(k); else set.add(k);
   L[key] = { ...(L[key] || {}), h: [...set] }; save();
   item.classList.toggle('arr-hid', set.has(k));
@@ -155,7 +159,7 @@ export function initArrange(o) {
 
 // Ключовете в реда, който си избрал, без скритите (напр. кой таб е първи)
 export function ordered(key, keys) {
-  const st = L[key] || {}; const o = st.o || []; const hid = new Set(st.h || []);
+  const st = L[key] || {}; const o = st.o || []; const hid = hidOf(key);
   return keys.filter((k) => !hid.has(k)).map((k, i) => ({ k, p: o.indexOf(k) >= 0 ? o.indexOf(k) : o.length + i })).sort((a, b) => a.p - b.p).map((x) => x.k);
 }
 // след всяко пречертаване: избраният елемент вече не е на страницата

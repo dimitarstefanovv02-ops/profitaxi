@@ -1,7 +1,7 @@
 // Вход, регистрация, забравена парола
 
 import { h, fill, icon, cx } from '../util.js';
-import { INVITES_ON, CAR_TYPES } from '../constants.js';
+import { CAR_TYPES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
@@ -116,7 +116,7 @@ export function registerView({ go }) {
         field('Парола', pw, null, true),
         field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true),
         !BRAND && field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
-        INVITES_ON && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
+        !BRAND && store.referralsOn() && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
       BRAND ? group('target', 'One Taxi',
         h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Акаунтът е само за шофьори на One Taxi'))),
         field('Код от One Taxi', code, 'Дава ти го диспечерът или офисът на One', true))

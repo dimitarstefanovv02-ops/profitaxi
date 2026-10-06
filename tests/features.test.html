@@ -34,27 +34,30 @@ try {
   }
   ok('Нов шофьор има код за покана', /^[A-Z]+-[A-Z0-9]{4}$/.test(refA.code), refA.code);
   ok('Започва с 0 поканени и 0 месеца', refA.count === 0 && refA.months === 0);
-  ok('Следващата награда е 5 → 1 месец', refA.next?.count === 5 && refA.next?.months === 1);
   const untilA = a.user.subscription.validUntil;
   const bad = reg('X', { refCode: 'NOPE-0000' });
   ok('Невалиден код дава грешка', !!bad.error && bad.error.includes('код'));
-  for (let i = 1; i <= 4; i++) reg('Б' + i, { refCode: refA.code.toLowerCase() });
+  const inv = [];
+  for (let i = 1; i <= 3; i++) inv.push(reg('Б' + i, { refCode: refA.code.toLowerCase() }));
   store.login(a.user.email, 'secret1');
   let r = store.myReferrals();
-  ok('4 покани: още няма награда', r.count === 4 && r.months === 0 && store.currentUser().subscription.validUntil === untilA);
-  reg('Б5', { refCode: refA.code });
+  ok('Само регистрация не дава награда (без загуба)', r.count === 3 && r.months === 0 && store.currentUser().subscription.validUntil === untilA, `${r.count}/${r.months}`);
+  store.adminLogin('admin@profitaxi.bg', 'admin123');
+  store.admin.extend(inv[0].user.id, 30);
   store.login(a.user.email, 'secret1'); r = store.myReferrals();
-  ok('5 покани = 1 безплатен месец', r.count === 5 && r.months === 1, `${r.count}/${r.months}`);
+  ok('Когато поканеният плати = 1 безплатен месец', r.paid === 1 && r.months === 1, `${r.paid}/${r.months}`);
   ok('Абонаментът е удължен с 30 дни', store.currentUser().subscription.validUntil === addDays(untilA, 30), store.currentUser().subscription.validUntil);
-  ok('Следващата награда е 8 → 2 месеца', r.next?.count === 8);
-  for (let i = 6; i <= 8; i++) reg('Б' + i, { refCode: refA.code });
+  ok('Поканилият получава съобщение', store.myMessages().some((m) => /месец безплатно/.test(m.text)));
+  store.admin.extend(inv[0].user.id, 30);
   store.login(a.user.email, 'secret1'); r = store.myReferrals();
-  ok('8 покани = 2 безплатни месеца общо', r.count === 8 && r.months === 2, `${r.count}/${r.months}`);
-  ok('Абонаментът е удължен общо с 60 дни', store.currentUser().subscription.validUntil === addDays(untilA, 60));
-  ok('След 8 няма следваща награда', r.next === null);
-  reg('Б9', { refCode: refA.code });
+  ok('Второ плащане на същия колега не дава още месец', r.months === 1 && store.currentUser().subscription.validUntil === addDays(untilA, 30));
+  store.admin.extend(inv[1].user.id, 30); store.admin.extend(inv[2].user.id, 30);
   store.login(a.user.email, 'secret1'); r = store.myReferrals();
-  ok('9-та покана не дава трети месец', r.count === 9 && r.months === 2 && store.currentUser().subscription.validUntil === addDays(untilA, 60));
+  ok('Няма лимит: 3 платили = 3 месеца', r.paid === 3 && r.months === 3 && store.currentUser().subscription.validUntil === addDays(untilA, 90), `${r.paid}/${r.months}`);
+  store.admin.saveSettings({ referrals: false });
+  ok('Админът може да изключи препоръките', store.referralsOn() === false);
+  store.admin.saveSettings({ referrals: true });
+  store.adminLogout();
   ok('Списъкът с поканени е съкратен (име + инициал)', r.invited.every((x) => /^Шофьор Б\d\.?$|^Шофьор .\.$/.test(x.name) || x.name.endsWith('.')), r.invited[0]?.name);
 
   // ---------- Резервации ----------

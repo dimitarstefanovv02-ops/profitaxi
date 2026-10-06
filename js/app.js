@@ -78,6 +78,7 @@ function render() {
   const view = PRIVATE[route.name];
   if (!view) return go('/home', true);
 
+  if (!autoRan) { autoRan = true; store.runAutoReminders(); }
   const ctx = { go, route, user, data: store.myData(), rerender: render };
   if (route.raw !== lastRaw) store.trackPage(route.name.slice(1));
   const tab = TABS.some(([p]) => p === route.name) || !!PARENT[route.name];
@@ -92,6 +93,7 @@ function render() {
   if (!notified) { notified = true; checkNotifications(ctx.data); if (route.name === '/home') setTimeout(() => showDueSheet(store.myData(), go), 600); }
 }
 let notified = false;
+let autoRan = false;
 
 function mount(app, el, route, withNav) {
   const keepScroll = route.raw === lastRaw;

@@ -100,7 +100,7 @@ async def main():
         ok('„Статистика“ има табове: градове, сезонност, коли, ефир, графики', await a.locator('.adm-tabs a').count()==5)
         await a.click('.adm-tabs >> text=Графики'); await a.wait_for_timeout(600)
         ok('„Графики“ е таб в „Статистика“', 'Статистика' in await a.inner_text('.adm-nav a.on') and await a.locator('.kpis-lg').count()==1)
-        for nav, txt in [('Контрол','Дубликати'),('Съобщения','Ново съобщение'),('Партньори','Кодове за достъп'),('Растеж','Фуния на регистрациите'),('Развитие','Какво се ползва'),('Пари','Промо кодове')]:
+        for nav, txt in [('Контрол','Дубликати'),('Съобщения','Ново съобщение'),('Партньори','Кодове за достъп'),('Растеж','Този месец'),('Развитие','Какво се ползва'),('Пари','Промо кодове')]:
             await a.click(f'.adm-nav >> text={nav}'); await a.wait_for_timeout(500)
             if txt not in await a.inner_text('main'): ok(f'{nav} показва {txt}', False)
         ok('Страниците (Контрол, Съобщения, Партньори, Растеж, Развитие, Пари) се отварят', not any('показва' in r and r.startswith('FAIL') for r in R))

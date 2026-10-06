@@ -1,5 +1,5 @@
 // Програмата „Покани колеги“ е спряна засега. true я връща навсякъде.
-export const INVITES_ON = false;
+export const INVITES_ON = true; // вече се управлява от админа: Настройки → Общи → Препоръки
 
 // ProfiTaxi – справочници
 

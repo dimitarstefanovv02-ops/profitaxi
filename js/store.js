@@ -29,6 +29,9 @@ function ensureExt() {
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.churn ||= []; db.audit ||= [];
   db.notDup ||= []; db.reviewed ||= [];
+  if (db.settings.referrals == null) db.settings.referrals = true;
+  db.settings.autoRemind ||= { on: true, before: true, day: true, after: true };
+  db.autoSent ||= {};
   db.settings.goal ||= { paid: 100, date: `${new Date().getFullYear() + (new Date().getMonth() >= 9 ? 1 : 0)}-01-31` };
 }
 const digits = (p) => String(p || '').replace(/\D/g, '').replace(/^359/, '0');
@@ -157,7 +160,7 @@ export function register(f) {
     if (pr.kind === 'months') u.subscription.validUntil = addDays(u.subscription.validUntil, 30 * pr.value);
     else u.discount = pr.value; // % отстъпка за първия платен месец
   }
-  if (referrer) { u.referredBy = referrer.id; applyReferralRewards(referrer); }
+  if (referrer) u.referredBy = referrer.id; // наградата идва, когато новият шофьор плати
   db.profiles[u.id].tour = 'pending'; // кратка разходка при първото влизане
   localStorage.setItem(SESSION_KEY, u.id);
   commit();
@@ -441,22 +444,21 @@ function makeRefCode(name) {
 }
 export const REF_TIERS = [{ count: 5, months: 1 }, { count: 8, months: 2 }];
 // Награди: 5 регистрирани = 1 безплатен месец, 8 = общо 2. Добавят се към абонамента.
-function applyReferralRewards(referrer) {
-  const count = db.users.filter((x) => x.referredBy === referrer.id).length;
-  const earned = REF_TIERS.filter((t) => count >= t.count).reduce((m, t) => Math.max(m, t.months), 0);
-  const add = earned - (referrer.refMonths || 0);
-  if (add > 0) {
-    const base = referrer.subscription.validUntil > todayStr() ? referrer.subscription.validUntil : todayStr();
-    referrer.subscription.validUntil = addDays(base, 30 * add);
-    referrer.refMonths = earned;
-  }
+// Препоръки без загуба: месец безплатно за всеки поканен колега, който ПЛАТИ (не само се регистрира)
+export const referralsOn = () => { load(); return db.settings.referrals !== false; };
+function rewardReferral(u) {
+  if (!u.referredBy || u.refRewarded || db.settings.referrals === false) return;
+  const r = db.users.find((x) => x.id === u.referredBy); if (!r) return;
+  u.refRewarded = true;
+  const base = r.subscription.validUntil > todayStr() ? r.subscription.validUntil : todayStr();
+  r.subscription.validUntil = addDays(base, 30);
+  r.refMonths = (r.refMonths || 0) + 1;
+  db.messages.push({ id: uid(), title: 'Получи месец безплатно', text: `${u.name.split(' ')[0]} плати абонамента си с твоя код – добавихме ти 1 месец безплатно. Благодарим!`, target: { userIds: [r.id] }, at: new Date().toISOString(), readBy: [] });
 }
 export function myReferrals() {
   const u = me(); if (!u) return null;
-  const invited = db.users.filter((x) => x.referredBy === u.id).map((x) => ({ name: x.name.split(' ')[0] + ' ' + (x.name.split(' ')[1] || '').slice(0, 1) + '.', date: x.createdAt.slice(0, 10) })).sort((a, b) => b.date.localeCompare(a.date));
-  const count = invited.length;
-  const next = REF_TIERS.find((t) => count < t.count) || null;
-  return { code: u.refCode, invited, count, months: u.refMonths || 0, next, tiers: REF_TIERS };
+  const invited = db.users.filter((x) => x.referredBy === u.id).map((x) => ({ name: x.name.split(' ')[0] + ' ' + (x.name.split(' ')[1] || '').slice(0, 1) + '.', date: x.createdAt.slice(0, 10), paid: !!x.subscription?.paidSince })).sort((a, b) => b.date.localeCompare(a.date));
+  return { code: u.refCode, invited, count: invited.length, paid: invited.filter((x) => x.paid).length, months: u.refMonths || 0 };
 }
 export const refExists = (code) => { load(); return db.users.some((x) => x.refCode === String(code || '').trim().toUpperCase()); };
 
@@ -551,12 +553,14 @@ export const admin = {
   },
   role: () => adminRole(),
   setStatus(id, status) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.status = status; audit(`${status === 'blocked' ? 'Спря' : 'Пусна'} достъпа на ${u.name}`); commit(); } },
-  setSubscription(id, validUntil, plan = 'paid') { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.subscription = { ...u.subscription, plan, validUntil }; if (plan === 'paid' && !u.subscription.paidSince) u.subscription.paidSince = todayStr(); audit(`Смени абонамента на ${u.name} до ${validUntil}`); commit(); } },
+  setSubscription(id, validUntil, plan = 'paid') { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.subscription = { ...u.subscription, plan, validUntil }; if (plan === 'paid' && !u.subscription.paidSince) { u.subscription.paidSince = todayStr(); rewardReferral(u); } audit(`Смени абонамента на ${u.name} до ${validUntil}`); commit(); } },
   extend(id, days, { silent } = {}) {
     requireAdmin();
     const u = db.users.find((x) => x.id === id); if (!u) return;
     const base = u.subscription && u.subscription.validUntil > todayStr() ? u.subscription.validUntil : todayStr();
+    const first = !u.subscription?.paidSince;
     u.subscription = { ...u.subscription, plan: 'paid', validUntil: addDays(base, days), paidSince: u.subscription?.paidSince || todayStr() };
+    if (first) rewardReferral(u);
     if (!silent) audit(`Удължи абонамента на ${u.name} с ${days} дни`);
     commit();
   },
@@ -644,7 +648,11 @@ export const admin = {
   },
   // бележки и дневник на достъпа
   notes(id) { requireAdmin(); return clone(db.notes[id] || []); },
-  addNote(id, text) { requireAdmin(); if (!text.trim()) return; (db.notes[id] ||= []).unshift({ text: text.trim(), at: new Date().toISOString(), by: adminUser().email }); commit(); },
+  addNote(id, text, due = null) { requireAdmin(); if (!text.trim()) return; (db.notes[id] ||= []).unshift({ text: text.trim(), at: new Date().toISOString(), by: adminUser().email, due: due || null, done: false }); commit(); },
+  noteDone(id, at) { requireAdmin(); const n = (db.notes[id] || []).find((x) => x.at === at); if (n) { n.done = true; commit(); } },
+  // напомняния от бележките, чиято дата е дошла
+  dueNotes() { requireAdmin(); const t = todayStr(); return Object.entries(db.notes).flatMap(([uidd, l]) => { const u = db.users.find((x) => x.id === uidd); return u && visible(u) ? l.filter((n) => n.due && !n.done && n.due <= t).map((n) => ({ ...n, userId: uidd, name: u.name })) : []; }); },
+  autoSentCount() { requireAdmin(); return Object.keys(db.autoSent).length; },
   log(userId, action) { requireAdmin(); if (action === 'delete' || action === 'export') audit(`${action === 'delete' ? 'Изтри данните на' : 'Свали данните на'} ${nameOf(userId)}`); const u = db.users.find((x) => x.id === userId); db.accessLog.unshift({ at: new Date().toISOString(), by: adminUser().email, userId, name: u?.name || '—', action }); db.accessLog = db.accessLog.slice(0, 500); persist(); },
   accessLog() { requireAdmin(); return clone(db.accessLog); },
   exportDriver(id) { requireAdmin(); this.log(id, 'export'); const d = userData(id); return { ...d, notes: db.notes[id] || [], nps: db.nps.filter((x) => x.userId === id), exportedAt: new Date().toISOString() }; },
@@ -674,6 +682,31 @@ function ideaDone(i) {
 }
 let invoiceNo = 0;
 function nextInvoice() { invoiceNo = Math.max(invoiceNo, ...db.payments.map((p) => Number(String(p.invoice || '').replace(/\D/g, '')) || 0)) + 1; return 'PT-' + String(invoiceNo).padStart(6, '0'); }
+
+// Автоматични напомняния за плащане: 3 дни преди, в деня и 7 дни след изтичане.
+// Пускат се при всяко отваряне на приложението или панела; всяко се праща само веднъж.
+// (С истинския сървър ще тръгват по график, а не при отваряне.)
+export function runAutoReminders() {
+  load(); const a = db.settings.autoRemind; if (!a?.on) return 0;
+  const t = todayStr(); const price = String(db.settings.price).replace('.', ','); let n = 0;
+  db.users.filter((u) => u.role === 'driver' && u.status !== 'blocked' && u.subscription).forEach((u) => {
+    const left = Math.round((parseDate(u.subscription.validUntil) - parseDate(t)) / 86400000);
+    const trial = u.subscription.plan === 'trial';
+    const stage = a.before && left >= 1 && left <= 3 ? 'before' : a.day && (left === 0 || left === -1) ? 'day' : a.after && left <= -7 && left >= -14 ? 'after' : null;
+    if (!stage) return;
+    const key = `${u.id}:${u.subscription.validUntil}:${stage}`;
+    if (db.autoSent[key]) return;
+    const msg = {
+      before: [trial ? 'Пробният период свършва скоро' : 'Абонаментът изтича скоро', `${trial ? 'Пробният ти период' : 'Абонаментът ти'} свършва след ${left} ${left === 1 ? 'ден' : 'дни'}. Абонаментът е ${price} € на месец – данните ти остават.`],
+      day: ['Абонаментът изтича днес', `Поднови го, за да не спира достъпът до отчетите. ${price} € на месец.`],
+      after: ['Липсваш ни', 'Абонаментът ти изтече, но всички данни са запазени. Поднови го и продължи оттам, докъдето беше.'],
+    }[stage];
+    db.messages.push({ id: uid(), title: msg[0], text: msg[1], target: { userIds: [u.id] }, at: new Date().toISOString(), readBy: [], auto: stage });
+    db.autoSent[key] = new Date().toISOString(); n++;
+  });
+  if (n) commit();
+  return n;
+}
 
 // ================= Демо данни =================
 const FIRST = ['Иван', 'Георги', 'Мария', 'Стоян', 'Николай', 'Димитър', 'Петър', 'Христо', 'Тодор', 'Елена', 'Красимир', 'Васил', 'Атанас', 'Росен', 'Пламен', 'Йордан', 'Светлин', 'Милена', 'Борислав', 'Стефан', 'Калоян', 'Ангел'];
@@ -743,7 +776,8 @@ function seed() {
   for (const d of [...fixed, ...extra]) seedDriver(d, today);
   // Шестима колеги са се регистрирали с кода на Иван → 1 спечелен месец, 6 от 8 към втория
   db.users.filter((u) => u.role === 'driver' && u.id !== ivan.id).slice(4, 10).forEach((u) => { u.referredBy = ivan.id; });
-  ivan.refMonths = 1;
+  ivan.refMonths = db.users.filter((u) => u.referredBy === ivan.id && u.subscription.paidSince).length;
+  db.users.filter((u) => u.referredBy === ivan.id && u.subscription.paidSince).forEach((u) => { u.refRewarded = true; });
   seedExtra(today);
   return db;
 }
