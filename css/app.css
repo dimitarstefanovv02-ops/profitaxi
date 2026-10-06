@@ -1019,11 +1019,14 @@ body:not(.admin) .home-link small { white-space: normal; }
 
 /* Глас и бележка */
 .voice { text-align: center; }
-.voice-mic { width: 96px; height: 96px; border-radius: 50%; margin: 18px auto 12px; display: grid; place-items: center; background: var(--c-violet); color: #fff; animation: micPulse 1.4s ease-in-out infinite; }
+.voice-mic { width: 96px; height: 96px; border-radius: 50%; margin: 18px auto 12px; display: grid; place-items: center; background: var(--surface-3); color: var(--muted); transition: background .2s; }
+.voice-mic.on, .voice-mic.scan { background: var(--c-violet); color: #fff; animation: micPulse 1.4s ease-in-out infinite; }
 .voice-mic.scan { background: var(--c-orange); }
 @keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, .45); } 50% { box-shadow: 0 0 0 18px rgba(139, 92, 246, 0); } }
 @media (prefers-reduced-motion: reduce) { .voice-mic { animation: none; } }
-.voice-live { font-size: 1.15rem; font-weight: 600; min-height: 2.6em; margin-bottom: 14px; }
+.voice-live { font-size: 1.05rem; font-weight: 600; min-height: 2.6em; margin-bottom: 12px; text-align: center; }
+.voice-live.bad { color: var(--neg); font-weight: 500; }
+.voice-input { font-size: 1.15rem; }
 
 /* Изтегли и без интернет */
 .install-bar { display: flex; align-items: center; gap: 10px; margin: 10px 16px 0; padding: 8px 10px; border-radius: 18px; background: var(--surface); border: 1.5px solid var(--accent); }

@@ -59,28 +59,75 @@ export function parseVoice(raw) {
   }
   return r;
 }
-export const voiceSupported = () => !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-// Слуша веднъж и връща разпознатото; onParsed(parsed, text)
+// Бутонът „Кажи го“ е навсякъде: ако телефонът не разпознава глас, се пише (или се ползва 🎤 на клавиатурата)
+export const voiceSupported = () => true;
+const srClass = () => window.SpeechRecognition || window.webkitSpeechRecognition;
+// Android Chrome понякога връща всяко парче наново („кеш“, „кеш 120“, „кеш 120 карта“…) – пазим само последното
+export function joinTranscripts(parts) {
+  const out = [];
+  for (const raw of parts) {
+    const t = String(raw || '').trim(); if (!t) continue;
+    const prev = out[out.length - 1];
+    if (prev && t.toLowerCase().startsWith(prev.toLowerCase())) out[out.length - 1] = t;
+    else if (prev && prev.toLowerCase().startsWith(t.toLowerCase())) continue;
+    else out.push(t);
+  }
+  return out.join(' ');
+}
+const VOICE_ERR = {
+  'not-allowed': 'Микрофонът е забранен за сайта. Разреши го от настройките на браузъра – или натисни 🎤 на клавиатурата и кажи сумите.',
+  'service-not-allowed': 'Телефонът не позволява разпознаване на глас тук. Натисни 🎤 на клавиатурата и кажи сумите.',
+  'no-speech': 'Не чух нищо. Натисни „Слушай пак“ или напиши.',
+  'audio-capture': 'Няма достъп до микрофона. Затвори други приложения, които го ползват, или напиши.',
+  'network': 'Разпознаването на глас иска интернет. Напиши сумите тук.',
+  'language-not-supported': 'Телефонът не разпознава български тук. Натисни 🎤 на клавиатурата или напиши.',
+};
+// Слуша и попълва полето; onParsed(parsed, text)
 export function listen(onParsed) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('Този телефон не поддържа гласово въвеждане', 'err'); return; }
-  const rec = new SR(); rec.lang = 'bg-BG'; rec.interimResults = true; rec.maxAlternatives = 1;
-  let finalText = '', closeSheet;
-  const live = h('p', { class: 'voice-live' }, 'Говори…');
-  closeSheet = openSheet((close) => h('div', { class: 'voice' },
-    sheetHead('Кажи го', close, 'Например: „кеш 120, карта 40, гориво 35, 30 литра“'),
-    h('div', { class: 'voice-mic' }, icon('call', 34)), live,
-    h('button', { class: 'btn btn-ghost btn-block', onclick: () => { try { rec.stop(); } catch { /* */ } } }, 'Готово')), { onClose: () => { try { rec.abort(); } catch { /* */ } } });
-  rec.onresult = (e) => { let t = ''; for (const r of e.results) t += r[0].transcript + ' '; finalText = t.trim(); live.textContent = `„${finalText}“`; };
-  rec.onerror = (e) => { closeSheet(); toast(e.error === 'not-allowed' ? 'Разреши микрофона в настройките' : 'Не те чух. Опитай пак.', 'err'); };
-  rec.onend = () => {
-    closeSheet();
-    if (!finalText) return;
-    const p = parseVoice(finalText);
-    if (!Object.keys(p.income).length && !p.fuel && !p.expenses.length) { toast(`Не разбрах сума в „${finalText}“`, 'err'); return; }
-    onParsed(p, finalText);
+  const SR = srClass();
+  // На iPhone в инсталираното приложение разпознаването на Safari не работи – там е 🎤 на клавиатурата
+  const canListen = !!SR && !(isIOS && isStandalone());
+  let rec = null, heard = [], interim = '', listening = false;
+  const status = h('p', { class: 'voice-live' });
+  const input = h('input', { class: 'input voice-input', type: 'text', inputmode: 'text', enterkeyhint: 'done', autocomplete: 'off', placeholder: 'кеш 120 карта 40 гориво 35', onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } } });
+  const mic = h('div', { class: 'voice-mic' }, icon('call', 34));
+  const again = h('button', { class: 'btn btn-ghost grow', onclick: () => start() }, icon('call', 18), 'Слушай пак');
+  const say = (text, bad) => { status.textContent = text; status.classList.toggle('bad', !!bad); };
+  const apply = () => {
+    const text = input.value.trim();
+    if (!text) { say('Кажи или напиши сумите, например „кеш 120 карта 40“.', true); return; }
+    const p = parseVoice(text);
+    if (!Object.keys(p.income).length && !p.fuel && !p.expenses.length) { say(`Не разбрах сума в „${text}“. Пиши: дума и число – „кеш 120“, „гориво 40“.`, true); return; }
+    stop(); close(); onParsed(p, text);
   };
-  try { rec.start(); } catch { closeSheet(); toast('Микрофонът е зает', 'err'); }
+  const stop = () => { listening = false; mic.classList.remove('on'); try { rec && rec.abort(); } catch { /* */ } };
+  const start = () => {
+    if (!canListen) { say(SR ? VOICE_ERR['service-not-allowed'] : 'Натисни 🎤 на клавиатурата и кажи сумите – или ги напиши.'); input.focus(); return; }
+    stop();
+    heard = []; interim = '';
+    rec = new SR(); rec.lang = 'bg-BG'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+    rec.onresult = (e) => {
+      const fin = [], tmp = [];
+      for (let i = 0; i < e.results.length; i++) (e.results[i].isFinal ? fin : tmp).push(e.results[i][0].transcript);
+      heard = fin; interim = tmp.join(' ');
+      input.value = joinTranscripts([...heard, interim]);
+    };
+    rec.onerror = (e) => { listening = false; mic.classList.remove('on'); if (e.error !== 'aborted') say(VOICE_ERR[e.error] || 'Не те чух. Опитай пак или напиши.', true); };
+    rec.onend = () => {
+      const wasOn = listening; listening = false; mic.classList.remove('on');
+      if (!wasOn) return;
+      const text = joinTranscripts([...heard, interim]);
+      if (text) { input.value = text; apply(); } else say(VOICE_ERR['no-speech'], true);
+    };
+    try { rec.start(); listening = true; mic.classList.add('on'); say('Говори… например „кеш 120, карта 40, гориво 35“'); }
+    catch { say('Микрофонът е зает. Опитай пак или напиши.', true); }
+  };
+  const close = openSheet((cl) => h('div', { class: 'voice' },
+    sheetHead('Кажи го', cl, 'Кажи сумите с думи – приложението ги попълва само'),
+    mic, status, input,
+    h('div', { class: 'row gap', style: { marginTop: '12px' } }, canListen && again,
+      h('button', { class: 'btn btn-primary grow', onclick: apply }, icon('check', 18), 'Добави'))), { onClose: () => stop() });
+  start();
 }
 // Прилага разпознатото към смяна (чернова или активната)
 export function applyParsed(shift, p, profile) {
