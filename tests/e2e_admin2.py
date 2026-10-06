@@ -6,7 +6,7 @@ R=[]
 def ok(n,c,x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  ['+str(x)+']' if x!='' else ''}")
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':1280,'height':900}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
+        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':1280,'height':1500}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
         await ctx.add_init_script("try{localStorage.setItem('profitaxi.adminTour','done');sessionStorage.setItem('profitaxi.oneIntro','1')}catch(e){}")
         base='http://localhost:8765'; errs=[]
         d = await ctx.new_page(); d.on('pageerror', lambda e: errs.append('drv:'+str(e)))

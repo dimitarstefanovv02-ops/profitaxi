@@ -112,7 +112,7 @@ async def main():
             for i in range(min(5, await a.locator('.adm-picker .seg-btn').count())):
                 await a.click(f'.adm-picker .seg-btn >> nth={i}'); await a.wait_for_timeout(400)
         await a.click('.adm-nav >> text=Днес'); await a.wait_for_timeout(600)
-        ok('Днес: карта, „Активни“ и „Шофьори общо“', await a.locator('.map-card').count()==1 and 'Активни' in await a.inner_text('.big-nums') and 'Шофьори общо' in await a.inner_text('.big-nums'))
+        ok('Днес: карта, „Активни“ и „Шофьори общо“', await a.locator('.map-card').count()>=1 and 'Активни' in await a.inner_text('.big-nums') and 'Шофьори общо' in await a.inner_text('.big-nums'))
         ok('Всички админ страници и периоди без грешки', not errs, errs[:3])
         # Мобилен админ
         m = await ctx.new_page(); await m.set_viewport_size({'width':390,'height':844}); await m.goto(base+'/admin.html#/overview'); await m.wait_for_timeout(1000)

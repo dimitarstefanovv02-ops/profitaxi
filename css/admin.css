@@ -549,3 +549,30 @@ body.admin .btn.arr-toggle.on { background: var(--violet, #7C3AED); color: #fff;
 .chk-row { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; }
 .chk { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
 .chk input { width: 20px; height: 20px; accent-color: var(--violet, #7C3AED); }
+
+/* Карта на деня */
+.hap.hc { border-left: 4px solid transparent; }
+.hap.hc.has { border-left-color: var(--hc); }
+.hap.hc .hap-ic { background: var(--surface); color: var(--muted); }
+.hap.hc.has .hap-ic { background: color-mix(in srgb, var(--hc) 18%, transparent); color: var(--hc); }
+.hm { position: relative; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(255,255,255,.95), 0 8px 22px rgba(0,0,0,.35); transition: transform .15s; }
+.hm > span { width: 62%; height: 62%; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.hm > span b { font: 800 .95rem var(--font); color: #0A0A0C; }
+.hm.quiet { background: rgba(120,124,140,.78); color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,.9), 0 4px 10px rgba(0,0,0,.25); }
+.hm.quiet b { font: 700 .72rem var(--font); }
+.hm.bad::after { content: ''; position: absolute; inset: -8px; border-radius: 50%; border: 3px solid rgba(229,72,77,.85); animation: mapPulse 1.8s ease-out infinite; }
+.lm-wrap:hover .hm { transform: scale(1.08); }
+.hm-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.hm-key { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: 600 .84rem var(--font); cursor: pointer; }
+.hm-key i { width: 12px; height: 12px; border-radius: 50%; background: var(--hc); }
+.hm-key b { font-family: var(--display); }
+.hm-key.off { opacity: .45; text-decoration: line-through; }
+.hm-key.off i { background: var(--muted); }
+.live-badge.bad { background: var(--neg-soft); color: var(--neg); white-space: normal; }
+.live-badge.bad i { background: var(--neg); }
+.hp h4 { margin: 0 0 2px; font: 800 1rem var(--font); }
+.hp p { margin: 0 0 8px; color: #555; }
+.hp-row { display: flex; align-items: center; gap: 7px; margin: 5px 0; font-size: .86rem; }
+.hp-row i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.hp-row a { margin-left: auto; padding-left: 10px; font-weight: 700; }
+.hp-all { display: block; margin-top: 8px; font-weight: 700; }

@@ -414,14 +414,7 @@ function liveMap(all) {
   const by = cityStats(all);
   const active = all.filter(isActive).length;
   if (!mapEl) mapEl = h('div', { class: 'lmap', role: 'img', 'aria-label': 'Карта на шофьорите по градове' });
-  if (!window.L) {
-    if (!document.getElementById('leaflet-js')) {
-      document.head.append(h('link', { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css' }));
-      const sc = h('script', { id: 'leaflet-js', src: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js' });
-      sc.onload = () => drawMap(cityStats(scoped()));
-      document.head.append(sc);
-    }
-  } else setTimeout(() => drawMap(by), 0);
+  loadLeaflet(() => setTimeout(() => drawMap(window.L ? cityStats(scoped()) : by), 0));
   const topC = Object.entries(by).sort((a, b) => b[1].total - a[1].total).slice(0, 6);
   return h('section', { class: 'card map-card' },
     h('div', { class: 'map-head' },
@@ -451,6 +444,7 @@ function overview() {
     pageHead('Днес', `${scopeLabel()} · обновява се на живо`),
     flow('overview', [
       ['happened', wide(happenedToday(all))],
+      ['hapmap', wide(happenedMap(all))],
       ['nums', wide(zone('overview.nums', { class: 'big-nums' }, [
         ['total', bigNum('Шофьори общо', String(all.length), `${newThis} нови тази седмица`, '', vsWeek(newThis, newPrev))],
         ['active', bigNum('Активни', String(actNow), 'смяна през последните 7 дни', 'live', vsWeek(actNow, actPrev))],
@@ -465,23 +459,106 @@ function overview() {
       ['map', wide(liveMap(all)), { hide: true }],
     ]));
 }
-// „Днес се случи“: какво е ново от сутринта
+// „Днес се случи“: какво е ново от сутринта. Всеки вид има свой цвят – същият е и на картата.
+const HAP = {
+  regs: { color: '#12A15E', ic: 'plus', label: 'нови регистрации', one: 'нова регистрация', href: '#/drivers?f=new' },
+  exp: { color: '#E5484D', ic: 'clock', label: 'изтекли абонамента', one: 'изтекъл абонамент', href: '#/money?t=expiring', bad: true },
+  alerts: { color: '#F59E0B', ic: 'bell', label: 'нови сигнала', one: 'нов сигнал', href: '#/control', bad: true },
+  tickets: { color: '#3B82F6', ic: 'inbox', label: 'въпроса от шофьори', one: 'въпрос от шофьор', href: '#/messages?t=inbox', bad: true },
+  ideas: { color: '#8B5CF6', ic: 'sparkle', label: 'нови предложения', one: 'ново предложение', href: '#/dev?t=opinions' },
+};
+// Какво се е случило днес – по шофьори (за картата) и общо
+function happenedData(all) {
+  const today = todayStr(), part = role() === 'partner', owner = isOwner();
+  const ids = new Set(all.map((d) => d.user.id));
+  const items = { regs: [], exp: [], alerts: [], tickets: [], ideas: [] };
+  all.forEach((d) => { if (isoToDateStr(d.user.createdAt) === today) items.regs.push(d.user.id); if (owner && d.user.subscription.validUntil === addDays(today, -1)) items.exp.push(d.user.id); });
+  if (!part) {
+    newAlerts().forEach((a) => { if (!a.key.startsWith('tk:') && !a.key.startsWith('idea:') && (!a.uid || ids.has(a.uid))) items.alerts.push(a.uid || null); });
+    store.admin.tickets().filter((t) => t.adminUnread && ids.has(t.userId)).forEach((t) => items.tickets.push(t.userId));
+    store.admin.ideas().filter((i) => i.status === 'new' && isoToDateStr(i.at) >= addDays(today, -1) && (!i.userId || ids.has(i.userId))).forEach((i) => items.ideas.push(i.userId || null));
+  }
+  if (!owner) delete items.exp;
+  if (part) { delete items.alerts; delete items.tickets; delete items.ideas; }
+  return items;
+}
 function happenedToday(all) {
-  const today = todayStr();
-  const regs = all.filter((d) => isoToDateStr(d.user.createdAt) === today).length;
-  const expired = all.filter((d) => d.user.subscription.validUntil === addDays(today, -1)).length;
-  const al = role() === 'partner' ? 0 : newAlerts().length;
-  const ideas = role() === 'partner' ? 0 : store.admin.ideas().filter((i) => i.status === 'new' && isoToDateStr(i.at) >= addDays(today, -1)).length;
-  const tq = role() === 'partner' ? 0 : unreadTickets();
-  const chip = (k, ic, n, label, href, cls) => [k, h('a', { class: cx('hap', n > 0 && cls), href }, h('span', { class: 'hap-ic' }, icon(ic, 18)), h('b', null, String(n)), h('span', null, label))];
+  const items = happenedData(all);
+  // сигналите тук са всички нови (вкл. без шофьор) – както в звънчето
+  const counts = { ...Object.fromEntries(Object.entries(items).map(([k, v]) => [k, v.length])) };
+  if ('alerts' in counts) counts.alerts = newAlerts().filter((a) => !a.key.startsWith('tk:') && !a.key.startsWith('idea:')).length;
+  if ('tickets' in counts) counts.tickets = unreadTickets();
+  const chip = (k) => { const c = HAP[k], n = counts[k]; return [k, h('a', { class: cx('hap hc', n > 0 && 'has'), href: c.href, style: { '--hc': c.color } }, h('span', { class: 'hap-ic' }, icon(c.ic, 18)), h('b', null, String(n)), h('span', null, c.label))]; };
   return h('section', { class: 'card happened' }, cardTitle('sparkle', 'Днес се случи'),
-    zone('overview.happened', { class: 'hap-row' }, [
-      chip('regs', 'plus', regs, 'нови регистрации', '#/drivers?f=new', 'good'),
-      isOwner() && chip('exp', 'clock', expired, 'изтекли абонамента', '#/money?t=expiring', 'bad'),
-      role() !== 'partner' && chip('alerts', 'bell', al, 'нови сигнала', '#/control', 'warn'),
-      role() !== 'partner' && chip('tickets', 'inbox', tq, 'въпроса от шофьори', '#/messages?t=inbox', 'warn'),
-      role() !== 'partner' && chip('ideas', 'sparkle', ideas, 'нови предложения', '#/dev?t=opinions', 'good'),
-    ]));
+    zone('overview.happened', { class: 'hap-row' }, Object.keys(items).map(chip)));
+}
+
+// Картата на „Днес“: всеки град с цветовете на случилото се – веднага се вижда къде има проблем
+let hapEl = null, hapMap = null, hapLayer = null, hapTiles = false;
+const hapOff = new Set();
+function loadLeaflet(cb) {
+  if (window.L) { cb(); return; }
+  const waiters = (window.__leafletWait ||= []); waiters.push(cb);
+  if (document.getElementById('leaflet-js')) return;
+  document.head.append(h('link', { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css' }));
+  const sc = h('script', { id: 'leaflet-js', src: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js' });
+  sc.onload = () => { (window.__leafletWait || []).splice(0).forEach((f) => { try { f(); } catch { /* */ } }); };
+  document.head.append(sc);
+}
+function hapByCity(all) {
+  const items = happenedData(all), cityOf = Object.fromEntries(all.map((d) => [d.user.id, d.user.city]));
+  const by = {};
+  all.forEach((d) => { const c = d.user.city; by[c] ||= { drivers: 0, ev: {} }; by[c].drivers++; });
+  Object.entries(items).forEach(([k, list]) => list.forEach((uid) => { const c = uid && cityOf[uid]; if (!c) return; by[c].ev[k] = (by[c].ev[k] || 0) + 1; }));
+  return { by, kinds: Object.keys(items) };
+}
+function drawHapMap(all) {
+  if (!window.L || !hapEl) return;
+  if (!hapMap) {
+    hapMap = L.map(hapEl, { zoomControl: true, scrollWheelZoom: false, minZoom: 6, maxZoom: 12, maxBounds: [[40.6, 21.4], [44.9, 29.6]], maxBoundsViscosity: .8 }).setView([42.75, 25.4], 7);
+    hapMap.fitBounds([[41.2, 22.3], [44.25, 28.65]], { padding: [10, 10] });
+  }
+  if (!hapTiles) { L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: 'Карта &copy; Esri, HERE, Garmin, &copy; OpenStreetMap' }).addTo(hapMap); hapTiles = true; }
+  if (hapLayer) hapLayer.remove();
+  hapLayer = L.layerGroup().addTo(hapMap);
+  const { by, kinds } = hapByCity(all);
+  const shown = kinds.filter((k) => !hapOff.has(k));
+  Object.entries(by).forEach(([city, v]) => {
+    const pos = CITY_POS[city]; if (!pos) return;
+    const ev = shown.map((k) => [k, v.ev[k] || 0]).filter(([, n]) => n > 0);
+    const total = ev.reduce((a, [, n]) => a + n, 0);
+    const bad = ev.some(([k]) => HAP[k].bad);
+    let html, size;
+    if (!total) {
+      size = 22;
+      html = `<div class="hm quiet" style="width:${size}px;height:${size}px" title="${city}"><b>${v.drivers}</b></div>`;
+    } else {
+      size = Math.round(34 + Math.min(22, Math.sqrt(total) * 8));
+      let acc = 0; const stops = ev.map(([k, n]) => { const a = (acc / total) * 360, b = ((acc + n) / total) * 360; acc += n; return `${HAP[k].color} ${a}deg ${b}deg`; }).join(',');
+      html = `<div class="hm ${bad ? 'bad' : ''}" style="width:${size}px;height:${size}px;background:conic-gradient(${stops})"><span><b>${total}</b></span></div><span class="lm-name">${city}</span>`;
+    }
+    const ic = L.divIcon({ className: 'lm-wrap', iconSize: [size, size], iconAnchor: [size / 2, size / 2], html });
+    const rows = ev.map(([k, n]) => `<div class="hp-row"><i style="background:${HAP[k].color}"></i><b>${n}</b> ${n === 1 ? HAP[k].one : HAP[k].label}<a href="${HAP[k].href}">Виж</a></div>`).join('');
+    L.marker([pos[1], pos[0]], { icon: ic, title: `${city}: ${total ? `${total} събития` : 'спокойно'}`, zIndexOffset: total ? (bad ? 2000 : 1000) : 0 })
+      .bindPopup(`<div class="hp"><h4>${city}</h4><p>${v.drivers} ${v.drivers === 1 ? 'шофьор' : 'шофьори'}</p>${rows || '<p>Днес е спокойно.</p>'}<a class="hp-all" href="#/drivers" data-city="${city}">Шофьорите в града →</a></div>`)
+      .on('popupopen', (e) => { e.popup.getElement()?.querySelector('.hp-all')?.addEventListener('click', () => { scope.city = city; scope.company = ''; }); })
+      .addTo(hapLayer);
+  });
+  setTimeout(() => hapMap.invalidateSize(), 0);
+}
+function happenedMap(all) {
+  if (!hapEl) hapEl = h('div', { class: 'lmap hmap', role: 'img', 'aria-label': 'Карта: какво се случи днес по градове' });
+  loadLeaflet(() => drawHapMap(scoped()));
+  const { by, kinds } = hapByCity(all);
+  const tot = Object.fromEntries(kinds.map((k) => [k, Object.values(by).reduce((a, v) => a + (v.ev[k] || 0), 0)]));
+  const problem = Object.entries(by).map(([c, v]) => [c, kinds.filter((k) => HAP[k].bad && !hapOff.has(k)).reduce((a, k) => a + (v.ev[k] || 0), 0)]).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const legend = h('div', { class: 'hm-legend' }, kinds.map((k) => h('button', { class: cx('hm-key', hapOff.has(k) && 'off'), style: { '--hc': HAP[k].color }, title: 'Покажи / скрий на картата',
+    onclick: () => { if (hapOff.has(k)) hapOff.delete(k); else hapOff.add(k); render(); } }, h('i'), h('b', null, String(tot[k])), HAP[k].label)));
+  return h('section', { class: 'card map-card' },
+    h('div', { class: 'map-head' },
+      h('div', null, h('h2', null, 'Карта на деня'), h('p', { class: 'muted small' }, 'Всеки град е оцветен с това, което се е случило днес – в същите цветове като горе. Червеният ореол значи проблем (изтекли, сигнали, въпроси). Натисни град за подробности; натисни цвят отдолу, за да го скриеш.')),
+      problem.length ? h('div', { class: 'live-badge bad' }, h('i'), `Проблеми: ${problem.map(([c, n]) => `${c} (${n})`).join(', ')}`) : h('div', { class: 'live-badge' }, h('i'), 'Без проблеми днес')),
+    hapEl, legend);
 }
 function goalCard(paidNow) {
   const g = store.admin.settings().goal || { paid: 100, date: todayStr() };
@@ -890,18 +967,18 @@ function allAlerts() {
   return once('alerts', () => {
     if (role() === 'partner') return [];
     const all = allDrivers(); const out = [];
-    duplicates(all).forEach((g) => out.push({ key: g.key, ic: 'users', cls: 'bad', title: `Възможен дубликат: ${g.reason}`, text: `${g.value} – ${g.list.map((d) => d.user.name).join(', ')}`, href: '#/control?t=dups' }));
-    oddShifts(all).forEach((x) => out.push({ key: `odd:${x.s.id}`, ic: 'alert', cls: 'warn', title: `Странна смяна: ${x.why.join(', ')}`, text: `${x.d.user.name}, ${fmtDate(shiftDate(x.s))}`, href: '#/control?t=odd' }));
-    if (isOwner()) payments().filter((p) => p.status === 'failed').forEach((p) => out.push({ key: `fail:${p.id}`, ic: 'card', cls: 'bad', title: 'Неуспешно плащане', text: `${all.find((d) => d.user.id === p.userId)?.user.name || '—'} – ${p.reason || ''}`, href: '#/money?t=payments' }));
+    duplicates(all).forEach((g) => out.push({ uid: g.list[0]?.user?.id, key: g.key, ic: 'users', cls: 'bad', title: `Възможен дубликат: ${g.reason}`, text: `${g.value} – ${g.list.map((d) => d.user.name).join(', ')}`, href: '#/control?t=dups' }));
+    oddShifts(all).forEach((x) => out.push({ uid: x.d.user.id, key: `odd:${x.s.id}`, ic: 'alert', cls: 'warn', title: `Странна смяна: ${x.why.join(', ')}`, text: `${x.d.user.name}, ${fmtDate(shiftDate(x.s))}`, href: '#/control?t=odd' }));
+    if (isOwner()) payments().filter((p) => p.status === 'failed').forEach((p) => out.push({ uid: p.userId, key: `fail:${p.id}`, ic: 'card', cls: 'bad', title: 'Неуспешно плащане', text: `${all.find((d) => d.user.id === p.userId)?.user.name || '—'} – ${p.reason || ''}`, href: '#/money?t=payments' }));
     all.forEach((d) => {
       const s = subState(d.user);
-      if (isOwner() && s.key === 'trial' && s.left <= 3 && s.left >= 0) out.push({ key: `trial:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'clock', cls: 'warn', title: 'Пробният период изтича', text: `${d.user.name} – ${s.left === 0 ? 'днес' : s.left === 1 ? 'утре' : `след ${s.left} дни`}`, href: `#/driver/${d.user.id}` });
-      if (isOwner() && s.key === 'expired' && s.left >= -7) out.push({ key: `exp:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'alert', cls: 'bad', title: 'Абонаментът изтече', text: d.user.name, href: `#/driver/${d.user.id}` });
+      if (isOwner() && s.key === 'trial' && s.left <= 3 && s.left >= 0) out.push({ uid: d.user.id, key: `trial:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'clock', cls: 'warn', title: 'Пробният период изтича', text: `${d.user.name} – ${s.left === 0 ? 'днес' : s.left === 1 ? 'утре' : `след ${s.left} дни`}`, href: `#/driver/${d.user.id}` });
+      if (isOwner() && s.key === 'expired' && s.left >= -7) out.push({ uid: d.user.id, key: `exp:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'alert', cls: 'bad', title: 'Абонаментът изтече', text: d.user.name, href: `#/driver/${d.user.id}` });
     });
-    store.admin.tickets().filter((t) => t.adminUnread).forEach((t) => out.push({ key: `tk:${t.id}:${t.thread.length}`, ic: 'inbox', cls: 'warn', title: 'Въпрос от шофьор', text: `${t.name}: ${t.thread.at(-1).text}`, href: '#/messages?t=inbox', on: t.id }));
-    store.admin.nps().filter((n) => n.score <= 6 && (Date.now() - new Date(n.at)) / 86400000 < 30).forEach((n) => out.push({ key: `nps:${n.id}`, ic: 'heart', cls: 'warn', title: `Недоволен шофьор (оценка ${n.score})`, text: n.comment || 'без коментар', href: '#/dev?t=opinions' }));
-    store.admin.ideas().filter((i) => i.status === 'new').forEach((i) => out.push({ key: `idea:${i.id}`, ic: 'sparkle', cls: 'good', title: 'Ново предложение', text: i.text, href: '#/dev?t=opinions' }));
-    store.admin.errors().slice(0, 20).forEach((e) => out.push({ key: `err:${e.id}`, ic: 'bolt', cls: 'warn', title: 'Грешка в приложението', text: `${e.msg} · ${e.device}, ${e.browser}`, href: '#/control?t=errors' }));
+    store.admin.tickets().filter((t) => t.adminUnread).forEach((t) => out.push({ uid: t.userId, key: `tk:${t.id}:${t.thread.length}`, ic: 'inbox', cls: 'warn', title: 'Въпрос от шофьор', text: `${t.name}: ${t.thread.at(-1).text}`, href: '#/messages?t=inbox', on: t.id }));
+    store.admin.nps().filter((n) => n.score <= 6 && (Date.now() - new Date(n.at)) / 86400000 < 30).forEach((n) => out.push({ uid: n.userId, key: `nps:${n.id}`, ic: 'heart', cls: 'warn', title: `Недоволен шофьор (оценка ${n.score})`, text: n.comment || 'без коментар', href: '#/dev?t=opinions' }));
+    store.admin.ideas().filter((i) => i.status === 'new').forEach((i) => out.push({ uid: i.userId, key: `idea:${i.id}`, ic: 'sparkle', cls: 'good', title: 'Ново предложение', text: i.text, href: '#/dev?t=opinions' }));
+    store.admin.errors().slice(0, 20).forEach((e) => out.push({ uid: e.userId, key: `err:${e.id}`, ic: 'bolt', cls: 'warn', title: 'Грешка в приложението', text: `${e.msg} · ${e.device}, ${e.browser}`, href: '#/control?t=errors' }));
     return out;
   });
 }
