@@ -1068,3 +1068,25 @@ body:not(.admin) .home-link small { white-space: normal; }
 .guide-next { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 5; padding-top: 8px; }
 .voice-mic { border: 0; cursor: pointer; font: inherit; }
 .sms-hint { flex-basis: 100%; color: var(--muted); order: 5; }
+
+/* Колата ми */
+.ms-row.sub { padding: 2px 0 2px 14px; font-size: .92rem; }
+.car-inv .ci-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; margin-top: 6px; }
+.car-inv small { display: block; color: var(--muted); font-size: .85rem; }
+.car-inv .ci-big { font-family: var(--display); font-size: 2.3rem; letter-spacing: -.03em; color: var(--accent-text); }
+.car-inv .ci-big.good { color: var(--pos); }
+.car-inv .ci-right { text-align: right; }
+.car-inv .ci-right b { font-family: var(--display); font-size: 1.3rem; }
+.ci-bar { position: relative; height: 14px; border-radius: 7px; background: var(--surface-3); margin: 12px 0 14px; overflow: hidden; }
+.ci-bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); border-radius: 7px; }
+.ci-bar span { position: absolute; right: 8px; top: -1px; font-size: .72rem; font-weight: 700; color: var(--text); }
+.ci-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ci-grid > div { background: var(--surface-2); border-radius: 14px; padding: 10px 12px; }
+.ci-grid b { font-family: var(--display); font-size: 1.25rem; }
+.ci-done { display: flex; gap: 8px; align-items: center; font-weight: 600; color: var(--pos); }
+.car-log { display: flex; flex-direction: column; }
+.cl-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; width: 100%; }
+.cl-row:last-child { border-bottom: 0; }
+.cl-date { flex: none; width: 74px; font-size: .82rem; color: var(--muted); }
+.cl-row small { display: block; color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.cl-amt { font-family: var(--display); white-space: nowrap; }

@@ -34,6 +34,9 @@ function ensureExt() {
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.churn ||= []; db.audit ||= [];
   db.notDup ||= []; db.reviewed ||= [];
+  // Лизингът вече не е вид кола: колата е „Собствена“, а вноската е обикновен месечен разход
+  for (const [, p] of Object.entries(db.profiles || {})) if (p && p.carType === 'leasing') p.carType = 'own';
+  for (const c of db.costs || []) if (c && c.system === 'leasing') { delete c.system; c.name = c.name === 'Лизингова вноска' ? 'Лизинг' : c.name; }
   if (db.settings.referrals == null) db.settings.referrals = true;
   // Тестов период: всичко е безплатно и без срок, цената е 0,00 €
   if (db.settings.freeMode == null) { const paid = paidFlag(); db.settings.freeMode = !paid; if (!paid) db.settings.price = 0; }
@@ -362,6 +365,20 @@ export function deleteCost(cid, { from = todayStr() } = {}) {
   else db.costs = db.costs.filter((x) => x !== c);
   commit();
 }
+// „Колата ми“: ремонти, обслужване, гуми – еднократни разходи с дата, км и бележка (влизат в чистото за деня си)
+export const CAR_LOG_CATS = { repair: 'Ремонт', service: 'Обслужване', tires: 'Гуми', car_other: 'Друго за колата' };
+export function saveCarEntry(e) {
+  const id = myId();
+  const amount = Math.round((Number(e.amount) || 0) * 100) / 100;
+  if (!(amount > 0)) return { error: 'Въведи сума' };
+  if (!e.date) return { error: 'Избери дата' };
+  const rec = { category: e.category in CAR_LOG_CATS ? e.category : 'repair', name: CAR_LOG_CATS[e.category] || 'Ремонт', amount, startDate: e.date, endDate: e.date, km: Number(e.km) || null, note: String(e.note || '').trim().slice(0, 300) };
+  const c = e.id && db.costs.find((x) => x.id === e.id && x.userId === id && x.carLog);
+  if (c) Object.assign(c, rec);
+  else db.costs.push({ id: uid(), userId: id, period: 'once', carLog: true, dueDate: null, payments: [], ...rec });
+  commit(); return { ok: true };
+}
+export function deleteCarEntry(cid) { const id = myId(); db.costs = db.costs.filter((x) => !(x.id === cid && x.userId === id && x.carLog)); commit(); }
 // Следваща дата на плащане според периода
 export function nextDue(date, period, anchorDay) {
   const d = parseDate(date);
@@ -494,8 +511,6 @@ function applyProfile(id, patch, from) {
   syncSystemCost(id, 'dispatch', p.dispatch.mode !== 'none' && p.dispatch.amount > 0
     ? { name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' }
     : null, from);
-  syncSystemCost(id, 'leasing', p.carType === 'leasing' && p.leasing.amount > 0
-    ? { name: 'Лизингова вноска', category: 'leasing', amount: p.leasing.amount, period: 'month' } : null, from);
   syncSystemCost(id, 'rent', p.carType === 'rent' && p.rent.amount > 0
     ? { name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period, perWorkDay: false } : null, from);
   // При кола под наем застраховки, винетка, преглед и т.н. са грижа на собственика
@@ -508,7 +523,7 @@ function applyProfile(id, patch, from) {
     }
   }
 }
-// Ефир, наем и лизинг се пазят като постоянни разходи с начална дата.
+// Ефир и наем се пазят като постоянни разходи с начална дата.
 // from: от кой ден важи новата стойност (по подразбиране днес). Ако е назад във времето,
 // старите стойности се отрязват до предишния ден, за да няма двойно броене.
 function syncSystemCost(userId, system, desired, from = todayStr()) {
@@ -890,7 +905,8 @@ function seed() {
       profile: { carType: 'rent', fuel: 'diesel', rent: { amount: 140, period: 'week' }, dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1800 },
       style: { workProb: 0.9, night: 0.6, rate: 0.9, kmMin: 200, kmMax: 340 } },
     { name: 'Мария Колева', email: 'maria@demo.bg', city: 'София', company: 'Yellow!', seed: 37, days: 90, plan: 'paid', valid: 5,
-      profile: { carType: 'leasing', fuel: 'hybrid', leasing: { amount: 420 }, dispatch: { mode: 'monthly', amount: 150 }, monthlyGoal: 2200 },
+      leasing: 420,
+      profile: { carType: 'own', fuel: 'hybrid', dispatch: { mode: 'monthly', amount: 150 }, monthlyGoal: 2200 },
       style: { workProb: 0.7, night: 0.1, rate: 1.05, kmMin: 150, kmMax: 260 } },
     { name: 'Стоян Ангелов', email: 'stoyan@demo.bg', city: 'Варна', company: 'Триумф Такси / Транстриумф', seed: 41, days: 40, plan: 'trial', valid: -3,
       profile: { carType: 'own', fuel: 'lpg', dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1200 },
@@ -917,7 +933,7 @@ function seed() {
     const city = pick(cityW);
     const list = COMPANIES[city] || [];
     const company = list.length && r0() > 0.12 ? pick(list) : 'Местно такси';
-    const carType = pick(['own', 'own', 'own', 'rent', 'rent', 'leasing']);
+    const carType = pick(['own', 'own', 'own', 'rent', 'rent', 'own']);
     const fuel = pick(['petrol_lpg', 'petrol_lpg', 'petrol_lpg', 'diesel', 'hybrid', 'lpg', 'electric']);
     const trial = r0() < 0.2;
     extra.push({
@@ -1097,7 +1113,7 @@ function seedDriver(d, today) {
   // Системни разходи от началото на акаунта
   const sys = [];
   if (p.dispatch.mode !== 'none') sys.push({ system: 'dispatch', name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' });
-  if (p.carType === 'leasing') sys.push({ system: 'leasing', name: 'Лизингова вноска', category: 'leasing', amount: p.leasing.amount, period: 'month', endDate: addDays(today, 400) });
+  if (d.leasing) sys.push({ name: 'Лизинг', category: 'leasing', amount: d.leasing, period: 'month', endDate: addDays(today, 400) });
   if (p.carType === 'rent') sys.push({ system: 'rent', name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period });
   sys.forEach((c) => db.costs.push({ id: uid(), userId: u.id, startDate: startDay, endDate: null, dueDate: null, payments: [], ...c }));
 

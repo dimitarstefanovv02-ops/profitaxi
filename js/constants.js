@@ -4,8 +4,7 @@ export const INVITES_ON = true; // вече се управлява от адм�
 // ProfiTaxi – справочници
 
 export const CAR_TYPES = {
-  own: { label: 'Собствена', hint: 'Колата е твоя', icon: 'car' },
-  leasing: { label: 'Лизинг', hint: 'Твоя, с месечна вноска', icon: 'doc' },
+  own: { label: 'Собствена', hint: 'Колата е твоя (и на лизинг)', icon: 'car' },
   rent: { label: 'Под наем', hint: 'Плащаш наем', icon: 'key' },
 };
 
@@ -45,11 +44,11 @@ export const EXPENSE_CATS = {
   other: { label: 'Друго', icon: 'more', color: 'var(--c-gray)' },
 };
 
-// Постоянни (периодични) разходи. owner: само при собствена кола или лизинг
+// Постоянни (периодични) разходи. owner: само при собствена кола (вкл. на лизинг)
 // (при кола под наем ги плаща собственикът). system: идват от профила.
 export const COST_CATS = {
   dispatch: { label: 'Ефир / диспечер', icon: 'radio', system: true, color: 'var(--c-violet)' },
-  leasing: { label: 'Лизингова вноска', icon: 'doc', system: true, car: true, color: 'var(--c-blue)' },
+  leasing: { label: 'Лизинг', icon: 'doc', car: true, owner: true, period: 'month', color: 'var(--c-blue)' },
   rent: { label: 'Наем на колата', icon: 'key', system: true, car: true, color: 'var(--c-blue)' },
   fuel: { label: 'Гориво', icon: 'fuel', period: 'week', color: 'var(--c-orange)' },
   wash: { label: 'Автомивка', icon: 'wash', period: 'week', color: 'var(--c-sky)' },

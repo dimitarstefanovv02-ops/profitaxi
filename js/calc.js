@@ -17,11 +17,13 @@ const shareFor = (cost, profile) => (COST_CATS[cost.category]?.car ? (profile.sh
 const PER_YEAR = { week: 52.1775, month: 12, quarter: 4, year: 1 };
 
 // Постоянни разходи, разпределени за един ден
-export function fixedForDay(costs, profile, day, worked) {
+// Еднократните разходи (ремонт, обслужване от „Колата ми“) се броят в деня си. withOnce=false ги пропуска.
+export function fixedForDay(costs, profile, day, worked, withOnce = true) {
   const d = parseDate(day);
   const dy = d.getFullYear() % 4 === 0 ? 366 : 365;
   let sum = 0;
   for (const c of costs) {
+    if (c.period === 'once') { if (withOnce && c.startDate === day) sum += Number(c.amount) || 0; continue; }
     if (c.startDate > day || (c.endDate && c.endDate < day)) continue;
     let v = 0;
     if (c.period === 'day') v = c.perWorkDay ? (worked ? c.amount : 0) : c.amount;
@@ -41,7 +43,7 @@ export function fixedByCategory(costs, profile, days, workedSet) {
   }
   return out;
 }
-export const activeCosts = (costs) => { const t = todayStr(); return costs.filter((c) => !c.endDate || c.endDate >= t); };
+export const activeCosts = (costs) => { const t = todayStr(); return costs.filter((c) => c.period !== 'once' && (!c.endDate || c.endDate >= t)); };
 // Колко струват постоянните разходи месечно
 export function monthlyFixed(costs, profile, workDaysPerMonth = 24) {
   let m = 0;
@@ -265,7 +267,7 @@ export function currentKm(shifts) { let m = 0; for (const s of shifts) m = Math.
 export function shiftNetAfterFixed(data, s) {
   const d = shiftDate(s);
   const same = data.shifts.filter((x) => x.end && shiftDate(x) === d).length || 1;
-  return shiftProfit(s) - fixedForDay(data.costs, data.profile, d, true) / same;
+  return shiftProfit(s) - fixedForDay(data.costs, data.profile, d, true, false) / same;
 }
 
 // Седмица по дни (за лентата на началния екран)

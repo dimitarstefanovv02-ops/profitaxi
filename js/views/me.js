@@ -7,6 +7,15 @@ import { themeToggle } from '../ui.js';
 import { profileCover } from './profile.js';
 import { openCategories } from './categories.js';
 import { upcomingReminders } from '../calc.js';
+import { carStats, carLog } from './vehicle.js';
+import { money } from '../util.js';
+// Подзаглавие за „Колата ми“
+function carSub(data) {
+  const c = carStats(data);
+  if (c.inv) return c.done ? 'Изплатена! 🎉' : `Избита ${Math.round(c.pct)}% · остават ${money(c.left)}`;
+  const n = carLog(data).length;
+  return n ? `${n} ремонта · колко си избил от колата` : 'Ремонти, разходи по колата и колко си избил от нея';
+}
 
 export function meView({ go, user, data }) {
   const ref = store.referralsOn() && store.myReferrals();
@@ -20,7 +29,8 @@ export function meView({ go, user, data }) {
       row('user', 'Лични данни', 'Име, телефон, снимки, парола, отчети, помощ, изход', null, '#/profile'),
       row('doc', 'Презентация', 'Как работи приложението – за преглед и теглене', null, '#/guide')),
     group('Колата и разходите',
-      row('car', 'Колата и ефирът', 'Своя, наем или лизинг, гориво, ефир, цел за месеца', null, '#/car'),
+      data.profile.carType !== 'rent' && row('tool', 'Колата ми', carSub(data), null, '#/vehicle'),
+      row('car', 'Колата и ефирът', 'Своя или под наем, гориво, ефир, цел за месеца', null, '#/car'),
       row('wallet', 'Постоянни разходи и падежи', payN ? `${payN} плащания в следващите 2 седмици` : 'Наем, ефир, застраховки, данъци', null, '#/costs'),
       row('tag', 'Категории разходи', 'Добави свои, скрий ненужните', () => openCategories())),
     group('Още',

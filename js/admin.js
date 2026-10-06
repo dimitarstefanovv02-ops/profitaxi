@@ -717,7 +717,7 @@ function driverDetail(r) {
         info('Регистриран', fmtDate(isoToDateStr(u.createdAt), { year: true })),
         info('Откъде', SOURCES[u.source] || '—'),
         info('Последен вход', u.lastLoginAt ? timeTxt(u.lastLoginAt) : '—'),
-        info('Кола', `${CAR_TYPES[p.carType]?.label}${p.carType === 'leasing' ? `, ${money(p.leasing.amount)}/мес` : p.carType === 'rent' ? `, ${money(p.rent.amount)} ${PERIODS[p.rent.period].label}` : ''}`),
+        info('Кола', `${CAR_TYPES[p.carType]?.label || 'Собствена'}${p.carType === 'rent' ? `, ${money(p.rent.amount)} ${PERIODS[p.rent.period].label}` : ''}`),
         p.car?.plate && info('Номер', `${p.car.model || ''} ${p.car.plate}${p.car.code ? `, код ${p.car.code}` : ''}`.trim()),
         info('Гориво', FUELS[p.fuel]?.label), info('Ефир', dispatchText),
         !partner && acts('driver.profile', [['edit', h('button', { class: 'btn btn-ghost act-v btn-sm', onclick: () => editDriver(u) }, icon('edit', 16), 'Град и фирма')]]))],
@@ -1324,12 +1324,12 @@ function seasonTab() {
 }
 function carsTab() {
   const per = perDriver(); const all = scoped();
-  const cars = { own: 0, rent: 0, leasing: 0 }; all.forEach((d) => { cars[d.profile.carType]++; });
+  const cars = { own: 0, rent: 0, leasing: 0 }; all.forEach((d) => { if (d.profile.carType === 'rent') cars.rent++; else if (activeCosts(d.costs).some((c) => c.category === 'leasing')) cars.leasing++; else cars.own++; });
   const fuels = {}; all.forEach((d) => { fuels[d.profile.fuel] = (fuels[d.profile.fuel] || 0) + 1; });
   return h('div', null, daysPicker(), flow('stats.cars', [
-    ['car', card('car', 'Своя, под наем или лизинг', avgTable(avgRows(per, (d) => d.profile.carType, (k) => CAR_TYPES[k]?.label || k, 'h'), 'Кола'))],
+    ['car', card('car', 'Своя или под наем', avgTable(avgRows(per, (d) => d.profile.carType, (k) => CAR_TYPES[k]?.label || k, 'h'), 'Кола'))],
     ['fuel', card('fuel', 'Кое гориво е най-изгодно', avgTable(avgRows(per, (d) => d.profile.fuel, (k) => FUELS[k]?.label || k, 'h'), 'Гориво'))],
-    ['carDonut', card('car', 'Колко коли от всеки вид', donut([{ label: 'Собствена', value: cars.own, color: PALETTE[0], text: String(cars.own) }, { label: 'Под наем', value: cars.rent, color: PALETTE[1], text: String(cars.rent) }, { label: 'Лизинг', value: cars.leasing, color: PALETTE[2], text: String(cars.leasing) }], 'коли', String(all.length)))],
+    ['carDonut', card('car', 'Колко коли от всеки вид', donut([{ label: 'Собствена (без лизинг)', value: cars.own, color: PALETTE[0], text: String(cars.own) }, { label: 'Под наем', value: cars.rent, color: PALETTE[1], text: String(cars.rent) }, { label: 'Собствена на лизинг', value: cars.leasing, color: PALETTE[2], text: String(cars.leasing) }], 'коли', String(all.length)))],
     ['fuelDonut', card('fuel', 'Гориво на колите', donut(Object.entries(fuels).sort((a, b) => b[1] - a[1]).map(([k, v], i) => ({ label: FUELS[k]?.label || k, value: v, color: PALETTE[(i + 3) % PALETTE.length], text: String(v) })), 'коли', String(all.length)))],
   ]));
 }
@@ -1341,7 +1341,7 @@ function driverMetrics(d, st, days) {
     m.dispatchMonthly = p.dispatch.mode === 'daily' ? p.dispatch.amount * (st.workedDays ? (st.workedDays / days) * 30.44 : 22) : p.dispatch.mode === 'weekly' ? p.dispatch.amount * 4.345 : p.dispatch.amount;
   }
   if (p.carType === 'rent' && p.rent.amount > 0) m.rentWeekly = p.rent.period === 'day' ? p.rent.amount * 7 : p.rent.period === 'month' ? p.rent.amount / 4.345 : p.rent.amount;
-  if (p.carType === 'leasing' && p.leasing.amount > 0) m.leasingMonthly = p.leasing.amount;
+  const leas = activeCosts(d.costs || []).filter((c) => c.category === 'leasing'); if (leas.length) m.leasingMonthly = leas.reduce((a, c) => a + costMonthly(c, p), 0);
   if (st.shifts) {
     m.hoursPerShift = st.hours / st.shifts; m.hoursPerDay = st.hours / st.workedDays; m.shiftsPerWeek = st.shifts / (days / 7);
     m.kmPerShift = st.km / st.shifts; m.incomePerHour = st.hours ? st.income / st.hours : null; m.netPerHour = st.hours ? st.net / st.hours : null;

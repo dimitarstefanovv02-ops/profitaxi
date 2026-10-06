@@ -76,7 +76,7 @@ function askDelete(d) {
     h('p', { class: 'muted small' }, '„За този месец“ – ако не го плащаш изобщо. „От днес“ – ако си го плащал досега и спираш.')));
 }
 
-// Наем, лизинг и ефир идват от профила: тук може да се смени от кога важат
+// Наем и ефир идват от профила: тук може да се смени от кога важат
 function systemCost(c, go) {
   openSheet((close) => h('div', { class: 'form' },
     sheetHead(c.name, close, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),

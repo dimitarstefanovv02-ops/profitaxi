@@ -75,7 +75,7 @@ async function setPhoto(key, redraw) {
   catch { toast('Снимката е твърде голяма', 'err'); }
 }
 
-// „Колата и ефирът“: вид кола (своя / наем / лизинг), данни за колата, гориво, ефир, споделяне, цел
+// „Колата и ефирът“: вид кола (своя / под наем), данни за колата, гориво, ефир, споделяне, цел
 export function carView({ go, user, data }) {
   const root = h('div', { class: 'screen', 'data-page': 'car' });
   const d = store.getProfile();
@@ -113,20 +113,20 @@ export function carView({ go, user, data }) {
   };
   draw();
   fill(root, h('div', { class: 'page-title' }, h('h1', null, 'Колата и ефирът')),
-    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя, под наем или на лизинг, горивото, ефирът и целта ти за месеца.'),
+    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя или под наем, горивото, ефирът и целта ти за месеца.'),
     body, bar);
   return root;
 }
 
 // Промени в наема, лизинга, ефира или вида кола – те стават постоянни разходи с начална дата
-const costChanged = (orig, d) => { const o = JSON.parse(orig); return ['carType', 'rent', 'leasing', 'dispatch'].some((k) => JSON.stringify(o[k]) !== JSON.stringify(d[k])); };
+const costChanged = (orig, d) => { const o = JSON.parse(orig); return ['carType', 'rent', 'dispatch'].some((k) => JSON.stringify(o[k]) !== JSON.stringify(d[k])); };
 export function askFrom(onPick) {
   const today = todayStr(), m0 = startOfMonth(today), month = MONTHS[parseDate(today).getMonth()];
   openSheet((close) => {
     const date = h('input', { class: 'input', type: 'date', value: m0, max: today });
     const pick = (from) => { close(); onPick(from); };
     return h('div', { class: 'form' },
-      sheetHead('От кога важи промяната?', close, 'Наемът, лизингът и ефирът се смятат от тази дата'),
+      sheetHead('От кога важи промяната?', close, 'Наемът и ефирът се смятат от тази дата'),
       h('button', { class: 'btn btn-primary btn-lg btn-block', onclick: () => pick(m0) }, icon('calendar', 20), `От 1 ${month} (целия месец)`),
       today !== m0 && h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => pick(today) }, `От днес, ${fmtDate(today)}`),
       h('div', { class: 'row gap' }, date, h('button', { class: 'btn btn-outline', onclick: () => date.value && pick(date.value > today ? today : date.value) }, 'От дата')),

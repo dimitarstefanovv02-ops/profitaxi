@@ -45,7 +45,7 @@ export function shiftEditorView(ctx) {
     const inc = shiftIncome(draft), exp = shiftExpenses(draft);
     const day = isoToDateStr(draft.start);
     const sameDay = data.shifts.filter((s) => s.end && s.id !== draft.id && shiftDate(s) === day).length + 1;
-    const fixedShare = fixedForDay(data.costs, profile, day, true) / sameDay;
+    const fixedShare = fixedForDay(data.costs, profile, day, true, false) / sameDay;
     const net = inc - exp - fixedShare;
     const cats = shiftCats(profile);
     const kmBad = draft.kmEnd > 0 && draft.kmEnd < draft.kmStart;

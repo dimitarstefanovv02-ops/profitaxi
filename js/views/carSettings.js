@@ -15,11 +15,7 @@ export function carBlock(d, onChange) {
   return h('div', { class: 'stack' },
     h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
       h('button', { type: 'button', class: cx('option', d.carType === k && 'on'), onclick: () => set({ carType: k }) },
-        icon(k === 'rent' ? 'key' : k === 'leasing' ? 'doc' : 'car', 24), v.label, h('small', null, v.hint)))),
-    d.carType === 'leasing' && amountTile('Лизингова вноска на месец', d.leasing.amount, () => openNumpad({
-      title: 'Лизингова вноска', sub: 'Месечна сума', fields: [{ key: 'v', label: 'На месец', value: d.leasing.amount }],
-      actions: [{ label: 'Готово', primary: true, run: ({ v }) => set({ leasing: { amount: v } }) }],
-    })),
+        icon(k === 'rent' ? 'key' : 'car', 24), v.label, h('small', null, v.hint)))),
     d.carType === 'rent' && h('div', { class: 'stack' },
       segmented({ day: 'На ден', week: 'На седмица', month: 'На месец' }, d.rent.period, (p) => set({ rent: { ...d.rent, period: p } }), { small: true }),
       amountTile(`Наем ${PERIODS[d.rent.period].label}`, d.rent.amount, () => openNumpad({
