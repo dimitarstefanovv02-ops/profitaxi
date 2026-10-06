@@ -12,6 +12,26 @@
 
 import crypto from 'node:crypto';
 import { fieldColl, fieldKey } from '../js/schema.js';
+import { sendPush, pushReady } from '../lib/webpush.js';
+
+// ---------- известия на телефона на админа ----------
+// pt:push – hash: sha1(endpoint) → { id (админ), sub, types: ['reg','ticket'], at }
+const PUSH_TYPES = ['reg', 'ticket'];
+const subKey = (endpoint) => crypto.createHash('sha1').update(String(endpoint)).digest('hex');
+async function notifyAdmins(type, data, onlyId) {
+  if (!pushReady()) return 0;
+  try {
+    const all = pairs(await one(['HGETALL', 'pt:push']));
+    const list = Object.entries(all).filter(([, r]) => r?.sub && (onlyId ? r.id === onlyId : (r.types || PUSH_TYPES).includes(type)));
+    const dead = [];
+    const res = await Promise.race([
+      Promise.allSettled(list.map(async ([k, r]) => { const st = await sendPush(r.sub, data); if (st === 404 || st === 410) dead.push(k); return st; })),
+      sleep(5000).then(() => []),
+    ]);
+    if (dead.length) await one(['HDEL', 'pt:push', ...dead]);
+    return res.filter((x) => x.status === 'fulfilled' && x.value >= 200 && x.value < 300).length;
+  } catch (e) { console.error('push', e); return 0; }
+}
 
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -109,6 +129,7 @@ async function applyPush(s, set = {}, del = []) {
   if (fields.length > 3000) return { error: 'Твърде много промени наведнъж' };
   const cur = {}; const vals = await one(['HMGET', 'pt:db', ...fields]); fields.forEach((f, i) => { cur[f] = parse(vals[i]); });
   const isAdmin = s.role === 'admin', id = s.id;
+  const newTickets = [];
   const hset = [], hdel = [], extra = [], rejected = [];
   for (const [f, raw] of Object.entries(set)) {
     const c = fieldColl(f), k = fieldKey(f), old = cur[f];
@@ -133,6 +154,7 @@ async function applyPush(s, set = {}, del = []) {
     else if (OWN.includes(c) && c !== 'payments') {
       if (v.userId !== id || (old && old.userId !== id)) { rejected.push(f); continue; }
       if (c === 'tickets' && old) v = { ...v, thread: unionThread(old.thread, v.thread) };
+      if (c === 'tickets') { const was = old?.thread?.length || 0, now = v.thread?.length || 0; if (now > was) newTickets.push(v); }
     } else if (c === 'messages') {
       if (!old) { rejected.push(f); continue; }
       const read = (v.readBy || []).includes(id);
@@ -160,6 +182,7 @@ async function applyPush(s, set = {}, del = []) {
   cmds.push(...extra);
   if (cmds.length) cmds.push(['INCR', 'pt:rev']);
   const res = await redis(cmds);
+  for (const t of newTickets.slice(0, 3)) { const m = t.thread[t.thread.length - 1]; await notifyAdmins('ticket', { title: `Въпрос от ${t.name || 'шофьор'}`, body: String(m?.text || '').slice(0, 140), url: '/admin#/messages?t=inbox', tag: 'tk-' + t.id }); }
   return { ok: true, rejected, rev: cmds.length ? res[res.length - 1] : undefined };
 }
 
@@ -231,6 +254,8 @@ const ops = {
     await redis([['HSET', 'pt:db', ...hs], ...authCmds(id, email, 'driver', password), ['INCR', 'pt:rev']]);
     const token = await issueToken(id, 'driver');
     const all2 = { ...all, ...set }; const rev = await one(['GET', 'pt:rev']);
+    const n = Object.values(all2).filter((x) => x && x.role === 'driver').length;
+    await notifyAdmins('reg', { title: 'Нов шофьор 🚕', body: `${u.name} · ${[u.city, u.company].filter(Boolean).join(', ')} – общо ${n}`, url: '/admin#/drivers?f=new', tag: 'reg-' + id });
     return { token, user: u, fields: driverView(all2, id), rev: Number(rev || 0) };
   },
 
@@ -331,15 +356,33 @@ const ops = {
         const t = { id: tid, userId: id, name: u.name, city: u.city, company: u.company, topic: 'login', at, status: 'open', adminUnread: true, driverUnread: false,
           thread: [{ by: 'driver', text: `Забравих си паролата. Моля, сменете я и ми се обадете на ${u.phone || 'телефона от профила'}.`, at }] };
         await redis([['HSET', 'pt:db', `tickets:${tid}`, JSON.stringify(t)], ['INCR', 'pt:rev']]);
+        await notifyAdmins('ticket', { title: `Забравена парола: ${u.name}`, body: `Смени паролата и се обади на ${u.phone || 'шофьора'}`, url: '/admin#/messages?t=inbox', tag: 'tk-' + tid });
       }
     }
     await sleep(300);
     return { ok: true }; // не казваме дали има такъв акаунт
   },
 
+  // Абонамент за известия на телефона на админа
+  async pushSub({ sub, types }, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return { error: 'Невалиден абонамент' };
+    if (!/^https:\/\//.test(sub.endpoint) && !MEMORY) return { error: 'Невалиден адрес' };
+    const t = (Array.isArray(types) ? types : PUSH_TYPES).filter((x) => PUSH_TYPES.includes(x));
+    await one(['HSET', 'pt:push', subKey(sub.endpoint), JSON.stringify({ id: s.id, sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, types: t, at: new Date().toISOString() })]);
+    return { ok: true, ready: pushReady() };
+  },
+  async pushUnsub({ endpoint }, s) { if (s.role !== 'admin') return { error: 'Само за админ' }; if (endpoint) await one(['HDEL', 'pt:push', subKey(endpoint)]); return { ok: true }; },
+  async pushTest(_, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    if (!pushReady()) return { error: 'Известията още не са включени на сървъра' };
+    const n = await notifyAdmins('test', { title: 'ProfiTaxi', body: 'Известията работят ✅', url: '/admin#/overview', tag: 'test' }, s.id);
+    return n ? { ok: true, sent: n } : { error: 'Няма телефон, на който да се прати. Включи известията отново.' };
+  },
+
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll']);
+const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
 

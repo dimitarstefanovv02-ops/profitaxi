@@ -6,6 +6,7 @@
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
 import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './constants.js';
 import { LIVE, call, getToken, setToken, setOnAuthLost } from './sync.js';
+import { PHONE_CODE } from './config.js';
 import { encode, decode } from './schema.js';
 
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
@@ -146,7 +147,8 @@ export function verifySmsCode(phone, code) {
   if (String(code).trim() !== r.code) return { error: 'Грешен код' };
   r.ok = true; persist(); return { ok: true };
 }
-const phoneVerified = (phone) => !!db.sms[digits(phone)]?.ok;
+const phoneVerified = (phone) => !PHONE_CODE || !!db.sms[digits(phone)]?.ok;
+export const phoneCodeOn = () => PHONE_CODE;
 // Кодове за достъп на партньори (напр. One Taxi)
 export function checkAccessCode(code, company) {
   load(); const c = db.codes.find((x) => x.code === String(code || '').trim().toUpperCase());
@@ -578,6 +580,8 @@ export async function wipeAllDrivers() {
 }
 // Забравена парола: в облака стига до админа като въпрос
 export async function forgotPassword(email) { if (!LIVE) return { ok: true }; return call('forgot', { email }, 'app'); }
+// Известия на телефона на админа (само в облака)
+export async function adminPush(op, body = {}) { if (!LIVE) return { error: 'Известията работят само на живия сайт' }; return call(op, body, 'admin'); }
 export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); if (LIVE) dropLive('admin'); }
 function requireAdmin() { if (!adminUser()) throw new Error('admin only'); }
 function requireOwner() { if (adminRole() !== 'owner') throw new Error('owner only'); }

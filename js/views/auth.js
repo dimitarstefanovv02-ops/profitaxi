@@ -94,7 +94,7 @@ export function registerView({ go }) {
       [!v.company, 'Избери фирма или напиши името ѝ'],
       [!carType, 'Избери каква е колата'],
       [!phone.value.trim(), 'Въведи телефон'],
-      [!phoneOk, 'Потвърди телефона с кода от SMS'],
+      [store.phoneCodeOn() && !phoneOk, 'Потвърди телефона с кода от SMS'],
       [BRAND && !store.live() && !!store.checkAccessCode(code.value, ONE.company).error, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
       [!BRAND && !store.live() && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
     ];
@@ -118,7 +118,7 @@ export function registerView({ go }) {
         field('Име', name, null, true),
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
-        field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true),
+        (store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true)),
         !BRAND && field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
         !BRAND && store.referralsOn() && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
       BRAND ? group('target', 'One Taxi',

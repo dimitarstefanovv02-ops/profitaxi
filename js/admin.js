@@ -10,6 +10,7 @@ import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, s
 import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, expenseCat, costCat } from './constants.js';
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
 import { cityCompanyPicker } from './views/cityPicker.js';
+import { VAPID_PUBLIC } from './config.js';
 import { zone, initArrange, setArranging, arranging, resetZones, resetAll, zonesOnPage, ordered, onRender, hasLayout } from './arrange.js';
 
 applyTheme();
@@ -444,6 +445,7 @@ function overview() {
     pageHead('Днес', `${scopeLabel()} · обновява се на живо`),
     flow('overview', [
       ['happened', wide(happenedToday(all))],
+      store.live() && !pushOn() && ['pushHint', wide(h('a', { class: 'card push-hint', href: '#/settings?t=notify' }, h('span', { class: 'hap-ic' }, icon('bell', 18)), h('span', { class: 'grow' }, h('b', null, 'Включи известията на телефона'), h('small', null, 'Звъни ти, щом се регистрира нов шофьор или те питат нещо.')), icon('right', 18)))],
       ['hapmap', wide(happenedMap(all))],
       ['nums', wide(zone('overview.nums', { class: 'big-nums' }, [
         ['total', bigNum('Шофьори общо', String(all.length), `${newThis} нови тази седмица`, '', vsWeek(newThis, newPrev))],
@@ -1718,8 +1720,8 @@ function printInvoice(p) {
 // =====================================================================
 function settings() {
   const owner = isOwner();
-  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && (store.live() ? ['wipe', 'Изчисти'] : ['demo', 'Демо данни'])]);
-  const body = { general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab, wipe: wipeTab };
+  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], ['notify', 'Известия'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && (store.live() ? ['wipe', 'Изчисти'] : ['demo', 'Демо данни'])]);
+  const body = { general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab, wipe: wipeTab, notify: notifyTab };
   return h('div', null, pageHead('Настройки', 'Общи настройки на услугата'), bar, body[cur]());
 }
 function generalTab() {
@@ -1827,6 +1829,59 @@ function demoTab() {
     h('button', { class: 'btn btn-ghost act-del', onclick: () => confirmSheet({ title: 'Нулиране на демо данните?', okLabel: 'Нулирай', danger: true, onOk: () => { store.resetDemo(); location.reload(); } }) }, 'Нулирай демо данните'))]]);
 }
 
+// ---------- Известия на телефона (Web Push) ----------
+// На iPhone работи само когато админът е отворен от иконката на началния екран (iOS 16.4+).
+const PUSH_KEY = 'profitaxi.adminPush';
+const pushTypes = () => { try { return JSON.parse(localStorage.getItem(PUSH_KEY + '.types')) || ['reg', 'ticket']; } catch { return ['reg', 'ticket']; } };
+const pushOn = () => { try { return localStorage.getItem(PUSH_KEY) === '1'; } catch { return false; } };
+const isIOSDev = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const standaloneNow = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const b64ToBytes = (s) => { const p = '='.repeat((4 - (s.length % 4)) % 4); const raw = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
+async function enablePush(types) {
+  if (!store.live()) return { error: 'Известията работят само на живия сайт.' };
+  if (isIOSDev && !standaloneNow()) return { error: 'На iPhone известията идват само в приложението от началния екран. В Safari: „Сподели“ → „Добави към началния екран“, отвори админа от иконката и натисни пак тук.' };
+  if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return { error: 'Този телефон или браузър не поддържа известия. На iPhone трябва iOS 16.4 или по-нов.' };
+  const perm = await Notification.requestPermission();
+  if (perm !== 'granted') return { error: 'Известията са забранени. Разреши ги от Настройки → Известия → ProfiTaxi Stats.' };
+  const reg = await navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready);
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
+  const r = await store.adminPush('pushSub', { sub: sub.toJSON(), types });
+  if (r.error) return r;
+  try { localStorage.setItem(PUSH_KEY, '1'); localStorage.setItem(PUSH_KEY + '.types', JSON.stringify(types)); } catch { /* */ }
+  return r;
+}
+async function disablePush() {
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration?.('/');
+    const sub = await reg?.pushManager?.getSubscription();
+    if (sub) { await store.adminPush('pushUnsub', { endpoint: sub.endpoint }); await sub.unsubscribe(); }
+  } catch { /* */ }
+  try { localStorage.removeItem(PUSH_KEY); } catch { /* */ }
+}
+function notifyTab() {
+  const on = pushOn(); let types = pushTypes();
+  const err = h('p', { class: 'err' });
+  const box = (k, label, sub) => h('label', { class: 'row gap', style: { alignItems: 'flex-start', padding: '8px 0', cursor: 'pointer' } },
+    h('input', { type: 'checkbox', checked: types.includes(k), style: { width: '22px', height: '22px', accentColor: 'var(--accent)', flex: 'none', marginTop: '2px' },
+      onchange: async (e) => { types = e.target.checked ? [...new Set([...types, k])] : types.filter((x) => x !== k); try { localStorage.setItem(PUSH_KEY + '.types', JSON.stringify(types)); } catch { /* */ } if (pushOn()) { const r = await enablePush(types); if (r.error) err.textContent = r.error; else toast('Запазено'); } } }),
+    h('span', null, h('b', null, label), h('div', { class: 'muted small' }, sub)));
+  const go = async (btn) => { btn.disabled = true; err.textContent = ''; const r = await enablePush(types); btn.disabled = false; if (r.error) { err.textContent = r.error; return; } toast(r.ready === false ? 'Включено. Сървърът ще праща известия след следващото обновяване.' : 'Известията са включени'); render(); };
+  const steps = isIOSDev && !standaloneNow();
+  return flow('settings.notify', [['n', wide(card('bell', 'Известия на телефона',
+    note('Телефонът ти звъни и показва известие, когато се случи нещо важно – дори приложението да е затворено.'),
+    steps && h('div', { class: 'inst-warn', style: { margin: '10px 0' } }, icon('alert', 18), h('span', null, 'На iPhone: отвори админа от иконката на началния екран (Safari → „Сподели“ → „Добави към началния екран“) и включи известията оттам.')),
+    h('div', { style: { margin: '10px 0' } },
+      box('reg', 'Нов шофьор се регистрира', 'Име, град и фирма – натискаш и отиваш в „Шофьори“'),
+      box('ticket', 'Въпрос от шофьор', 'Включително „Забравена парола“ – натискаш и отиваш във „Входящи“')),
+    h('div', { class: 'row gap wrap' },
+      on ? h('span', { class: 'chip good' }, icon('check', 14), 'Включени на това устройство') : null,
+      h('button', { class: 'btn btn-page', onclick: (e) => go(e.currentTarget) }, icon('bell', 18), on ? 'Включи пак' : 'Включи известията'),
+      on && h('button', { class: 'btn btn-ghost', onclick: async () => { const r = await store.adminPush('pushTest'); if (r.error) err.textContent = r.error; else toast('Пратено – погледни телефона'); } }, 'Пробно известие'),
+      on && h('button', { class: 'btn btn-ghost', onclick: async () => { await disablePush(); toast('Изключени'); render(); } }, 'Изключи')),
+    err))]]);
+}
+
 function wipeTab() {
   const n = store.admin.drivers().length;
   const box = h('input', { class: 'input', placeholder: 'ИЗТРИЙ', autocapitalize: 'characters', style: { maxWidth: '220px' } });
@@ -1843,6 +1898,8 @@ function wipeTab() {
 }
 
 // ---------- старт ----------
+// Service worker: нужен за известията на телефона (и за отваряне без интернет)
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('/sw.js').catch(() => {});
 initArrange({ onDone: () => render(), onReset: () => { resetZones(zonesOnPage()); toast('Тази страница е както беше'); render(); } });
 let pending = false;
 window.addEventListener('hashchange', () => { top.q = ''; render(); });

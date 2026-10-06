@@ -12,6 +12,12 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
   if (u.pathname === '/api/db') return api(req, res);
+  // фалшив „push“ сървър за тестовете: пази получените известия
+  if (u.pathname === '/mock/push') {
+    const got = (globalThis.__pushes ||= []);
+    if (req.method === 'GET') { res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify(got)); }
+    const ch = []; req.on('data', (c) => ch.push(c)); req.on('end', () => { got.push({ auth: req.headers.authorization, enc: req.headers['content-encoding'], body: Buffer.concat(ch).toString('base64') }); res.statusCode = 201; res.end(); }); return;
+  }
   let p = path.join(root, decodeURIComponent(u.pathname));
   if (!p.startsWith(root)) { res.statusCode = 403; return res.end(); }
   if (fs.existsSync(p) && fs.statSync(p).isDirectory()) p = fs.existsSync(p.replace(/\/$/, '') + '.html') ? p.replace(/\/$/, '') + '.html' : path.join(p, 'index.html');

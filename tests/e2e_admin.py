@@ -89,7 +89,7 @@ async def main():
         await a.fill('input[type=number]','30'); await a.click('main .btn-page'); await a.wait_for_timeout(300)
         d2 = await ctx.new_page(); await d2.goto(base+'/app'); await d2.evaluate("localStorage.removeItem('profitaxi.session')"); await d2.goto(base+'/app#/register'); await d2.wait_for_timeout(400)
         await d2.fill('input[autocomplete=name]','Проба'); await d2.fill('input[type=email]','proba@test.bg'); await d2.fill('input[type=password]','123456')
-        await d2.fill('input[type=tel]','0877333444'); await d2.click('text=Изпрати код по SMS'); await d2.wait_for_timeout(250); _c = re.findall(r'\d{4}', await d2.inner_text('#toast'))[-1]; await d2.fill('input[placeholder="4 цифри"]', _c); await d2.click('.sms-row >> text=Потвърди'); await d2.wait_for_timeout(150)
+        await d2.fill('input[type=tel]','0877333444'); await d2.wait_for_timeout(100)
         await d2.select_option('select >> nth=0','Нова Загора'); await d2.wait_for_timeout(150); await d2.select_option('select >> nth=1','Ирис Такси')
         await d2.click('text=Собствена'); await d2.click('input[type=checkbox]'); await d2.click('button[type=submit]'); await d2.wait_for_timeout(500)
         days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")

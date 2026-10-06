@@ -67,7 +67,7 @@ async def main():
         await d.goto(base+'/app#/profile'); await d.wait_for_timeout(400); await d.click('text=Изход'); await d.wait_for_timeout(300)
         await d.goto(base+'/app#/register?promo=START2'); await d.wait_for_timeout(400)
         await d.fill('input[autocomplete=name]','Промо Тест'); await d.fill('input[type=email]','promo@test.bg'); await d.fill('input[type=password]','123456')
-        await d.fill('input[type=tel]','0877555666'); await d.click('text=Изпрати код по SMS'); await d.wait_for_timeout(250); c = re.findall(r'\d{4}', await d.inner_text('#toast'))[-1]; await d.fill('input[placeholder="4 цифри"]', c); await d.click('.sms-row >> text=Потвърди'); await d.wait_for_timeout(150)
+        await d.fill('input[type=tel]','0877555666'); await d.wait_for_timeout(100)
         await d.select_option('select >> nth=0','Сливен'); await d.wait_for_timeout(150); await d.select_option('select >> nth=1','Perfect Taxi')
         await d.click('text=Собствена'); await d.click('input[type=checkbox]'); await d.click('button[type=submit]'); await d.wait_for_timeout(500)
         days = await d.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='promo@test.bg');return [u.source,u.promo,Math.round((new Date(u.subscription.validUntil)-new Date(new Date().toISOString().slice(0,10)))/864e5)]})()")
