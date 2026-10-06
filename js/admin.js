@@ -158,14 +158,14 @@ function loginView() {
   const demo = (label, e, p) => h('button', { type: 'button', onclick: () => { email.value = e; pw.value = p; } }, label);
   return shell(
     h('div', { class: 'auth-hero' }, h('h1', null, 'Администрация'), h('p', null, 'Вход само за администратори.')),
-    h('form', { class: 'form', onsubmit: (e) => {
-      e.preventDefault(); const r = store.adminLogin(email.value, pw.value);
+    h('form', { class: 'form', onsubmit: async (e) => {
+      e.preventDefault(); const r = await store.adminLogin(email.value, pw.value);
       if (r.error) { err.textContent = r.error; return; }
       if (r.twoFactor) { login2fa = r; render(); setTimeout(() => toast(`Демо: кодът от SMS е ${r.demoCode}`), 50); return; }
       render();
     } }, field('Имейл', email), field('Парола', pw), err,
       h('button', { class: 'btn btn-xl', type: 'submit', style: { background: 'var(--accent)', color: 'var(--accent-ink)' } }, 'Вход')),
-    h('div', { class: 'demo-box' }, h('b', null, 'Демо: '), 'admin@profitaxi.bg / admin123 ', demo('Попълни', 'admin@profitaxi.bg', 'admin123'),
+    !store.live() && h('div', { class: 'demo-box' }, h('b', null, 'Демо: '), 'admin@profitaxi.bg / admin123 ', demo('Попълни', 'admin@profitaxi.bg', 'admin123'),
       h('div', { class: 'small muted', style: { marginTop: '8px' } }, 'Други роли: ', demo('Поддръжка', 'support@profitaxi.bg', 'support123'), ' ', demo('Партньор One', 'one@partner.bg', 'one123'))));
 }
 
@@ -1641,7 +1641,7 @@ function printInvoice(p) {
 // =====================================================================
 function settings() {
   const owner = isOwner();
-  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && ['demo', 'Демо данни']]);
+  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && !store.live() && ['demo', 'Демо данни']]);
   const body = { general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab };
   return h('div', null, pageHead('Настройки', 'Общи настройки на услугата'), bar, body[cur]());
 }

@@ -17,9 +17,11 @@ export function loginView({ go }) {
   const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg', required: true });
   const pw = input({ type: 'password', autocomplete: 'current-password', placeholder: '••••••', required: true });
   const err = h('p', { class: 'err', role: 'alert' });
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    const r = store.login(email.value, pw.value, BRAND ? { company: BRAND.company } : {});
+    const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
+    const r = await store.login(email.value, pw.value, BRAND ? { company: BRAND.company } : {});
+    if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     go('/home');
   };
@@ -38,7 +40,7 @@ export function loginView({ go }) {
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Вход'),
       h('a', { href: '#/forgot', class: 'muted small', style: { textAlign: 'center' } }, 'Забравена парола')),
-    h('div', { class: 'demo-box' },
+    !store.live() && h('div', { class: 'demo-box' },
       h('b', null, 'Демо версия. '), `Пробвай с готов профил: ${BRAND ? 'one@demo.bg' : 'ivan@demo.bg'} / demo123. `,
       h('button', { type: 'button', onclick: fill }, 'Попълни')),
     h('p', { class: 'auth-foot' }, 'Нямаш акаунт? ', h('a', { href: '#/register' }, 'Регистрирай се')));
@@ -79,7 +81,7 @@ export function registerView({ go }) {
   drawSms();
   const agree = h('input', { type: 'checkbox', style: { width: '22px', height: '22px', accentColor: 'var(--accent)', flex: 'none' } });
   const err = h('p', { class: 'err', role: 'alert' });
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const v = BRAND ? { city: ONE.city, company: ONE.company } : cc.value();
     // проверки в реда на формата
@@ -92,13 +94,15 @@ export function registerView({ go }) {
       [!carType, 'Избери каква е колата'],
       [!phone.value.trim(), 'Въведи телефон'],
       [!phoneOk, 'Потвърди телефона с кода от SMS'],
-      [BRAND && !!store.checkAccessCode(code.value, ONE.company).error, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
-      [!BRAND && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
+      [BRAND && !store.live() && !!store.checkAccessCode(code.value, ONE.company).error, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
+      [!BRAND && !store.live() && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
     ];
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
-    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : { promo: promo.value }) });
+    const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
+    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : { promo: promo.value }) });
+    if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     toast('Акаунтът е създаден');
     go('/onboarding');

@@ -59,7 +59,7 @@ export function profileView({ go, user, data, route }) {
       h('section', { class: 'card', style: { padding: '8px 18px', marginTop: '14px' } },
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
         h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта'))),
-      h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, 'Демо версия. Данните се пазят на това устройство.'));
+      h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, store.live() ? 'Данните се пазят в облака – влез от всеки телефон и ги виждаш.' : 'Демо версия. Данните се пазят на това устройство.'));
   };
   draw();
   if (route?.query?.get('s') === 'notify') setTimeout(() => root.querySelector('#notify')?.scrollIntoView({ block: 'start' }), 80);
@@ -240,12 +240,12 @@ function changePw() {
     return h('div', { class: 'form' },
       sheetHead('Смяна на паролата', close),
       field('Текуща парола', a), field('Нова парола', b, 'Поне 6 символа'), err,
-      h('button', { class: 'btn btn-page btn-lg', onclick: () => { const r = store.changePassword(a.value, b.value); if (r.error) { err.textContent = r.error; return; } close(); toast('Паролата е сменена'); } }, 'Смени'));
+      h('button', { class: 'btn btn-page btn-lg', onclick: async () => { const r = await store.changePassword(a.value, b.value); if (r.error) { err.textContent = r.error; return; } close(); toast('Паролата е сменена'); } }, 'Смени'));
   });
 }
 
 function delAccount() {
   confirmSheet({ title: 'Изтриване на акаунта?', text: 'Всички смени, разходи и настройки ще бъдат изтрити завинаги. Това не може да се върне.', okLabel: 'Изтрий всичко', danger: true,
-    onOk: () => { store.deleteMyAccount(); location.hash = '/login'; } });
+    onOk: async () => { const r = await store.deleteMyAccount(); if (r?.error) { toast(r.error); return; } location.hash = '/login'; } });
 }
 export { CAR_TYPES, FUELS, money };

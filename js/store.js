@@ -5,6 +5,8 @@
 
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
 import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './constants.js';
+import { LIVE, call, getToken, setToken, setOnAuthLost } from './sync.js';
+import { encode, decode } from './schema.js';
 
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
@@ -15,6 +17,7 @@ let db = null;
 
 function load() {
   if (db) return db;
+  if (LIVE) return loadLive();
   try { db = JSON.parse(localStorage.getItem(KEY)); } catch { db = null; }
   if (db && db.version > VERSION) { location.reload(); return db; } // друг раздел вече е с по-нова версия
   if (!db || db.version !== VERSION) { db = seed(); persist(); }
@@ -51,15 +54,18 @@ try {
 } catch { PREVIEW = null; }
 export const previewMode = () => !!PREVIEW && !!me();
 export function endPreview() { try { sessionStorage.removeItem('profitaxi.preview'); } catch { /* */ } PREVIEW = null; }
-function persist() { if (PREVIEW) return; localStorage.setItem(KEY, JSON.stringify(db)); }
+function persist() { if (PREVIEW) return; if (LIVE) { saveLive(); schedulePush(); return; } localStorage.setItem(KEY, JSON.stringify(db)); }
 function commit() { persist(); listeners.forEach((fn) => fn()); }
 export const onChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
-export function resetDemo() { localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
+export const live = () => LIVE;
+export function resetDemo() {
+  if (LIVE) return; localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
 ['profitaxi.v1', 'profitaxi.v2', 'profitaxi.v4'].forEach((k) => localStorage.removeItem(k)); // стари демо данни
 
 // Синхронизация между отворени раздели
 // Само чете – никога не записва в отговор на друг раздел, за да няма безкрайно презаписване
 window.addEventListener('storage', (e) => {
+  if (LIVE) { liveStorageEvent(e); return; }
   if (e.key !== KEY || !e.newValue) return;
   let next; try { next = JSON.parse(e.newValue); } catch { return; }
   if (!next || next.version !== VERSION) { if (next && next.version > VERSION) location.reload(); return; }
@@ -96,6 +102,7 @@ export function currentUser() {
 }
 export function login(email, password, { company } = {}) {
   load();
+  if (LIVE) return liveAuth('login', { email, password, company }, 'app', SESSION_KEY);
   const u = db.users.find((x) => norm(x.email) === norm(email) && x.role === 'driver');
   if (!u || u.password !== password) return { error: 'Грешен имейл или парола' };
   if (company && u.company !== company) return { error: 'Този вход е само за шофьорите на One Taxi. Влез от profitaxi.vercel.app/app.' };
@@ -104,7 +111,7 @@ export function login(email, password, { company } = {}) {
   commit();
   return { user: clone(u) };
 }
-export function logout() { if (PREVIEW) endPreview(); else localStorage.removeItem(SESSION_KEY); listeners.forEach((fn) => fn()); }
+export function logout() { if (PREVIEW) endPreview(); else { localStorage.removeItem(SESSION_KEY); if (LIVE) dropLive('app'); } listeners.forEach((fn) => fn()); }
 
 function validateAccount({ name, email, password, city, company, carType }, { skipPassword } = {}) {
   if (!name?.trim()) return 'Въведи име';
@@ -150,6 +157,7 @@ export function register(f) {
   load();
   const err = validateAccount(f);
   if (err) return { error: err };
+  if (LIVE) return registerLive(f);
   const code = (f.refCode || '').trim().toUpperCase();
   const referrer = code ? db.users.find((x) => x.refCode === code && x.role === 'driver') : null;
   if (code && !referrer) return { error: 'Няма такъв код за покана. Провери го или остави полето празно.' };
@@ -201,6 +209,7 @@ function newDriver({ name, email, password, phone = '', city, company, trialDays
 }
 export function changePassword(oldPw, newPw) {
   const u = me(); if (!u) return { error: 'Няма вход' };
+  if (LIVE) return call('passwd', { old: oldPw, password: newPw }, 'app');
   if (u.password !== oldPw) return { error: 'Грешна текуща парола' };
   if ((newPw || '').length < 6) return { error: 'Паролата трябва да е поне 6 символа' };
   u.password = newPw; commit(); return { ok: true };
@@ -215,6 +224,7 @@ export function updateAccount({ name, phone, city, company }) {
 }
 export function deleteMyAccount() {
   const u = me(); if (!u) return;
+  if (LIVE) return call('deleteMe', {}, 'app').then((r) => { if (!r.error) { localStorage.removeItem(SESSION_KEY); dropLive('app'); } return r; });
   wipeUser(u.id);
   localStorage.removeItem(SESSION_KEY);
   commit();
@@ -291,7 +301,7 @@ export function logError(msg, page = '') {
 // Броим кои страници се отварят (без съдържание – само име на страницата)
 export function trackPage(page) {
   const u = me(); if (!u) return;
-  const p = db.usage[page] ||= { views: 0, users: {} }; p.views++; p.users[u.id] = (p.users[u.id] || 0) + 1; p.last = new Date().toISOString(); persist();
+  const p = db.usage[page] ||= { views: 0, users: {} }; p.views++; p.users[u.id] = (p.users[u.id] || 0) + 1; p.last = new Date().toISOString(); (p.userLast ||= {})[u.id] = p.last; persist();
 }
 
 // ================= Данни на текущия шофьор =================
@@ -523,6 +533,7 @@ export const ADMIN_ROLES = { owner: 'Собственик', support: 'Поддр
 export const adminRole = () => adminUser()?.adminRole || 'owner';
 export function adminLogin(email, password) {
   load();
+  if (LIVE) return liveAuth('adminLogin', { email, password }, 'admin', ADMIN_SESSION_KEY);
   const u = db.users.find((x) => norm(x.email) === norm(email) && x.role === 'admin');
   if (!u || u.password !== password) return { error: 'Грешен имейл или парола' };
   // Двуфакторно влизане: след паролата – код по SMS (в демото се показва на екрана)
@@ -542,7 +553,7 @@ export function adminVerify2fa(id, code) {
   localStorage.setItem(ADMIN_SESSION_KEY, id);
   return { ok: true };
 }
-export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); }
+export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); if (LIVE) dropLive('admin'); }
 function requireAdmin() { if (!adminUser()) throw new Error('admin only'); }
 function requireOwner() { if (adminRole() !== 'owner') throw new Error('owner only'); }
 // Партньорът вижда само шофьорите на своята фирма
@@ -719,6 +730,141 @@ export function runAutoReminders() {
 const FIRST = ['Иван', 'Георги', 'Мария', 'Стоян', 'Николай', 'Димитър', 'Петър', 'Христо', 'Тодор', 'Елена', 'Красимир', 'Васил', 'Атанас', 'Росен', 'Пламен', 'Йордан', 'Светлин', 'Милена', 'Борислав', 'Стефан', 'Калоян', 'Ангел'];
 const LAST = ['Петров', 'Димитров', 'Колева', 'Ангелов', 'Иванов', 'Стоянов', 'Георгиев', 'Христов', 'Тодоров', 'Николова', 'Попов', 'Василев', 'Атанасов', 'Маринов', 'Илиев', 'Йорданов', 'Кирилов', 'Павлова', 'Михайлов', 'Костадинов', 'Русев', 'Лазаров'];
 const LAT = { 'Иван': 'ivan', 'Георги': 'georgi', 'Мария': 'maria', 'Стоян': 'stoyan', 'Николай': 'nikolay', 'Димитър': 'dimitar', 'Петър': 'petar', 'Христо': 'hristo', 'Тодор': 'todor', 'Елена': 'elena', 'Красимир': 'krasimir', 'Васил': 'vasil', 'Атанас': 'atanas', 'Росен': 'rosen', 'Пламен': 'plamen', 'Йордан': 'yordan', 'Светлин': 'svetlin', 'Милена': 'milena', 'Борислав': 'borislav', 'Стефан': 'stefan', 'Калоян': 'kaloyan', 'Ангел': 'angel' };
+
+
+// ================= Обща база данни (режим „на живо“) =================
+// Данните се пазят в облака (/api/db). На устройството има копие, за да работи и без интернет –
+// промените се качват веднага щом има връзка.
+const IS_ADMIN_PAGE = /^\/admin/.test(location.pathname);
+const scope = () => (IS_ADMIN_PAGE || PREVIEW ? 'admin' : 'app');
+const liveKey = () => `profitaxi.live.${scope()}`;
+const defaultSettings = () => ({ trialDays: 14, price: 0, freeMode: true });
+const emptyDb = () => ({ version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: defaultSettings() });
+let base = {}, rev = null, pushTimer = null, pushing = false, pushAgain = false, syncStarted = false;
+export const syncState = { last: null, pending: false, offline: false };
+
+function loadLive() {
+  try { db = JSON.parse(localStorage.getItem(liveKey())); } catch { db = null; }
+  if (!db || typeof db !== 'object') db = emptyDb();
+  db.settings ||= defaultSettings();
+  try { const b = JSON.parse(localStorage.getItem(liveKey() + '.base')); base = b?.f || {}; rev = b?.rev ?? null; } catch { base = {}; rev = null; }
+  ensureExt();
+  registerAllCustom();
+  startSync();
+  return db;
+}
+function saveLive() { try { localStorage.setItem(liveKey(), JSON.stringify(db)); } catch { /* препълнено – пак работим от паметта */ } }
+function saveBase() { try { localStorage.setItem(liveKey() + '.base', JSON.stringify({ f: base, rev })); } catch { /* */ } }
+function dropLive(sc) {
+  const t = getToken(sc); if (t) call('logout', { token: t }, sc);
+  setToken(sc, null);
+  ['', '.base'].forEach((x) => localStorage.removeItem(`profitaxi.live.${sc}${x}`));
+  if (sc === scope()) { db = emptyDb(); base = {}; rev = null; ensureExt(); }
+}
+function applyFields(fields, newRev) {
+  const sms = db?.sms;
+  db = decode(fields, { version: VERSION });
+  db.sms = sms || {};
+  db.settings ||= defaultSettings();
+  ensureExt();
+  registerAllCustom();
+  base = {}; for (const [f, v] of Object.entries(fields)) base[f] = JSON.stringify(v);
+  rev = newRev ?? null;
+  saveLive(); saveBase();
+  syncState.last = Date.now(); syncState.offline = false;
+  listeners.forEach((fn) => fn());
+}
+function diff() {
+  const cur = encode(db), set = {}, del = [], cs = {};
+  for (const [f, v] of Object.entries(cur)) { const j = JSON.stringify(v); cs[f] = j; if (base[f] !== j) set[f] = v; }
+  for (const f of Object.keys(base)) if (!(f in cur)) del.push(f);
+  return { set, del, cs, n: Object.keys(set).length + del.length };
+}
+function schedulePush() {
+  if (!getToken(scope())) return;
+  syncState.pending = true;
+  clearTimeout(pushTimer); pushTimer = setTimeout(flush, 400);
+}
+async function flush() {
+  pushTimer = null;
+  if (PREVIEW || !getToken(scope())) return true;
+  if (pushing) { pushAgain = true; return false; }
+  const d = diff();
+  if (!d.n) { syncState.pending = false; return true; }
+  pushing = true;
+  const r = await call('push', { set: d.set, del: d.del }, scope());
+  pushing = false;
+  if (r.error) {
+    syncState.offline = !!r.offline;
+    if (!r.auth) { clearTimeout(pushTimer); pushTimer = setTimeout(flush, 15000); }
+    return false;
+  }
+  for (const f of Object.keys(d.set)) base[f] = d.cs[f];
+  for (const f of d.del) delete base[f];
+  // никой друг не е писал междувременно и всичко е прието → копието ни е като в облака
+  if (r.rev != null && rev != null && r.rev === rev + 1 && !(r.rejected || []).length) rev = r.rev; else if (r.rev != null) rev = null;
+  saveBase();
+  syncState.offline = false; syncState.last = Date.now();
+  if (pushAgain) { pushAgain = false; return flush(); }
+  syncState.pending = !!pushTimer;
+  return true;
+}
+let pulling = false;
+export async function syncNow() {
+  if (!LIVE || !getToken(scope()) || pulling) return;
+  pulling = true;
+  try {
+    if (diff().n && !(await flush())) return;
+    const r = await call('pull', { rev }, scope());
+    if (r.error) { syncState.offline = !!r.offline; return; }
+    if (r.same) { syncState.last = Date.now(); syncState.offline = false; return; }
+    if (pushing || pushTimer || diff().n) return; // докато сме тегли, шофьорът е въвел нещо – следващия път
+    applyFields(r.fields, r.rev);
+  } finally { pulling = false; }
+}
+function startSync() {
+  if (syncStarted) return; syncStarted = true;
+  setOnAuthLost((sc) => {
+    if (sc !== scope()) return;
+    localStorage.removeItem(sc === 'admin' ? ADMIN_SESSION_KEY : SESSION_KEY);
+    dropLive(sc); listeners.forEach((fn) => fn());
+  });
+  const every = IS_ADMIN_PAGE ? 20000 : 45000;
+  setInterval(() => { if (document.visibilityState === 'visible') syncNow(); }, every);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); else if (diff().n) flush(); });
+  window.addEventListener('online', () => syncNow());
+  window.addEventListener('pagehide', () => { if (pushTimer) flush(); });
+  setTimeout(() => syncNow(), 50);
+}
+function liveStorageEvent(e) {
+  if (e.key !== liveKey() || !e.newValue) return;
+  try { db = JSON.parse(e.newValue); } catch { return; }
+  try { const b = JSON.parse(localStorage.getItem(liveKey() + '.base')); base = b?.f || {}; rev = b?.rev ?? null; } catch { /* */ }
+  ensureExt(); registerAllCustom();
+  listeners.forEach((fn) => fn());
+}
+async function liveAuth(op, body, sc, sessionKey) {
+  const r = await call(op, body, sc);
+  if (r.error) return { error: r.error };
+  setToken(sc, r.token);
+  localStorage.setItem(sessionKey, r.user.id);
+  applyFields(r.fields, r.rev);
+  return { user: clone(r.user) };
+}
+async function registerLive(f) {
+  const perr = validatePhone(f.phone); if (perr) return { error: perr };
+  if (!phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
+  const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
+  const profile = db.profiles[u.id];
+  db.users = db.users.filter((x) => x.id !== u.id); delete db.profiles[u.id];
+  const { password, ...user } = u;
+  const r = await call('register', { user, profile, password: f.password, accessCode: f.accessCode ?? null, promo: f.promo || '', refCode: f.refCode || '' }, 'app');
+  if (r.error) return { error: r.error };
+  setToken('app', r.token);
+  localStorage.setItem(SESSION_KEY, r.user.id);
+  applyFields(r.fields, r.rev);
+  return { user: clone(r.user) };
+}
 
 function seed() {
   db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: paidFlag() ? 3.99 : 0, freeMode: !paidFlag() } };
