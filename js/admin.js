@@ -347,23 +347,27 @@ function drawMap(by) {
   if (!window.L || !mapEl) return;
   const dark = isDark();
   if (!lmap) {
-    lmap = L.map(mapEl, { zoomControl: true, attributionControl: true, scrollWheelZoom: false, minZoom: 6, maxZoom: 12 }).setView([42.75, 25.4], 7);
+    lmap = L.map(mapEl, { zoomControl: true, attributionControl: true, scrollWheelZoom: false, minZoom: 6, maxZoom: 12, maxBounds: [[40.6, 21.4], [44.9, 29.6]], maxBoundsViscosity: .8 }).setView([42.75, 25.4], 7);
     lmap.fitBounds([[41.2, 22.3], [44.25, 28.65]], { padding: [10, 10] });
   }
   if (mapTheme !== dark) {
     lmap.eachLayer((l) => { if (l instanceof L.TileLayer) lmap.removeLayer(l); });
-    L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
-      subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap, &copy; CARTO' }).addTo(lmap);
+    // Esri Canvas – модерна сива карта, безплатна, без ключ (основа + надписи)
+    const base = dark ? 'Dark_Gray' : 'Light_Gray';
+    const esri = (kind) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${base}_${kind}/MapServer/tile/{z}/{y}/{x}`;
+    L.tileLayer(esri('Base'), { maxZoom: 16, attribution: 'Карта &copy; Esri, HERE, Garmin, &copy; OpenStreetMap' }).addTo(lmap);
+    L.tileLayer(esri('Reference'), { maxZoom: 16 }).addTo(lmap);
     mapTheme = dark;
   }
   if (lmarkers) lmarkers.remove();
   lmarkers = L.layerGroup().addTo(lmap);
   const max = Math.max(1, ...Object.values(by).map((x) => x.total));
+  const named = new Set(Object.entries(by).sort((a, b) => b[1].total - a[1].total).slice(0, 5).map(([c]) => c));
   Object.entries(by).forEach(([city, v]) => {
     const pos = CITY_POS[city]; if (!pos) return;
-    const size = Math.round(34 + Math.sqrt(v.total / max) * 34);
+    const size = Math.round(26 + Math.sqrt(v.total / max) * 26);
     const icon = L.divIcon({ className: 'lm-wrap', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
-      html: `<div class="lm ${v.active ? 'on' : ''}" style="width:${size}px;height:${size}px"><b>${v.total}</b>${v.active ? `<i>${v.active}</i>` : ''}</div><span class="lm-name">${city}</span>` });
+      html: `<div class="lm ${v.active ? 'on' : ''}" style="width:${size}px;height:${size}px"><b>${v.total}</b>${v.active ? `<i>${v.active}</i>` : ''}</div>${named.has(city) ? `<span class="lm-name">${city}</span>` : ''}` });
     L.marker([pos[1], pos[0]], { icon, title: `${city}: ${v.total} шофьори, ${v.active} активни` })
       .on('click', () => { scope.city = city; scope.company = ''; go('/drivers'); }).addTo(lmarkers);
   });

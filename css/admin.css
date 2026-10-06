@@ -310,3 +310,6 @@ body.admin .btn-ghost.act-del { border-color: var(--neg); color: #fff; backgroun
 .lm-name { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 6px; white-space: nowrap; font: 800 12px var(--font); color: #0A0A0C; background: rgba(255, 255, 255, .92); padding: 2px 8px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
 .leaflet-container { font-family: var(--font); }
 .big-num.live b { color: #12A15E; }
+.lm b { font-size: .95rem; }
+.lm i { min-width: 20px; height: 20px; font-size: .72rem; right: -5px; top: -5px; }
+.lm-wrap:hover { z-index: 1000 !important; }
