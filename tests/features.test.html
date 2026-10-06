@@ -21,10 +21,11 @@ try {
   const refA = store.myReferrals();
   // --- Телефон с SMS: задължителен и уникален ---
   { const ph = newPhone();
-    const r0 = store.register({ ...base, name: 'Без SMS', email: `nosms-${Date.now()}@x.bg`, phone: ph });
-    ok('Регистрация без потвърден телефон се отказва', !!r0.error && /SMS/.test(r0.error), r0.error);
-    const r1 = store.register({ ...base, name: 'Със SMS', email: `sms1-${Date.now()}@x.bg`, phone: verified(ph) });
-    ok('С потвърден телефон регистрацията минава', !r1.error, r1.error);
+    // засега кодът по SMS е изключен (config.js PHONE_CODE = false): телефонът е задължителен, но без код
+    const r1 = store.phoneCodeOn() ? store.register({ ...base, name: 'Със SMS', email: `sms1-${Date.now()}@x.bg`, phone: verified(ph) }) : store.register({ ...base, name: 'Без SMS', email: `nosms-${Date.now()}@x.bg`, phone: ph });
+    ok(store.phoneCodeOn() ? 'С потвърден телефон регистрацията минава' : 'Без код по SMS регистрацията минава (засега)', !r1.error, r1.error);
+    const r0 = store.register({ ...base, name: 'Втори', email: `nosms2-${Date.now()}@x.bg`, phone: '' });
+    ok('Без телефон регистрацията се отказва', !!r0.error, r0.error);
     store.logout();
     const r2 = store.sendSmsCode(ph);
     ok('Същият телефон не може втори път (един пробен период)', !!r2.error && /телефон/.test(r2.error), r2.error);

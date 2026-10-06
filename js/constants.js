@@ -14,6 +14,8 @@ export const FUELS = {
   diesel: { label: 'Дизел', types: ['diesel'] },
   hybrid: { label: 'Хибрид', types: ['petrol'] },
   lpg: { label: 'Само газ', types: ['lpg'] },
+  petrol_cng: { label: 'Бензин + Метан', types: ['cng', 'petrol'] },
+  cng: { label: 'Метан', types: ['cng'] },
   electric: { label: 'Ток', types: ['electric'] },
 };
 
@@ -21,6 +23,7 @@ export const FUEL_TYPES = {
   petrol: { label: 'Бензин', unit: 'л' },
   lpg: { label: 'Газ', unit: 'л' },
   diesel: { label: 'Дизел', unit: 'л' },
+  cng: { label: 'Метан', unit: 'кг' },
   electric: { label: 'Ток', unit: 'kWh' },
 };
 

@@ -24,14 +24,14 @@ export function parseReceipt(raw) {
   }
   // 2) литри: „30,52 Л“ или „30,520 X 2,45“
   let qty = null, price = null;
-  const mQty = text.match(/(\d{1,3}[.,]\d{1,3})\s*(Л|L|ЛИТР|KWH)(?![А-ЯA-Z])/);
+  const mQty = text.match(/(\d{1,3}[.,]\d{1,3})\s*(Л|L|ЛИТР|KWH|КГ|KG)(?![А-ЯA-Z])/);
   if (mQty) qty = num(mQty[1]);
   const mX = text.match(/(\d{1,3}[.,]\d{2,3})\s*(?:Л|L)?\s*[XХ*]\s*(\d{1,2}[.,]\d{2,3})/);
   if (mX) { const a = num(mX[1]), b = num(mX[2]); if (a > b) { qty = qty || a; price = b; } else { qty = qty || b; price = a; } }
   if (!amount && qty && price) amount = round2(qty * price);
   // 3) последна възможност: най-голямото число под 1000 с два знака
   if (!amount) { const all = [...text.matchAll(NUM)].map((x) => num(x[1])).filter((v) => v < 1000); if (all.length) amount = Math.max(...all); }
-  const type = /ДИЗЕЛ|DIESEL|НАФТА|\bD\b/.test(text) ? 'diesel' : /ГАЗ|LPG|ПРОПАН|АВТОГАЗ/.test(text) ? 'lpg' : /KWH|ЗАРЕЖДАНЕ\s*НА\s*ЕЛ/.test(text) ? 'electric' : /А\s?95|A\s?95|А\s?98|A\s?98|А\s?100|A\s?100|БЕНЗИН/.test(text) ? 'petrol' : null;
+  const type = /ДИЗЕЛ|DIESEL|НАФТА|\bD\b/.test(text) ? 'diesel' : /МЕТАН|CNG|ПРИРОДЕН\s*ГАЗ|(?<![А-ЯA-Z])(КГ|KG)(?![А-ЯA-Z])/.test(text) ? 'cng' : /ГАЗ|LPG|ПРОПАН|АВТОГАЗ/.test(text) ? 'lpg' : /KWH|ЗАРЕЖДАНЕ\s*НА\s*ЕЛ/.test(text) ? 'electric' : /А\s?95|A\s?95|А\s?98|A\s?98|А\s?100|A\s?100|БЕНЗИН/.test(text) ? 'petrol' : null;
   return { amount: amount ? round2(amount) : null, qty: qty ? round2(qty) : null, type };
 }
 let tessLoading = null;
