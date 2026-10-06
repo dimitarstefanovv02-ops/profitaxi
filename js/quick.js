@@ -82,16 +82,23 @@ const VOICE_ERR = {
   'network': 'Разпознаването на глас иска интернет. Напиши сумите тук.',
   'language-not-supported': 'Телефонът не разпознава български тук. Натисни 🎤 на клавиатурата или напиши.',
 };
+// Запис → облак (Whisper, разпознава български на всеки телефон). Ако облакът го няма – гласът на браузъра.
+const cloudOff = () => { try { return sessionStorage.getItem('profitaxi.cloudVoiceOff') === '1'; } catch { return false; } };
+const canRecord = () => !!(navigator.mediaDevices?.getUserMedia && window.MediaRecorder) && store.live() && !cloudOff();
+const pickMime = () => ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/aac', 'audio/ogg'].find((m) => { try { return MediaRecorder.isTypeSupported(m); } catch { return false; } }) || '';
+const toB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(blob); });
+
 // Слуша и попълва полето; onParsed(parsed, text)
 export function listen(onParsed) {
   const SR = srClass();
   // На iPhone в инсталираното приложение разпознаването на Safari не работи – там е 🎤 на клавиатурата
-  const canListen = !!SR && !(isIOS && isStandalone());
-  let rec = null, heard = [], interim = '', listening = false;
+  const canListen = () => canRecord() || (!!SR && !(isIOS && isStandalone()));
+  let rec = null, heard = [], interim = '', listening = false, media = null, closed = false;
   const status = h('p', { class: 'voice-live' });
   const input = h('input', { class: 'input voice-input', type: 'text', inputmode: 'text', enterkeyhint: 'done', autocomplete: 'off', placeholder: 'кеш 120 карта 40 гориво 35', onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } } });
-  const mic = h('div', { class: 'voice-mic' }, icon('call', 34));
-  const again = h('button', { class: 'btn btn-ghost grow', onclick: () => start() }, icon('call', 18), 'Слушай пак');
+  const mic = h('button', { class: 'voice-mic', type: 'button', 'aria-label': 'Микрофон', onclick: () => (listening ? finish() : start()) }, icon('call', 34));
+  const again = h('button', { class: 'btn btn-ghost grow', onclick: () => (listening ? finish() : start()) });
+  const setBtn = () => { again.replaceChildren(icon(listening ? 'check' : 'call', 18), listening ? 'Готово' : 'Слушай пак'); again.style.display = canListen() ? '' : 'none'; };
   const say = (text, bad) => { status.textContent = text; status.classList.toggle('bad', !!bad); };
   const apply = () => {
     const text = input.value.trim();
@@ -100,10 +107,55 @@ export function listen(onParsed) {
     if (!Object.keys(p.income).length && !p.fuel && !p.expenses.length) { say(`Не разбрах сума в „${text}“. Пиши: дума и число – „кеш 120“, „гориво 40“.`, true); return; }
     stop(); close(); onParsed(p, text);
   };
-  const stop = () => { listening = false; mic.classList.remove('on'); try { rec && rec.abort(); } catch { /* */ } };
-  const start = () => {
-    if (!canListen) { say(SR ? VOICE_ERR['service-not-allowed'] : 'Натисни 🎤 на клавиатурата и кажи сумите – или ги напиши.'); input.focus(); return; }
-    stop();
+  const setOn = (on) => { listening = on; mic.classList.toggle('on', on); setBtn(); };
+  const stop = () => {
+    try { rec && rec.abort(); } catch { /* */ }
+    if (media) { media.cancel = true; media.end(); }
+    setOn(false);
+  };
+  const finish = () => { if (media) media.end(); else { try { rec && rec.stop(); } catch { /* */ } } };
+
+  // --- запис и разпознаване в облака ---
+  const startCloud = async () => {
+    let stream;
+    try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
+    catch (e) { setOn(false); say(e?.name === 'NotAllowedError' ? VOICE_ERR['not-allowed'] : VOICE_ERR['audio-capture'], true); return; }
+    if (closed) { stream.getTracks().forEach((t) => t.stop()); return; }
+    const mime = pickMime();
+    const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    const chunks = []; let spoke = false, quietSince = Date.now(), t0 = Date.now(), timer = null, ctx = null;
+    const m = media = { cancel: false, end: () => { clearInterval(timer); try { if (mr.state !== 'inactive') mr.stop(); } catch { /* */ } } };
+    // Тишина след думите → спира сам (до 15 сек.)
+    try {
+      ctx = new (window.AudioContext || window.webkitAudioContext)(); const an = ctx.createAnalyser(); an.fftSize = 1024;
+      ctx.createMediaStreamSource(stream).connect(an); const buf = new Float32Array(an.fftSize);
+      timer = setInterval(() => {
+        an.getFloatTimeDomainData(buf); let sum = 0; for (const v of buf) sum += v * v; const rms = Math.sqrt(sum / buf.length);
+        if (rms > 0.02) { spoke = true; quietSince = Date.now(); }
+        if ((spoke && Date.now() - quietSince > 1500) || Date.now() - t0 > 15000 || (!spoke && Date.now() - t0 > 7000)) m.end();
+      }, 100);
+    } catch { timer = setTimeout(() => m.end(), 8000); }
+    mr.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    mr.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop()); try { ctx && ctx.close(); } catch { /* */ }
+      media = null; setOn(false);
+      if (m.cancel || closed) return;
+      const blob = new Blob(chunks, { type: mr.mimeType || mime || 'audio/webm' });
+      if (blob.size < 800) { say(VOICE_ERR['no-speech'], true); return; }
+      say('Разпознавам…');
+      const r = await store.voiceToText(await toB64(blob), blob.type);
+      if (closed) return;
+      if (r.error === 'novoice') { try { sessionStorage.setItem('profitaxi.cloudVoiceOff', '1'); } catch { /* */ } setBtn(); say('Натисни „Слушай пак“.'); return; }
+      if (r.error) { say(r.error, true); return; }
+      if (!r.text) { say(VOICE_ERR['no-speech'], true); return; }
+      input.value = r.text; apply();
+    };
+    mr.start(250); setOn(true);
+    say('Говори… например „кеш 120, карта 40, гориво 35“. Спира само, щом замълчиш.');
+  };
+
+  // --- гласът на браузъра (резерва) ---
+  const startBrowser = () => {
     heard = []; interim = '';
     rec = new SR(); rec.lang = 'bg-BG'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
     rec.onresult = (e) => {
@@ -112,21 +164,29 @@ export function listen(onParsed) {
       heard = fin; interim = tmp.join(' ');
       input.value = joinTranscripts([...heard, interim]);
     };
-    rec.onerror = (e) => { listening = false; mic.classList.remove('on'); if (e.error !== 'aborted') say(VOICE_ERR[e.error] || 'Не те чух. Опитай пак или напиши.', true); };
+    rec.onerror = (e) => { setOn(false); if (e.error !== 'aborted') say(VOICE_ERR[e.error] || 'Не те чух. Опитай пак или напиши.', true); };
     rec.onend = () => {
-      const wasOn = listening; listening = false; mic.classList.remove('on');
+      const wasOn = listening; setOn(false);
       if (!wasOn) return;
       const text = joinTranscripts([...heard, interim]);
       if (text) { input.value = text; apply(); } else say(VOICE_ERR['no-speech'], true);
     };
-    try { rec.start(); listening = true; mic.classList.add('on'); say('Говори… например „кеш 120, карта 40, гориво 35“'); }
+    try { rec.start(); setOn(true); say('Говори… например „кеш 120, карта 40, гориво 35“'); }
     catch { say('Микрофонът е зает. Опитай пак или напиши.', true); }
+  };
+
+  const start = () => {
+    if (listening) return;
+    if (canRecord()) { setOn(true); say('Включвам микрофона…'); startCloud(); return; }
+    if (!canListen()) { setBtn(); say(SR ? VOICE_ERR['service-not-allowed'] : 'Натисни 🎤 на клавиатурата и кажи сумите – или ги напиши.'); input.focus(); return; }
+    startBrowser();
   };
   const close = openSheet((cl) => h('div', { class: 'voice' },
     sheetHead('Кажи го', cl, 'Кажи сумите с думи – приложението ги попълва само'),
     mic, status, input,
-    h('div', { class: 'row gap', style: { marginTop: '12px' } }, canListen && again,
-      h('button', { class: 'btn btn-primary grow', onclick: apply }, icon('check', 18), 'Добави'))), { onClose: () => stop() });
+    h('div', { class: 'row gap', style: { marginTop: '12px' } }, again,
+      h('button', { class: 'btn btn-primary grow', onclick: apply }, icon('check', 18), 'Добави'))), { onClose: () => { closed = true; stop(); } });
+  setBtn();
   start();
 }
 // Прилага разпознатото към смяна (чернова или активната)

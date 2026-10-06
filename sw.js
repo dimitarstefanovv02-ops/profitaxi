@@ -1,5 +1,5 @@
 // ProfiTaxi – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v36';
+const VERSION = 'profitaxi-v37';
 const SHELL = [
   '/app', '/app.html', '/css/app.css', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/sync.js', '/js/schema.js', '/js/config.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',

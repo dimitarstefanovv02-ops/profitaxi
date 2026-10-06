@@ -319,9 +319,32 @@ const ops = {
     return { ok: true, drivers };
   },
 
+  // Глас → текст на български (Whisper през Groq). Само за влезли – ключът не се вижда от телефона.
+  async voice({ audio, mime }, s) {
+    const key = process.env.GROQ_API_KEY;
+    if (!key) return { error: 'novoice' };
+    if (typeof audio !== 'string' || audio.length > 4_000_000) return { error: 'Записът е твърде дълъг' };
+    const buf = Buffer.from(audio, 'base64');
+    if (buf.length < 800) return { error: 'Не чух нищо' };
+    const type = String(mime || 'audio/webm').split(';')[0];
+    const ext = type.includes('mp4') || type.includes('m4a') || type.includes('aac') ? 'm4a' : type.includes('ogg') ? 'ogg' : type.includes('wav') ? 'wav' : 'webm';
+    const fd = new FormData();
+    fd.append('file', new Blob([buf], { type }), `glas.${ext}`);
+    fd.append('model', process.env.GROQ_MODEL || 'whisper-large-v3');
+    fd.append('language', 'bg');
+    fd.append('temperature', '0');
+    fd.append('response_format', 'json');
+    fd.append('prompt', 'Кеш 120, карта 40, приложения 30, бакшиш 5, гориво 35 и 30 литра, автомивка 10, паркинг 3, километри 262400.');
+    const r = await fetch(process.env.GROQ_URL || 'https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: fd });
+    if (r.status === 429) return { error: 'Твърде много записи наведнъж. Опитай след минута.' };
+    if (!r.ok) { console.error('voice', r.status, await r.text().catch(() => '')); return { error: 'Разпознаването не отговаря. Напиши сумите.' }; }
+    const j = await r.json();
+    return { text: String(j.text || '').trim() };
+  },
+
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll']);
+const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'voice']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
 
