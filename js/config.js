@@ -1,3 +1,3 @@
 // Обща база данни (тестов период). true = данните се пазят в облака и се виждат от админа.
 // false = старото демо: всичко остава само на устройството.
-export const LIVE_DEFAULT = false;
+export const LIVE_DEFAULT = true;

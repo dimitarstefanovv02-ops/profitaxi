@@ -27,6 +27,15 @@
           "value": "noindex, nofollow"
         }
       ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
     }
   ],
   "redirects": [
@@ -35,5 +44,8 @@
       "destination": "/app/onetaxi",
       "permanent": false
     }
+  ],
+  "regions": [
+    "fra1"
   ]
 }
