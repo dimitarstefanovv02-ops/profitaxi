@@ -36,7 +36,7 @@ function ensureExt() {
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.churn ||= []; db.audit ||= [];
   db.notDup ||= []; db.reviewed ||= [];
   // Лизингът вече не е вид кола: колата е „Собствена“, а вноската е обикновен месечен разход
-  for (const [, p] of Object.entries(db.profiles || {})) if (p && p.carType === 'leasing') p.carType = 'own';
+  for (const [, p] of Object.entries(db.profiles || {})) { if (p && p.carType === 'leasing') p.carType = 'own'; if (p && p.fuel === 'cng') p.fuel = 'petrol_cng'; } // само метан – няма такива коли
   for (const c of db.costs || []) if (c && c.system === 'leasing') { delete c.system; c.name = c.name === 'Лизингова вноска' ? 'Лизинг' : c.name; }
   if (db.settings.referrals == null) db.settings.referrals = true;
   // Тестов период: всичко е безплатно и без срок, цената е 0,00 €

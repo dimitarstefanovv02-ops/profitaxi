@@ -15,7 +15,6 @@ export const FUELS = {
   hybrid: { label: 'Хибрид', types: ['petrol'] },
   lpg: { label: 'Само газ', types: ['lpg'] },
   petrol_cng: { label: 'Бензин + Метан', types: ['cng', 'petrol'] },
-  cng: { label: 'Метан', types: ['cng'] },
   electric: { label: 'Ток', types: ['electric'] },
 };
 
