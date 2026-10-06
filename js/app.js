@@ -2,7 +2,7 @@
 
 import { h, icon, clear, cx, fmtTimer } from './util.js';
 import * as store from './store.js';
-import { applyTheme } from './ui.js';
+import { applyTheme, toast } from './ui.js';
 import { checkNotifications } from './notify.js';
 import { loginView, registerView, forgotView } from './views/auth.js';
 import { onboardingView } from './views/onboarding.js';
@@ -19,6 +19,7 @@ import { meView } from './views/me.js';
 import { ideasView } from './views/ideas.js';
 import { helpView } from './views/help.js';
 import { guideView } from './views/guide.js';
+import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } from './arrange.js';
 import { vehicleView } from './views/vehicle.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
@@ -119,6 +120,7 @@ function mount(app, el, route, withNav) {
   if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
   lastRaw = route.raw;
   tickTimers();
+  arrangeRendered();
 }
 
 function nav(active) {
@@ -180,6 +182,8 @@ document.addEventListener('focusout', () => setTimeout(() => { if (pending && !b
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
 
 oneIntro();
+// „Подреди екраните“ (Профил): влачене на картите и бутоните – пази се на телефона
+initArrange({ onDone: () => { toast('Подредбата е запазена'); render(); }, onReset: () => { resetZones(zonesOnPage()); toast('Тази страница е както беше'); render(); } });
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
   navigator.serviceWorker.register('/sw.js').catch(() => {});
 }

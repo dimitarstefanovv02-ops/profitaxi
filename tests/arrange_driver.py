@@ -1,0 +1,41 @@
+# Шофьор: „Подреди екраните“ – мести, скрива, помни, „Както беше“
+import asyncio, sys
+from playwright.async_api import async_playwright
+async def main():
+  async with async_playwright() as p:
+    b=await p.chromium.launch(); c=await b.new_context(viewport={'width':390,'height':844}, has_touch=True)
+    await c.add_init_script("try{localStorage.setItem('profitaxi.installed','1');localStorage.setItem('profitaxi.paidMode','1');localStorage.setItem('profitaxi.dueShown',(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date()))}catch(e){}")
+    pg=await c.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e))); fails=[]
+    def ok(n,cnd,x=''):
+      print(('PASS ' if cnd else 'FAIL ')+' '+n+(f'  [{x}]' if x!='' else ''))
+      if not cnd: fails.append(n)
+    order = lambda z: pg.eval_on_selector(f'[data-zone="{z}"]', 'z=>[...z.children].map(c=>c.dataset.k)')
+    await pg.goto('http://localhost:8765/app'); await pg.wait_for_timeout(300)
+    await pg.evaluate("async()=>{const s=await import('/js/store.js'); s.login('ivan@demo.bg','demo123'); s.updateProfile({tour:'done'})}")
+    await pg.goto('http://localhost:8765/app#/me'); await pg.wait_for_timeout(500); await pg.evaluate("document.querySelectorAll('.sheet-wrap').forEach(e=>e.remove())")
+    await pg.click('text=Подреди екраните'); await pg.wait_for_timeout(300)
+    ok('Профил → „Подреди екраните“ включва режима', await pg.evaluate("document.body.classList.contains('arranging')") and await pg.locator('.arr-bar').count()==1)
+    await pg.click('.nav a[href="#/home"]'); await pg.wait_for_timeout(500)
+    ok('Менюто долу работи в режима', '#/home' in pg.url)
+    o0 = await order('drv.home')
+    await pg.click('[data-zone="drv.home"] > [data-k="next"]'); await pg.wait_for_timeout(150)
+    for _ in range(3): await pg.click('.arr-bar [aria-label="Нагоре"]'); await pg.wait_for_timeout(100)
+    o1 = await order('drv.home')
+    ok('Днес: „Следващо“ се мести най-горе', o1[0]=='next', [o0,o1])
+    await pg.click('[data-zone="drv.home"] > [data-k="links"]'); await pg.click('.arr-bar button:has-text("Скрий")'); await pg.wait_for_timeout(150)
+    await pg.click('.nav a[href="#/money"]'); await pg.wait_for_timeout(500)
+    await pg.click('[data-zone="drv.money.links"] > [data-k="excel"]'); await pg.click('.arr-bar [aria-label="Нагоре"]'); await pg.wait_for_timeout(100)
+    m1 = await order('drv.money.links')
+    ok('Пари: бутоните се местят един спрямо друг', m1.index('excel') < m1.index('costs'), m1)
+    await pg.click('.arr-bar >> text=Готово'); await pg.wait_for_timeout(300); await pg.reload(); await pg.wait_for_timeout(600)
+    ok('Подредбата се пази след презареждане', (await order('drv.money.links')).index('excel') < 3)
+    await pg.goto('http://localhost:8765/app#/home'); await pg.wait_for_timeout(500)
+    ok('Скритото го няма на „Днес“', not await pg.locator('.home-links').is_visible() and (await order('drv.home'))[0]=='next')
+    await pg.goto('http://localhost:8765/app#/me'); await pg.wait_for_timeout(400); await pg.evaluate("document.querySelectorAll('.sheet-wrap').forEach(e=>e.remove())"); await pg.click('text=Подреди екраните'); await pg.click('.nav a[href="#/home"]'); await pg.wait_for_timeout(500)
+    ok('В режима скритото се вижда бледо, за да се върне', await pg.locator('[data-k="links"].arr-hid').count()==1)
+    await pg.click('.arr-bar >> text=Както беше'); await pg.wait_for_timeout(400)
+    ok('„Както беше“ връща страницата', (await order('drv.home'))[0]=='meter' and await pg.locator('.arr-hid').count()==0)
+    await pg.click('.arr-bar >> text=Готово'); await pg.wait_for_timeout(300)
+    ok('Без грешки в JS', not errs, errs)
+    print(f'FAILS: {len(fails)} / 9'); await b.close(); sys.exit(1 if fails else 0)
+asyncio.run(main())

@@ -3,6 +3,7 @@
 
 import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, parseDate } from '../util.js';
 import * as store from '../store.js';
+import { zone } from '../arrange.js';
 import { CAR_TYPES, FUELS } from '../constants.js';
 import { carBlock, fuelBlock, dispatchBlock, shareBlock, goalBlock } from './carSettings.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero, THEMES, TEXT_SIZES, getTextSize, setTextSize } from '../ui.js';
@@ -21,44 +22,45 @@ export function profileView({ go, user, data, route }) {
     fill(root,
       h('div', { class: 'page-title' }, h('h1', null, 'Лични данни')),
       profileCover(user, d),
-
-      h('h2', { class: 'section-title' }, 'Лични данни'),
+      zone('drv.profile', { class: 'dz' }, [
+      ['data', h('div', null, h('h2', { class: 'section-title' }, 'Лични данни'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         infoRow('user', 'Име', user.name),
         infoRow('phone', 'Телефон', user.phone || 'не е въведен'),
         infoRow('doc', 'Имейл', user.email),
         infoRow('pin', 'Град и фирма', `${user.city || '—'}, ${user.company || '—'}`),
-        listBtn('edit', 'Промени личните данни', () => editAccount(user), true)),
+        listBtn('edit', 'Промени личните данни', () => editAccount(user), true)))],
 
-      h('h2', { class: 'section-title' }, 'Снимки'),
+      ['photos', h('div', null, h('h2', { class: 'section-title' }, 'Снимки'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('user', d.photo ? 'Смени профилната снимка' : 'Качи профилна снимка', () => setPhoto('photo', draw), true),
-        listBtn('camera', d.carPhoto ? 'Смени снимката на колата' : 'Качи снимка на колата', () => setPhoto('carPhoto', draw), true)),
+        listBtn('camera', d.carPhoto ? 'Смени снимката на колата' : 'Качи снимка на колата', () => setPhoto('carPhoto', draw), true)))],
 
-      h('h2', { class: 'section-title' }, 'Известия и изглед'),
-      h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)),
-      h('section', { class: 'card' }, cardTitle('sun', 'Изглед'),
+      ['notify', h('div', null, h('h2', { class: 'section-title' }, 'Известия'),
+      h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)))],
+      ['look', h('div', null, h('h2', { class: 'section-title' }, 'Изглед'), h('section', { class: 'card' }, cardTitle('sun', 'Изглед'),
         segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, wrap: true, small: true }),
         h('p', { class: 'muted small', style: { margin: '8px 2px 14px' } }, '„За слънце“ – по-силен контраст за деня в колата. „Тъмна вечер“ – тъмна от 19 до 7 ч.'),
         h('div', { class: 'field-label', style: { marginBottom: '8px' } }, 'Размер на текста'),
-        segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true })),
+        segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true })))],
 
-      h('h2', { class: 'section-title' }, 'Отчети'),
+      ['reports', h('div', null, h('h2', { class: 'section-title' }, 'Отчети'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('print', 'Отчет в PDF', () => { go('/stats'); setTimeout(() => window.print(), 700); }, true),
-        listBtn('download', 'Всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() }))),
+        listBtn('download', 'Всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() }))))],
 
-      h('h2', { class: 'section-title' }, 'Сигурност и помощ'),
+      ['help', h('div', null, h('h2', { class: 'section-title' }, 'Сигурност и помощ'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('lock', 'Смяна на паролата', changePw, true),
         listBtn('sparkle', 'Помощ: кратка разходка', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }, true),
         h('a', { class: 'list-btn', href: '#/help' }, h('span', { class: 'l-ic' }, icon('inbox', 18)), h('span', { class: 'grow' }, 'Пиши ни'), store.myUnreadTickets() > 0 && h('span', { class: 'chip warn' }, 'Нов отговор'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност'), icon('right', 18)),
-        h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))),
+        h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))))],
 
-      h('section', { class: 'card', style: { padding: '8px 18px', marginTop: '14px' } },
+      ['exit', h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
-        h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта'))),
+        h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта')))],
+      ]),
       h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, store.live() ? 'Данните се пазят в облака – влез от всеки телефон и ги виждаш.' : 'Демо версия. Данните се пазят на това устройство.'));
   };
   draw();

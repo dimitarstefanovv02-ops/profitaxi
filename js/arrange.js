@@ -149,7 +149,7 @@ export function initArrange(o) {
   document.addEventListener('pointercancel', () => end(), true);
   // в режим „Подреди“ натисканията не отварят нищо (освен менюто и табовете)
   document.addEventListener('click', (e) => {
-    if (!arranging() || e.target.closest('.arr-bar, .arr-toggle')) return;
+    if (!arranging() || e.target.closest('.arr-bar, .arr-toggle, .nav, .sub-back')) return;
     const item = itemOf(e.target);
     if (item && item.parentElement.hasAttribute('data-tap') && !document.querySelector('.arr-drag')) return;
     e.preventDefault(); e.stopPropagation();

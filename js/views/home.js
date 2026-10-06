@@ -9,6 +9,7 @@ import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsU
 import { calendarView } from './calendar.js';
 import { INCOME_TYPES, FUELS, FUEL_TYPES } from '../constants.js';
 import { scanReceipt } from '../quick.js';
+import { zone } from '../arrange.js';
 
 // Кой панел е отворен на място в „Днес“: календарът или резервациите (като „Покажи повече“)
 let openPanel = null;
@@ -80,42 +81,47 @@ export function homeView({ go, user, data, rerender, route }) {
     // Докато караш: само големите бутони
     active && !showAll && driveMode(active, data, go, g, rerender || (() => go('/home'))),
     active && !showAll && h('button', { class: 'btn btn-ghost btn-block drive-all', onclick: () => { showAll = true; (rerender || (() => go('/home')))(); } }, icon('down', 18), 'Покажи всичко'),
-    ...(active && !showAll ? [] : [
+    ...(active && !showAll ? [] : [zone('drv.home', { class: 'dz' }, [
 
     // 1. Колко ти остава този месец (първия ден – какво да направи)
-    data.shifts.length ? meter(g, month) : firstDay(),
+    ['meter', data.shifts.length ? meter(g, month) : firstDay()],
 
     // 2. Главното действие: смяната
-    active ? liveShift(active, go, data) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
-    active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => { showAll = false; (rerender || (() => go('/home')))(); } }, icon('car', 18), 'Режим „шофирам“'),
-    !active && h('button', { class: 'btn btn-ghost btn-block', 'data-tour': 'past', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
+    ['shift', h('div', { class: 'home-shift' },
+      active ? liveShift(active, go, data) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
+      active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => { showAll = false; (rerender || (() => go('/home')))(); } }, icon('car', 18), 'Режим „шофирам“'),
+      !active && h('button', { class: 'btn btn-ghost btn-block', 'data-tour': 'past', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'))],
 
     // 3. Календар и лични резервации – с едно натискане
-    (store.flagOn('calendar') || store.flagOn('reservations')) && h('div', { class: 'home-links' },
-      store.flagOn('calendar') && panelBtn('cal', 'calendar', 'Календар', 'Всичко по дни'),
-      store.flagOn('reservations') && panelBtn('res', 'route', 'Резервации', resCount ? `${resCount} предстоящи` : 'Запиши курс')),
-    openPanel && h('div', { class: 'home-panel', id: 'home-panel' },
-      openPanel === 'cal' ? embedded(calendarView({ go, data })) : embedded(reservationsView({ data })),
-      h('button', { class: 'btn btn-ghost btn-block home-panel-close', onclick: () => togglePanel(openPanel) }, h('span', { class: 'flip' }, icon('down', 18)), 'Скрий')),
+    (store.flagOn('calendar') || store.flagOn('reservations')) && ['links', h('div', null,
+      h('div', { class: 'home-links' },
+        store.flagOn('calendar') && panelBtn('cal', 'calendar', 'Календар', 'Всичко по дни'),
+        store.flagOn('reservations') && panelBtn('res', 'route', 'Резервации', resCount ? `${resCount} предстоящи` : 'Запиши курс')),
+      openPanel && h('div', { class: 'home-panel', id: 'home-panel' },
+        openPanel === 'cal' ? embedded(calendarView({ go, data })) : embedded(reservationsView({ data })),
+        h('button', { class: 'btn btn-ghost btn-block home-panel-close', onclick: () => togglePanel(openPanel) }, h('span', { class: 'flip' }, icon('down', 18)), 'Скрий')))],
 
     // 4. Какво следва: курс и плащане с бутоните за тях
-    nextUp(data, go),
+    ['next', nextUp(data, go)],
 
     // Всичко останало – на едно натискане
-    more('Покажи повече: седмицата, часовете, последните смени',
-      weekCard(data),
-      ti.hasData && bestToday(ti),
-      h('div', { class: 'grid2', style: { marginTop: '14px' } },
-        stat('На час', money2(g.stats.netPerHour), { icon: 'clock', cls: 'stat-card', sub: 'чисто' }),
-        stat('На км', money2(g.stats.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' }),
-        stat('Смени', String(g.stats.shifts), { icon: 'calendar', cls: 'stat-card', sub: `${fmtDuration(g.stats.hours)} общо` }),
-        stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' })),
-      rec.current >= 2 && h('div', { class: 'card tip', style: { marginTop: '14px' } },
-        h('div', { class: 'tip-ic' }, icon('flame', 22)),
-        h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`))),
-      recent.length > 0 && h('div', { class: 'card', style: { marginTop: '14px' } },
-        cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
-        recent.slice(0, 3).map((s) => shiftRow(data, s))))]));
+    ['more', more('Покажи повече: седмицата, часовете, последните смени',
+      zone('drv.home.more', { class: 'dz' }, [
+        ['week', weekCard(data)],
+        ti.hasData && ['best', bestToday(ti)],
+        ['stats', h('div', { class: 'grid2' },
+          stat('На час', money2(g.stats.netPerHour), { icon: 'clock', cls: 'stat-card', sub: 'чисто' }),
+          stat('На км', money2(g.stats.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' }),
+          stat('Смени', String(g.stats.shifts), { icon: 'calendar', cls: 'stat-card', sub: `${fmtDuration(g.stats.hours)} общо` }),
+          stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' }))],
+        rec.current >= 2 && ['streak', h('div', { class: 'card tip' },
+          h('div', { class: 'tip-ic' }, icon('flame', 22)),
+          h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`)))],
+        recent.length > 0 && ['recent', h('div', { class: 'card' },
+          cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
+          recent.slice(0, 3).map((s) => shiftRow(data, s)))],
+      ]))],
+    ])]));
 }
 
 // „Следващо“: най-близкият курс и най-спешното плащане (просрочените са първи)
