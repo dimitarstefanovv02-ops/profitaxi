@@ -2,6 +2,7 @@
 
 import { h, fill, icon, cx, money, todayStr, addDays, fmtDateLong, fmtDate, parseNum } from '../util.js';
 import * as store from '../store.js';
+import { addToCalendar } from '../quick.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, empty, hero, cardTitle } from '../ui.js';
 
 export const mapsUrl = (r) => `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(r.from)}&destination=${encodeURIComponent(r.to)}`;
@@ -37,6 +38,7 @@ export function reservationsView({ data }) {
       h('div', { class: 'hero-num' }, String(up.length)),
       h('div', { class: 'hero-sub' }, up.length === 1 ? 'предстояща резервация' : 'предстоящи резервации'),
       sum > 0 && h('div', { class: 'hero-chips' }, h('span', { class: 'hero-chip' }, icon('coins', 14), `договорени ${money(sum)}`))),
+    up.length > 0 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '12px' }, onclick: () => addToCalendar(up) }, icon('calendar', 18), 'Всички в календара на телефона'),
     up.length
       ? h('section', { class: 'card', style: { padding: '6px 14px' } }, up.map((r) => reservationRow(r)))
       : empty('calendar', 'Няма предстоящи резервации', 'Записвай курсове до летището, гарата или друг град, за да не изпуснеш нито един.',
@@ -73,7 +75,8 @@ export function editReservation(r) {
         h('a', { class: 'btn btn-ghost btn-sm', href: mapsUrl(d), target: '_blank', rel: 'noopener' }, icon('route', 16), 'Маршрут'),
         !d.done && h('button', { class: 'btn btn-ok btn-sm', onclick: () => { store.setReservationDone(d.id, true); close(); toast('Отбелязано като изпълнено'); } }, icon('check', 16), 'Изпълнена')),
       err,
-      h('div', { class: 'row gap' },
+      !isNew && d.date >= todayStr() && h('button', { class: 'btn btn-ghost btn-block', style: { marginBottom: '10px' }, onclick: () => addToCalendar([d]) }, icon('calendar', 18), 'Добави в календара на телефона'),
+      h('div', { class: 'row gap sheet-actions' },
         !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { close(); confirmSheet({ title: 'Изтриване на резервацията?', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteReservation(d.id); toast('Изтрита'); } }); } }, icon('trash', 20)),
         h('button', { class: 'btn btn-primary btn-lg grow', onclick: save }, 'Запази')));
   }, { tall: true });

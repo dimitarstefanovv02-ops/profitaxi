@@ -66,7 +66,7 @@ with sync_playwright() as p:
     check(pg.evaluate("localStorage.getItem('profitaxi.theme')") is None, 'site does not touch app theme')
     pg.click('#theme-btn')
     # второстепенното е скрито, но се отваря
-    check(pg.locator('main > section').count() <= 7, 'home is short (%d sections)' % pg.locator('main > section').count())
+    check(pg.locator('main > section:not([hidden])').count() <= 7, 'home is short (%d sections)' % pg.locator('main > section:not([hidden])').count())
     check(pg.locator('.step3 .step-shot img').count() >= 3, 'home: 3 steps with screenshots')
     check(pg.locator('.faq details').count() == 5, 'home: 5 questions')
     check(pg.locator('.marquee').count() == 1 and 'Русе' in pg.locator('.cities p').inner_text(), 'home: every city + moving cities')

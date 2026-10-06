@@ -3,21 +3,36 @@
 import { h, icon, cx, money, fmtNum, clear } from './util.js';
 
 // ---------- Тема ----------
+// Теми: auto (като телефона), light, dark, sun (светла с висок контраст за деня),
+// schedule (тъмна вечер от 19 до 7 ч, светла през деня)
+export const THEMES = { auto: 'Като телефона', light: 'Светла', dark: 'Тъмна', sun: 'За слънце', schedule: 'Тъмна вечер' };
+const nightNow = () => { const hr = new Date().getHours(); return hr >= 19 || hr < 7; };
+const effective = (p) => (p === 'schedule' ? (nightNow() ? 'dark' : 'light') : p);
 export function applyTheme(pref) {
   const p = pref || localStorage.getItem('profitaxi.theme') || 'auto';
+  const e = effective(p);
   const root = document.documentElement;
-  if (p === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', p);
-  const dark = p === 'dark' || (p === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#161B22' : '#EEF1F5');
+  if (e === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', e);
+  const dark = e === 'dark' || (e === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#161B22' : e === 'sun' ? '#FFFFFF' : '#EEF1F5');
+  applyTextSize();
 }
 export function setTheme(p) { localStorage.setItem('profitaxi.theme', p); applyTheme(p); }
 export const getTheme = () => localStorage.getItem('profitaxi.theme') || 'auto';
-export const isDark = () => { const p = getTheme(); return p === 'dark' || (p === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); };
+export const isDark = () => { const e = effective(getTheme()); return e === 'dark' || (e === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); };
+// по график: проверяваме на всеки 5 минути дали е време за смяна на темата
+setInterval(() => { if (getTheme() === 'schedule') applyTheme(); }, 5 * 60000);
+// Размер на текста: всичко е в rem, затова растат и бутоните
+export const TEXT_SIZES = { normal: 'Нормален', large: 'Голям', xl: 'Много голям' };
+const SIZE_PCT = { normal: '100%', large: '112.5%', xl: '125%' };
+export const getTextSize = () => { try { return localStorage.getItem('profitaxi.textSize') || 'normal'; } catch { return 'normal'; } };
+export function setTextSize(k) { try { localStorage.setItem('profitaxi.textSize', k); } catch { /* */ } applyTextSize(); }
+function applyTextSize() { document.documentElement.style.fontSize = SIZE_PCT[getTextSize()] || '100%'; }
 // Видим бутон за светла/тъмна тема (запомня избора; без избор – по телефона)
 export function themeToggle(onChange) {
   const btn = h('button', { class: 'icon-btn theme-toggle', type: 'button' });
   const paint = () => { const d = isDark(); btn.replaceChildren(icon(d ? 'sun' : 'moon', 20)); btn.setAttribute('aria-label', d ? 'Светла тема' : 'Тъмна тема'); btn.title = d ? 'Светла тема' : 'Тъмна тема'; };
-  btn.addEventListener('click', () => { setTheme(isDark() ? 'light' : 'dark'); paint(); onChange?.(); });
+  btn.addEventListener('click', () => { setTheme(isDark() ? (getTheme() === 'sun' ? 'sun' : 'light') : 'dark'); paint(); onChange?.(); });
   paint();
   return btn;
 }
@@ -28,7 +43,8 @@ let toastTimer;
 export function toast(msg, kind = 'ok') {
   let el = document.getElementById('toast');
   if (!el) { el = h('div', { id: 'toast', role: 'status', 'aria-live': 'polite' }); document.body.appendChild(el); }
-  clear(el).appendChild(h('div', { class: cx('toast', kind) }, icon(kind === 'err' ? 'alert' : 'check', 18), h('span', null, msg)));
+  clear(el).appendChild(h('div', { class: cx('toast', kind) }, h('span', { class: 'toast-ic' }, icon(kind === 'err' ? 'alert' : 'check', 18)), h('span', null, msg)));
+  try { navigator.vibrate?.(kind === 'err' ? [30, 40, 30] : 15); } catch { /* */ }
   el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
@@ -160,9 +176,17 @@ export function barChart(points, { height = 160, valueKey = 'net', highlight, cl
       return h('rect', { x: i * step + (step - bw) / 2, y: v >= 0 ? zero - hgt : zero, width: bw, height: hgt, class: cx('bar', v < 0 ? 'neg' : 'pos', p.future && 'future', highlight === p.key && 'hl') },
         h('title', null, `${p.label}: ${fmt(v)}`));
     }));
+  // Натискане върху колона показва сумата ѝ (на телефон няма „задържане с мишката“)
+  const tip = h('div', { class: 'chart-tip', 'aria-live': 'polite' }, h('span', { class: 'muted' }, 'Натисни колона, за да видиш сумата'));
+  const hit = h('div', { class: 'bars-hit', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } }, points.map((p, i) => h('button', { type: 'button', 'aria-label': `${p.label}: ${fmt(p[valueKey])}`, onclick: (e) => {
+    svg.querySelectorAll('rect.bar').forEach((r, j) => r.classList.toggle('sel', j === i));
+    hit.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === e.currentTarget));
+    tip.replaceChildren(h('b', null, p.tip || p.label), h('span', { class: p[valueKey] < 0 ? 'neg' : '' }, fmt(p[valueKey])));
+  } })));
   return h('div', { class: 'chart' },
     h('div', { class: 'chart-scale' }, h('span', null, fmt(max)), min < 0 && h('span', null, fmt(min))),
-    svg,
+    h('div', { class: 'bars-wrap' }, svg, hit),
+    tip,
     h('div', { class: 'bars-labels', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } },
       points.map((p, i) => h('span', null, i % labelEvery === 0 ? p.label : ''))));
 }

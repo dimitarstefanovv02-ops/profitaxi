@@ -10,7 +10,7 @@
   --accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #C8141B;
   --violet: #0A0A0C; --v-soft: rgba(10, 10, 12, .06); --v-line: rgba(10, 10, 12, .12); --v-strong: rgba(10, 10, 12, .38); --v-glow: rgba(237, 29, 36, .07);
   --bg: #F4F4F5; --surface: #FFFFFF; --surface-2: #F1F1F3; --surface-3: #E4E4E7; --line: #E4E4E7;
-  --text: #0A0A0C; --muted: #5C5C66; --faint: #8E8E98;
+  --text: #0A0A0C; --muted: #4C4C55; --faint: #70707A;
   --neg: #B4232A; --neg-soft: #FBE7E8;
   --road: #0A0A0C;
   --font: 'Base Neue', 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -19,14 +19,14 @@
 }
 :root[data-brand="one"][data-theme="dark"] {
   --bg: #050506; --surface: #121214; --surface-2: #1A1A1D; --surface-3: #252528; --line: #26262A;
-  --text: #F5F5F6; --muted: #A1A1AA; --faint: #6E6E78;
+  --text: #F5F5F6; --muted: #B8B8C0; --faint: #8B8B95;
   --violet: #F5F5F6; --v-soft: rgba(255, 255, 255, .07); --v-line: rgba(255, 255, 255, .12); --v-strong: rgba(255, 255, 255, .34); --v-glow: rgba(237, 29, 36, .10);
   --accent-soft: #3A1214; --accent-text: #FF5A60; --neg: #FF6B70; --neg-soft: #3A1517;
 }
 @media (prefers-color-scheme: dark) {
-  :root[data-brand="one"]:not([data-theme="light"]) {
+  :root[data-brand="one"]:not([data-theme="light"]):not([data-theme="sun"]) {
     --bg: #050506; --surface: #121214; --surface-2: #1A1A1D; --surface-3: #252528; --line: #26262A;
-    --text: #F5F5F6; --muted: #A1A1AA; --faint: #6E6E78;
+    --text: #F5F5F6; --muted: #B8B8C0; --faint: #8B8B95;
     --violet: #F5F5F6; --v-soft: rgba(255, 255, 255, .07); --v-line: rgba(255, 255, 255, .12); --v-strong: rgba(255, 255, 255, .34); --v-glow: rgba(237, 29, 36, .10);
     --accent-soft: #3A1214; --accent-text: #FF5A60; --neg: #FF6B70; --neg-soft: #3A1517;
   }
@@ -152,7 +152,7 @@
 .collab .on-dark { display: none; }
 [data-brand="one"][data-theme="dark"] .collab .on-light { display: none; }
 [data-brand="one"][data-theme="dark"] .collab .on-dark { display: block; }
-@media (prefers-color-scheme: dark) { [data-brand="one"]:not([data-theme="light"]) .collab .on-light { display: none; } [data-brand="one"]:not([data-theme="light"]) .collab .on-dark { display: block; } }
+@media (prefers-color-scheme: dark) { [data-brand="one"]:not([data-theme="light"]):not([data-theme="sun"]) .collab .on-light { display: none; } [data-brand="one"]:not([data-theme="light"]):not([data-theme="sun"]) .collab .on-dark { display: block; } }
 .collab-bar img { height: 30px; }
 .collab-bar .cb-word { font-weight: 900; font-stretch: 112%; letter-spacing: -.01em; font-size: 1rem; gap: 6px; }
 .collab-bar .cb-one { color: var(--one-red); }
@@ -166,10 +166,17 @@
 .collab-bar .on-dark { display: none; }
 [data-brand="one"][data-theme="dark"] .collab-bar .on-light { display: none; }
 [data-brand="one"][data-theme="dark"] .collab-bar .on-dark { display: block; }
-@media (prefers-color-scheme: dark) { [data-brand="one"]:not([data-theme="light"]) .collab-bar .on-light { display: none; } [data-brand="one"]:not([data-theme="light"]) .collab-bar .on-dark { display: block; } }
+@media (prefers-color-scheme: dark) { [data-brand="one"]:not([data-theme="light"]):not([data-theme="sun"]) .collab-bar .on-light { display: none; } [data-brand="one"]:not([data-theme="light"]):not([data-theme="sun"]) .collab-bar .on-dark { display: block; } }
 /* Логото One | ProfiTaxi – по цялата ширина на екрана (горе на всяка страница и на входа) */
 .collab { display: block; width: 100%; }
 .collab .collab-lockup { width: 100%; height: auto; }
 .collab-bar { position: relative; display: block; padding: calc(env(safe-area-inset-top) + 12px) 16px 10px; background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; }
 .collab-bar .cb-lockup { width: 100%; height: auto; }
 .collab-bar .on-light, .collab .on-light { display: block; }
+
+/* „За слънце“: светла с висок контраст */
+:root[data-brand="one"][data-theme="sun"] {
+  --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F1F1F3; --surface-3: #E1E1E5; --line: #A9A9B2;
+  --text: #000000; --muted: #26262C; --faint: #44444C; --v-line: rgba(0, 0, 0, .45); --v-strong: rgba(0, 0, 0, .7);
+  --accent-soft: #FDD9DA; --neg: #9E1016;
+}

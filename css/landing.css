@@ -613,3 +613,33 @@ html.intro .fx-words .fx-w { animation-play-state: paused; }
   .ic-scene { width: 100%; }
   .ic-money .bill { width: 30px; height: 18px; font-size: 11px; line-height: 15px; }
 }
+
+/* ===== Демо: една смяна за 30 секунди ===== */
+.demo-wrap { display: grid; gap: 40px; align-items: center; }
+@media (min-width: 900px) { .demo-wrap { grid-template-columns: 1.1fr .9fr; gap: 64px; } }
+.demo-steps { list-style: none; padding: 0; margin: 22px 0; display: grid; gap: 8px; counter-reset: d; }
+.demo-steps li { counter-increment: d; display: grid; grid-template-columns: 40px 1fr; column-gap: 14px; padding: 12px 14px; border-radius: 16px; cursor: pointer; border: 1px solid transparent; transition: background .25s, border-color .25s; }
+.demo-steps li::before { content: counter(d); grid-row: span 2; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: var(--s-surface-2, rgba(127,127,127,.12)); }
+.demo-steps li b { font-size: 1.05rem; }
+.demo-steps li span { opacity: .75; font-size: .95rem; }
+.demo-steps li.on { background: rgba(139, 92, 246, .12); border-color: rgba(139, 92, 246, .45); }
+.demo-steps li.on::before { background: #FFC21A; color: #1C1500; }
+.demo-vis { display: grid; justify-items: center; gap: 16px; }
+.demo-screen img { position: absolute; inset: 9px; width: calc(100% - 18px); height: calc(100% - 18px); opacity: 0; transition: opacity .5s; }
+.demo-screen img.on { opacity: 1; }
+.demo-bar { width: min(300px, 74vw); height: 6px; border-radius: 999px; background: rgba(127,127,127,.2); overflow: hidden; }
+.demo-bar i { display: block; height: 100%; width: 0; background: #FFC21A; }
+@media (prefers-reduced-motion: reduce) { .demo-screen img { transition: none; } .demo-bar { display: none; } }
+
+/* ===== Отзиви ===== */
+.rev-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.rev { margin: 0; padding: 24px; border-radius: 22px; background: var(--s-surface, rgba(127,127,127,.08)); border: 1px solid rgba(139, 92, 246, .25); display: grid; gap: 14px; }
+.rev blockquote { margin: 0; font-size: 1.05rem; line-height: 1.5; }
+.rev figcaption b { display: block; }
+.rev figcaption span { opacity: .7; font-size: .9rem; }
+@media (max-width: 899px) {
+  .demo-vis { order: -1; }
+  .demo-steps { margin: 4px 0 16px; gap: 4px; }
+  .demo-steps li { padding: 8px 10px; }
+  .demo-steps li:not(.on) span { display: none; }
+}

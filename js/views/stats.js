@@ -105,6 +105,7 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
         stat('От смените', money(st.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(st.fixedExp), { icon: 'calendar', color: 'var(--c-blue)' })),
       shareRows(expItems, st.totalExp)),
 
+    fuelLine(st) && h('section', { class: 'card' }, fuelLine(st)),
     more('Покажи подробности: приходи, часове, гориво, рекорди',
     h('div', { class: 'grid2', style: { marginTop: '12px' } },
       stat('Часове', fmtDuration(st.hours), { icon: 'clock', cls: 'stat-card', sub: st.shifts ? `~${fmtDuration(st.avgShiftHours)} на смяна` : '' }),
@@ -197,3 +198,15 @@ export function exportCsv(data, r) {
   document.body.appendChild(a); a.click(); a.remove();
 }
 export { MONTHS_SHORT, minStr };
+
+// Гориво: литри на 100 км и цена на километър – видимо, без да се отваря нищо
+export function fuelLine(st) {
+  const f = Object.entries(st.fuel || {}).filter(([, x]) => x.amount > 0);
+  if (!f.length || !st.km) return null;
+  const amount = f.reduce((a, [, x]) => a + x.amount, 0);
+  const main = f.sort((a, b) => b[1].amount - a[1].amount)[0];
+  const per100 = main[1].per100;
+  return h('div', { class: 'fuel-line' }, icon('fuel', 18),
+    h('span', null, per100 ? h('b', null, `${String(Math.round(per100 * 10) / 10).replace('.', ',')} ${FUEL_TYPES[main[0]]?.unit || 'л'}/100 км`) : h('b', null, 'Гориво'),
+      ` · ${money(amount / st.km, 2)} на км`, !per100 ? h('small', null, ' – въвеждай и литрите за разход на 100 км') : null));
+}

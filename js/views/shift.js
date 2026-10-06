@@ -8,6 +8,7 @@ import { openCategories } from './categories.js';
 import { showShiftResult } from './shiftResult.js';
 import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
 import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
+import { listen, applyParsed, scanReceipt, voiceSupported } from '../quick.js';
 
 let draft = null;      // чернова на отворената смяна
 let showAllIncome = false, moreOpen = false;
@@ -19,7 +20,10 @@ export function shiftEditorView(ctx) {
   const key = route.raw;
   if (draftKey !== key || !draft) {
     draftKey = key;
-    showAllIncome = false; moreOpen = false;
+    // Показваме отворено това, което шофьорът обикновено ползва (последните 8 смени)
+    const last = ctx.data.shifts.filter((s) => s.end).slice(0, 8);
+    showAllIncome = last.some((s) => (s.income.app || 0) + (s.income.tips || 0) > 0);
+    moreOpen = last.length >= 3 && last.slice(0, 3).every((s) => s.kmEnd > 0);
     if (id === 'new') {
       const now = new Date(); now.setMinutes(0, 0, 0);
       const start = new Date(now.getTime() - 10 * 3600000);
@@ -57,16 +61,19 @@ export function shiftEditorView(ctx) {
 
       // Колко взе: кеш и карта винаги; приложения и бакшиш – с „+“
       h('section', { class: 'card' },
-        cardTitle('coins', 'Колко взе', h('b', { class: 'num' }, money(inc))),
+        h('div', { class: 'quick-in' },
+          voiceSupported() && h('button', { class: 'btn btn-ghost btn-sm', onclick: () => listen((p) => { const t = applyParsed(draft, p, profile); draw(); toast(`Добавено: ${t}`); }) }, icon('call', 16), 'Кажи го'),
+          h('button', { class: 'btn btn-ghost btn-sm', onclick: () => scanReceipt((r) => editFuel(r.amount ? { amount: r.amount, qty: r.qty, fuelType: r.type && fuelTypes.includes(r.type) ? r.type : undefined } : {})) }, icon('camera', 16), 'Снимай бележка')),
+        cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(inc))),
         h('div', { class: 'tiles' }, Object.entries(INCOME_TYPES).filter(([k]) => k === 'cash' || k === 'card' || showAllIncome || draft.income[k]).map(([k, t]) =>
           h('button', { class: 'tile', style: { '--tc': t.color }, onclick: () => editIncome(k) },
             h('span', { class: 'tile-top' }, h('span', { class: 'ic-chip' }, icon(t.icon, 16)), t.label),
-            h('span', { class: cx('tile-val', !draft.income[k] && 'zero') }, money(draft.income[k], draft.income[k] % 1 ? 2 : 0))))),
+            h('span', { class: cx('tile-val', !draft.income[k] && 'zero') }, draft.income[k] ? money(draft.income[k], draft.income[k] % 1 ? 2 : 0) : 'Въведи')))),
         !showAllIncome && !(draft.income.app && draft.income.tips) && h('button', { class: 'more-link', onclick: () => { showAllIncome = true; draw(); } }, icon('plus', 16), 'Приложения и бакшиш')),
 
       // Колко похарчи: гориво, автомивка, паркинг; другото – в „Друг разход“
       h('section', { class: 'card' },
-        cardTitle('fuel', 'Колко похарчи', h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
+        cardTitle('fuel', 'Разходи', h('b', { class: 'num' }, money(exp, exp % 1 ? 2 : 0))),
         h('div', { class: 'quick quick-4' },
           cats.slice(0, 3).map((c) => h('button', { style: { '--qc': c.color }, onclick: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })) }, h('span', { class: 'q-ic' }, icon(c.icon, 21)), c.label)),
           h('button', { class: 'quick-more', onclick: otherExpense }, h('span', { class: 'q-ic' }, icon('plus', 21)), 'Друг разход')),
@@ -131,7 +138,7 @@ export function shiftEditorView(ctx) {
   function editIncome(k) {
     const cur = draft.income[k];
     const actions = cur > 0
-      ? [{ label: `+ Добави`, run: ({ v }) => { draft.income[k] = round2(cur + v); draw(); } }, { label: 'Замени', primary: true, run: ({ v }) => { draft.income[k] = v; draw(); } }]
+      ? [{ label: `Добави към ${money(cur, cur % 1 ? 2 : 0)}`, run: ({ v }) => { draft.income[k] = round2(cur + v); draw(); } }, { label: 'Смени на новата', primary: true, run: ({ v }) => { draft.income[k] = v; draw(); } }]
       : [{ label: 'Запиши', primary: true, run: ({ v }) => { draft.income[k] = v; draw(); } }];
     openNumpad({ title: INCOME_TYPES[k].label, sub: cur > 0 ? `Сега: ${money(cur, 2)}` : 'Сума за смяната', fields: [{ key: 'v', label: 'Сума', value: '' }], actions });
   }

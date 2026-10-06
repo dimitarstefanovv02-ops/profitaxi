@@ -5,7 +5,7 @@ import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, pars
 import * as store from '../store.js';
 import { CAR_TYPES, FUELS } from '../constants.js';
 import { carBlock, fuelBlock, dispatchBlock, shareBlock, goalBlock } from './carSettings.js';
-import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero } from '../ui.js';
+import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero, THEMES, TEXT_SIZES, getTextSize, setTextSize } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import { openCategories, pickImage } from './categories.js';
@@ -37,7 +37,11 @@ export function profileView({ go, user, data, route }) {
 
       h('h2', { class: 'section-title' }, 'Известия и изглед'),
       h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)),
-      h('section', { class: 'card' }, cardTitle('sun', 'Изглед'), segmented({ auto: 'Автоматично', light: 'Светла', dark: 'Тъмна' }, getTheme(), (t) => { setTheme(t); draw(); }, { page: true })),
+      h('section', { class: 'card' }, cardTitle('sun', 'Изглед'),
+        segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, wrap: true, small: true }),
+        h('p', { class: 'muted small', style: { margin: '8px 2px 14px' } }, '„За слънце“ – по-силен контраст за деня в колата. „Тъмна вечер“ – тъмна от 19 до 7 ч.'),
+        h('div', { class: 'field-label', style: { marginBottom: '8px' } }, 'Размер на текста'),
+        segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true })),
 
       h('h2', { class: 'section-title' }, 'Отчети'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },

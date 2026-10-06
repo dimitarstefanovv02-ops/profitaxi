@@ -60,9 +60,9 @@ export function periodStats(data, from, to) {
   const today = todayStr();
   const inP = shifts.filter((s) => { const d = shiftDate(s); return d >= from && d <= to && s.end; });
   const workedSet = new Set(inP.map(shiftDate));
-  // Постоянните разходи (наем, ефир, данъци…) се броят за целия текущ месец, защото са платени
-  // или дължими за него, но не и за бъдещи месеци. Затова „Октомври“ показва целия наем от 600 €.
-  const fixedTo = minStr(to, endOfMonth(today));
+  // Постоянните разходи (наем, ефир, данъци…) се трупат ден по ден до днес – иначе в началото
+  // на месеца всеки е на минус. Колко още ще излязат до края на месеца е в „Очаквано“ (goalProgress).
+  const fixedTo = minStr(to, today);
   const days = from <= fixedTo ? eachDay(from, fixedTo) : [];
   let fixed = 0;
   for (const d of days) fixed += fixedForDay(costs, profile, d, workedSet.has(d));
@@ -151,24 +151,29 @@ export function goalProgress(data) {
     const withoutWork = fixedForDay(data.costs, data.profile, d, false);
     fixedLeft += withoutWork + (all - withoutWork) * workRatio; // таксата „на работен ден“ – само за очакваните работни дни
   }
-  // Целта се гледа като шофьор: наемът, ефирът и другите месечни разходи са за целия месец
-  // (обикновено вече платени), затова се изваждат изцяло още сега, а не ден по ден.
-  // Остава да се изкара разликата до целта с печалбата на час от смените (без постоянните разходи).
+  // „Чисто досега“ = приход − разходи от смените − постоянните разходи до днес.
+  // До целта остава: цел − чисто досега + постоянните разходи, които предстоят до края на месеца.
   const monthFixed = st.fixedExp + fixedLeft;
-  const net = st.income - st.varExp - monthFixed;
-  const remaining = Math.max(0, goal - net);
+  const net = st.net;
+  const remaining = Math.max(0, goal - net + fixedLeft);
   const toEarn = remaining; // нужна печалба от смени до края на месеца
   const hoursNeeded = ratePerHour > 0 ? toEarn / ratePerHour : null;
   const shiftsNeeded = hoursNeeded != null ? Math.ceil(hoursNeeded / avgShiftHours) : null;
   const shiftsLeft = Math.max(1, Math.round(remainingDays * workRatio));
   const needPerShift = toEarn / shiftsLeft;
   const avgDaily = elapsed ? st.net / elapsed : 0;
+  // Колко трябва днес: оставащото, разделено на очакваните работни дни (днес включително, ако още не си карал)
+  const workedToday = st.workedDays && data.shifts.some((s) => s.end && shiftDate(s) === today);
+  const daysInclToday = remainingDays + (workedToday ? 0 : 1);
+  const workDaysLeft = Math.max(1, Math.round(daysInclToday * workRatio));
+  const needToday = remaining / workDaysLeft;
   const forecast = st.net + (st.workedDays ? ((st.income - st.varExp) / Math.max(st.workedDays, 1)) * remainingDays * workRatio - fixedLeft : avgDaily * remainingDays);
   return {
-    goal, net, netToDate: st.net, monthFixed, pct: goal ? net / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
+    goal, net, netToDate: st.net, monthFixed, pct: goal ? Math.max(0, net) / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
+    needToday, workDaysLeft, workedToday, needHoursToday: ratePerHour > 0 ? needToday / ratePerHour : null,
     ratePerHour, hoursNeeded, shiftsNeeded, avgShiftHours, shiftsLeft, needPerShift,
     feasible: hoursNeeded != null && hoursNeeded <= remainingDays * 12,
-    done: goal > 0 && net >= goal, stats: st,
+    done: goal > 0 && remaining <= 0, stats: st,
   };
 }
 

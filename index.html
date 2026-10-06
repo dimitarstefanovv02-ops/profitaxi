@@ -119,6 +119,37 @@
   </div>
 </section>
 
+<!-- ============ ДЕМО: една смяна за 30 секунди ============ -->
+<section class="sec demo" id="demo">
+  <div class="s-wrap">
+    <div class="sec-head c rv"><span class="eyebrow">Виж го в действие</span><h2>Една смяна за 30 секунди</h2></div>
+    <div class="demo-wrap">
+    <div class="demo-txt rv">
+      <ol class="demo-steps">
+        <li data-i="0"><b>Отваряш приложението</b><span>Веднага виждаш колко ти остава този месец и колко трябва днес.</span></li>
+        <li data-i="1"><b>„Започни смяна“</b><span>Километражът от таблото и тръгваш.</span></li>
+        <li data-i="2"><b>Докато караш</b><span>Големи бутони: кеш, карта, гориво. Или го кажи на глас.</span></li>
+        <li data-i="3"><b>„Приключи смяната“</b><span>Проверяваш сумите и записваш.</span></li>
+        <li data-i="4"><b>Печалбата от смяната</b><span>След горивото и дела от наема и ефира.</span></li>
+        <li data-i="5"><b>Месецът на един поглед</b><span>Всичко по дни, разход на гориво и Excel за счетоводителя.</span></li>
+      </ol>
+      <button class="s-btn s-btn-line demo-replay" type="button">Пусни отначало</button>
+    </div>
+    <div class="demo-vis rv zoom">
+      <div class="phone2 demo-screen">
+        <img src="/img/demo/demo-1.webp" alt="Началният екран: чисто за месеца и колко трябва днес" width="390" height="844" class="on" loading="lazy">
+        <img src="/img/demo/demo-2.webp" alt="Започване на смяна с километража" width="390" height="844" loading="lazy">
+        <img src="/img/demo/demo-3.webp" alt="Режим „шофирам“ с големи бутони" width="390" height="844" loading="lazy">
+        <img src="/img/demo/demo-4.webp" alt="Приключване на смяната" width="390" height="844" loading="lazy">
+        <img src="/img/demo/demo-5.webp" alt="Печалбата от смяната" width="390" height="844" loading="lazy">
+        <img src="/img/demo/demo-6.webp" alt="Месецът в „Пари“" width="390" height="844" loading="lazy">
+      </div>
+      <div class="demo-bar" aria-hidden="true"><i></i></div>
+    </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ 3. ЦЕНА + ПОКАНИ ============ -->
 <section class="sec">
   <div class="s-wrap">
@@ -173,6 +204,14 @@
 </section>
 
 <!-- ============ ВСЕКИ ГРАД ============ -->
+<!-- ============ ОТЗИВИ (показват се само ако в /data/reviews.json има истински) ============ -->
+<section class="sec alt reviews" id="reviews" hidden>
+  <div class="s-wrap">
+    <div class="sec-head c"><span class="eyebrow">Шофьорите казват</span><h2>От хора, които го ползват всеки ден.</h2></div>
+    <div class="rev-grid"></div>
+  </div>
+</section>
+
 <section class="sec cities">
   <div class="s-wrap">
     <h2 class="rv">Всеки град.</h2>

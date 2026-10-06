@@ -289,3 +289,32 @@ if (location.hash.startsWith('#/')) location.replace('/app' + location.hash);
     ph.addEventListener('pointerleave', () => { ph.style.setProperty('--rx', '0deg'); ph.style.setProperty('--ry', '0deg'); });
   });
 })();
+
+// ---------- Демо: една смяна за 30 секунди (6 кадъра по 5 сек.) ----------
+(() => {
+  const box = document.getElementById('demo'); if (!box) return;
+  const imgs = [...box.querySelectorAll('.demo-screen img')], steps = [...box.querySelectorAll('.demo-steps li')], bar = box.querySelector('.demo-bar i');
+  const STEP = 5000; let i = 0, timer = null, started = 0, visible = false;
+  const show = (n) => {
+    i = (n + imgs.length) % imgs.length;
+    imgs.forEach((im, k) => im.classList.toggle('on', k === i)); steps.forEach((li, k) => li.classList.toggle('on', k === i));
+    if (bar) { bar.style.transition = 'none'; bar.style.width = `${(i / imgs.length) * 100}%`; requestAnimationFrame(() => { if (!reduce && visible) { bar.style.transition = `width ${STEP}ms linear`; bar.style.width = `${((i + 1) / imgs.length) * 100}%`; } }); }
+  };
+  const play = () => { clearInterval(timer); if (reduce) return; timer = setInterval(() => show(i + 1), STEP); };
+  const stop = () => clearInterval(timer);
+  steps.forEach((li, k) => li.addEventListener('click', () => { show(k); if (visible) play(); }));
+  box.querySelector('.demo-replay')?.addEventListener('click', () => { show(0); play(); });
+  if ('IntersectionObserver' in window) new IntersectionObserver(([e]) => { visible = e.isIntersecting; if (visible) { if (!started) { started = 1; show(0); } play(); } else stop(); }, { threshold: 0.35 }).observe(box);
+  show(0);
+})();
+
+// ---------- Отзиви: само истински, от /data/reviews.json (празно = секцията не се показва) ----------
+(() => {
+  const sec = document.getElementById('reviews'); if (!sec) return;
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  fetch('/data/reviews.json', { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : [])).then((list) => {
+    if (!Array.isArray(list) || !list.length) return;
+    sec.querySelector('.rev-grid').innerHTML = list.slice(0, 6).map((x) => `<figure class="rev"><blockquote>„${esc(x.text)}“</blockquote><figcaption><b>${esc(x.name)}</b><span>${esc([x.city, x.company].filter(Boolean).join(' · '))}${x.since ? ` · с ProfiTaxi от ${esc(x.since)}` : ''}</span></figcaption></figure>`).join('');
+    sec.hidden = false;
+  }).catch(() => {});
+})();

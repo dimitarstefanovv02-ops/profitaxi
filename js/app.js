@@ -22,6 +22,7 @@ import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
 import { BRAND, isBrandUser, collabBar, oneIntro } from './brand.js';
+import { installBar, installBarVisible } from './quick.js';
 
 applyTheme();
 
@@ -94,6 +95,9 @@ function render() {
 }
 let notified = false;
 let autoRan = false;
+window.addEventListener('online', () => render());
+window.addEventListener('offline', () => render());
+window.addEventListener('profitaxi:installable', () => render());
 
 function mount(app, el, route, withNav) {
   const keepScroll = route.raw === lastRaw;
@@ -104,6 +108,10 @@ function mount(app, el, route, withNav) {
   clear(app).appendChild(el);
   // One изданието: лентата One × ProfiTaxi горе на всяка вътрешна страница
   if (BRAND && store.currentUser()) app.prepend(collabBar());
+  // „Изтегли“ – иконката на началния екран (само за влезли шофьори, докато не е инсталирано)
+  if (store.currentUser() && !store.previewMode() && installBarVisible()) app.prepend(installBar(() => render()));
+  // Без интернет: всичко продължава да работи и се пази на телефона
+  if (!navigator.onLine) app.prepend(h('div', { class: 'offline-bar' }, icon('alert', 16), 'Без интернет – всичко се пази на телефона'));
   if (store.previewMode()) app.prepend(h('div', { class: 'preview-bar' }, icon('eye', 18), h('span', { class: 'grow' }, h('b', null, `Преглед като ${store.currentUser().name}`), ' – само за гледане, промените не се запазват'), h('button', { class: 'btn btn-sm', onclick: () => { store.endPreview(); window.close(); location.href = '/admin'; } }, 'Затвори')));
   if (withNav) app.appendChild(nav(route.name));
   if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);

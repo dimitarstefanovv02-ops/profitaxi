@@ -40,7 +40,7 @@ export function showShiftResult(data, shiftId) {
     g.goal > 0 && h('div', { class: 'result-goal' },
       h('div', { class: 'row between' }, h('span', null, 'Цел за месеца'), h('b', null, `${Math.min(100, Math.round(g.pct * 100))}%`)),
       h('div', { class: 'result-bar' }, h('span', { style: { width: `${Math.min(100, Math.max(0, g.pct * 100))}%` } })),
-      h('p', null, g.done ? 'Целта е изпълнена. Всичко оттук нататък е бонус.' : `Остават ${money(g.remaining)}${g.hoursNeeded != null ? `, около ${Math.ceil(g.hoursNeeded)} часа` : ''}.`)),
+      h('p', null, g.done ? 'Целта е изпълнена. Всичко оттук нататък е бонус.' : `От смените трябват още ${money(g.remaining)}${g.hoursNeeded != null ? `, около ${Math.ceil(g.hoursNeeded)} часа` : ''}.`)),
     h('button', { class: 'btn btn-primary btn-lg btn-block', onclick: close }, icon('check', 20), 'Супер')));
 }
 

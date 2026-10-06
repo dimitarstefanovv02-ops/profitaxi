@@ -171,7 +171,7 @@ function editCost(c, data) {
     return h('div', { class: 'form' },
       sheetHead(isNew ? 'Нов постоянен разход' : 'Постоянен разход', close),
       body,
-      h('div', { class: 'row gap' },
+      h('div', { class: 'row gap sheet-actions' },
         !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { close(); askDelete(d); } }, icon('trash', 20)),
         h('button', { class: 'btn btn-page btn-lg grow', onclick: save }, 'Запази')));
   }, { tall: true });
@@ -205,7 +205,7 @@ function editReminder(r, km = 0) {
     return h('div', { class: 'form' },
       sheetHead(isNew ? 'Ново напомняне' : 'Напомняне', close),
       box,
-      h('div', { class: 'row gap' },
+      h('div', { class: 'row gap sheet-actions' },
         !isNew && h('button', { class: 'btn btn-ghost btn-lg', 'aria-label': 'Изтрий', onclick: () => { store.deleteReminder(d.id); close(); toast('Изтрито'); } }, icon('trash', 20)),
         h('button', { class: 'btn btn-page btn-lg grow', onclick: save }, 'Запази')));
   });

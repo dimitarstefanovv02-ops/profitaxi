@@ -5,14 +5,15 @@ import { h, icon, money, todayStr, startOfMonth, endOfMonth, MONTHS, parseDate }
 import { goalProgress, series } from '../calc.js';
 import { barChart, cardTitle, empty } from '../ui.js';
 import { shiftRow } from './home.js';
-import { exportCsv } from './stats.js';
+import { exportCsv, fuelLine } from './stats.js';
+import { shareMonth } from '../quick.js';
 
 export function moneyView({ go, data }) {
   const today = todayStr();
   const g = goalProgress(data);
   const st = g.stats;
   const month = MONTHS[parseDate(today).getMonth()];
-  const spent = st.varExp + g.monthFixed;
+  const spent = st.varExp + st.fixedExp; // постоянните – ден по ден до днес
   const pts = series(data, startOfMonth(today), endOfMonth(today), 'day');
   const recent = data.shifts.filter((s) => s.end).slice(0, 5);
 
@@ -24,7 +25,9 @@ export function moneyView({ go, data }) {
       h('div', { class: 'ms-row' }, h('span', null, 'Изкарах'), h('b', null, money(st.income))),
       h('div', { class: 'ms-row' }, h('span', null, 'Разходи'), h('b', null, `−${money(spent)}`)),
       h('div', { class: 'ms-total' }, h('span', null, 'Остават ми'), h('b', { class: g.net < 0 ? 'neg' : '' }, money(g.net))),
-      h('p', { class: 'muted small' }, 'В разходите е целият наем, ефир и другите месечни плащания.')),
+      h('p', { class: 'muted small' }, `Наемът, ефирът и другите постоянни плащания се смятат ден по ден – дотук ${money(st.fixedExp)}. Очаквано за целия месец: ${money(g.forecast)}.`),
+      fuelLine(st),
+      h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '12px' }, onclick: () => shareMonth({ net: g.net, income: st.income, shifts: st.shifts, hours: st.hours, name: '' }) }, icon('share', 18), 'Сподели месеца като картинка')),
 
     st.shifts > 0 && pts.length > 1 && h('section', { class: 'card' }, cardTitle('chart', 'Чисто по дни'), barChart(pts, { height: 130, highlight: today })),
 
@@ -39,3 +42,4 @@ export function moneyView({ go, data }) {
       recent.length ? recent.map((s) => shiftRow(data, s))
         : empty('list', 'Още няма смени', 'Започни смяна от „Днес“.', h('button', { class: 'btn btn-primary', onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи смяна'))));
 }
+
