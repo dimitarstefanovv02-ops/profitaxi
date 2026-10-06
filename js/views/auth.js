@@ -104,8 +104,7 @@ export function registerView({ go }) {
     const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : { promo: promo.value }) });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
-    toast('Акаунтът е създаден');
-    go('/onboarding');
+    go('/guide?first=1');
   };
   const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 15)), title), ...kids);
   return h('div', { class: 'auth' },

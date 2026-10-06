@@ -553,6 +553,14 @@ export function adminVerify2fa(id, code) {
   localStorage.setItem(ADMIN_SESSION_KEY, id);
   return { ok: true };
 }
+// Изчиства всички шофьори и данните им в облака (само собственикът)
+export async function wipeAllDrivers() {
+  if (!LIVE) { resetDemo(); return { ok: true, drivers: 0 }; }
+  const r = await call('wipeAll', {}, 'admin');
+  if (r.error) return r;
+  rev = null; await syncNow();
+  return r;
+}
 export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); if (LIVE) dropLive('admin'); }
 function requireAdmin() { if (!adminUser()) throw new Error('admin only'); }
 function requireOwner() { if (adminRole() !== 'owner') throw new Error('owner only'); }
@@ -744,6 +752,7 @@ let base = {}, rev = null, pushTimer = null, pushing = false, pushAgain = false,
 export const syncState = { last: null, pending: false, offline: false };
 
 function loadLive() {
+  try { localStorage.removeItem(KEY); } catch { /* старите демо данни не трябват */ }
   try { db = JSON.parse(localStorage.getItem(liveKey())); } catch { db = null; }
   if (!db || typeof db !== 'object') db = emptyDb();
   db.settings ||= defaultSettings();
@@ -992,7 +1001,7 @@ function seedMore(today, drivers, r, ago) {
   const tk = (n, topic, text, d, reply, status = 'open') => { const u = drivers[n]; if (!u) return; const t = { id: uid(), userId: u.id, name: u.name, city: u.city, company: u.company, topic, at: ago(d), status, adminUnread: !reply, driverUnread: !!reply, thread: [{ by: 'driver', text, at: ago(d) }] }; if (reply) t.thread.push({ by: 'admin', name: 'Администратор', text: reply, at: ago(d - 0.2) }); db.tickets.push(t); };
   tk(4, 'pay', 'Платих, но още пише, че абонаментът изтича. Може ли да проверите?', 0.3);
   tk(7, 'shift', 'Как да въведа смяна, която е минала през полунощ?', 1.2);
-  tk(12, 'login', 'Забравих си паролата и не идва имейл.', 2.5, 'Изпратих ви нова парола по SMS. Сменете я от „Моят профил“.', 'closed');
+  tk(12, 'login', 'Забравих си паролата и не идва имейл.', 2.5, 'Изпратих ви нова парола по SMS. Сменете я от „Профил → Лични данни“.', 'closed');
   tk(15, 'reports', 'Може ли отчетът да излиза и по седмици?', 4, 'Да – в „Пари“ избери „Седмица“ горе.', 'closed');
   tk(19, 'pay', 'Искам фактура на фирма за абонамента.', 0.8);
   tk(22, 'shift', 'Не мога да добавя бакшиш след като приключа смяната.', 3);

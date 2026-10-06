@@ -660,7 +660,7 @@ function startTab(all) {
       table(['Шофьор', 'Регистриран', 'Стъпки', 'Заседнал на', ''], notDone.map(({ d }) => ({ href: '#/driver/' + d.user.id, cells: [
         h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`)),
         agoTxt(daysAgo(isoToDateStr(d.user.createdAt))), stepDots(d), h('span', { class: cx('chip', isStuck(d) ? 'bad' : 'warn') }, stuckAt(d) || '—'),
-        role() !== 'partner' ? h('button', { class: 'btn btn-ghost act-v btn-sm', onclick: () => { Object.assign(msgState, { mode: 'picked', userIds: [d.user.id], title: 'Помощ за началото', text: 'Здравей! Видяхме, че още не си въвел първата смяна. Ако нещо не е ясно, пиши ни от „Моят профил → Помощ“ – отговаряме бързо.' }); go('/messages?t=new'); } }, icon('bell', 14), 'Пиши') : '',
+        role() !== 'partner' ? h('button', { class: 'btn btn-ghost act-v btn-sm', onclick: () => { Object.assign(msgState, { mode: 'picked', userIds: [d.user.id], title: 'Помощ за началото', text: 'Здравей! Видяхме, че още не си въвел първата смяна. Ако нещо не е ясно, пиши ни от „Профил → Лични данни → Помощ“ – отговаряме бързо.' }); go('/messages?t=new'); } }, icon('bell', 14), 'Пиши') : '',
       ] })), { rightFrom: 9 })))],
   ]);
 }
@@ -989,7 +989,7 @@ const TEMPLATES = [
 ];
 // Готови отговори за входящите – натискаш и го пращаш (или първо го променяш)
 const QUICK = [
-  ['pw', 'Нова парола', 'Изпратихме ви нова парола по SMS. Сменете я от „Моят профил → Смяна на паролата“.'],
+  ['pw', 'Нова парола', 'Изпратихме ви нова парола по SMS. Сменете я от „Профил → Лични данни → Смяна на паролата“.'],
   ['night', 'Смяна след полунощ', 'Въведете смяната с датата, на която е започнала. Приложението я брои към този ден, дори да свършва след полунощ.'],
   ['tips', 'Бакшиш след смяна', 'Отворете смяната от „Пари → Всички смени“, натиснете я и добавете бакшиша. Сметката се оправя сама.'],
   ['paid', 'Абонаментът е подновен', 'Абонаментът ви е подновен. Ако още не се вижда, излезте и влезте отново в приложението.'],
@@ -1027,7 +1027,7 @@ function inboxTab(tk) {
       ['list', card('list', `Въпроси (${list.length})`, list.length ? list.map((x) => h('button', { class: cx('tk-row', x.id === inbox.sel && 'on', x.adminUnread && 'unread'), onclick: () => { inbox.sel = x.id; inbox.reply = ''; render(); } },
         h('span', { class: 'grow' }, h('b', null, x.name), h('small', null, x.thread.at(-1).text)),
         h('span', { class: 'tk-meta' }, h('span', { class: 'chip' }, store.TICKET_TOPICS[x.topic]), h('small', null, timeTxt(x.thread.at(-1).at))))) : note('Няма въпроси тук.'))],
-      ['thread', thread || card('inbox', 'Избери въпрос', note('Шофьорите пишат от „Моят профил → Пиши ни“. Отговорът им излиза в приложението.'))],
+      ['thread', thread || card('inbox', 'Избери въпрос', note('Шофьорите пишат от „Профил → Лични данни → Пиши ни“. Отговорът им излиза в приложението.'))],
     ]));
 }
 function composeTab() {
@@ -1467,7 +1467,7 @@ function chartsTab() {
 // =====================================================================
 //   РАЗВИТИЕ: използване, анкета, предложения, функции
 // =====================================================================
-const PAGE_NAMES = { home: 'Днес', shift: 'Смяна (въвеждане)', money: 'Пари', stats: 'Статистика', costs: 'Постоянни разходи', me: 'Аз', calendar: 'Календар', reservations: 'Резервации', profile: 'Моят профил', car: 'Колата и ефирът', shifts: 'Всички смени', ideas: 'Предложи функция', onboarding: 'Първоначална настройка', help: 'Пиши ни' };
+const PAGE_NAMES = { home: 'Днес', shift: 'Смяна (въвеждане)', money: 'Пари', stats: 'Статистика', costs: 'Постоянни разходи', me: 'Профил', calendar: 'Календар', reservations: 'Резервации', profile: 'Лични данни', car: 'Колата и ефирът', shifts: 'Всички смени', ideas: 'Предложи функция', onboarding: 'Първоначална настройка', help: 'Пиши ни' };
 const IDEA_ST = { new: 'Ново', planned: 'Ще го направим', done: 'Готово', hidden: 'Скрито' };
 function devPage() {
   const ideasL = store.admin.ideas(); const nps = store.admin.nps();
@@ -1641,8 +1641,8 @@ function printInvoice(p) {
 // =====================================================================
 function settings() {
   const owner = isOwner();
-  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && !store.live() && ['demo', 'Демо данни']]);
-  const body = { general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab };
+  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && (store.live() ? ['wipe', 'Изчисти'] : ['demo', 'Демо данни'])]);
+  const body = { general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab, wipe: wipeTab };
   return h('div', null, pageHead('Настройки', 'Общи настройки на услугата'), bar, body[cur]());
 }
 function generalTab() {
@@ -1748,6 +1748,21 @@ function layoutTab() {
 function demoTab() {
   return flow('settings.demo', [['d', card('alert', 'Демо данни', note('Връща демо шофьорите и смените в началното им състояние. Изтрива всичко въведено на това устройство.'),
     h('button', { class: 'btn btn-ghost act-del', onclick: () => confirmSheet({ title: 'Нулиране на демо данните?', okLabel: 'Нулирай', danger: true, onOk: () => { store.resetDemo(); location.reload(); } }) }, 'Нулирай демо данните'))]]);
+}
+
+function wipeTab() {
+  const n = store.admin.drivers().length;
+  const box = h('input', { class: 'input', placeholder: 'ИЗТРИЙ', autocapitalize: 'characters', style: { maxWidth: '220px' } });
+  const err = h('p', { class: 'err' });
+  const go = async () => {
+    if (box.value.trim().toUpperCase() !== 'ИЗТРИЙ') { err.textContent = 'Напиши ИЗТРИЙ, за да потвърдиш'; return; }
+    err.textContent = ''; const r = await store.wipeAllDrivers();
+    if (r.error) { err.textContent = r.error; return; }
+    toast(`Изчистено: ${r.drivers} шофьори`); render();
+  };
+  return flow('settings.wipe', [['w', wide(card('trash', 'Изчисти всички шофьори', note(`Изтрива завинаги всички ${n} шофьори и всичко тяхно: смени, разходи, въпроси, мнения, грешки, статистика. Остават настройките, кодовете (с 0 ползвания), промо кодовете и админите. Шофьорите ще трябва да се регистрират отново.`),
+    h('div', { class: 'row gap wrap', style: { marginTop: '14px', alignItems: 'center' } }, box,
+      h('button', { class: 'btn btn-danger', onclick: () => confirmSheet({ title: 'Да изтрия ли всички шофьори?', text: 'Това не може да се върне.', okLabel: 'Изтрий всичко', danger: true, onOk: go }) }, 'Изчисти всичко')), err))]]);
 }
 
 // ---------- старт ----------

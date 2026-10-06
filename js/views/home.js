@@ -89,7 +89,7 @@ export function homeView({ go, user, data, rerender, route }) {
     // 2. Главното действие: смяната
     active ? liveShift(active, go, data) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
     active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => { showAll = false; (rerender || (() => go('/home')))(); } }, icon('car', 18), 'Режим „шофирам“'),
-    !active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
+    !active && h('button', { class: 'btn btn-ghost btn-block', 'data-tour': 'past', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
 
     // 3. Календар и лични резервации – с едно натискане
     (store.flagOn('calendar') || store.flagOn('reservations')) && h('div', { class: 'home-links' },

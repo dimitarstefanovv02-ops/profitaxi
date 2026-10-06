@@ -12,11 +12,11 @@ async function share(code) {
 }
 
 export function inviteView({ go } = {}) {
-  // Програмата може да се спре от админа – тогава връщаме към „Аз“
+  // Програмата може да се спре от админа – тогава връщаме към „Профил“
   if (!store.referralsOn()) { setTimeout(() => go ? go('/me', true) : (location.hash = '#/me')); return h('div'); }
   const ref = store.myReferrals();
   return h('div', { class: 'screen', 'data-page': 'invite' },
-    h('a', { class: 'back', href: '#/me' }, icon('left', 20), 'Аз'),
+    h('a', { class: 'back', href: '#/me' }, icon('left', 20), 'Профил'),
     hero(
       h('div', { class: 'hero-top' }, h('div', null, h('h1', null, 'Препоръчай колега'), h('div', { class: 'hero-sub' }, 'За всеки колега, който плати абонамента си с твоя код, получаваш 1 месец безплатно'))),
       h('div', { class: 'code-box' },

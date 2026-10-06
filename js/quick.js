@@ -212,6 +212,9 @@ const ua = navigator.userAgent;
 const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const inApp = /FBAN|FBAV|Instagram|Viber|Messenger|Line\/|WhatsApp|TikTok/i.test(ua);
 const iosSafari = isIOS && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua) && !inApp;
+const markInstalled = () => { try { localStorage.setItem('profitaxi.installed', '1'); } catch { /* */ } };
+// Отворено от иконката на началния екран → запомняме, че е инсталирано (Android споделя паметта с Chrome)
+if (isStandalone()) markInstalled();
 export function installBarVisible() {
   if (isStandalone()) return false;
   try { if (localStorage.getItem('profitaxi.installed') === '1' && !deferred) return false; const d = Number(localStorage.getItem('profitaxi.installHide') || 0); if (Date.now() - d < 7 * 86400000) return false; } catch { /* */ }
@@ -241,10 +244,13 @@ export async function install() {
     isIOS && !iosSafari && !inApp ? h('div', { class: 'inst-warn' }, icon('alert', 18), h('span', null, 'На iPhone това работи само в Safari. Отвори profitaxi.vercel.app/app в Safari.')) : null,
     isIOS
       ? h('div', { class: 'inst-steps' },
-        step(1, 'share', 'Натисни „Сподели“', 'Квадратчето със стрелка нагоре – долу в средата на Safari (или горе вдясно).'),
-        step(2, 'plus', '„Добави към началния екран“', 'Превърти малко надолу в менюто, ако не го виждаш. После „Добави“.'))
+        step(1, 'share', 'Отвори менюто и натисни „Сподели“', 'Иконката „Сподели“ е квадратче със стрелка нагоре. Ако не я виждаш долу в Safari, натисни менюто „⋯“ и после „Сподели“.'),
+        step(2, 'plus', 'Натисни „Добави към началния екран“', 'Превърти надолу в менюто, ако не го виждаш.'),
+        step(3, 'check', 'Натисни „Добави“', 'Иконката ProfiTaxi излиза на началния екран. Отваряй приложението от нея.'))
       : h('div', { class: 'inst-steps' },
         step(1, 'more', 'Натисни менюто „⋮“', 'Горе вдясно в Chrome.'),
         step(2, 'download', '„Инсталиране на приложението“', 'Или „Добавяне към началния екран“. После „Инсталиране“.')),
-    h('button', { class: 'btn btn-primary btn-lg btn-block', style: { marginTop: '16px' }, onclick: close }, 'Разбрах')));
+    h('div', { class: 'row gap', style: { marginTop: '16px' } },
+      h('button', { class: 'btn btn-ghost btn-lg grow', onclick: close }, 'По-късно'),
+      h('button', { class: 'btn btn-primary btn-lg grow', onclick: () => { markInstalled(); close(); toast('Готово! Отваряй ProfiTaxi от иконката.'); window.dispatchEvent(new Event('profitaxi:installable')); } }, 'Добавих го'))));
 }

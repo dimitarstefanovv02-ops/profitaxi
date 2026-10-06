@@ -283,9 +283,45 @@ const ops = {
     return { ok: true };
   },
 
+  // Изчиства всички шофьори и данните им (за началото на теста). Остават: настройките, кодовете, промо кодовете, функциите и админите.
+  async wipeAll(_, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    const all = await allFields();
+    const me = all[`users:${s.id}`];
+    if (s.id !== 'admin' && me?.adminRole !== 'owner') return { error: 'Само собственикът може да изтрие всичко' };
+    const KEEP = ['settings', 'flags'];
+    const drop = [], put = [];
+    let drivers = 0;
+    for (const [f, v] of Object.entries(all)) {
+      const c = fieldColl(f);
+      if (KEEP.includes(c)) continue;
+      if (c === 'users' && v?.role === 'admin') continue;
+      if (c === 'codes' || c === 'promos') { put.push(f, JSON.stringify({ ...v, uses: 0 })); continue; }
+      if (c === 'users') drivers++;
+      drop.push(f);
+    }
+    const auth = pairs(await one(['HGETALL', 'pt:auth']));
+    const tok = pairs(await one(['HGETALL', 'pt:tok']));
+    const emails = {}; { const arr = await one(['HGETALL', 'pt:email']) || []; for (let i = 0; i < arr.length; i += 2) emails[arr[i]] = arr[i + 1]; }
+    const dropAuth = Object.keys(auth).filter((id) => auth[id]?.role !== 'admin');
+    const dropTok = Object.keys(tok).filter((t) => tok[t]?.role !== 'admin');
+    const dropEmail = Object.keys(emails).filter((e) => dropAuth.includes(emails[e]));
+    const audit = [{ at: new Date().toISOString(), by: me?.email || 'admin', text: `Изчисти всички данни на шофьорите (${drivers})` }];
+    const cmds = [];
+    for (let i = 0; i < drop.length; i += 500) cmds.push(['HDEL', 'pt:db', ...drop.slice(i, i + 500)]);
+    if (put.length) cmds.push(['HSET', 'pt:db', ...put]);
+    cmds.push(['HSET', 'pt:db', 'audit', JSON.stringify(audit)]);
+    if (dropAuth.length) cmds.push(['HDEL', 'pt:auth', ...dropAuth]);
+    if (dropTok.length) cmds.push(['HDEL', 'pt:tok', ...dropTok]);
+    if (dropEmail.length) cmds.push(['HDEL', 'pt:email', ...dropEmail]);
+    cmds.push(['INCR', 'pt:rev']);
+    await redis(cmds);
+    return { ok: true, drivers };
+  },
+
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe']);
+const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
 

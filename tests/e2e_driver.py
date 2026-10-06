@@ -29,7 +29,10 @@ async def main():
         ok('„Друга“ без име дава грешка', 'фирма' in (await T('.err').inner_text()).lower(), await T('.err').inner_text())
         await pg.fill('input[placeholder="Име на фирмата"]','Хасково Такси Експрес')
         await pg.click('button[type=submit]'); await pg.wait_for_timeout(500)
-        ok('Успешна регистрация → първа настройка', '#/onboarding' in pg.url, pg.url)
+        ok('Успешна регистрация → презентацията', '#/guide' in pg.url and await T('.guide-page').count()==17, pg.url)
+        ok('Презентация: бутон за PDF', await T('a[download="ProfiTaxi-vavedenie.pdf"]').count()>=1)
+        await pg.click('.guide-next .btn'); await pg.wait_for_timeout(400)
+        ok('„Нататък“ → първа настройка', '#/onboarding' in pg.url, pg.url)
         # --- Първа настройка ---
         await pg.click('.tile'); await pg.keyboard.type('140'); await pg.click('text=Готово')
         await pg.click('text=Напред'); await pg.click('text=Дизел'); await pg.click('text=Напред')

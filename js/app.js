@@ -18,8 +18,9 @@ import { moneyView } from './views/money.js';
 import { meView } from './views/me.js';
 import { ideasView } from './views/ideas.js';
 import { helpView } from './views/help.js';
+import { guideView } from './views/guide.js';
 import { calendarView } from './views/calendar.js';
-import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
+import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
 import { BRAND, isBrandUser, collabBar, oneIntro } from './brand.js';
 import { installBar, installBarVisible } from './quick.js';
@@ -31,16 +32,16 @@ const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
-  '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView,
+  '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
 const TABS = [
   ['/home', 'home', 'Днес'],
   ['/money', 'wallet', 'Пари'],
-  ['/me', 'user', 'Аз'],
+  ['/me', 'user', 'Профил'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/profile', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
-const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Аз', '/profile': 'Моят профил' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/profile', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me' };
+const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
 export const go = (path, replace) => {
   const url = '#' + path;
@@ -75,21 +76,21 @@ function render() {
   if (access !== 'ok') return mount(app, lockView(user, access), route, false);
 
   const profile = store.getProfile();
-  if (!profile.onboarded && route.name !== '/onboarding') return go('/onboarding', true);
+  if (!profile.onboarded && route.name !== '/onboarding' && route.name !== '/guide') return go('/onboarding', true);
   const view = PRIVATE[route.name];
   if (!view) return go('/home', true);
 
   if (!autoRan) { autoRan = true; store.runAutoReminders(); }
   const ctx = { go, route, user, data: store.myData(), rerender: render };
   if (route.raw !== lastRaw) store.trackPage(route.name.slice(1));
-  const tab = TABS.some(([p]) => p === route.name) || !!PARENT[route.name];
+  const tab = (TABS.some(([p]) => p === route.name) || !!PARENT[route.name]) && !(route.name === '/guide' && route.query.get('first'));
   mount(app, view(ctx), route, tab);
   // Разходка: веднъж след регистрация или когато е пусната от Профил → Помощ
   let tourNow = false; try { tourNow = sessionStorage.getItem('profitaxi.tourNow') === '1'; } catch { /* */ }
-  if (route.name === '/home' && (tourNow || ctx.data.profile.tour === 'pending')) {
+  if (route.name === '/home' && !tourOpen() && (tourNow || ctx.data.profile.tour === 'pending')) {
     try { sessionStorage.removeItem('profitaxi.tourNow'); } catch { /* */ }
     notified = true;
-    setTimeout(() => { if (location.hash.startsWith('#/home')) startTour(DRIVER_TOUR, { onDone: () => { if (store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
+    setTimeout(() => { if (location.hash.startsWith('#/home') && !tourOpen()) startTour(DRIVER_TOUR, { home: '/home', onDone: () => { if (store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
   }
   if (!notified) { notified = true; checkNotifications(ctx.data); if (route.name === '/home') setTimeout(() => showDueSheet(store.myData(), go), 600); }
 }

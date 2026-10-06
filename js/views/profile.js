@@ -1,4 +1,4 @@
-// „Моят профил“ – личното: данни, снимки, известия, отчети, парола, помощ, изход.
+// „Лични данни“ – личното: данни, снимки, известия, отчети, парола, помощ, изход.
 // „Колата и ефирът“ – работата: вид кола, гориво, ефир, споделяне, цел.
 
 import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, parseDate } from '../util.js';
@@ -19,7 +19,7 @@ export function profileView({ go, user, data, route }) {
   const draw = () => {
     const d = store.getProfile();
     fill(root,
-      h('div', { class: 'page-title' }, h('h1', null, 'Моят профил')),
+      h('div', { class: 'page-title' }, h('h1', null, 'Лични данни')),
       profileCover(user, d),
 
       h('h2', { class: 'section-title' }, 'Лични данни'),
@@ -160,7 +160,7 @@ export function profileCover(user, d) {
       h('div', { class: 'cover-info' },
         h('h1', null, user.name),
         h('div', { class: 'cover-car' }, car.model || 'Добави модел на колата', car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate))),
-      h('a', { class: 'icon-btn', 'aria-label': 'Моят профил', href: '#/profile' }, icon('edit', 20))),
+      h('a', { class: 'icon-btn', 'aria-label': 'Лични данни', href: '#/profile' }, icon('edit', 20))),
     h('div', { class: 'cover-chips' },
       h('span', { class: 'chip' }, icon('pin', 14), user.city || 'без град'),
       h('span', { class: 'chip' }, icon('car', 14), user.company || 'без фирма'),
