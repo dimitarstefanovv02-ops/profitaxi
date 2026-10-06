@@ -164,7 +164,8 @@ export function profileCover(user, d) {
     h('div', { class: 'cover-chips' },
       h('span', { class: 'chip' }, icon('pin', 14), user.city || 'без град'),
       h('span', { class: 'chip' }, icon('car', 14), user.company || 'без фирма'),
-      h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
+      store.freeMode() ? h('span', { class: 'chip good' }, icon('check', 14), 'Безплатно – тестов период')
+        : h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
 }
 
 const listBtn = (ic, label, onclick, arrow) => h('button', { class: 'list-btn', onclick }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, label), arrow && icon('right', 18));

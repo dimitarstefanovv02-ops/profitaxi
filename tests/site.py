@@ -70,7 +70,7 @@ with sync_playwright() as p:
     check(pg.locator('.step3 .step-shot img').count() >= 3, 'home: 3 steps with screenshots')
     check(pg.locator('.faq details').count() == 5, 'home: 5 questions')
     check(pg.locator('.marquee').count() == 1 and 'Русе' in pg.locator('.cities p').inner_text(), 'home: every city + moving cities')
-    check(pg.locator('.price-switch').count() == 0 and pg.locator('.p-amount b').first.inner_text() == '3,99 €', 'home: 3,99 € monthly only')
+    check(pg.locator('.price-switch').count() == 0 and pg.locator('.p-amount b').first.inner_text() == '0,00 €', 'home: 0,00 € (тестов период)')
     check(pg.locator('.roi .roi-row').count() >= 4, 'home: price math shown open')
     check(pg.locator('.tease, .punch').count() == 0, 'no jokes on home')
     pg.click('#menu-btn'); check(pg.locator('#drawer').is_visible(), 'drawer opens')

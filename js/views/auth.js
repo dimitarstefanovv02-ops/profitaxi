@@ -108,7 +108,7 @@ export function registerView({ go }) {
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),
     h('div', { class: 'auth-hero', style: { margin: '14px 0 20px' } },
       h('h1', null, 'Нов акаунт'),
-      h('p', null, '14 дни безплатно, без карта. Полетата със звездичка са задължителни.')),
+      h('p', null, 'Безплатно по време на теста, без карта. Полетата със звездичка са задължителни.')),
     h('form', { class: 'form', onsubmit: submit, novalidate: true },
       group('user', 'Акаунт',
         field('Име', name, null, true),

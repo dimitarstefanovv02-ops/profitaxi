@@ -23,6 +23,8 @@ function load() {
   registerAllCustom();
   return db;
 }
+// Само за тестове: режим с плащане (localStorage profitaxi.paidMode = 1)
+function paidFlag() { try { return localStorage.getItem('profitaxi.paidMode') === '1'; } catch (e) { return false; } }
 // Допълнителни данни: съобщения, кодове, бележки, използване, анкети, предложения, функции, дневник
 function ensureExt() {
   db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
@@ -30,6 +32,8 @@ function ensureExt() {
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.churn ||= []; db.audit ||= [];
   db.notDup ||= []; db.reviewed ||= [];
   if (db.settings.referrals == null) db.settings.referrals = true;
+  // Тестов период: всичко е безплатно и без срок, цената е 0,00 €
+  if (db.settings.freeMode == null) { const paid = paidFlag(); db.settings.freeMode = !paid; if (!paid) db.settings.price = 0; }
   db.settings.autoRemind ||= { on: true, before: true, day: true, after: true };
   db.autoSent ||= {};
   db.settings.goal ||= { paid: 100, date: `${new Date().getFullYear() + (new Date().getMonth() >= 9 ? 1 : 0)}-01-31` };
@@ -68,14 +72,17 @@ const norm = (e) => String(e || '').trim().toLowerCase();
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 // ================= Абонамент / достъп =================
+export const freeMode = () => { load(); return db.settings.freeMode !== false; };
 export function accessState(user) {
   if (!user) return 'none';
   if (user.status === 'blocked') return 'blocked';
   if (user.role === 'admin') return 'ok';
+  if (freeMode()) return 'ok'; // тестов период – без срок
   if (!user.subscription || user.subscription.validUntil < todayStr()) return 'expired';
   return 'ok';
 }
 export function trialDaysLeft(user) {
+  if (freeMode()) return null;
   if (!user?.subscription || user.subscription.plan !== 'trial') return null;
   return Math.max(0, Math.round((parseDate(user.subscription.validUntil) - parseDate(todayStr())) / 86400000));
 }
@@ -687,7 +694,7 @@ function nextInvoice() { invoiceNo = Math.max(invoiceNo, ...db.payments.map((p) 
 // Пускат се при всяко отваряне на приложението или панела; всяко се праща само веднъж.
 // (С истинския сървър ще тръгват по график, а не при отваряне.)
 export function runAutoReminders() {
-  load(); const a = db.settings.autoRemind; if (!a?.on) return 0;
+  load(); const a = db.settings.autoRemind; if (!a?.on || db.settings.freeMode !== false) return 0;
   const t = todayStr(); const price = String(db.settings.price).replace('.', ','); let n = 0;
   db.users.filter((u) => u.role === 'driver' && u.status !== 'blocked' && u.subscription).forEach((u) => {
     const left = Math.round((parseDate(u.subscription.validUntil) - parseDate(t)) / 86400000);
@@ -714,7 +721,7 @@ const LAST = ['Петров', 'Димитров', 'Колева', 'Ангело�
 const LAT = { 'Иван': 'ivan', 'Георги': 'georgi', 'Мария': 'maria', 'Стоян': 'stoyan', 'Николай': 'nikolay', 'Димитър': 'dimitar', 'Петър': 'petar', 'Христо': 'hristo', 'Тодор': 'todor', 'Елена': 'elena', 'Красимир': 'krasimir', 'Васил': 'vasil', 'Атанас': 'atanas', 'Росен': 'rosen', 'Пламен': 'plamen', 'Йордан': 'yordan', 'Светлин': 'svetlin', 'Милена': 'milena', 'Борислав': 'borislav', 'Стефан': 'stefan', 'Калоян': 'kaloyan', 'Ангел': 'angel' };
 
 function seed() {
-  db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: 3.99 } };
+  db = { version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: { trialDays: 14, price: paidFlag() ? 3.99 : 0, freeMode: !paidFlag() } };
   const today = todayStr();
   db.users.push({ id: 'admin', role: 'admin', adminRole: 'owner', name: 'Администратор', email: 'admin@profitaxi.bg', password: 'admin123', phone: '0888 000 111', status: 'active', createdAt: new Date().toISOString() });
   db.users.push({ id: 'admin-support', role: 'admin', adminRole: 'support', name: 'Поддръжка', email: 'support@profitaxi.bg', password: 'support123', status: 'active', createdAt: new Date().toISOString() });

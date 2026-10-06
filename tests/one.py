@@ -10,7 +10,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         # Въвеждащият ефект „сливане“ се показва при първо отваряне и изчезва сам
-        c0 = await b.new_context(viewport={'width': 390, 'height': 844}); p0 = await c0.new_page()
+        c0 = await b.new_context(viewport={'width': 390, 'height': 844}); await c0.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}"); p0 = await c0.new_page()
         await p0.goto(base + '/app/onetaxi#/login'); await p0.wait_for_timeout(500)
         ok('Ефектът One × ProfiTaxi се показва при отваряне', await p0.locator('#one-intro').count() == 1)
         await p0.wait_for_timeout(6400)
@@ -18,7 +18,7 @@ async def main():
         await p0.reload(); await p0.wait_for_timeout(400)
         ok('Ефектът не се повтаря в същото посещение', await p0.locator('#one-intro').count() == 0)
         await c0.close()
-        ctx = await b.new_context(viewport={'width': 390, 'height': 844}); await ctx.add_init_script("try { sessionStorage.setItem('profitaxi.oneIntro', '1') } catch (e) {}"); pg = await ctx.new_page()
+        ctx = await b.new_context(viewport={'width': 390, 'height': 844}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}"); await ctx.add_init_script("try { sessionStorage.setItem('profitaxi.oneIntro', '1') } catch (e) {}"); pg = await ctx.new_page()
         errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(base + '/app/onetaxi'); await pg.evaluate('localStorage.clear()'); await pg.goto(base + '/app/onetaxi#/login'); await pg.wait_for_timeout(600)
         ok('/app/onetaxi е изданието One', await pg.evaluate("document.documentElement.dataset.brand") == 'one')

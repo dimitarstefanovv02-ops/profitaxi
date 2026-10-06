@@ -14,7 +14,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         for w in (390, 820, 1280):
-            ctx = await b.new_context(viewport={'width': w, 'height': 900}); await ctx.add_init_script("try { localStorage.setItem('profitaxi.adminTour', 'done'); sessionStorage.setItem('profitaxi.oneIntro', '1') } catch (e) {}"); pg = await ctx.new_page()
+            ctx = await b.new_context(viewport={'width': w, 'height': 900}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}"); await ctx.add_init_script("try { localStorage.setItem('profitaxi.adminTour', 'done'); sessionStorage.setItem('profitaxi.oneIntro', '1') } catch (e) {}"); pg = await ctx.new_page()
             await pg.goto('http://localhost:8765/app'); await pg.evaluate("localStorage.clear(); localStorage.setItem('profitaxi.dueShown', (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date()))"); await pg.goto('http://localhost:8765/app')
             await pg.fill('input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(600)
             pages = [('/app', r) for r in ['#/home', '#/money', '#/me', '#/shifts', '#/stats', '#/costs', '#/profile', '#/car', '#/calendar', '#/shift/new']]

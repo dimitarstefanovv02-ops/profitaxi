@@ -7,7 +7,7 @@ def ok(n,c,x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  ['+str(x)+']' if 
 B='http://localhost:8765/app'
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':390,'height':844}, color_scheme='dark')
+        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':390,'height':844}, color_scheme='dark'); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
         await ctx.add_init_script("try{localStorage.setItem('profitaxi.dueShown',(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date()))}catch(e){}")
         pg = await ctx.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B); await pg.evaluate('localStorage.clear()'); await pg.goto(B+'#/login'); await pg.wait_for_timeout(400)

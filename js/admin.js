@@ -172,6 +172,7 @@ function loginView() {
 // ---------- Общи помощни ----------
 function subState(u) {
   if (u.status === 'blocked') return { key: 'blocked', label: 'Спрян', cls: 'bad' };
+  if (store.freeMode()) return { key: 'trial', label: 'Тестов', cls: 'good', left: 9999 };
   const left = Math.round((parseDate(u.subscription.validUntil) - parseDate(todayStr())) / 86400000);
   if (left < 0) return { key: 'expired', label: 'Изтекъл', cls: 'bad', left };
   if (u.subscription.plan === 'trial') return { key: 'trial', label: 'Пробен', cls: 'warn', left };
@@ -324,7 +325,7 @@ function health(d) {
   const lg = loginAgo(d), ds = daysSince(d), s = subState(d.user);
   sc += lg == null ? 0 : lg <= 2 ? 30 : lg <= 7 ? 20 : lg <= 14 ? 10 : 0; if (lg == null || lg > 7) why.push(lg == null ? 'не е влизал' : `не е влизал ${lg} дни`);
   sc += ds == null ? 0 : ds <= 2 ? 40 : ds <= 7 ? 28 : ds <= 14 ? 12 : 0; if (ds == null) why.push('няма смени'); else if (ds > 7) why.push(`без смени ${ds} дни`);
-  sc += { active: 30, trial: 18, expired: 0, blocked: 0 }[s.key];
+  sc += { active: 30, trial: store.freeMode() ? 30 : 18, expired: 0, blocked: 0 }[s.key];
   if (s.key === 'active' && s.left <= 3) { sc -= 10; why.push('абонаментът изтича'); }
   if (s.key === 'trial' && s.left <= 3) why.push('пробният период свършва');
   if (s.key === 'expired') why.push('абонаментът е изтекъл');
@@ -1647,10 +1648,14 @@ function settings() {
 function generalTab() {
   const s = store.admin.settings();
   const days = h('input', { class: 'input', type: 'number', min: 0, max: 90, value: s.trialDays });
-  const price = h('input', { class: 'input', inputmode: 'decimal', value: String(s.price ?? 3.99).replace('.', ',') });
+  const price = h('input', { class: 'input', inputmode: 'decimal', value: String(s.price ?? 0).replace('.', ',') });
   const gPaid = h('input', { class: 'input', type: 'number', min: 1, value: s.goal?.paid || 100 });
   const gDate = h('input', { class: 'input', type: 'date', value: s.goal?.date || addDays(todayStr(), 90) });
   return flow('settings.general', [
+    ['free', card('gift', 'Тестов период',
+      h('div', { class: 'row between' }, h('span', null, s.freeMode !== false ? 'Включен: всичко е безплатно, без срок' : 'Изключен: важат цената и пробният период'),
+        h('button', { class: cx('toggle', s.freeMode !== false && 'on'), role: 'switch', 'aria-checked': String(s.freeMode !== false), 'aria-label': 'Тестов период', onclick: () => confirmSheet({ title: s.freeMode !== false ? 'Да спрем тестовия период?' : 'Да включим тестовия период?', text: s.freeMode !== false ? 'Шофьорите, чийто пробен период е минал, ще видят „Абонаментът изтече“.' : 'Всички шофьори ползват всичко безплатно, без срок.', okLabel: 'Да', onOk: () => { store.admin.saveSettings({ freeMode: s.freeMode === false }); toast('Запазено'); } }) })),
+      note('Докато е включен, никой не вижда цена, пробни дни или напомняния за плащане.'))],
     ['price', card('coins', 'Цена и пробен период', h('div', { class: 'form' },
       field('Пробен период при регистрация (дни)', days, '0 = без пробен период'),
       field('Цена на месечния абонамент (€)', price, 'Използва се за сметката на приходите'),

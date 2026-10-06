@@ -6,7 +6,7 @@ R=[]
 def ok(n,c,x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  ['+str(x)+']' if x!='' else ''}")
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':1280,'height':900})
+        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':1280,'height':900}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
         await ctx.add_init_script("try{localStorage.setItem('profitaxi.adminTour','done');sessionStorage.setItem('profitaxi.oneIntro','1')}catch(e){}")
         base='http://localhost:8765'; errs=[]
         d = await ctx.new_page(); d.on('pageerror', lambda e: errs.append('drv:'+str(e)))
@@ -86,7 +86,7 @@ async def main():
         pv = await ctx.new_page(); await pv.goto(base+f'/app?preview={did}#/home'); await pv.wait_for_timeout(800)
         ok('„Виж като шофьор“ показва приложението на Мария', 'Преглед като Мария' in await pv.inner_text('body'))
         # Роля поддръжка
-        a2 = await (await b.new_context(viewport={'width':1280,'height':900})).new_page()
+        c2 = await b.new_context(viewport={'width':1280,'height':900}); await c2.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}"); a2 = await c2.new_page()
         await a2.add_init_script("try{localStorage.setItem('profitaxi.adminTour','done')}catch(e){}")
         await a2.goto(base+'/admin.html'); await a2.wait_for_timeout(400)
         await a2.fill('input[type=email]','support@profitaxi.bg'); await a2.fill('input[type=password]','support123'); await a2.click('button[type=submit]'); await a2.wait_for_timeout(700)
