@@ -14,7 +14,8 @@ async def main():
         ok('Шофьорски акаунт не влиза в админ панела', 'Грешен' in await a.inner_text('.err'))
         await a.fill('input[type=email]','admin@profitaxi.bg'); await a.fill('input[type=password]','admin123'); await a.click('button[type=submit]'); await a.wait_for_timeout(1200)
         ok('Админ вход', await a.locator('.scope-bar').count()==1)
-        # Филтър: сумите по градове = общото
+        # Филтър: сумите по градове = общото (числата са на „Статистика → Графики“)
+        await a.evaluate("location.hash='#/charts'"); await a.wait_for_timeout(600)
         total = num(await a.inner_text('.kpi >> nth=0 >> .kpi-value'))
         cities = await a.eval_on_selector('.scope-bar select', 'e=>[...e.options].slice(1).map(o=>o.value)')
         s = 0
@@ -32,7 +33,7 @@ async def main():
         ok('Приходът по фирмите в Пловдив = прихода на Пловдив', abs(s2-city_total) <= len(comps), f'{s2} vs {city_total}')
         await a.select_option('.scope-bar select >> nth=1', comps[0]); await a.wait_for_timeout(400)
         # Филтърът се пази между страниците
-        for route in ['#/geo','#/market','#/drivers','#/subs','#/reports']:
+        for route in ['#/geo','#/market','#/drivers','#/subs','#/stats','#/growth']:
             label = route
             await a.evaluate(f"location.hash='{route}'"); await a.wait_for_timeout(700)
             v = await a.eval_on_selector_all('.scope-bar select', 'e=>e.map(s=>s.value)')
@@ -78,7 +79,7 @@ async def main():
         ok('„Нов шофьор“ е бутон в „Шофьори“ и менюто остава на „Шофьори“', '#/new' in a.url and 'Шофьори' in await a.inner_text('.adm-nav a.on'))
         await a.click('button[type=submit]'); await a.wait_for_timeout(200)
         ok('Нов шофьор без данни дава грешка', len(await a.inner_text('.err'))>3, await a.inner_text('.err'))
-        await a.fill('label:has-text("Име") input','Нов Шофьор'); await a.fill('input[type=email]','nov@test.bg')
+        await a.fill('label:has-text("Име") input','Нов Шофьор'); await a.fill('input[type=email]','nov@test.bg'); await a.fill('input[type=tel]','0877999000')
         await a.select_option('select >> nth=0','Сливен'); await a.wait_for_timeout(150); await a.select_option('select >> nth=1','Perfect Taxi')
         await a.click('.seg-btn:has-text("Собствена")'); await a.click('button[type=submit]'); await a.wait_for_timeout(800)
         ok('Създаден шофьор в Сливен, Perfect Taxi', 'Perfect Taxi' in await a.inner_text('main'))
@@ -88,26 +89,34 @@ async def main():
         await a.fill('input[type=number]','30'); await a.click('main .btn-page'); await a.wait_for_timeout(300)
         d2 = await ctx.new_page(); await d2.goto(base+'/app'); await d2.evaluate("localStorage.removeItem('profitaxi.session')"); await d2.goto(base+'/app#/register'); await d2.wait_for_timeout(400)
         await d2.fill('input[autocomplete=name]','Проба'); await d2.fill('input[type=email]','proba@test.bg'); await d2.fill('input[type=password]','123456')
+        await d2.fill('input[type=tel]','0877333444'); await d2.click('text=Изпрати код по SMS'); await d2.wait_for_timeout(250); _c = re.findall(r'\d{4}', await d2.inner_text('#toast'))[-1]; await d2.fill('input[placeholder="4 цифри"]', _c); await d2.click('.sms-row >> text=Потвърди'); await d2.wait_for_timeout(150)
         await d2.select_option('select >> nth=0','Нова Загора'); await d2.wait_for_timeout(150); await d2.select_option('select >> nth=1','Ирис Такси')
         await d2.click('text=Собствена'); await d2.click('input[type=checkbox]'); await d2.click('button[type=submit]'); await d2.wait_for_timeout(500)
         days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")
         ok('Пробният период от настройките (30 дни) важи при регистрация', days==30, days)
         # Всички страници без грешки, при всички периоди
-        ok('Менюто е 3 бутона', await a.locator('.adm-nav a').count()==3)
-        await a.click('.adm-nav >> text=Отчети'); await a.wait_for_timeout(500)
-        ok('„Отчети“ води до всички подробни страници', await a.locator('.adm-reports a').count()==4)
+        ok('Менюто има 9 страници', await a.locator('.adm-nav a').count()==9)
+        await a.click('.adm-nav >> text=Статистика'); await a.wait_for_timeout(500)
+        ok('„Статистика“ води до графики, градове и фирми, ефир и наеми', await a.locator('.adm-reports a').count()==3)
         await a.click('.adm-reports >> text=Графики и подробни числа'); await a.wait_for_timeout(600)
-        ok('„Графики“ отваря подробните отчети', await a.evaluate("document.querySelector('.adm-main details.more').open"))
-        for label in ['Ефир, наеми и работа','Градове и фирми','Абонаменти']:
-            await a.click('.adm-nav >> text=Отчети'); await a.wait_for_timeout(400)
+        ok('„Графики“ е отделна страница с отворените отчети', await a.evaluate("document.querySelector('.adm-main details.more').open"))
+        for nav, txt in [('Контрол','Дублирани акаунти'),('Съобщения','Ново съобщение'),('Партньори','Кодове за достъп'),('Растеж','Фуния на регистрациите'),('Развитие','Кое се ползва')]:
+            await a.click(f'.adm-nav >> text={nav}'); await a.wait_for_timeout(500)
+            if txt not in await a.inner_text('main'): ok(f'{nav} показва {txt}', False)
+        ok('Новите страници (Контрол, Съобщения, Партньори, Растеж, Развитие) се отварят', not any('показва' in r and r.startswith('FAIL') for r in R))
+        await a.click('.adm-nav >> text=Контрол'); await a.wait_for_timeout(400)
+        ok('Контрол показва демо дубликата (един телефон в два профила)', 'Телефон' in await a.inner_text('.dup'))
+        for label in ['Ефир, наеми и работа','Градове и фирми']:
+            await a.click('.adm-nav >> text=Статистика'); await a.wait_for_timeout(400)
             await a.click(f'.adm-reports >> text={label}'); await a.wait_for_timeout(600)
-            ok(f'{label}: менюто е на „Отчети“ и има „Назад“', 'Отчети' in await a.inner_text('.adm-nav a.on') and await a.locator('.adm-back').count()==1)
+            ok(f'{label}: менюто е на „Статистика“ и има „Назад“', 'Статистика' in await a.inner_text('.adm-nav a.on') and await a.locator('.adm-back').count()==1)
             for i in range(5):
                 if await a.locator('.adm-picker .seg-btn').count():
                     await a.click(f'.adm-picker .seg-btn >> nth={i}'); await a.wait_for_timeout(400)
         for label in ['Днес']:
             await a.click(f'.adm-nav >> text={label}'); await a.wait_for_timeout(600)
             ok('Днес: карта, „Активни“ и „Шофьори общо“', await a.locator('.map-card').count()==1 and 'Активни' in await a.inner_text('.big-nums') and 'Шофьори общо' in await a.inner_text('.big-nums'))
+            await a.evaluate("location.hash='#/charts'"); await a.wait_for_timeout(500)
             if not await a.evaluate("document.querySelector('.adm-main details.more').open"): await a.click('.adm-main details.more summary'); await a.wait_for_timeout(300)
             for i in range(5):
                 if await a.locator('.adm-picker .seg-btn').count():

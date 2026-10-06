@@ -325,3 +325,69 @@ body.admin .btn-ghost.act-del { border-color: var(--neg); color: #fff; backgroun
 .lm.on::after { inset: -4px; border-color: rgba(18, 161, 94, .8); }
 .lm-name { font-size: 11px; margin-top: 3px; padding: 1px 7px; }
 .lmap { background: #dfe8d6; }
+
+/* ===== Новото меню и страници ===== */
+.adm-nav .count.alert { background: #E03A4E; color: #fff; }
+.adm-card { margin-bottom: 14px; }
+.adm-note { margin: 0 0 10px; }
+.adm-list { margin: 0; padding-left: 20px; line-height: 1.6; color: var(--muted); }
+details.as-page > summary { display: none; }
+details.as-page { border: 0; }
+.alert-row { display: flex; align-items: center; gap: 12px; padding: 10px 6px; border-bottom: 1px solid var(--line); text-decoration: none; color: var(--text); border-radius: 10px; }
+.alert-row:hover { background: var(--surface-2); }
+.alert-row small { display: block; color: var(--muted); }
+.al-ic { width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center; flex: none; background: var(--surface-2); }
+.al-ic.bad { background: var(--neg-soft); color: var(--neg); } .al-ic.warn { background: var(--accent-soft); color: var(--accent-text, #8A6100); } .al-ic.good { background: var(--pos-soft); color: var(--pos); }
+.al-wrap.new .alert-row b::after { content: ' • ново'; color: #E03A4E; font-size: .8rem; }
+.dup { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-top: 10px; }
+.dup-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.dup-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; text-decoration: none; color: var(--text); border-top: 1px solid var(--line); }
+.dup-row small { display: block; color: var(--muted); }
+.sent { display: flex; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.sent p { margin: 4px 0; color: var(--muted); }
+.report { border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-top: 12px; background: var(--surface); }
+.rep-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.rep-head b { font-size: 1.15rem; } .rep-head span { color: var(--muted); }
+.rep-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rep-cell { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; display: grid; }
+.rep-cell span { color: var(--muted); font-size: .85rem; } .rep-cell b { font-size: 1.2rem; }
+.rep-line { margin: 10px 0 0; }
+@media (min-width: 1100px) { .rep-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.funnel { display: grid; gap: 12px; }
+.fn-row { display: grid; grid-template-columns: 160px 1fr; gap: 4px 12px; align-items: center; }
+.fn-label { font-weight: 700; }
+.fn-bar { position: relative; height: 34px; background: var(--surface-2); border-radius: 10px; overflow: hidden; }
+.fn-bar i { position: absolute; inset: 0 auto 0 0; background: var(--violet, #7C3AED); opacity: .85; border-radius: 10px; }
+.fn-bar b { position: relative; padding: 0 12px; line-height: 34px; font-size: .9rem; color: var(--text); mix-blend-mode: normal; }
+.fn-drop { grid-column: 2; color: var(--neg); font-weight: 700; }
+.ret { display: inline-block; min-width: 54px; padding: 4px 8px; border-radius: 8px; text-align: center; font-weight: 800; background: color-mix(in srgb, #12A15E calc(var(--p) * 70%), transparent); }
+.big-nums.two { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+.weekly { white-space: pre-wrap; background: var(--surface-2); border-radius: 12px; padding: 12px; font: 600 .92rem/1.6 var(--font); margin: 0 0 10px; }
+.usage { display: grid; gap: 8px; }
+.us-row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; font-weight: 600; }
+.nps-dist { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; align-items: end; height: 110px; margin: 10px 0; }
+.nd { display: grid; grid-template-rows: 1fr auto; height: 100%; text-align: center; font-size: .75rem; color: var(--muted); }
+.nd i { align-self: end; border-radius: 6px 6px 0 0; min-height: 2px; }
+.nd.bad i { background: #E03A4E; } .nd.mid i { background: #C9CCD2; } .nd.good i { background: #12A15E; }
+.quote-s { margin: 6px 0; color: var(--muted); }
+.idea-a { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.idea-a .votes { min-width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--v-soft, var(--surface-2)); color: var(--violet); font-weight: 800; }
+.flag { padding: 12px 0; border-bottom: 1px solid var(--line); }
+.bulk { position: sticky; top: 8px; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 16px; background: var(--surface); border: 1.5px solid var(--violet, #7C3AED); box-shadow: 0 10px 30px -18px rgba(0,0,0,.5); }
+.bulk b { margin-right: 6px; }
+.pick { width: 20px; height: 20px; accent-color: var(--violet, #7C3AED); cursor: pointer; }
+.note-row { padding: 10px 0; border-bottom: 1px solid var(--line); } .note-row p { margin: 0 0 2px; }
+@media (max-width: 719px) { .fn-row, .us-row { grid-template-columns: 1fr; } }
+/* Печат само на отчета за фирмата */
+@media print { body.print-report .adm-side, body.print-report .scope-bar, body.print-report .adm-head, body.print-report .adm-main > :not(div), body.print-report .no-print { display: none !important; }
+  body.print-report .adm-grid > .adm-card:not(:has(#company-report)), body.print-report .adm-main section:not(:has(#company-report)) { display: none !important; } }
+/* 9 бутона в менюто: на телефон се плъзгат хоризонтално */
+@media (max-width: 999px) {
+  .adm-nav { overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px; }
+  .adm-nav::-webkit-scrollbar { display: none; }
+  .adm-nav a { flex: none; padding: 10px 12px; }
+}
+@media (max-width: 480px) { .adm-nav .count { display: inline-block; } }
+.code-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.code-row .code { font-size: 1.1rem; letter-spacing: .04em; display: block; }
+.code-row small { color: var(--muted); }

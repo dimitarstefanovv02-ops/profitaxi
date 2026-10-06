@@ -56,6 +56,8 @@ export function homeView({ go, user, data, rerender }) {
       h('div', { class: 'row gap' }, themeToggle(),
         data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials))),
 
+    messagesBox(rerender || (() => go('/home'))),
+    store.flagOn('nps') && store.npsDue() && npsCard(rerender || (() => go('/home'))),
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
 
@@ -67,9 +69,9 @@ export function homeView({ go, user, data, rerender }) {
     !active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'),
 
     // 3. Календар и лични резервации – с едно натискане
-    h('div', { class: 'home-links' },
-      panelBtn('cal', 'calendar', 'Календар', 'Всичко по дни'),
-      panelBtn('res', 'route', 'Резервации', resCount ? `${resCount} предстоящи` : 'Запиши курс')),
+    (store.flagOn('calendar') || store.flagOn('reservations')) && h('div', { class: 'home-links' },
+      store.flagOn('calendar') && panelBtn('cal', 'calendar', 'Календар', 'Всичко по дни'),
+      store.flagOn('reservations') && panelBtn('res', 'route', 'Резервации', resCount ? `${resCount} предстоящи` : 'Запиши курс')),
     openPanel && h('div', { class: 'home-panel', id: 'home-panel' },
       openPanel === 'cal' ? embedded(calendarView({ go, data })) : embedded(reservationsView({ data })),
       h('button', { class: 'btn btn-ghost btn-block home-panel-close', onclick: () => togglePanel(openPanel) }, h('span', { class: 'flip' }, icon('down', 18)), 'Скрий')),
@@ -134,6 +136,29 @@ function reservationsCard(data) {
 function greeting() {
   const hr = new Date().getHours();
   return hr >= 5 && hr < 11 ? 'Добро утро' : hr >= 11 && hr < 18 ? 'Добър ден' : 'Добър вечер';
+}
+
+// Съобщения от ProfiTaxi (или от фирмата) – показват се горе, докато не ги затвориш
+function messagesBox(redraw) {
+  const list = store.myMessages().slice(-2);
+  if (!list.length) return null;
+  return h('div', { class: 'msgs' }, list.map((m) => h('div', { class: 'msg' },
+    h('span', { class: 'msg-ic' }, icon('bell', 18)),
+    h('div', { class: 'grow' }, h('b', null, m.title), h('p', null, m.text)),
+    h('button', { class: 'icon-btn plain', 'aria-label': 'Затвори', onclick: () => { store.readMessage(m.id); redraw(); } }, icon('x', 18)))));
+}
+
+// Кратка анкета: „Колко вероятно е да препоръчаш ProfiTaxi?“ (0–10)
+let npsScore = null;
+function npsCard(redraw) {
+  const comment = h('input', { class: 'input', placeholder: 'Какво да подобрим? (по желание)', maxlength: 200 });
+  return h('section', { class: 'card nps' },
+    h('div', { class: 'row between' }, h('b', null, 'Колко вероятно е да препоръчаш ProfiTaxi на колега?'),
+      h('button', { class: 'icon-btn plain', 'aria-label': 'Не сега', onclick: () => { store.skipNps(); redraw(); } }, icon('x', 18))),
+    h('div', { class: 'nps-scale' }, Array.from({ length: 11 }, (_, i) => h('button', { class: cx('nps-btn', npsScore === i && 'on'), onclick: () => { npsScore = i; redraw(); } }, String(i)))),
+    h('div', { class: 'nps-legend' }, h('span', null, 'Изобщо не'), h('span', null, 'Със сигурност')),
+    npsScore != null && h('div', { class: 'row gap', style: { marginTop: '10px' } }, comment,
+      h('button', { class: 'btn btn-primary', onclick: () => { store.submitNps(npsScore, comment.value); npsScore = null; toast('Благодарим за отговора!'); redraw(); } }, 'Изпрати')));
 }
 
 function firstDay() {

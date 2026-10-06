@@ -21,7 +21,7 @@ async def main():
             await pg.evaluate("localStorage.setItem('profitaxi.asession','admin'); localStorage.setItem('profitaxi.dueShown', (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date()))")
             pages += [(u, '') for u in ['/', '/about', '/features', '/how', '/pricing', '/faq']]
             pages += [('/app/onetaxi', r) for r in ['#/home', '#/money', '#/me', '#/profile', '#/car', '#/shift/new']]
-            pages += [('/admin.html', r) for r in ['#/overview', '#/reports', '#/geo', '#/market', '#/drivers', '#/subs', '#/new', '#/settings']]
+            pages += [('/admin.html', r) for r in ['#/overview', '#/drivers', '#/control', '#/messages', '#/partners', '#/growth', '#/stats', '#/charts', '#/dev', '#/geo', '#/market', '#/subs', '#/new', '#/settings']]
             for base, route in pages:
                 await pg.goto('http://localhost:8765' + base + route); await pg.wait_for_timeout(700)
                 # година в статистиките – най-големите числа

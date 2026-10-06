@@ -16,6 +16,7 @@ import { reservationsView } from './views/reservations.js';
 import { inviteView } from './views/invite.js';
 import { moneyView } from './views/money.js';
 import { meView } from './views/me.js';
+import { ideasView } from './views/ideas.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, DRIVER_TOUR } from './tour.js';
 import { showDueSheet } from './notify.js';
@@ -28,7 +29,7 @@ const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
-  '/money': moneyView, '/me': meView,
+  '/money': moneyView, '/me': meView, '/ideas': ideasView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
 const TABS = [
@@ -36,7 +37,7 @@ const TABS = [
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Аз'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Аз' };
 
 export const go = (path, replace) => {
@@ -77,6 +78,7 @@ function render() {
   if (!view) return go('/home', true);
 
   const ctx = { go, route, user, data: store.myData(), rerender: render };
+  if (route.raw !== lastRaw) store.trackPage(route.name.slice(1));
   const tab = TABS.some(([p]) => p === route.name) || !!PARENT[route.name];
   mount(app, view(ctx), route, tab);
   // Разходка: веднъж след регистрация или когато е пусната от Профил → Помощ

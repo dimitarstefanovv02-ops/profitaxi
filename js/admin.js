@@ -1,6 +1,6 @@
 // ProfiTaxi – админ панел. Отделен вход на /admin. Шофьорите нямат връзка към него.
 
-import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, eachDay, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, endOfMonth, dateStr } from './util.js';
+import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, eachDay, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, endOfMonth, dateStr, startOfWeek } from './util.js';
 import * as store from './store.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, getTheme, setTheme, shareRows, cardTitle, more, isDark } from './ui.js';
 import { startTour, ADMIN_TOUR } from './tour.js';
@@ -12,14 +12,20 @@ import { cityCompanyPicker } from './views/cityPicker.js';
 applyTheme();
 document.body.classList.add('admin');
 
-// Менюто е 3 бутона. Останалите страници са вътре в тях (нищо не е махнато).
+// Менюто: всяка страница с няколко свързани неща, нищо не е наблъскано на едно място
 const NAV = [
   ['/overview', 'home', 'Днес'],
   ['/drivers', 'users', 'Шофьори'],
-  ['/reports', 'chart', 'Отчети'],
+  ['/control', 'shield', 'Контрол'],
+  ['/messages', 'bell', 'Съобщения'],
+  ['/partners', 'key', 'Партньори'],
+  ['/growth', 'trophy', 'Растеж'],
+  ['/stats', 'chart', 'Статистика'],
+  ['/dev', 'sparkle', 'Развитие'],
+  ['/subs', 'receipt', 'Абонаменти'],
 ];
-const PARENT = { '/driver': '/drivers', '/new': '/drivers', '/geo': '/reports', '/market': '/reports', '/subs': '/reports' };
-const PARENT_LABEL = { '/drivers': 'Шофьори', '/reports': 'Отчети' };
+const PARENT = { '/driver': '/drivers', '/new': '/drivers', '/geo': '/stats', '/market': '/stats', '/charts': '/stats', '/reports': '/stats' };
+const PARENT_LABEL = { '/drivers': 'Шофьори', '/stats': 'Статистика' };
 const mkState = () => ({ unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() });
 const overviewState = mkState(), geoState = mkState(), driverState = mkState(), marketState = mkState();
 const listState = { q: '', filter: 'all', sort: 'net' };
@@ -39,15 +45,16 @@ function render() {
   const r = parse();
   if (!store.adminUser()) return fill(app, loginView());
   if (r.name === '/login') return go('/overview');
-  const views = { '/overview': overview, '/reports': reports, '/geo': geo, '/market': market, '/drivers': drivers, '/driver': driverDetail, '/subs': subs, '/new': newDriver, '/settings': settings };
+  const views = { '/overview': overview, '/charts': overview, '/reports': statsPage, '/stats': statsPage, '/geo': geo, '/market': market, '/drivers': drivers, '/driver': driverDetail, '/subs': subs, '/new': newDriver, '/settings': settings,
+    '/control': control, '/messages': messagesPage, '/partners': partners, '/growth': growth, '/dev': devPage };
   const view = views[r.name] || overview;
-  const withScope = ['/overview', '/reports', '/geo', '/market', '/drivers', '/subs'].includes(r.name) || !views[r.name];
+  const withScope = ['/overview', '/charts', '/stats', '/geo', '/market', '/drivers', '/subs', '/growth'].includes(r.name) || !views[r.name];
   const y = window.scrollY;
   const parent = PARENT[r.name] && r.name !== '/driver' ? PARENT[r.name] : null;
   const back = parent && h('a', { class: 'adm-back', href: '#' + parent }, icon('left', 18), PARENT_LABEL[parent]);
   fill(app, h('div', { class: 'adm' }, sidebar(r.name), h('main', { class: 'adm-main' }, back, withScope && scopeBar(), view(r))));
-  // „Отчети → Графики“ отваря подробните отчети на „Днес“
-  if (r.raw.includes('charts')) { const d = document.querySelector('.adm-main details.more'); if (d) { d.open = true; setTimeout(() => d.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50); } }
+  // на телефон менюто се плъзга – показваме активния бутон
+  const on = document.querySelector('.adm-nav a.on'); if (on && on.parentElement.scrollWidth > on.parentElement.clientWidth) on.parentElement.scrollLeft = on.offsetLeft - 16;
   if (r.raw === render.last) window.scrollTo(0, y); else window.scrollTo(0, 0);
   render.last = r.raw;
   let seen = 'done'; try { seen = localStorage.getItem('profitaxi.adminTour'); } catch { /* */ }
@@ -60,7 +67,7 @@ function sidebar(active) {
   return h('aside', { class: 'adm-side' },
     h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')), h('span', { class: 'adm-badge' }, 'Админ')),
     h('nav', { class: 'adm-nav' }, NAV.map(([p, ic, label]) =>
-      h('a', { href: '#' + p, class: cx((active === p || PARENT[active] === p) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n)))),
+      h('a', { href: '#' + p, class: cx((active === p || PARENT[active] === p) && 'on') }, icon(ic, 19), h('span', null, label), p === '/drivers' && h('span', { class: 'count' }, n), p === '/control' && newAlerts().length > 0 && h('span', { class: 'count alert' }, newAlerts().length)))),
     h('div', { class: 'adm-side-foot' },
       h('div', { class: 'who' }, a.email),
       h('a', { class: cx('icon-btn', 'sf-set', active === '/settings' && 'on'), id: 'adm-settings', href: '#/settings', 'aria-label': 'Настройки', title: 'Настройки' }, icon('shield', 18)),
@@ -337,7 +344,7 @@ const CITY_POS = { 'София': [23.32, 42.70], 'Пловдив': [24.75, 42.15
   'Шумен': [26.94, 43.27], 'Ямбол': [26.50, 42.48] };
 // Активен = има смяна през последните 7 дни (или е на смяна сега)
 const isActive = (d) => { const from = addDays(todayStr(), -6); return d.shifts.some((x) => !x.end || shiftDate(x) >= from); };
-let mapEl = null, lmap = null, lmarkers = null, mapTheme = null, gmap = null, gmarkers = [], gTheme = null;
+let mapEl = null, lmap = null, lmarkers = null, mapTheme = null;
 function cityStats(all) {
   const by = {};
   all.forEach((d) => { const c = d.user.city; by[c] = by[c] || { total: 0, active: 0 }; by[c].total++; if (isActive(d)) by[c].active++; });
@@ -371,47 +378,10 @@ function drawMap(by) {
   });
   setTimeout(() => lmap.invalidateSize(), 0);
 }
-// Google Maps (ако в Настройки има ключ): малки балончета като SVG иконки
-const G_DARK = [{ elementType: 'geometry', stylers: [{ color: '#1d1d22' }] }, { elementType: 'labels.text.fill', stylers: [{ color: '#9a9aa6' }] }, { elementType: 'labels.text.stroke', stylers: [{ color: '#1d1d22' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2c33' }] }, { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] }, { featureType: 'poi', stylers: [{ visibility: 'off' }] }, { featureType: 'transit', stylers: [{ visibility: 'off' }] }];
-function bubbleSvg(total, active, size) {
-  const W = size + 12, r = size / 2, cx = r + 2, cy = r + 10;
-  const badge = active ? `<circle cx="${cx + r - 2}" cy="${cy - r + 2}" r="9" fill="#12A15E" stroke="#fff" stroke-width="2"/><text x="${cx + r - 2}" y="${cy - r + 6}" font-family="Arial" font-weight="700" font-size="11" fill="#fff" text-anchor="middle">${active}</text>` : '';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${size + 14}"><circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="#7C3AED" fill-opacity=".9" stroke="#fff" stroke-width="2.5"/><text x="${cx}" y="${cy + 4.5}" font-family="Arial" font-weight="700" font-size="13" fill="#fff" text-anchor="middle">${total}</text>${badge}</svg>`;
-  return { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), w: W, h: size + 14, ax: cx, ay: cy };
-}
-function drawGoogle(by) {
-  if (!window.google?.maps || !mapEl) return;
-  const dark = isDark();
-  if (!gmap) {
-    gmap = new google.maps.Map(mapEl, { center: { lat: 42.75, lng: 25.4 }, zoom: 7, disableDefaultUI: true, zoomControl: true, gestureHandling: 'cooperative', clickableIcons: false, styles: dark ? G_DARK : null });
-    gmap.fitBounds({ south: 41.2, west: 22.3, north: 44.25, east: 28.65 }, 8); gTheme = dark;
-  } else if (gTheme !== dark) { gmap.setOptions({ styles: dark ? G_DARK : null }); gTheme = dark; }
-  gmarkers.forEach((m) => m.setMap(null)); gmarkers = [];
-  const max = Math.max(1, ...Object.values(by).map((x) => x.total));
-  Object.entries(by).forEach(([city, v]) => {
-    const pos = CITY_POS[city]; if (!pos) return;
-    const b = bubbleSvg(v.total, v.active, Math.round(20 + Math.sqrt(v.total / max) * 16));
-    const m = new google.maps.Marker({ position: { lat: pos[1], lng: pos[0] }, map: gmap, title: `${city}: ${v.total} шофьори, ${v.active} активни`,
-      icon: { url: b.url, scaledSize: new google.maps.Size(b.w, b.h), anchor: new google.maps.Point(b.ax, b.ay) } });
-    m.addListener('click', () => { scope.city = city; scope.company = ''; go('/drivers'); });
-    gmarkers.push(m);
-  });
-}
-
 function liveMap(all) {
   const by = cityStats(all);
   const active = all.filter(isActive).length;
   if (!mapEl) mapEl = h('div', { class: 'lmap', role: 'img', 'aria-label': 'Карта на шофьорите по градове' });
-  const gkey = store.admin.settings().mapsKey;
-  if (gkey) {
-    if (!window.google?.maps) {
-      if (!document.getElementById('gmaps-js')) {
-        window.__ptGmapsReady = () => drawGoogle(cityStats(scoped()));
-        document.head.append(h('script', { id: 'gmaps-js', async: true, src: `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(gkey)}&callback=__ptGmapsReady&language=bg&region=BG` }));
-      }
-    } else setTimeout(() => drawGoogle(by), 0);
-  } else
   // Leaflet се зарежда само веднъж, при първото отваряне на картата
   if (!window.L) {
     if (!document.getElementById('leaflet-js')) {
@@ -433,11 +403,13 @@ const bigNum = (label, value, sub, cls) => h('div', { class: cx('big-num', cls) 
 
 // „Подробни отчети“ остава отворено, когато смениш периода вътре
 let overviewMoreOpen = false;
+const asPage = (det) => { det.open = true; det.classList.add('as-page'); return det; };
 const keepOpen = (det) => { det.open = overviewMoreOpen; det.addEventListener('toggle', () => { overviewMoreOpen = det.open; }); return det; };
 
 function overview() {
   const root = h('div');
   const draw = () => {
+    const chartsOnly = parse().name === '/charts';
     const r = periodRange(overviewState);
     const all = scoped();
     const rows = all.map((d) => ({ d, st: periodStats(d, r.from, r.to) }));
@@ -489,15 +461,16 @@ function overview() {
     const risk = all.filter((d) => subState(d.user).key !== 'blocked' && (daysSince(d) == null || daysSince(d) >= 7)).sort((a, b) => (daysSince(b) ?? 999) - (daysSince(a) ?? 999));
 
     fill(root,
-      pageHead('Днес', `${scopeLabel()} · обновява се на живо`),
-      liveMap(all),
-      h('div', { class: 'big-nums' },
+      chartsOnly ? pageHead('Графики и подробни числа', `${scopeLabel()}: всички шофьори за избрания период`) : pageHead('Днес', `${scopeLabel()} · обновява се на живо`),
+      !chartsOnly && liveMap(all),
+      !chartsOnly && h('div', { class: 'big-nums' },
         bigNum('Шофьори общо', String(all.length), `${all.filter((d) => isoToDateStr(d.user.createdAt) >= addDays(todayStr(), -6)).length} нови тази седмица`),
         bigNum('Активни', String(all.filter(isActive).length), 'смяна през последните 7 дни', 'live'),
         bigNum('Платени абонаменти', String(count('active')), `${count('trial')} на пробен период`),
         bigNum('Приход от абонаменти', money(mrr), 'на месец')),
-      attentionCard(all, risk),
-      keepOpen(more('Подробни отчети и графики',
+      !chartsOnly && attentionCard(all, risk),
+      !chartsOnly && alertsPreview(),
+      (chartsOnly ? asPage : () => null)(more('Подробни отчети и графики',
       h('div', { class: 'adm-picker' }, periodPicker(overviewState, draw)),
       h('div', { class: 'kpis kpis-lg' },
         kpi('coins', 'var(--text)', 'Приход', money(T.income), `${fmtNum(T.shifts)} смени`, '', { lg: true, title: moneyFull(T.income), trend: trendChip(C.income, P.income), spark: sparkline(sparkPts.map((x) => x.income), '#FFC21A') }),
@@ -627,16 +600,20 @@ function drivers() {
   const mFrom = startOfMonth(today);
   const all = scoped().map((d) => ({ d, s: subState(d.user), st: periodStats(d, mFrom, endOfMonth(today)), last: lastShift(d) }));
   const listEl = h('div');
+  const bulkEl = h('div');
+  const drawBulk = () => fill(bulkEl, bulkBar(() => { drawList(); drawBulk(); }));
   function drawList() {
     const q = listState.q.trim().toLowerCase();
     const list = all.filter(({ d, s }) => (listState.filter === 'all' || s.key === listState.filter) &&
       (!q || [d.user.name, d.user.email, d.user.phone, d.user.company, d.user.city].join(' ').toLowerCase().includes(q)));
     const sorters = { net: (a, b) => b.st.net - a.st.net, name: (a, b) => a.d.user.name.localeCompare(b.d.user.name, 'bg'), recent: (a, b) => (b.last?.start || '').localeCompare(a.last?.start || ''), sub: (a, b) => a.d.user.subscription.validUntil.localeCompare(b.d.user.subscription.validUntil), reg: (a, b) => b.d.user.createdAt.localeCompare(a.d.user.createdAt) };
     list.sort(sorters[listState.sort]);
-    fill(listEl, list.length ? table(['Шофьор', 'Град, фирма и кола', 'Статус', 'Абонамент до', 'Последна смяна', 'Чисто (месец)'],
+    const allOn = list.length > 0 && list.every(({ d }) => picked.has(d.user.id));
+    fill(listEl, list.length ? table([h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Избери всички', checked: allOn, onclick: (e) => { e.stopPropagation(); list.forEach(({ d }) => (allOn ? picked.delete(d.user.id) : picked.add(d.user.id))); drawList(); drawBulk(); } }), 'Шофьор', 'Град, фирма и кола', 'Статус', 'Абонамент до', 'Последна смяна', 'Чисто (месец)'],
       list.map(({ d, s, st, last }) => ({
         href: '#/driver/' + d.user.id,
         cells: [
+          h('input', { type: 'checkbox', class: 'pick', 'aria-label': `Избери ${d.user.name}`, checked: picked.has(d.user.id), onclick: (e) => { e.stopPropagation(); if (picked.has(d.user.id)) picked.delete(d.user.id); else picked.add(d.user.id); drawList(); drawBulk(); } }),
           h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, d.user.email)),
           h('span', { class: 'who-cell' }, h('b', { style: { fontWeight: 600 } }, `${d.user.city}, ${d.user.company}`), h('span', null, `${CAR_TYPES[d.profile.carType]?.label}, ${FUELS[d.profile.fuel]?.label}`)),
           h('span', { class: cx('chip', s.cls) }, s.label),
@@ -644,7 +621,7 @@ function drivers() {
           last ? fmtDate(shiftDate(last)) : '—',
           h('b', { class: tone(st.net) }, money(st.net)),
         ],
-      })), { rightFrom: 5 }) : empty('users', 'Няма намерени шофьори', 'Промени търсенето или филтъра.'),
+      })), { rightFrom: 6 }) : empty('users', 'Няма намерени шофьори', 'Промени търсенето или филтъра.'),
       // на телефон: карти вместо широка таблица
       list.length > 0 && h('div', { class: 'drv-cards' }, list.map(({ d, s, st, last }) => h('a', { class: 'drv-card', href: '#/driver/' + d.user.id },
         h('span', { class: 'drv-av' }, d.user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')),
@@ -663,18 +640,55 @@ function drivers() {
         h('input', { class: 'input', type: 'search', placeholder: 'Търси по име, имейл, телефон, фирма', value: listState.q, style: { minHeight: '44px' }, oninput: (e) => { listState.q = e.target.value; drawList(); } }),
         h('select', { class: 'input', style: { minHeight: '44px', padding: '8px 36px 8px 12px' }, onchange: (e) => { listState.sort = e.target.value; drawList(); } },
           [['net', 'По печалба'], ['name', 'По име'], ['recent', 'По последна смяна'], ['sub', 'По абонамент'], ['reg', 'По регистрация']].map(([v, l]) => h('option', { value: v, selected: listState.sort === v }, l)))),
+      bulkEl,
       h('section', { class: 'card', style: { marginTop: '14px' } }, listEl));
-    drawList();
+    drawList(); drawBulk();
   };
   drawAll();
   return root;
 }
+
+// Масови действия върху отметнатите шофьори
+const picked = new Set();
+function bulkBar(redraw) {
+  if (!picked.size) return null;
+  const ids = [...picked];
+  return h('div', { class: 'bulk' },
+    h('b', null, `Избрани: ${ids.length}`),
+    h('button', { class: 'btn btn-page btn-sm', onclick: () => { store.admin.extendMany(ids, 30); toast(`+30 дни за ${ids.length} шофьори`); } }, '+30 дни'),
+    h('button', { class: 'btn btn-ghost act-v btn-sm', onclick: () => { msgState.title = ''; msgState.text = ''; toast('Напиши съобщението – ще отиде до избраните градове/фирми'); go('/messages'); } }, icon('bell', 16), 'Съобщение'),
+    h('button', { class: 'btn btn-ghost act-ok btn-sm', onclick: () => { store.admin.setStatusMany(ids, 'active'); toast('Достъпът е пуснат'); } }, 'Пусни достъп'),
+    h('button', { class: 'btn btn-ghost act-warn btn-sm', onclick: () => confirmSheet({ title: `Спиране на ${ids.length} шофьори?`, okLabel: 'Спри достъпа', danger: true, onOk: () => { store.admin.setStatusMany(ids, 'blocked'); toast('Достъпът е спрян'); } }) }, 'Спри достъп'),
+    h('button', { class: 'btn btn-ghost btn-sm', onclick: () => { picked.clear(); redraw(); } }, 'Изчисти'));
+}
+
+// Бележки за шофьора (вижда ги само админът) и лични данни (GDPR)
+function notesCard(u) {
+  const list = store.admin.notes(u.id);
+  const ta = h('textarea', { class: 'input', rows: 2, placeholder: 'Напр. „Иска фактура на фирма“' });
+  return h('section', { class: 'card' }, cardTitle('edit', 'Бележки (вижда ги само админът)'),
+    h('div', { class: 'row gap' }, ta, h('button', { class: 'btn btn-page', onclick: () => { if (!ta.value.trim()) return; store.admin.addNote(u.id, ta.value); store.admin.log(u.id, 'note'); toast('Бележката е запазена'); } }, 'Добави')),
+    list.length ? list.map((n) => h('div', { class: 'note-row' }, h('p', null, n.text), h('small', { class: 'muted' }, `${fmtDate(isoToDateStr(n.at), { year: true })} · ${n.by}`))) : h('p', { class: 'muted small', style: { marginTop: '10px' } }, 'Няма бележки.'));
+}
+function gdprCard(u) {
+  return h('section', { class: 'card' }, cardTitle('shield', 'Лични данни (GDPR)'),
+    h('p', { class: 'muted small' }, 'При поискване от шофьора: свали всичките му данни като файл или ги изтрий окончателно. Всяко действие се записва в „Контрол → Дневник“.'),
+    h('div', { class: 'adm-actions' },
+      h('button', { class: 'btn btn-ghost act-v', onclick: () => {
+        const data = store.admin.exportDriver(u.id);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+        a.download = `profitaxi-danni-${u.name.replace(/\s+/g, '-')}.json`; a.click(); toast('Файлът с данните е свален');
+      } }, icon('download', 18), 'Свали всички данни'),
+      h('button', { class: 'btn btn-ghost act-del', onclick: () => confirmSheet({ title: 'Окончателно изтриване?', text: `Всички данни на ${u.name} ще бъдат изтрити завинаги и не могат да се върнат.`, okLabel: 'Изтрий завинаги', danger: true, onOk: () => { store.admin.log(u.id, 'delete'); store.admin.deleteDriver(u.id); toast('Данните са изтрити'); go('/drivers'); } }) }, icon('trash', 18), 'Изтрий окончателно')));
+}
+const viewedOnce = new Set();
 
 // ---------- Детайли за шофьор ----------
 function driverDetail(r) {
   const data = store.admin.driverData(r.param);
   if (!data.user) { setTimeout(() => go('/drivers')); return h('div'); }
   const u = data.user, p = data.profile, s = subState(u);
+  if (!viewedOnce.has(u.id)) { viewedOnce.add(u.id); store.admin.log(u.id, 'view'); }
   const root = h('div');
   const statsBox = h('div');
   const drawStats = () => {
@@ -731,6 +745,7 @@ function driverDetail(r) {
             : h('button', { class: 'btn btn-ghost act-warn', onclick: () => confirmSheet({ title: `Спиране на ${u.name}?`, text: 'Шофьорът няма да може да влиза, докато не пуснеш достъпа отново. Данните остават.', okLabel: 'Спри достъпа', danger: true, onOk: () => { store.admin.setStatus(u.id, 'blocked'); toast('Достъпът е спрян'); } }) }, icon('lock', 18), 'Спри достъпа'),
           h('button', { class: 'btn btn-ghost act-n', onclick: () => resetPw(u) }, icon('key', 18), 'Нова парола'),
           h('button', { class: 'btn btn-ghost act-del', onclick: () => confirmSheet({ title: 'Изтриване на акаунта?', text: `Всички данни на ${u.name} ще бъдат изтрити завинаги.`, okLabel: 'Изтрий', danger: true, onOk: () => { store.admin.deleteDriver(u.id); toast('Акаунтът е изтрит'); go('/drivers'); } }) }, icon('trash', 18), 'Изтрий')))),
+    h('div', { class: 'adm-grid two' }, notesCard(u), gdprCard(u)),
     h('h2', { class: 'section-title' }, 'Статистика'),
     statsBox,
     h('h2', { class: 'section-title' }, 'Смени'),
@@ -851,21 +866,12 @@ function newDriver() {
       if (r.error) { err.textContent = r.error; return; }
       toast('Шофьорът е създаден'); go('/driver/' + r.user.id);
     } },
-      field('Име', name, null, true), field('Имейл', email, null, true), field('Начална парола', pw, 'Изпрати я на шофьора', true), field('Телефон', phone, 'По желание'),
+      field('Име', name, null, true), field('Имейл', email, null, true), field('Начална парола', pw, 'Изпрати я на шофьора', true), field('Телефон', phone, 'Задължително – един телефон, един акаунт', true),
       cc.el, box, err,
       h('button', { class: 'btn btn-page btn-lg', type: 'submit' }, 'Създай акаунт'))));
 }
 
 // ---------- Настройки ----------
-function mapsKeyCard(s) {
-  const key = h('input', { class: 'input', value: s.mapsKey || '', placeholder: 'AIza…', autocomplete: 'off', spellcheck: 'false' });
-  return h('section', { class: 'card form' },
-    cardTitle('pin', 'Карта: Google Maps'),
-    h('p', { class: 'muted small' }, 'Постави ключ за Google Maps JavaScript API и картата на „Днес“ става Google Maps. Без ключ се ползва безплатната карта на Esri. Ключът се взима от console.cloud.google.com (нужен е профил с карта за плащане; има безплатен месечен лимит).'),
-    field('Google Maps ключ', key),
-    h('button', { class: 'btn btn-page', onclick: () => { store.admin.saveSettings({ mapsKey: key.value.trim() }); gmap = null; mapEl = null; toast(key.value.trim() ? 'Ключът е запазен. Картата е Google Maps.' : 'Ключът е махнат. Картата е Esri.'); } }, 'Запази ключа'));
-}
-
 function settings() {
   const s = store.admin.settings();
   const days = h('input', { class: 'input', type: 'number', min: 0, max: 90, value: s.trialDays });
@@ -876,11 +882,308 @@ function settings() {
       field('Пробен период при регистрация (дни)', days, '0 = без пробен период'),
       field('Цена на месечния абонамент (€)', price, 'Използва се за сметката на месечните приходи (MRR)'),
       h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ trialDays: Math.max(0, Math.min(90, Number(days.value) || 0)), price: Math.max(0, parseFloat(price.value.replace(',', '.')) || 0) }); toast('Запазено'); } }, 'Запази')),
-    mapsKeyCard(s),
     h('section', { class: 'card' },
       cardTitle('alert', 'Демо данни'),
       h('p', { class: 'muted small', style: { marginBottom: '12px' } }, 'Връща демо шофьорите и смените в началното им състояние. Изтрива всичко въведено на това устройство.'),
       h('button', { class: 'btn btn-ghost', onclick: () => confirmSheet({ title: 'Нулиране на демо данните?', okLabel: 'Нулирай', danger: true, onOk: () => { store.resetDemo(); location.reload(); } }) }, 'Нулирай демо данните')));
+}
+
+
+// ======================================================================
+//   НОВИТЕ СТРАНИЦИ: Контрол, Съобщения, Партньори, Растеж, Статистика, Развитие
+// ======================================================================
+const card = (ic, title, ...kids) => h('section', { class: 'card adm-card' }, cardTitle(ic, title), ...kids);
+const note = (text) => h('p', { class: 'muted small adm-note' }, text);
+const allDrivers = () => store.admin.allData();
+const companiesOf = (all) => [...new Set(all.map((d) => d.user.company).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'bg'));
+const citiesOf = (all) => [...new Set(all.map((d) => d.user.city).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'bg'));
+const sel = (opts, value, onchange, placeholder) => h('select', { class: 'input', onchange: (e) => onchange(e.target.value) },
+  placeholder != null && h('option', { value: '' }, placeholder), opts.map((o) => h('option', { value: o, selected: o === value }, o)));
+const plateKey = (p) => String(p || '').toUpperCase().replace(/[\s-]/g, '');
+const emailBase = (e) => String(e || '').toLowerCase().split('@')[0].replace(/[\d._-]+/g, '');
+// подобен имейл = една и съща основа от поне 8 букви (напр. ivan.petrov1 и ivanpetrov2), за да не са еднакви само по малко име
+
+// ---------- Дублирани акаунти ----------
+// Същият телефон, номер на кола, код на кола във фирмата или име + град в два и повече профила.
+// Не спираме никого – само показваме, за да провериш.
+function duplicates(all = allDrivers()) {
+  const groups = [];
+  const by = (reason, keyFn) => {
+    const m = {};
+    all.forEach((d) => { const k = keyFn(d); if (k) (m[k] ||= []).push(d); });
+    Object.entries(m).filter(([, l]) => l.length > 1).forEach(([k, l]) => groups.push({ key: `dup:${reason}:${k}:${l.map((d) => d.user.id).sort().join(',')}`, reason, value: k, list: l }));
+  };
+  by('Телефон', (d) => store.normPhone(d.user.phone));
+  by('Номер на колата', (d) => plateKey(d.profile.car?.plate));
+  by('Код на колата във фирмата', (d) => (d.profile.car?.code ? `${d.user.company} · ${d.profile.car.code}` : ''));
+  by('Име и град', (d) => `${d.user.name.trim().toLowerCase()} · ${d.user.city}`);
+  by('Подобен имейл', (d) => { const b = emailBase(d.user.email); return b.length >= 8 ? b : ''; });
+  return groups;
+}
+// ---------- Известия за админа ----------
+function allAlerts() {
+  const all = allDrivers(); const out = [];
+  duplicates(all).forEach((g) => out.push({ key: g.key, ic: 'users', cls: 'bad', title: `Възможен дубликат: ${g.reason}`, text: `${g.value} – ${g.list.map((d) => d.user.name).join(', ')}`, href: '#/control' }));
+  all.forEach((d) => {
+    const s = subState(d.user);
+    if (s.key === 'trial' && s.left <= 3 && s.left >= 0) out.push({ key: `trial:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'clock', cls: 'warn', title: 'Пробният период изтича', text: `${d.user.name} – след ${s.left} дни`, href: `#/driver/${d.user.id}` });
+    if (s.key === 'expired' && s.left >= -7) out.push({ key: `exp:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'alert', cls: 'bad', title: 'Абонаментът изтече', text: d.user.name, href: `#/driver/${d.user.id}` });
+    if ((Date.now() - new Date(d.user.createdAt)) / 86400000 < 7) out.push({ key: `new:${d.user.id}`, ic: 'plus', cls: 'good', title: 'Нов шофьор', text: `${d.user.name}, ${d.user.city}`, href: `#/driver/${d.user.id}` });
+  });
+  store.admin.nps().filter((n) => n.score <= 6 && (Date.now() - new Date(n.at)) / 86400000 < 30).forEach((n) => out.push({ key: `nps:${n.id}`, ic: 'heart', cls: 'warn', title: `Недоволен шофьор (оценка ${n.score})`, text: n.comment || 'без коментар', href: '#/dev' }));
+  store.admin.ideas().filter((i) => i.status === 'new').forEach((i) => out.push({ key: `idea:${i.id}`, ic: 'sparkle', cls: 'good', title: 'Ново предложение', text: i.text, href: '#/dev' }));
+  return out;
+}
+function newAlerts() { const seen = new Set(store.admin.alertsSeen()); return allAlerts().filter((a) => !seen.has(a.key)); }
+const alertRow = (a) => h('a', { class: 'alert-row', href: a.href }, h('span', { class: cx('al-ic', a.cls) }, icon(a.ic, 18)), h('span', { class: 'grow' }, h('b', null, a.title), h('small', null, a.text)), icon('right', 16));
+function alertsPreview() {
+  const n = newAlerts(); if (!n.length) return null;
+  return card('bell', `Нови известия (${n.length})`, n.slice(0, 4).map(alertRow), h('a', { class: 'btn btn-ghost btn-block', href: '#/control', style: { marginTop: '10px' } }, 'Всички известия'));
+}
+
+// ---------- КОНТРОЛ: известия, дубликати, дневник, поверителност ----------
+function control() {
+  const all = allDrivers(); const al = allAlerts(); const seen = new Set(store.admin.alertsSeen());
+  const fresh = al.filter((a) => !seen.has(a.key)); const dups = duplicates(all); const log = store.admin.accessLog().slice(0, 30);
+  return h('div', null,
+    pageHead('Контрол', 'Известия, дублирани акаунти и кой какво е гледал'),
+    h('div', { class: 'adm-grid two' },
+      card('bell', `Известия${fresh.length ? ` (${fresh.length} нови)` : ''}`,
+        al.length ? h('div', null, al.slice(0, 40).map((a) => h('div', { class: cx('al-wrap', !seen.has(a.key) && 'new') }, alertRow(a))))
+          : note('Няма известия.'),
+        fresh.length > 0 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '10px' }, onclick: () => { store.admin.markAlertsSeen(fresh.map((a) => a.key)); toast('Отбелязани като видени'); } }, icon('check', 18), 'Маркирай всички като видени')),
+      card('users', `Дублирани акаунти (${dups.length})`,
+        note('Профили с един и същ телефон, номер или код на кола, име и град или подобен имейл. Нищо не се спира автоматично – провери и реши.'),
+        dups.length ? dups.map((g) => h('div', { class: 'dup' },
+          h('div', { class: 'dup-head' }, h('span', { class: 'chip bad' }, g.reason), h('b', null, g.value)),
+          g.list.map((d) => h('a', { class: 'dup-row', href: `#/driver/${d.user.id}` }, h('span', { class: 'grow' }, h('b', null, d.user.name), h('small', null, `${d.user.email} · ${d.user.phone || 'без телефон'} · ${d.user.city}`)),
+            h('span', { class: cx('chip', subState(d.user).cls) }, subState(d.user).label))))) : note('Няма открити дубликати.'))),
+    h('div', { class: 'adm-grid two' },
+      card('eye', 'Дневник на достъпа', note('Кой от админите е отварял, свалял или изтривал данни на шофьор.'),
+        log.length ? table(['Кога', 'Админ', 'Шофьор', 'Действие'], log.map((l) => ({ cells: [fmtDate(isoToDateStr(l.at)) + ' ' + l.at.slice(11, 16), l.by, l.name, { view: 'Отвори профила', export: 'Свали данните', delete: 'Изтри', note: 'Бележка' }[l.action] || l.action] })), { rightFrom: 9 }) : note('Още няма записи.')),
+      card('shield', 'Поверителност (GDPR)',
+        h('ul', { class: 'adm-list' },
+          h('li', null, 'В профила на всеки шофьор има „Свали всички данни“ (файл за шофьора при поискване) и „Изтрий окончателно“.'),
+          h('li', null, 'Всяко отваряне, сваляне и изтриване се записва в дневника вляво.'),
+          h('li', null, 'Телефонът се потвърждава с SMS при регистрация – един телефон, един акаунт.'),
+          h('li', null, 'Отчетите за фирмите са само обобщени – без имена и лични данни.')))));
+}
+
+// ---------- СЪОБЩЕНИЯ до шофьорите ----------
+const msgState = { title: '', text: '', city: '', company: '' };
+function messagesPage() {
+  const all = allDrivers(); const list = store.admin.messages();
+  const reach = (t) => all.filter((d) => (!t || ((!t.city || d.user.city === t.city) && (!t.company || d.user.company === t.company)))).length;
+  const root = h('div');
+  const title = h('input', { class: 'input', value: msgState.title, maxlength: 80, placeholder: 'Заглавие', oninput: (e) => { msgState.title = e.target.value; } });
+  const text = h('textarea', { class: 'input', rows: 4, maxlength: 400, placeholder: 'Текст на съобщението', oninput: (e) => { msgState.text = e.target.value; } }); text.value = msgState.text;
+  const target = () => (msgState.city || msgState.company ? { city: msgState.city || null, company: msgState.company || null } : null);
+  const comps = companiesOf(all.filter((d) => !msgState.city || d.user.city === msgState.city));
+  return h('div', null,
+    pageHead('Съобщения', 'Съобщение до всички, до град или до фирма. Излиза горе на „Днес“ в приложението.'),
+    h('div', { class: 'adm-grid two' },
+      card('bell', 'Ново съобщение',
+        h('div', { class: 'form' }, field('Заглавие', title), field('Текст', text),
+          h('div', { class: 'grid2' },
+            field('Град', sel(citiesOf(all), msgState.city, (v) => { msgState.city = v; msgState.company = ''; render(); }, 'Всички градове')),
+            field('Фирма', sel(comps, msgState.company, (v) => { msgState.company = v; render(); }, 'Всички фирми'))),
+          h('p', { class: 'muted small' }, `Ще го видят ${reach(target())} шофьори.`),
+          h('button', { class: 'btn btn-page btn-lg', onclick: () => {
+            if (!msgState.title.trim() || !msgState.text.trim()) { toast('Напиши заглавие и текст', 'err'); return; }
+            store.admin.sendMessage({ title: msgState.title, text: msgState.text, target: target() });
+            Object.assign(msgState, { title: '', text: '' }); toast('Съобщението е изпратено');
+          } }, icon('bell', 18), 'Изпрати'))),
+      card('list', `Изпратени (${list.length})`,
+        list.length ? list.map((m) => { const n = reach(m.target); return h('div', { class: 'sent' },
+          h('div', { class: 'grow' }, h('b', null, m.title), h('p', null, m.text),
+            h('small', { class: 'muted' }, `${fmtDate(isoToDateStr(m.at))} · ${m.target ? [m.target.city, m.target.company].filter(Boolean).join(', ') : 'до всички'} · прочетено от ${m.readBy.length} от ${n}`)),
+          h('button', { class: 'icon-btn', 'aria-label': 'Изтрий', onclick: () => confirmSheet({ title: 'Изтриване на съобщението?', okLabel: 'Изтрий', danger: true, onOk: () => store.admin.deleteMessage(m.id) }) }, icon('trash', 18))); })
+          : note('Още няма изпратени съобщения.'))));
+}
+
+// ---------- ПАРТНЬОРИ: кодове за достъп и месечен отчет за фирма ----------
+const repState = { company: '', month: todayStr().slice(0, 7) };
+function partners() {
+  const all = allDrivers(); const codes = store.admin.codes(); const comps = companiesOf(all);
+  if (!repState.company) repState.company = comps.includes('ONE Такси – 032 22 22') ? 'ONE Такси – 032 22 22' : comps[0] || '';
+  const f = { code: h('input', { class: 'input', placeholder: 'напр. YELLOW2026', style: { textTransform: 'uppercase' } }), company: comps[0] || '', limit: h('input', { class: 'input', type: 'number', min: 0, value: 100 }), expires: h('input', { class: 'input', type: 'date', value: addDays(todayStr(), 180) }) };
+  const compSel = sel(comps, f.company, (v) => { f.company = v; });
+  return h('div', null,
+    pageHead('Партньори', 'Кодове за достъп за фирмите и месечен отчет за всяка фирма'),
+    h('div', { class: 'adm-grid two' },
+      card('key', 'Кодове за достъп',
+        note('С код от фирмата шофьорите се регистрират в изданието на партньора (напр. One Taxi). Можеш да спреш код по всяко време.'),
+        codes.length ? codes.map((c) => h('div', { class: 'code-row' },
+          h('div', { class: 'grow' }, h('b', { class: 'code' }, c.code), h('small', null, `${c.company} · ползван ${c.uses}${c.limit ? ` от ${c.limit}` : ''} · ${c.expires ? `до ${fmtDate(c.expires, { year: true })}` : 'без срок'}`)),
+          h('button', { class: cx('btn btn-sm', c.active ? 'btn-ghost act-ok' : 'btn-ghost act-warn'), onclick: () => store.admin.toggleCode(c.code) }, c.active ? 'Активен' : 'Спрян'),
+          h('button', { class: 'icon-btn', 'aria-label': 'Изтрий кода', onclick: () => confirmSheet({ title: `Изтриване на ${c.code}?`, okLabel: 'Изтрий', danger: true, onOk: () => store.admin.deleteCode(c.code) }) }, icon('trash', 16)))) : note('Няма кодове.'),
+        h('div', { class: 'form', style: { marginTop: '14px' } },
+          h('div', { class: 'grid2' }, field('Нов код', f.code), field('Фирма', compSel)),
+          h('div', { class: 'grid2' }, field('Максимум регистрации', f.limit, '0 = без лимит'), field('Валиден до', f.expires)),
+          h('button', { class: 'btn btn-page', onclick: () => {
+            const city = all.find((d) => d.user.company === f.company)?.user.city || '';
+            const r = store.admin.saveCode({ code: f.code.value, company: f.company, city, limit: Number(f.limit.value) || 0, expires: f.expires.value || null });
+            if (r.error) toast(r.error, 'err'); else toast('Кодът е създаден');
+          } }, icon('plus', 18), 'Създай код'))),
+      companyReport(all, comps)));
+}
+function companyReport(all, comps) {
+  const [y, m] = repState.month.split('-').map(Number);
+  const from = `${repState.month}-01`, to = endOfMonth(from);
+  const list = all.filter((d) => d.user.company === repState.company);
+  const rows = list.map((d) => ({ d, st: periodStats(d, from, to) }));
+  const T = aggregate(rows);
+  const shifts = list.flatMap((d) => d.shifts.filter((s) => s.end && shiftDate(s) >= from && shiftDate(s) <= to));
+  const ti = timeInsights(shifts);
+  const byWd = Array(7).fill(0); shifts.forEach((s) => { byWd[(new Date(s.start).getDay() + 6) % 7] += shiftIncome(s); });
+  const bestWd = byWd.indexOf(Math.max(...byWd));
+  const cars = {}; list.forEach((d) => { const k = CAR_TYPES[d.profile.carType]?.label || '—'; cars[k] = (cars[k] || 0) + 1; });
+  const month = h('input', { class: 'input', type: 'month', value: repState.month, max: todayStr().slice(0, 7), onchange: (e) => { repState.month = e.target.value || repState.month; render(); } });
+  return card('doc', 'Месечен отчет за фирма',
+    h('div', { class: 'grid2 no-print' }, field('Фирма', sel(comps, repState.company, (v) => { repState.company = v; render(); })), field('Месец', month)),
+    h('div', { class: 'report', id: 'company-report' },
+      h('div', { class: 'rep-head' }, h('b', null, repState.company || '—'), h('span', null, `${MONTHS[m - 1]} ${y} · ProfiTaxi`)),
+      list.length ? h('div', null,
+        h('div', { class: 'rep-grid' },
+          repCell('Шофьори в ProfiTaxi', String(list.length)), repCell('Активни през месеца', String(T.active)),
+          repCell('Смени', fmtNum(T.shifts)), repCell('Часове', fmtNum(Math.round(T.hours))),
+          repCell('Оборот общо', money(T.income)), repCell('Чисто на час (средно)', money2(T.perHour)),
+          repCell('Оборот на смяна', money(T.perShift)), repCell('Км на смяна', T.shifts ? fmtNum(T.km / T.shifts) : '—')),
+        h('p', { class: 'rep-line' }, h('b', null, 'Най-силен ден: '), T.shifts ? WD_SHORT[bestWd] : '—', ti.top[0] ? [h('b', null, ' · Най-добро време: '), `${WD_SHORT[ti.top[0].wd]} ${ti.top[0].from}:00–${ti.top[0].to}:00`] : ''),
+        h('p', { class: 'rep-line' }, h('b', null, 'Коли: '), Object.entries(cars).map(([k, v]) => `${k} ${v}`).join(', ')),
+        h('p', { class: 'muted small' }, 'Само обобщени данни – без имена, телефони или данни за отделен шофьор.'))
+        : note('Няма шофьори от тази фирма.')),
+    h('button', { class: 'btn btn-ghost no-print', style: { marginTop: '12px' }, onclick: () => { document.body.classList.add('print-report'); window.print(); setTimeout(() => document.body.classList.remove('print-report'), 500); } }, icon('print', 18), 'Свали като PDF'));
+}
+const repCell = (label, value) => h('div', { class: 'rep-cell' }, h('span', null, label), h('b', null, value));
+
+// ---------- РАСТЕЖ: фуния, задържане, стойност на клиент, седмичен отчет ----------
+function growth() {
+  const all = scoped(); const price = store.admin.settings().price || 0;
+  const n = all.length;
+  const onboarded = all.filter((d) => d.profile.onboarded).length;
+  const first = all.filter((d) => d.shifts.some((s) => s.end)).length;
+  const five = all.filter((d) => d.shifts.filter((s) => s.end).length >= 5).length;
+  const paid = all.filter((d) => d.user.subscription?.paidSince).length;
+  const steps = [['Регистрирали се', n], ['Настроили колата', onboarded], ['Първа смяна', first], ['5+ смени', five], ['Платили', paid]];
+  // Задържане: шофьорите по седмица на регистрация и дали пишат смени след 1, 2, 4, 8 седмици
+  const weekStart = (iso) => startOfWeek(isoToDateStr(iso));
+  const cohorts = {}; all.forEach((d) => { (cohorts[weekStart(d.user.createdAt)] ||= []).push(d); });
+  const weeks = Object.keys(cohorts).sort().slice(-10);
+  const activeIn = (d, w) => { const from = addDays(weekStart(d.user.createdAt), w * 7), to = addDays(from, 6); return from <= todayStr() ? d.shifts.some((s) => s.end && shiftDate(s) >= from && shiftDate(s) <= to) : null; };
+  const W = [1, 2, 4, 8];
+  // Стойност на клиент: средно колко месеца плаща един шофьор
+  const paidUsers = all.filter((d) => d.user.subscription?.paidSince);
+  const months = paidUsers.map((d) => Math.max(0, (parseDate(d.user.subscription.validUntil < todayStr() ? d.user.subscription.validUntil : todayStr()) - parseDate(d.user.subscription.paidSince)) / (30.4 * 86400000)));
+  const avgM = months.length ? months.reduce((a, b) => a + b, 0) / months.length : 0;
+  const churned = paidUsers.filter((d) => d.user.subscription.validUntil < todayStr()).length;
+  const churnRate = paidUsers.length ? churned / paidUsers.length : 0;
+  const lifetime = churnRate > 0 ? Math.max(avgM, 1 / Math.max(churnRate / Math.max(avgM, 1), 0.02)) : Math.max(avgM, 12);
+  return h('div', null,
+    pageHead('Растеж', `${scopeLabel()}: откъде се губят шофьори и колко ти носи един шофьор`),
+    card('chart', 'Фуния на регистрациите',
+      note('Колко шофьори стигат до всяка стъпка. Най-голямото падане показва какво да оправиш.'),
+      h('div', { class: 'funnel' }, steps.map(([label, v], i) => h('div', { class: 'fn-row' },
+        h('span', { class: 'fn-label' }, label),
+        h('div', { class: 'fn-bar' }, h('i', { style: { width: `${n ? (v / n) * 100 : 0}%` } }), h('b', null, `${v} · ${pct(v, n)}`)),
+        i > 0 && h('small', { class: 'fn-drop' }, steps[i - 1][1] ? `−${Math.round(100 - (v / steps[i - 1][1]) * 100)}% от предната стъпка` : ''))))),
+    card('users', 'Задържане по седмица на регистрация',
+      note('Какъв дял от записалите се през дадена седмица още пишат смени след 1, 2, 4 и 8 седмици.'),
+      table(['Седмица', 'Записали се', ...W.map((w) => `След ${w} седм.`)], weeks.map((wk) => { const list = cohorts[wk]; return { cells: [fmtDate(wk), String(list.length), ...W.map((w) => {
+        const vals = list.map((d) => activeIn(d, w)); if (vals.some((v) => v === null)) return h('span', { class: 'muted' }, '—');
+        const p = vals.filter(Boolean).length / list.length; return h('span', { class: 'ret', style: { '--p': p } }, `${Math.round(p * 100)}%`); })] }; }), { rightFrom: 1 })),
+    h('div', { class: 'adm-grid two' },
+      card('coins', 'Стойност на един клиент',
+        h('div', { class: 'big-nums two' },
+          bigNum('Средно плаща', `${fmtNum1(avgM)} мес.`, 'досега, на платил шофьор'),
+          bigNum('Отказали се', pct(churned, paidUsers.length), `${churned} от ${paidUsers.length} платили`),
+          bigNum('Очаквано време като клиент', `${fmtNum1(lifetime)} мес.`, 'при сегашния темп'),
+          bigNum('Стойност на клиент', money(lifetime * price, 2), `при ${money(price, 2)} на месец`)),
+        note('Това е горната граница колко можеш да даваш за реклама, за да спечелиш един нов шофьор.')),
+      weeklyReport(all)));
+}
+function weeklyReport(all) {
+  const to = todayStr(), from = addDays(to, -6), pf = addDays(from, -7), pt = addDays(from, -1);
+  const T = aggregate(all.map((d) => ({ d, st: periodStats(d, from, to) }))), P = aggregate(all.map((d) => ({ d, st: periodStats(d, pf, pt) })));
+  const newD = all.filter((d) => isoToDateStr(d.user.createdAt) >= from).length;
+  const alerts = newAlerts().length;
+  const lines = [`ProfiTaxi – седмицата ${fmtDate(from)} – ${fmtDate(to)}`, `Нови шофьори: ${newD}`, `Активни: ${T.active} (предната седмица ${P.active})`, `Смени: ${T.shifts} (предната ${P.shifts})`,
+    `Оборот на шофьорите: ${money(T.income)}`, `Чисто на час: ${money2(T.perHour)}`, `Нови известия за проверка: ${alerts}`];
+  return card('doc', 'Седмичен отчет',
+    note('Обобщение на седмицата. Ще идва всеки понеделник по имейл, щом свържем сървъра; дотогава – тук.'),
+    h('pre', { class: 'weekly' }, lines.join('\n')),
+    h('button', { class: 'btn btn-ghost', onclick: () => { navigator.clipboard?.writeText(lines.join('\n')); toast('Копирано'); } }, icon('copy', 18), 'Копирай'));
+}
+
+// ---------- СТАТИСТИКА: средният шофьор по град, сезонност, коли и гориво ----------
+const statState = { days: 30 };
+function statsPage() {
+  const all = scoped(); const to = todayStr(), from = addDays(to, -(statState.days - 1));
+  const per = all.map((d) => ({ d, st: periodStats(d, from, to) })).filter((x) => x.st.shifts > 0);
+  const avgRow = (list) => { const T = aggregate(list); const n = list.length || 1; return { n: list.length, perHour: T.perHour, perShift: T.perShift, hours: T.shifts ? T.hours / T.shifts : 0, km: T.shifts ? T.km / T.shifts : 0, net: T.net / n, income: T.income / n }; };
+  const byCity = {}; per.forEach((x) => { (byCity[x.d.user.city] ||= []).push(x); });
+  const cityRows = Object.entries(byCity).map(([c, l]) => [c, avgRow(l)]).sort((a, b) => b[1].n - a[1].n);
+  const group = (keyFn, labelFn) => { const m = {}; per.forEach((x) => { (m[keyFn(x.d)] ||= []).push(x); }); return Object.entries(m).map(([k, l]) => [labelFn(k), avgRow(l)]).sort((a, b) => b[1].perHour - a[1].perHour); };
+  // Сезонност: оборот по месеци (всички данни) и по дни от седмицата
+  const byMonth = Array(12).fill(0).map(() => ({ inc: 0, n: 0 })); const byWd = Array(7).fill(0).map(() => ({ inc: 0, n: 0 }));
+  all.forEach((d) => d.shifts.forEach((s) => { if (!s.end) return; const dt = new Date(s.start); const v = shiftIncome(s); byMonth[dt.getMonth()].inc += v; byMonth[dt.getMonth()].n++; byWd[(dt.getDay() + 6) % 7].inc += v; byWd[(dt.getDay() + 6) % 7].n++; }));
+  const seasonPts = byMonth.map((x, i) => ({ label: MONTHS_SHORT[i], net: x.n ? x.inc / x.n : 0 }));
+  const wdPts = byWd.map((x, i) => ({ label: WD_SHORT[i], net: x.n ? x.inc / x.n : 0 }));
+  const avgTable = (rows, first) => table([first, 'Шофьори', 'Чисто/час', 'Оборот/смяна', 'Часове/смяна', 'Км/смяна', 'Чисто на шофьор'],
+    rows.map(([k, a]) => ({ cells: [h('b', null, k), String(a.n), money2(a.perHour), money(a.perShift), fmtNum1(a.hours), fmtNum(a.km), h('b', { class: tone(a.net) }, money(a.net))] })), { rightFrom: 1 });
+  return h('div', null,
+    pageHead('Статистика', `${scopeLabel()}: средният шофьор, сезонност, коли и гориво`),
+    h('div', { class: 'row gap adm-picker' }, segmented({ 7: '7 дни', 30: '30 дни', 90: '90 дни', 365: 'Година' }, String(statState.days), (v) => { statState.days = Number(v); render(); }, { page: true })),
+    card('pin', 'Средният шофьор по град', note(`За последните ${statState.days} дни, само шофьорите с поне една смяна.`), cityRows.length ? avgTable(cityRows, 'Град') : note('Няма данни.')),
+    h('div', { class: 'adm-grid two' },
+      card('calendar', 'Сезонност по месеци', note('Среден оборот на смяна във всеки месец (всички данни).'), barChart(seasonPts, { height: 170, cls: 'violet' })),
+      card('clock', 'По дни от седмицата', note('Среден оборот на смяна в съответния ден.'), barChart(wdPts, { height: 170 }))),
+    h('div', { class: 'adm-grid two' },
+      card('car', 'Своя, под наем или лизинг', avgTable(group((d) => d.profile.carType, (k) => CAR_TYPES[k]?.label || k), 'Кола')),
+      card('fuel', 'Кое гориво е най-изгодно', avgTable(group((d) => d.profile.fuel, (k) => FUELS[k]?.label || k), 'Гориво'))),
+    h('div', { class: 'big-links adm-reports' },
+      h('a', { class: 'big-link', href: '#/charts' }, h('span', { class: 'bl-ic' }, icon('chart', 22)), h('span', { class: 'grow' }, h('b', null, 'Графики и подробни числа'), h('span', null, 'Приход и чисто по дни, видове разходи, рекорди')), icon('right', 18)),
+      h('a', { class: 'big-link', href: '#/geo' }, h('span', { class: 'bl-ic' }, icon('target', 22)), h('span', { class: 'grow' }, h('b', null, 'Градове и фирми'), h('span', null, 'Сравнение между градове и фирми')), icon('right', 18)),
+      h('a', { class: 'big-link', href: '#/market' }, h('span', { class: 'bl-ic' }, icon('coins', 22)), h('span', { class: 'grow' }, h('b', null, 'Ефир, наеми и работа'), h('span', null, 'Колко струват ефирът и наемът')), icon('right', 18))));
+}
+
+// ---------- РАЗВИТИЕ: какво се ползва, анкета, предложения, функции за част от шофьорите ----------
+const PAGE_NAMES = { home: 'Днес', shift: 'Смяна (въвеждане)', money: 'Пари', stats: 'Статистика', costs: 'Постоянни разходи', me: 'Аз', calendar: 'Календар', reservations: 'Резервации', profile: 'Моят профил', car: 'Колата и ефирът', shifts: 'Всички смени', ideas: 'Предложи функция', onboarding: 'Първоначална настройка' };
+const IDEA_ST = { new: 'Ново', planned: 'Ще го направим', done: 'Готово', hidden: 'Скрито' };
+function devPage() {
+  const all = allDrivers(); const N = all.length || 1;
+  const usage = Object.entries(store.admin.usage()).map(([p, u]) => ({ p, users: Object.keys(u.users).length, views: u.views })).sort((a, b) => b.users - a.users);
+  const nps = store.admin.nps(); const pro = nps.filter((x) => x.score >= 9).length, det = nps.filter((x) => x.score <= 6).length;
+  const score = nps.length ? Math.round(((pro - det) / nps.length) * 100) : null;
+  const ideasL = store.admin.ideas(); const flags = store.admin.flags(); const comps = companiesOf(all);
+  return h('div', null,
+    pageHead('Развитие', 'Какво ползват шофьорите, какво мислят и какво искат'),
+    h('div', { class: 'adm-grid two' },
+      card('eye', 'Кое се ползва', note('Колко шофьори са отваряли всяка страница. Неползваното е кандидат за подобряване или махане.'),
+        h('div', { class: 'usage' }, usage.map((u) => h('div', { class: 'us-row' }, h('span', null, PAGE_NAMES[u.p] || u.p),
+          h('div', { class: 'fn-bar' }, h('i', { style: { width: `${(u.users / N) * 100}%` } }), h('b', null, `${u.users} шоф. · ${pct(u.users, N)}`)))))),
+      card('heart', 'Би ли препоръчал ProfiTaxi?',
+        h('div', { class: 'big-nums two' }, bigNum('Оценка (NPS)', score == null ? '—' : String(score), 'от −100 до +100', score > 30 ? 'live' : ''), bigNum('Отговори', String(nps.length), `${pro} доволни · ${det} недоволни`)),
+        h('div', { class: 'nps-dist' }, Array.from({ length: 11 }, (_, i) => { const c = nps.filter((x) => x.score === i).length; return h('div', { class: cx('nd', i <= 6 ? 'bad' : i <= 8 ? 'mid' : 'good') }, h('i', { style: { height: `${nps.length ? (c / Math.max(...Array.from({ length: 11 }, (_, j) => nps.filter((x) => x.score === j).length), 1)) * 100 : 0}%` } }), h('span', null, String(i))); })),
+        nps.filter((x) => x.comment).slice(0, 6).map((x) => h('p', { class: 'quote-s' }, h('b', null, `${x.score}/10 `), `„${x.comment}“`)))),
+    h('div', { class: 'adm-grid two' },
+      card('sparkle', `Предложения от шофьорите (${ideasL.length})`,
+        ideasL.length ? ideasL.map((i) => h('div', { class: 'idea-a' }, h('span', { class: 'votes' }, String(i.votes.length)), h('span', { class: 'grow' }, i.text),
+          h('select', { class: 'input', style: { width: 'auto' }, onchange: (e) => store.admin.setIdea(i.id, e.target.value) }, Object.entries(IDEA_ST).map(([k, v]) => h('option', { value: k, selected: i.status === k }, v))))) : note('Още няма предложения.'),
+        note('Статусът се вижда и от шофьорите („Ще го направим“, „Готово“). „Скрито“ го маха от техния списък.')),
+      card('bolt', 'Функции за част от шофьорите',
+        note('Пускаш нещо първо на част от шофьорите (процент или една фирма) и виждаш дали помага, преди да е за всички.'),
+        flags.map((f) => flagRow(f, comps)))));
+}
+function flagRow(f, comps) {
+  const save = (patch) => store.admin.saveFlag({ ...f, ...patch });
+  return h('div', { class: 'flag' },
+    h('div', { class: 'row between' }, h('b', null, f.label), h('button', { class: cx('toggle', f.on && 'on'), role: 'switch', 'aria-checked': String(f.on), 'aria-label': f.label, onclick: () => save({ on: !f.on }) })),
+    f.on && h('div', { class: 'row gap', style: { marginTop: '8px', flexWrap: 'wrap' } },
+      h('select', { class: 'input', style: { width: 'auto' }, onchange: (e) => save({ target: e.target.value }) }, Object.entries({ all: 'За всички', percent: 'За процент от шофьорите', company: 'Само за една фирма' }).map(([k, v]) => h('option', { value: k, selected: f.target === k }, v))),
+      f.target === 'percent' && h('input', { class: 'input', type: 'number', min: 0, max: 100, value: f.percent || 0, style: { width: '90px' }, onchange: (e) => save({ percent: Math.max(0, Math.min(100, Number(e.target.value) || 0)) }) }),
+      f.target === 'percent' && h('span', { class: 'muted small' }, '% от шофьорите'),
+      f.target === 'company' && sel(comps, f.company, (v) => save({ company: v }), 'Избери фирма')));
 }
 
 let pending = false;

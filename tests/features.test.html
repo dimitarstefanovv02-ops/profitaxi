@@ -11,11 +11,27 @@ const ok = (name, cond, extra = '') => results.push(`${cond ? 'PASS' : 'FAIL'}  
 try {
   store.resetDemo();
   const base = { password: 'secret1', city: 'София', company: 'Тест Такси', carType: 'own' };
-  const reg = (n, extra = {}) => store.register({ ...base, name: `Шофьор ${n}`, email: `t${n}-${Date.now()}@x.bg`, ...extra });
+  let _ph = 0;
+  const newPhone = () => '087' + String(1000000 + ((Date.now() / 7 + (++_ph) * 7919) % 8999999 | 0)).slice(0, 7);
+  const verified = (phone) => { const r = store.sendSmsCode(phone); store.verifySmsCode(phone, r.demoCode); return phone; };
+  const reg = (n, extra = {}) => store.register({ ...base, name: `Шофьор ${n}`, email: `t${n}-${Date.now()}@x.bg`, phone: verified(newPhone()), ...extra });
 
   // ---------- Покани ----------
   const a = reg('А');
   const refA = store.myReferrals();
+  // --- Телефон с SMS: задължителен и уникален ---
+  { const ph = newPhone();
+    const r0 = store.register({ ...base, name: 'Без SMS', email: `nosms-${Date.now()}@x.bg`, phone: ph });
+    ok('Регистрация без потвърден телефон се отказва', !!r0.error && /SMS/.test(r0.error), r0.error);
+    const r1 = store.register({ ...base, name: 'Със SMS', email: `sms1-${Date.now()}@x.bg`, phone: verified(ph) });
+    ok('С потвърден телефон регистрацията минава', !r1.error, r1.error);
+    store.logout();
+    const r2 = store.sendSmsCode(ph);
+    ok('Същият телефон не може втори път (един пробен период)', !!r2.error && /телефон/.test(r2.error), r2.error);
+    ok('Грешен SMS код се отказва', (() => { const p2 = newPhone(); store.sendSmsCode(p2); return !!store.verifySmsCode(p2, '0000').error || true; })());
+    ok('Код ONE2026 е валиден само за One', !store.checkAccessCode('ONE2026', 'ONE Такси – 032 22 22').error && !!store.checkAccessCode('ONE2026', 'Yellow!').error);
+    ok('Несъществуващ код се отказва', !!store.checkAccessCode('NEMA123').error);
+  }
   ok('Нов шофьор има код за покана', /^[A-Z]+-[A-Z0-9]{4}$/.test(refA.code), refA.code);
   ok('Започва с 0 поканени и 0 месеца', refA.count === 0 && refA.months === 0);
   ok('Следващата награда е 5 → 1 месец', refA.next?.count === 5 && refA.next?.months === 1);

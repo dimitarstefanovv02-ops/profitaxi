@@ -47,7 +47,23 @@ export function loginView({ go }) {
 export function registerView({ go }) {
   const name = input({ autocomplete: 'name', placeholder: 'Иван Иванов' });
   const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg' });
-  const phone = input({ type: 'tel', autocomplete: 'tel', inputmode: 'tel', placeholder: '08xx xxx xxx' });
+  const phone = input({ type: 'tel', autocomplete: 'tel', inputmode: 'tel', placeholder: '08xx xxx xxx', oninput: () => { phoneOk = false; drawSms(); } });
+  // Телефонът се потвърждава с код по SMS – така един човек не може да ползва пробния период много пъти
+  let phoneOk = false, smsSent = false;
+  const smsCode = input({ inputmode: 'numeric', maxlength: 4, placeholder: '4 цифри', autocomplete: 'one-time-code' });
+  const smsBox = h('div', { class: 'sms-box' });
+  const drawSms = () => fill(smsBox, phoneOk
+    ? h('div', { class: 'sms-ok' }, icon('check', 18), 'Телефонът е потвърден')
+    : h('div', { class: 'sms-row' },
+      h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => {
+        const r = store.sendSmsCode(phone.value); if (r.error) { err.textContent = r.error; return; }
+        err.textContent = ''; smsSent = true; drawSms(); toast(`Демо: кодът от SMS е ${r.demoCode}`);
+      } }, smsSent ? 'Изпрати пак' : 'Изпрати код по SMS'),
+      smsSent && smsCode,
+      smsSent && h('button', { type: 'button', class: 'btn btn-page', onclick: () => {
+        const r = store.verifySmsCode(phone.value, smsCode.value); if (r.error) { err.textContent = r.error; return; }
+        err.textContent = ''; phoneOk = true; drawSms();
+      } }, 'Потвърди')));
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
   const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
@@ -58,6 +74,7 @@ export function registerView({ go }) {
   const drawCar = () => fill(carBox, h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
     h('button', { type: 'button', class: cx('option', carType === k && 'on'), onclick: () => { carType = k; drawCar(); } }, icon(v.icon, 24), v.label, h('small', null, v.hint)))));
   drawCar();
+  drawSms();
   const agree = h('input', { type: 'checkbox', style: { width: '22px', height: '22px', accentColor: 'var(--accent)', flex: 'none' } });
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = (e) => {
@@ -71,12 +88,14 @@ export function registerView({ go }) {
       [!v.city, 'Избери град'],
       [!v.company, 'Избери фирма или напиши името ѝ'],
       [!carType, 'Избери каква е колата'],
-      [BRAND && code.value.trim().toUpperCase() !== ONE.accessCode, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
+      [!phone.value.trim(), 'Въведи телефон'],
+      [!phoneOk, 'Потвърди телефона с кода от SMS'],
+      [BRAND && !!store.checkAccessCode(code.value, ONE.company).error, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
     ];
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
-    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value });
+    const r = store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : {}) });
     if (r.error) { err.textContent = r.error; return; }
     toast('Акаунтът е създаден');
     go('/onboarding');
@@ -92,7 +111,7 @@ export function registerView({ go }) {
         field('Име', name, null, true),
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
-        field('Телефон', phone, 'По желание'),
+        field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true),
         INVITES_ON && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
       BRAND ? group('target', 'One Taxi',
         h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Акаунтът е само за шофьори на One Taxi'))),

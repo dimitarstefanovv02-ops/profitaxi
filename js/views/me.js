@@ -26,5 +26,6 @@ export function meView({ go, user, data }) {
     group('Още',
       ref && row('gift', 'Покани колеги', `${ref.count} поканени · 5 = 1 месец безплатно`, null, '#/invite'),
       row('bell', 'Известия и имейли', 'Напомняния за плащания и курсове', null, '#/profile?s=notify'),
+      row('sparkle', 'Предложи функция', 'Напиши идея или гласувай за чужда', null, '#/ideas'),
       h('div', { class: 'big-link as-row' }, h('span', { class: 'bl-ic' }, icon('moon', 22)), h('span', { class: 'grow' }, h('b', null, 'Светла / тъмна тема'), h('span', null, 'Натисни бутона вдясно')), themeToggle())));
 }

@@ -1,3 +1,4 @@
+import re
 # Изданието One Taxi (/onetaxi): марка, вход само за One, регистрация с код
 import asyncio, sys
 from playwright.async_api import async_playwright
@@ -39,6 +40,7 @@ async def main():
         await pg.evaluate("localStorage.removeItem('profitaxi.session')"); await pg.goto(base + '/app/onetaxi#/register'); await pg.wait_for_timeout(500)
         ok('Регистрацията е заключена за One Taxi, Пловдив', await pg.locator('.one-locked').count() == 1 and await pg.locator('select').count() == 0)
         await pg.fill('input[autocomplete=name]', 'Тест One'); await pg.fill('input[type=email]', 'test.one@test.bg'); await pg.fill('input[type=password]', '123456')
+        await pg.fill('input[type=tel]','0877555666'); await pg.click('text=Изпрати код по SMS'); await pg.wait_for_timeout(250); _c = re.findall(r'\d{4}', await pg.inner_text('#toast'))[-1]; await pg.fill('input[placeholder="4 цифри"]', _c); await pg.click('.sms-row >> text=Потвърди'); await pg.wait_for_timeout(150)
         await pg.fill('input[placeholder="Кодът от One Taxi"]', 'GRESHEN'); await pg.click('.option >> nth=0'); await pg.click('input[type=checkbox]'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(300)
         ok('Грешен код се отказва', 'Невалиден код' in await pg.inner_text('.err'))
         await pg.fill('input[placeholder="Кодът от One Taxi"]', 'one2026'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(600)

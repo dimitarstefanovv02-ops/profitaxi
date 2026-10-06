@@ -919,3 +919,24 @@ body:not(.admin) .home-link small { white-space: normal; }
 .home-link { position: relative; padding-right: 34px; }
 .home-link .hl-chev { position: absolute; right: 10px; top: 50%; margin-top: -9px; }
 .home-link.on .hl-chev { transform: rotate(180deg); }
+/* Регистрация: потвърждаване на телефона */
+.sms-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.sms-row .input { width: 110px; flex: none; }
+.sms-ok { display: flex; align-items: center; gap: 8px; color: var(--pos); font-weight: 700; }
+/* Съобщения на „Днес“ */
+.msgs { display: grid; gap: 10px; margin-bottom: 12px; }
+.msg { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 18px; background: var(--surface); border: 1.5px solid var(--v-strong, var(--line)); }
+.msg p { margin: 2px 0 0; color: var(--muted); }
+.msg-ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; background: var(--v-soft); color: var(--violet); flex: none; }
+/* Анкета */
+.nps b { line-height: 1.35; }
+.nps-scale { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; margin-top: 12px; }
+.nps-btn { height: 40px; border-radius: 10px; background: var(--surface-2); font-weight: 800; color: var(--text); }
+.nps-btn.on { background: var(--accent); color: var(--accent-ink); }
+.nps-legend { display: flex; justify-content: space-between; color: var(--muted); font-size: .85rem; margin-top: 6px; }
+/* Предложения */
+.idea-list { display: grid; gap: 10px; }
+.idea { display: flex; gap: 12px; align-items: center; }
+.idea .chip { margin-top: 6px; display: inline-flex; }
+.idea-vote { display: grid; justify-items: center; gap: 2px; width: 52px; padding: 8px 0; border-radius: 14px; background: var(--surface-2); color: var(--muted); flex: none; }
+.idea-vote.on { background: var(--v-soft); color: var(--violet); }

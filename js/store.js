@@ -9,7 +9,7 @@ import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './co
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 8;
+const VERSION = 9;
 const listeners = new Set();
 let db = null;
 
@@ -19,9 +19,17 @@ function load() {
   if (db && db.version > VERSION) { location.reload(); return db; } // друг раздел вече е с по-нова версия
   if (!db || db.version !== VERSION) { db = seed(); persist(); }
   if (db.settings && db.settings.price === 9.99) { db.settings.price = 3.99; persist(); } // новата цена
+  ensureExt();
   registerAllCustom();
   return db;
 }
+// Допълнителни данни: съобщения, кодове, бележки, използване, анкети, предложения, функции, дневник
+function ensureExt() {
+  db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
+  db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
+}
+const digits = (p) => String(p || '').replace(/\D/g, '').replace(/^359/, '0');
+export const normPhone = digits;
 function registerAllCustom() { Object.values(db.profiles).forEach((p) => registerCustomCats(p.customCats)); }
 function persist() { localStorage.setItem(KEY, JSON.stringify(db)); }
 function commit() { persist(); listeners.forEach((fn) => fn()); }
@@ -85,6 +93,36 @@ function validateAccount({ name, email, password, city, company, carType }, { sk
   if (db.users.some((x) => norm(x.email) === norm(email))) return 'Има акаунт с този имейл';
   return null;
 }
+function validatePhone(phone) {
+  const d = digits(phone);
+  if (!/^0\d{9}$/.test(d)) return 'Въведи мобилен телефон, например 0888 123 456';
+  if (db.users.some((x) => x.role === 'driver' && digits(x.phone) === d)) return 'Има акаунт с този телефон. Влез в него или се свържи с нас.';
+  return null;
+}
+// SMS код за потвърждаване на телефона. В демото кодът се показва на екрана;
+// с истински доставчик (напр. SMS шлюз) се изпраща като SMS.
+export function sendSmsCode(phone) {
+  load(); const err = validatePhone(phone); if (err) return { error: err };
+  const code = String(1000 + Math.floor(Math.random() * 9000));
+  db.sms[digits(phone)] = { code, at: Date.now(), ok: false }; persist();
+  return { ok: true, demoCode: code };
+}
+export function verifySmsCode(phone, code) {
+  load(); const r = db.sms[digits(phone)];
+  if (!r || Date.now() - r.at > 10 * 60000) return { error: 'Кодът е изтекъл. Изпрати нов.' };
+  if (String(code).trim() !== r.code) return { error: 'Грешен код' };
+  r.ok = true; persist(); return { ok: true };
+}
+const phoneVerified = (phone) => !!db.sms[digits(phone)]?.ok;
+// Кодове за достъп на партньори (напр. One Taxi)
+export function checkAccessCode(code, company) {
+  load(); const c = db.codes.find((x) => x.code === String(code || '').trim().toUpperCase());
+  if (!c || !c.active) return { error: 'Невалиден код' };
+  if (company && c.company !== company) return { error: 'Кодът не е за тази фирма' };
+  if (c.expires && c.expires < todayStr()) return { error: 'Кодът е изтекъл' };
+  if (c.limit && c.uses >= c.limit) return { error: 'Кодът е използван максимален брой пъти' };
+  return { code: clone(c) };
+}
 export function register(f) {
   load();
   const err = validateAccount(f);
@@ -92,7 +130,13 @@ export function register(f) {
   const code = (f.refCode || '').trim().toUpperCase();
   const referrer = code ? db.users.find((x) => x.refCode === code && x.role === 'driver') : null;
   if (code && !referrer) return { error: 'Няма такъв код за покана. Провери го или остави полето празно.' };
+  const perr = validatePhone(f.phone); if (perr) return { error: perr };
+  if (!phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
+  let accessCode = null;
+  if (f.accessCode != null) { const r = checkAccessCode(f.accessCode, f.company); if (r.error) return { error: r.error }; accessCode = r.code.code; }
   const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
+  u.phoneVerified = true;
+  if (accessCode) { u.accessCode = accessCode; db.codes.find((x) => x.code === accessCode).uses++; }
   if (referrer) { u.referredBy = referrer.id; applyReferralRewards(referrer); }
   db.profiles[u.id].tour = 'pending'; // кратка разходка при първото влизане
   localStorage.setItem(SESSION_KEY, u.id);
@@ -144,9 +188,41 @@ function wipeUser(id) {
   db.costs = db.costs.filter((x) => x.userId !== id);
   db.reminders = db.reminders.filter((x) => x.userId !== id);
   db.reservations = db.reservations.filter((x) => x.userId !== id);
+  if (db.notes) delete db.notes[id];
+  if (db.nps) db.nps = db.nps.filter((x) => x.userId !== id);
 }
 function me() { load(); const id = localStorage.getItem(SESSION_KEY); return db.users.find((x) => x.id === id && x.role === 'driver'); }
 function myId() { const u = me(); if (!u) throw new Error('not signed in'); return u.id; }
+
+// ================= Съобщения, анкета, предложения, функции, използване (шофьор) =================
+const forMe = (t, u) => !t || ((!t.city || t.city === u.city) && (!t.company || t.company === u.company));
+export function myMessages() { const u = me(); if (!u) return []; return clone(db.messages.filter((m) => forMe(m.target, u) && !(m.readBy || []).includes(u.id))); }
+export function readMessage(id) { const u = me(); const m = db.messages.find((x) => x.id === id); if (u && m) { m.readBy = [...new Set([...(m.readBy || []), u.id])]; commit(); } }
+export function npsDue() {
+  const u = me(); if (!u) return false;
+  const age = (Date.now() - new Date(u.createdAt)) / 86400000;
+  const last = db.nps.filter((x) => x.userId === u.id).map((x) => x.at).sort().pop();
+  const skip = db.dismissed[u.id]?.nps;
+  return age >= 14 && (!last || Date.now() - new Date(last) > 90 * 86400000) && (!skip || Date.now() - skip > 14 * 86400000);
+}
+export function submitNps(score, comment = '') { const u = me(); if (!u) return; db.nps.push({ id: uid(), userId: u.id, score, comment: comment.trim(), at: new Date().toISOString(), city: u.city, company: u.company }); commit(); }
+export function skipNps() { const u = me(); if (!u) return; db.dismissed[u.id] = { ...(db.dismissed[u.id] || {}), nps: Date.now() }; commit(); }
+export function ideas() { load(); return clone(db.ideas.filter((x) => x.status !== 'hidden')).sort((a, b) => b.votes.length - a.votes.length); }
+export function submitIdea(text) { const u = me(); if (!u || !text.trim()) return; db.ideas.push({ id: uid(), userId: u.id, text: text.trim(), votes: [u.id], status: 'new', at: new Date().toISOString() }); commit(); }
+export function voteIdea(id) { const u = me(); const i = db.ideas.find((x) => x.id === id); if (!u || !i) return; i.votes = i.votes.includes(u.id) ? i.votes.filter((x) => x !== u.id) : [...i.votes, u.id]; commit(); }
+const hashPct = (str) => { let h = 0; for (const c of str) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 100; };
+export function flagOn(key) {
+  load(); const f = db.flags.find((x) => x.key === key); if (!f) return true; // неизвестна функция = включена
+  if (!f.on) return false; const u = me(); if (!u) return true;
+  if (f.target === 'company') return u.company === f.company;
+  if (f.target === 'percent') return hashPct(u.id + key) < (f.percent || 0);
+  return true;
+}
+// Броим кои страници се отварят (без съдържание – само име на страницата)
+export function trackPage(page) {
+  const u = me(); if (!u) return;
+  const p = db.usage[page] ||= { views: 0, users: {} }; p.views++; p.users[u.id] = (p.users[u.id] || 0) + 1; p.last = new Date().toISOString(); persist();
+}
 
 // ================= Данни на текущия шофьор =================
 // Всяка функция работи САМО с данните на влезлия шофьор.
@@ -403,7 +479,7 @@ export const admin = {
   resetPassword(id, pw) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (u) { u.password = pw; commit(); } },
   createDriver(f) {
     requireAdmin();
-    const err = validateAccount(f);
+    const err = validateAccount(f) || validatePhone(f.phone);
     if (err) return { error: err };
     const u = newDriver({ ...f, trialDays: f.days || 30, plan: 'paid', profile: { carType: f.carType, fuel: f.fuel || 'petrol_lpg' } });
     u.subscription.paidSince = todayStr();
@@ -417,6 +493,35 @@ export const admin = {
   deleteDriver(id) { requireAdmin(); wipeUser(id); commit(); },
   settings() { requireAdmin(); return clone(db.settings); },
   saveSettings(s) { requireAdmin(); Object.assign(db.settings, s); commit(); },
+  // масови действия
+  extendMany(ids, days) { ids.forEach((id) => this.extend(id, days)); },
+  setStatusMany(ids, status) { requireAdmin(); db.users.filter((u) => ids.includes(u.id)).forEach((u) => { u.status = status; }); commit(); },
+  // съобщения
+  messages() { requireAdmin(); return clone(db.messages).sort((a, b) => b.at.localeCompare(a.at)); },
+  sendMessage({ title, text, target }) { requireAdmin(); db.messages.push({ id: uid(), title: title.trim(), text: text.trim(), target: target || null, at: new Date().toISOString(), readBy: [] }); commit(); },
+  deleteMessage(id) { requireAdmin(); db.messages = db.messages.filter((m) => m.id !== id); commit(); },
+  // кодове за достъп
+  codes() { requireAdmin(); return clone(db.codes); },
+  saveCode(c) { requireAdmin(); const code = c.code.trim().toUpperCase(); if (!code) return { error: 'Въведи код' }; const ex = db.codes.find((x) => x.code === code);
+    if (ex && !c.edit) return { error: 'Има такъв код' }; if (ex) Object.assign(ex, { ...c, code }); else db.codes.push({ uses: 0, active: true, ...c, code, at: new Date().toISOString() }); delete db.codes.find((x) => x.code === code).edit; commit(); return { ok: true }; },
+  toggleCode(code) { requireAdmin(); const c = db.codes.find((x) => x.code === code); if (c) { c.active = !c.active; commit(); } },
+  deleteCode(code) { requireAdmin(); db.codes = db.codes.filter((x) => x.code !== code); commit(); },
+  // бележки и дневник на достъпа
+  notes(id) { requireAdmin(); return clone(db.notes[id] || []); },
+  addNote(id, text) { requireAdmin(); if (!text.trim()) return; (db.notes[id] ||= []).unshift({ text: text.trim(), at: new Date().toISOString(), by: adminUser().email }); commit(); },
+  log(userId, action) { requireAdmin(); const u = db.users.find((x) => x.id === userId); db.accessLog.unshift({ at: new Date().toISOString(), by: adminUser().email, userId, name: u?.name || '—', action }); db.accessLog = db.accessLog.slice(0, 500); persist(); },
+  accessLog() { requireAdmin(); return clone(db.accessLog); },
+  exportDriver(id) { requireAdmin(); this.log(id, 'export'); const d = userData(id); return { ...d, notes: db.notes[id] || [], nps: db.nps.filter((x) => x.userId === id), exportedAt: new Date().toISOString() }; },
+  // развитие
+  usage() { requireAdmin(); return clone(db.usage); },
+  nps() { requireAdmin(); return clone(db.nps); },
+  ideas() { requireAdmin(); return clone(db.ideas).sort((a, b) => b.votes.length - a.votes.length); },
+  setIdea(id, status) { requireAdmin(); const i = db.ideas.find((x) => x.id === id); if (i) { i.status = status; commit(); } },
+  flags() { requireAdmin(); return clone(db.flags); },
+  saveFlag(f) { requireAdmin(); const ex = db.flags.find((x) => x.key === f.key); if (ex) Object.assign(ex, f); else db.flags.push(f); commit(); },
+  // известия, които вече са видени
+  alertsSeen() { requireAdmin(); return [...db.alertsSeen]; },
+  markAlertsSeen(keys) { requireAdmin(); db.alertsSeen = [...new Set([...db.alertsSeen, ...keys])].slice(-2000); commit(); },
 };
 
 // ================= Демо данни =================
@@ -486,7 +591,38 @@ function seed() {
   // Шестима колеги са се регистрирали с кода на Иван → 1 спечелен месец, 6 от 8 към втория
   db.users.filter((u) => u.role === 'driver' && u.id !== ivan.id).slice(4, 10).forEach((u) => { u.referredBy = ivan.id; });
   ivan.refMonths = 1;
+  seedExtra(today);
   return db;
+}
+
+// Демо: съобщения, код One, бележки, използване, анкета, предложения, функции и един дубликат
+function seedExtra(today) {
+  ensureExt();
+  const drivers = db.users.filter((u) => u.role === 'driver'); const r = rng(99);
+  const ago = (d) => new Date(Date.now() - d * 86400000).toISOString();
+  db.messages.push({ id: uid(), title: 'Добре дошли в ProfiTaxi', text: 'Записвайте всяка смяна – в края на месеца ще видите точно колко ви остава.', target: null, at: ago(20), readBy: drivers.slice(0, 18).map((u) => u.id) });
+  db.messages.push({ id: uid(), title: 'One Taxi: нов тарифен план', text: 'От 1 ноември ефирът става 35 € на седмица. Обновете го в „Колата и ефирът“.', target: { company: 'ONE Такси – 032 22 22' }, at: ago(2), readBy: [] });
+  const oneUsers = drivers.filter((u) => u.company === 'ONE Такси – 032 22 22');
+  db.codes.push({ code: 'ONE2026', company: 'ONE Такси – 032 22 22', city: 'Пловдив', limit: 200, expires: addDays(today, 180), uses: oneUsers.length, active: true, note: 'Пилот One Taxi', at: ago(30) });
+  oneUsers.forEach((u) => { u.accessCode = 'ONE2026'; });
+  const ivan = drivers.find((u) => u.email === 'ivan@demo.bg');
+  db.notes[ivan.id] = [{ text: 'Иска фактура на фирма за абонамента.', at: ago(3), by: 'admin@profitaxi.bg' }];
+  const pages = { home: .95, shift: .9, money: .7, stats: .45, costs: .5, me: .4, calendar: .25, reservations: .2, profile: .3, car: .25, shifts: .35 };
+  Object.entries(pages).forEach(([pg, share]) => {
+    const p = db.usage[pg] = { views: 0, users: {}, last: ago(0) };
+    drivers.forEach((u) => { if (r() < share) { const n = 1 + Math.floor(r() * (pg === 'home' ? 90 : 25)); p.users[u.id] = n; p.views += n; } });
+  });
+  drivers.slice(0, 22).forEach((u, i) => { const sc = [10, 9, 9, 8, 10, 7, 9, 6, 10, 8, 9, 5, 10, 9, 8, 7, 10, 9, 3, 9, 8, 10][i];
+    db.nps.push({ id: uid(), userId: u.id, score: sc, comment: ['', 'Супер е, само искам и фактури', '', 'Много удобно за горивото', '', 'Искам да виждам и разходите на колата по месеци'][i % 6], at: ago(1 + i), city: u.city, company: u.company }); });
+  const idea = (text, n, status) => db.ideas.push({ id: uid(), userId: drivers[n % drivers.length].id, text, votes: drivers.slice(0, n).map((u) => u.id), status, at: ago(n) });
+  idea('Сканиране на касовата бележка за горивото', 14, 'planned'); idea('Отчет за НАП / счетоводител', 11, 'new'); idea('Отделна сметка за бакшишите', 6, 'new');
+  idea('Напомняне за смяна на гумите', 4, 'done'); idea('Тъмна тема по график (вечер)', 3, 'new');
+  db.flags.push({ key: 'calendar', label: 'Календар на „Днес“', on: true, target: 'all' });
+  db.flags.push({ key: 'reservations', label: 'Лични резервации', on: true, target: 'all' });
+  db.flags.push({ key: 'nps', label: 'Анкета „Би ли препоръчал?“', on: true, target: 'percent', percent: 50 });
+  // дубликат за демо: двама шофьори с един и същ телефон и номер на кола
+  const a = drivers[8], b = drivers[17];
+  if (a && b) { b.phone = a.phone; db.profiles[b.id].car = { ...(db.profiles[b.id].car || {}), plate: 'СВ 1234 АВ' }; db.profiles[a.id].car = { ...(db.profiles[a.id].car || {}), plate: 'СВ 1234 АВ' }; }
 }
 
 // Демо шофьорът за пробване и за снимките на сайта. Измислен човек, кола и фирма.

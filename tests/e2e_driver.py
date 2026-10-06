@@ -13,6 +13,7 @@ async def main():
         T = lambda s: pg.locator(s)
         # --- Регистрация: валидации ---
         await pg.fill('input[autocomplete=name]','Тест Шофьор'); await pg.fill('input[type=email]','test@test.bg'); await pg.fill('input[type=password]','123456')
+        await pg.fill('input[type=tel]','0877111222'); await pg.click('text=Изпрати код по SMS'); await pg.wait_for_timeout(250); _c = re.findall(r'\d{4}', await pg.inner_text('#toast'))[-1]; await pg.fill('input[placeholder="4 цифри"]', _c); await pg.click('.sms-row >> text=Потвърди'); await pg.wait_for_timeout(150)
         await pg.click('button[type=submit]'); await pg.wait_for_timeout(200)
         ok('Регистрация без град дава грешка', 'град' in (await T('.err').inner_text()).lower() or 'кола' in (await T('.err').inner_text()).lower(), await T('.err').inner_text())
         await pg.select_option('select >> nth=0','Пловдив'); await pg.wait_for_timeout(150)
