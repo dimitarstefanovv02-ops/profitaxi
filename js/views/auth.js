@@ -51,7 +51,7 @@ export function registerView({ go }) {
   const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg' });
   const phone = input({ type: 'tel', autocomplete: 'tel', inputmode: 'tel', placeholder: '08xx xxx xxx', oninput: () => { phoneOk = false; drawSms(); } });
   // Телефонът се потвърждава с код по SMS – така един човек не може да ползва пробния период много пъти
-  let phoneOk = false, smsSent = false;
+  let phoneOk = false, smsSent = false, lastCode = '';
   const smsCode = input({ inputmode: 'numeric', maxlength: 4, placeholder: '4 цифри', autocomplete: 'one-time-code' });
   const smsBox = h('div', { class: 'sms-box' });
   const drawSms = () => fill(smsBox, phoneOk
@@ -59,9 +59,10 @@ export function registerView({ go }) {
     : h('div', { class: 'sms-row' },
       h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => {
         const r = store.sendSmsCode(phone.value); if (r.error) { err.textContent = r.error; return; }
-        err.textContent = ''; smsSent = true; drawSms(); toast(`Демо: кодът от SMS е ${r.demoCode}`);
-      } }, smsSent ? 'Изпрати пак' : 'Изпрати код по SMS'),
+        err.textContent = ''; smsSent = true; drawSms(); lastCode = r.demoCode; drawSms(); if (!store.live()) toast(`Демо: кодът от SMS е ${r.demoCode}`);
+      } }, smsSent ? (store.live() ? 'Нов код' : 'Изпрати пак') : (store.live() ? 'Вземи код' : 'Изпрати код по SMS')),
       smsSent && smsCode,
+      smsSent && store.live() && lastCode && h('div', { class: 'sms-hint small' }, `В теста не пращаме SMS – кодът ти е `, h('b', null, lastCode)),
       smsSent && h('button', { type: 'button', class: 'btn btn-page', onclick: () => {
         const r = store.verifySmsCode(phone.value, smsCode.value); if (r.error) { err.textContent = r.error; return; }
         err.textContent = ''; phoneOk = true; drawSms();
@@ -134,17 +135,18 @@ export function registerView({ go }) {
 export function forgotView() {
   const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg' });
   const box = h('div');
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     if (!/^\S+@\S+\.\S+$/.test(email.value)) { toast('Въведи валиден имейл', 'err'); return; }
+    const r = await store.forgotPassword(email.value);
+    if (r.error) { toast(r.error, 'err'); return; }
     fill(box, h('div', { class: 'card' },
-      h('h2', null, 'Провери пощата си'),
-      h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, ще получиш линк за нова парола.`),
-      h('p', { class: 'faint small', style: { marginTop: '10px' } }, 'В демо версията не се изпращат имейли.')));
+      h('h2', null, 'Получихме молбата ти'),
+      h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, ще ти сменим паролата и ще ти се обадим на телефона от профила – обикновено до няколко часа.`)));
   };
   box.appendChild(h('form', { class: 'form', onsubmit: submit },
     field('Имейл', email),
-    h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Изпрати линк')));
+    h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Поискай нова парола')));
   return h('div', { class: 'auth' },
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),
     h('div', { class: 'auth-hero', style: { margin: '18px 0 22px' } },

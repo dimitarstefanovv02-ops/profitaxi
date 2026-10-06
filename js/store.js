@@ -561,6 +561,8 @@ export async function wipeAllDrivers() {
   rev = null; await syncNow();
   return r;
 }
+// Забравена парола: в облака стига до админа като въпрос
+export async function forgotPassword(email) { if (!LIVE) return { ok: true }; return call('forgot', { email }, 'app'); }
 export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); if (LIVE) dropLive('admin'); }
 function requireAdmin() { if (!adminUser()) throw new Error('admin only'); }
 function requireOwner() { if (adminRole() !== 'owner') throw new Error('owner only'); }

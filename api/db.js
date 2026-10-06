@@ -319,6 +319,24 @@ const ops = {
     return { ok: true, drivers };
   },
 
+  // „Забравена парола“: стига до админа като въпрос; админът сменя паролата и се обажда на шофьора
+  async forgot({ email }) {
+    const e = norm(email);
+    if (!/^\S+@\S+\.\S+$/.test(e)) return { error: 'Невалиден имейл' };
+    const id = await one(['HGET', 'pt:email', e]);
+    if (id) {
+      const u = parse(await one(['HGET', 'pt:db', `users:${id}`]));
+      if (u && u.role === 'driver') {
+        const tid = crypto.randomUUID().replace(/-/g, '').slice(0, 12), at = new Date().toISOString();
+        const t = { id: tid, userId: id, name: u.name, city: u.city, company: u.company, topic: 'login', at, status: 'open', adminUnread: true, driverUnread: false,
+          thread: [{ by: 'driver', text: `Забравих си паролата. Моля, сменете я и ми се обадете на ${u.phone || 'телефона от профила'}.`, at }] };
+        await redis([['HSET', 'pt:db', `tickets:${tid}`, JSON.stringify(t)], ['INCR', 'pt:rev']]);
+      }
+    }
+    await sleep(300);
+    return { ok: true }; // не казваме дали има такъв акаунт
+  },
+
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
 const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll']);

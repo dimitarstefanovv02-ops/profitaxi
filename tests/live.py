@@ -142,6 +142,13 @@ async def main():
         await a.evaluate(S.join(["async () => {", "await s.syncNow(); }"]))
         d = await a.evaluate(S.join(["async () => {", f"return s.admin.driverData('{id1}').costs.map(c => c.amount); }}"]))
         check(7 in d, 'Без интернет: разходът се качва, щом връзката се върне', d)
+        # забравена парола → въпрос при админа
+        await d1b.goto(base + '/app#/forgot'); await d1b.wait_for_timeout(300)
+        await d1b.fill('input[type=email]', 'ivan.t@mail.bg'); await d1b.click('button[type=submit]'); await d1b.wait_for_timeout(800)
+        check('Получихме' in await d1b.inner_text('#app'), 'Забравена парола: шофьорът вижда потвърждение')
+        await a.evaluate(S.join(["async () => {", "await s.syncNow(); }"]))
+        t = await a.evaluate(S.join(["async () => {", "return s.admin.tickets().filter(t => t.thread[0].text.includes('Забравих')).map(t => t.name); }"]))
+        check(t == ['Иван Тестов'], 'Забравена парола стига до админа във Входящи', t)
         # админът изчиства всички шофьори
         r = await a.evaluate(S.join(["async () => {", "const r = await s.wipeAllDrivers(); return [r.error || r.drivers, s.admin.drivers().length]; }"]))
         check(r == [1, 0], 'Админ: „Изчисти всичко“ трие шофьорите', r)
