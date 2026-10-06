@@ -313,3 +313,15 @@ body.admin .btn-ghost.act-del { border-color: var(--neg); color: #fff; backgroun
 .lm b { font-size: .95rem; }
 .lm i { min-width: 20px; height: 20px; font-size: .72rem; right: -5px; top: -5px; }
 .lm-wrap:hover { z-index: 1000 !important; }
+.lm b { font-size: .8rem; }
+.lm { box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 4px 12px rgba(0, 0, 0, .35); }
+.lm i { min-width: 17px; height: 17px; font-size: .66rem; right: -6px; top: -6px; padding: 0 4px; }
+.lm.on::after { inset: -4px; }
+.lm-name { font-size: 11px; margin-top: 4px; }
+/* По-малки балончета върху цветната карта */
+.lm { box-shadow: 0 0 0 2px #fff, 0 3px 10px rgba(0, 0, 0, .35); }
+.lm b { font-size: .78rem; }
+.lm i { min-width: 16px; height: 16px; font-size: .64rem; right: -6px; top: -6px; padding: 0 4px; }
+.lm.on::after { inset: -4px; border-color: rgba(18, 161, 94, .8); }
+.lm-name { font-size: 11px; margin-top: 3px; padding: 1px 7px; }
+.lmap { background: #dfe8d6; }

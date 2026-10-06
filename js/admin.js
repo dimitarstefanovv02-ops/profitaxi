@@ -337,7 +337,7 @@ const CITY_POS = { 'София': [23.32, 42.70], 'Пловдив': [24.75, 42.15
   'Шумен': [26.94, 43.27], 'Ямбол': [26.50, 42.48] };
 // Активен = има смяна през последните 7 дни (или е на смяна сега)
 const isActive = (d) => { const from = addDays(todayStr(), -6); return d.shifts.some((x) => !x.end || shiftDate(x) >= from); };
-let mapEl = null, lmap = null, lmarkers = null, mapTheme = null;
+let mapEl = null, lmap = null, lmarkers = null, mapTheme = null, gmap = null, gmarkers = [], gTheme = null;
 function cityStats(all) {
   const by = {};
   all.forEach((d) => { const c = d.user.city; by[c] = by[c] || { total: 0, active: 0 }; by[c].total++; if (isActive(d)) by[c].active++; });
@@ -350,13 +350,11 @@ function drawMap(by) {
     lmap = L.map(mapEl, { zoomControl: true, attributionControl: true, scrollWheelZoom: false, minZoom: 6, maxZoom: 12, maxBounds: [[40.6, 21.4], [44.9, 29.6]], maxBoundsViscosity: .8 }).setView([42.75, 25.4], 7);
     lmap.fitBounds([[41.2, 22.3], [44.25, 28.65]], { padding: [10, 10] });
   }
-  if (mapTheme !== dark) {
+  if (mapTheme === null) {
     lmap.eachLayer((l) => { if (l instanceof L.TileLayer) lmap.removeLayer(l); });
-    // Esri Canvas – модерна сива карта, безплатна, без ключ (основа + надписи)
-    const base = dark ? 'Dark_Gray' : 'Light_Gray';
-    const esri = (kind) => `https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_${base}_${kind}/MapServer/tile/{z}/{y}/{x}`;
-    L.tileLayer(esri('Base'), { maxZoom: 16, attribution: 'Карта &copy; Esri, HERE, Garmin, &copy; OpenStreetMap' }).addTo(lmap);
-    L.tileLayer(esri('Reference'), { maxZoom: 16 }).addTo(lmap);
+    // Esri World Topo – истинска цветна карта (зелен релеф, реки, пътища, градове), безплатна, без ключ
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18, attribution: 'Карта &copy; Esri, HERE, Garmin, &copy; OpenStreetMap' }).addTo(lmap);
     mapTheme = dark;
   }
   if (lmarkers) lmarkers.remove();
@@ -365,7 +363,7 @@ function drawMap(by) {
   const named = new Set(Object.entries(by).sort((a, b) => b[1].total - a[1].total).slice(0, 5).map(([c]) => c));
   Object.entries(by).forEach(([city, v]) => {
     const pos = CITY_POS[city]; if (!pos) return;
-    const size = Math.round(26 + Math.sqrt(v.total / max) * 26);
+    const size = Math.round(20 + Math.sqrt(v.total / max) * 16);
     const icon = L.divIcon({ className: 'lm-wrap', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
       html: `<div class="lm ${v.active ? 'on' : ''}" style="width:${size}px;height:${size}px"><b>${v.total}</b>${v.active ? `<i>${v.active}</i>` : ''}</div>${named.has(city) ? `<span class="lm-name">${city}</span>` : ''}` });
     L.marker([pos[1], pos[0]], { icon, title: `${city}: ${v.total} шофьори, ${v.active} активни` })
@@ -373,10 +371,47 @@ function drawMap(by) {
   });
   setTimeout(() => lmap.invalidateSize(), 0);
 }
+// Google Maps (ако в Настройки има ключ): малки балончета като SVG иконки
+const G_DARK = [{ elementType: 'geometry', stylers: [{ color: '#1d1d22' }] }, { elementType: 'labels.text.fill', stylers: [{ color: '#9a9aa6' }] }, { elementType: 'labels.text.stroke', stylers: [{ color: '#1d1d22' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#2c2c33' }] }, { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1626' }] }, { featureType: 'poi', stylers: [{ visibility: 'off' }] }, { featureType: 'transit', stylers: [{ visibility: 'off' }] }];
+function bubbleSvg(total, active, size) {
+  const W = size + 12, r = size / 2, cx = r + 2, cy = r + 10;
+  const badge = active ? `<circle cx="${cx + r - 2}" cy="${cy - r + 2}" r="9" fill="#12A15E" stroke="#fff" stroke-width="2"/><text x="${cx + r - 2}" y="${cy - r + 6}" font-family="Arial" font-weight="700" font-size="11" fill="#fff" text-anchor="middle">${active}</text>` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${size + 14}"><circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="#7C3AED" fill-opacity=".9" stroke="#fff" stroke-width="2.5"/><text x="${cx}" y="${cy + 4.5}" font-family="Arial" font-weight="700" font-size="13" fill="#fff" text-anchor="middle">${total}</text>${badge}</svg>`;
+  return { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), w: W, h: size + 14, ax: cx, ay: cy };
+}
+function drawGoogle(by) {
+  if (!window.google?.maps || !mapEl) return;
+  const dark = isDark();
+  if (!gmap) {
+    gmap = new google.maps.Map(mapEl, { center: { lat: 42.75, lng: 25.4 }, zoom: 7, disableDefaultUI: true, zoomControl: true, gestureHandling: 'cooperative', clickableIcons: false, styles: dark ? G_DARK : null });
+    gmap.fitBounds({ south: 41.2, west: 22.3, north: 44.25, east: 28.65 }, 8); gTheme = dark;
+  } else if (gTheme !== dark) { gmap.setOptions({ styles: dark ? G_DARK : null }); gTheme = dark; }
+  gmarkers.forEach((m) => m.setMap(null)); gmarkers = [];
+  const max = Math.max(1, ...Object.values(by).map((x) => x.total));
+  Object.entries(by).forEach(([city, v]) => {
+    const pos = CITY_POS[city]; if (!pos) return;
+    const b = bubbleSvg(v.total, v.active, Math.round(20 + Math.sqrt(v.total / max) * 16));
+    const m = new google.maps.Marker({ position: { lat: pos[1], lng: pos[0] }, map: gmap, title: `${city}: ${v.total} шофьори, ${v.active} активни`,
+      icon: { url: b.url, scaledSize: new google.maps.Size(b.w, b.h), anchor: new google.maps.Point(b.ax, b.ay) } });
+    m.addListener('click', () => { scope.city = city; scope.company = ''; go('/drivers'); });
+    gmarkers.push(m);
+  });
+}
+
 function liveMap(all) {
   const by = cityStats(all);
   const active = all.filter(isActive).length;
   if (!mapEl) mapEl = h('div', { class: 'lmap', role: 'img', 'aria-label': 'Карта на шофьорите по градове' });
+  const gkey = store.admin.settings().mapsKey;
+  if (gkey) {
+    if (!window.google?.maps) {
+      if (!document.getElementById('gmaps-js')) {
+        window.__ptGmapsReady = () => drawGoogle(cityStats(scoped()));
+        document.head.append(h('script', { id: 'gmaps-js', async: true, src: `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(gkey)}&callback=__ptGmapsReady&language=bg&region=BG` }));
+      }
+    } else setTimeout(() => drawGoogle(by), 0);
+  } else
   // Leaflet се зарежда само веднъж, при първото отваряне на картата
   if (!window.L) {
     if (!document.getElementById('leaflet-js')) {
@@ -822,6 +857,15 @@ function newDriver() {
 }
 
 // ---------- Настройки ----------
+function mapsKeyCard(s) {
+  const key = h('input', { class: 'input', value: s.mapsKey || '', placeholder: 'AIza…', autocomplete: 'off', spellcheck: 'false' });
+  return h('section', { class: 'card form' },
+    cardTitle('pin', 'Карта: Google Maps'),
+    h('p', { class: 'muted small' }, 'Постави ключ за Google Maps JavaScript API и картата на „Днес“ става Google Maps. Без ключ се ползва безплатната карта на Esri. Ключът се взима от console.cloud.google.com (нужен е профил с карта за плащане; има безплатен месечен лимит).'),
+    field('Google Maps ключ', key),
+    h('button', { class: 'btn btn-page', onclick: () => { store.admin.saveSettings({ mapsKey: key.value.trim() }); gmap = null; mapEl = null; toast(key.value.trim() ? 'Ключът е запазен. Картата е Google Maps.' : 'Ключът е махнат. Картата е Esri.'); } }, 'Запази ключа'));
+}
+
 function settings() {
   const s = store.admin.settings();
   const days = h('input', { class: 'input', type: 'number', min: 0, max: 90, value: s.trialDays });
@@ -832,6 +876,7 @@ function settings() {
       field('Пробен период при регистрация (дни)', days, '0 = без пробен период'),
       field('Цена на месечния абонамент (€)', price, 'Използва се за сметката на месечните приходи (MRR)'),
       h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ trialDays: Math.max(0, Math.min(90, Number(days.value) || 0)), price: Math.max(0, parseFloat(price.value.replace(',', '.')) || 0) }); toast('Запазено'); } }, 'Запази')),
+    mapsKeyCard(s),
     h('section', { class: 'card' },
       cardTitle('alert', 'Демо данни'),
       h('p', { class: 'muted small', style: { marginBottom: '12px' } }, 'Връща демо шофьорите и смените в началното им състояние. Изтрива всичко въведено на това устройство.'),
