@@ -8,7 +8,7 @@ import { openCategories } from './categories.js';
 import { showShiftResult } from './shiftResult.js';
 import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
 import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
-import { listen, applyParsed, scanReceipt, voiceSupported } from '../quick.js';
+import { scanReceipt } from '../quick.js';
 
 let draft = null;      // чернова на отворената смяна
 let showAllIncome = false, moreOpen = false;
@@ -62,7 +62,6 @@ export function shiftEditorView(ctx) {
       // Колко взе: кеш и карта винаги; приложения и бакшиш – с „+“
       h('section', { class: 'card' },
         h('div', { class: 'quick-in' },
-          voiceSupported() && h('button', { class: 'btn btn-ghost btn-sm', onclick: () => listen((p) => { const t = applyParsed(draft, p, profile); draw(); toast(`Добавено: ${t}`); }) }, icon('call', 16), 'Кажи го'),
           h('button', { class: 'btn btn-ghost btn-sm', onclick: () => scanReceipt((r) => editFuel(r.amount ? { amount: r.amount, qty: r.qty, fuelType: r.type && fuelTypes.includes(r.type) ? r.type : undefined } : {})) }, icon('camera', 16), 'Снимай бележка')),
         cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(inc))),
         h('div', { class: 'tiles' }, Object.entries(INCOME_TYPES).filter(([k]) => k === 'cash' || k === 'card' || showAllIncome || draft.income[k]).map(([k, t]) =>

@@ -8,7 +8,7 @@ import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, mo
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
 import { INCOME_TYPES, FUELS, FUEL_TYPES } from '../constants.js';
-import { listen, applyParsed, scanReceipt, voiceSupported } from '../quick.js';
+import { scanReceipt } from '../quick.js';
 
 // Кой панел е отворен на място в „Днес“: календарът или резервациите (като „Покажи повече“)
 let openPanel = null;
@@ -58,7 +58,6 @@ export function homeView({ go, user, data, rerender, route }) {
     if (doAct === 'start' && !act) startShift();
     else if (!act) { toast('Първо започни смяна', 'err'); startShift(); }
     else if (doAct === 'fuel') quickFuel(data.profile);
-    else if (doAct === 'voice') quickVoice(data.profile);
   }, 350);
   const recent = data.shifts.filter((s) => s.end).slice(0, 3);
   const resCount = upcomingReservations(data.reservations || []).length;
@@ -280,10 +279,9 @@ function driveMode(s, data, go, g, redraw) {
       big('cash', 'coins', 'Кеш', `+ към ${money(s.income.cash || 0)}`, () => quickIncome('cash')),
       big('card', 'card', 'Карта', `+ към ${money(s.income.card || 0)}`, () => quickIncome('card')),
       big('fuel', 'fuel', 'Гориво', 'сума и литри', () => quickFuel(data.profile)),
-      voiceSupported() ? big('voice', 'call', 'Кажи го', '„кеш 50, гориво 30“', () => quickVoice(data.profile)) : big('other', 'plus', 'Друго', 'бакшиш, паркинг…', () => go('/shift/' + s.id))),
+      big('other', 'plus', 'Друго', 'бакшиш, паркинг…', () => go('/shift/' + s.id))),
     h('div', { class: 'drive-row' },
-      h('button', { class: 'btn btn-ghost', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка'),
-      h('button', { class: 'btn btn-ghost', onclick: () => go('/shift/' + s.id) }, icon('plus', 18), 'Друго')),
+      h('button', { class: 'btn btn-ghost', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка')),
     h('button', { class: 'btn btn-dark btn-xl drive-end', onclick: () => go('/shift/' + s.id + '?end=1') }, icon('stop', 22), 'Приключи смяната'));
 }
 // „Забрави ли да приключиш?“ – ако смяната тече над 13 часа
@@ -311,9 +309,6 @@ function quickFuel(profile, pre = {}) {
   openNumpad({ title: 'Гориво', sub: pre.amount ? 'От бележката – провери и запиши' : 'Количеството е по желание, но дава разход на 100 км', top: chips,
     fields: [{ key: 'amount', label: 'Сума', value: pre.amount || '' }, { key: 'qty', label: 'Количество', value: pre.qty || '', unit: FUEL_TYPES[type].unit }],
     actions: [{ label: 'Добави', primary: true, run: ({ amount, qty }) => { if (!amount) return; const a = store.getActiveShift(); if (!a) return; a.expenses.push({ id: uid(), category: 'fuel', fuelType: type, amount, qty }); store.saveShift(a); toast(`Гориво ${money(amount, 2)}`); } }] });
-}
-function quickVoice(profile) {
-  listen((p) => { const a = store.getActiveShift(); if (!a) return; const txt = applyParsed(a, p, profile); store.saveShift(a); toast(`Добавено: ${txt}`); });
 }
 
 // ---------- Седмичен отчет: понеделник до сряда, докато не го затвориш ----------

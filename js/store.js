@@ -561,11 +561,6 @@ export async function wipeAllDrivers() {
   rev = null; await syncNow();
   return r;
 }
-// Глас → текст в облака (разпознава български на всеки телефон). Без облака: { error: 'novoice' }
-export async function voiceToText(audio, mime) {
-  if (!LIVE || !getToken('app')) return { error: 'novoice' };
-  return call('voice', { audio, mime }, 'app');
-}
 export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); if (LIVE) dropLive('admin'); }
 function requireAdmin() { if (!adminUser()) throw new Error('admin only'); }
 function requireOwner() { if (adminRole() !== 'owner') throw new Error('owner only'); }

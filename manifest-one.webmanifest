@@ -52,18 +52,6 @@
           "type": "image/png"
         }
       ]
-    },
-    {
-      "name": "Кажи го (глас)",
-      "short_name": "Глас",
-      "url": "/app/onetaxi#/home?do=voice",
-      "icons": [
-        {
-          "src": "/icons/one-192.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
     }
   ]
 }

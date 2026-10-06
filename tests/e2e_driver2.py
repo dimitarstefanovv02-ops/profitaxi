@@ -1,5 +1,5 @@
 # Новото в шофьорското приложение: режим „шофирам“, колко трябва днес, разходи до днес,
-# забравена смяна, седмичен отчет, „Изтегли“, без интернет, глас, бележка, календар, бързи действия
+# забравена смяна, седмичен отчет, „Изтегли“, без интернет, бележка, календар, бързи действия
 import asyncio, re
 from playwright.async_api import async_playwright
 R=[]
@@ -57,10 +57,7 @@ async def main():
         await pg.goto(B+'#/home?do=fuel'); await pg.wait_for_timeout(700)
         ok('Бързо действие „Гориво“ отваря клавиатурата за горивото', 'Гориво' in (await pg.inner_text('.sheet') if await pg.locator('.sheet').count() else ''))
         await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
-        # глас: разпознатото се прибавя към смяната
-        added = await pg.evaluate("""(async()=>{const q=await import('/js/quick.js');const s=await import('/js/store.js');const a=s.getActiveShift();const before=a.income.card||0;
-          const txt=q.applyParsed(a,q.parseVoice('карта 40 бакшиш 5'),s.getProfile());s.saveShift(a);const n=s.getActiveShift();return [n.income.card-before, n.income.tips, txt]})()""")
-        ok('„Кажи го“: „карта 40 бакшиш 5“ се добавя', added[0]==40 and added[1]==5, added[2])
+        ok('Без гласово въвеждане', await pg.locator('button:has-text("Кажи го")').count()==0)
         rc = await pg.evaluate("(async()=>{const q=await import('/js/quick.js');return q.parseReceipt('ЛУКОЙЛ\\nДИЗЕЛ\\n31,20 Л X 2,39\\nОБЩА СУМА 74,57')})()")
         ok('Бележка: сума, литри и вид гориво', rc['amount']==74.57 and rc['qty']==31.2 and rc['type']=='diesel', rc)
         # приключване – терминът е еднакъв
