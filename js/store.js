@@ -9,7 +9,7 @@ import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './co
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 6;
+const VERSION = 8;
 const listeners = new Set();
 let db = null;
 

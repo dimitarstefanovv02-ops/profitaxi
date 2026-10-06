@@ -25,8 +25,10 @@ async def main():
             for base, route in pages:
                 await pg.goto('http://localhost:8765' + base + route); await pg.wait_for_timeout(700)
                 # година в статистиките – най-големите числа
-                if await pg.locator('.seg-btn:has-text("Година")').count():
-                    await pg.click('.seg-btn:has-text("Година") >> nth=0'); await pg.wait_for_timeout(700)
+                if await pg.locator('details.more:not([open]) summary').count() and 'admin' in base:
+                    await pg.click('details.more:not([open]) summary >> nth=0'); await pg.wait_for_timeout(300)
+                if await pg.locator('.seg-btn:has-text("Година"):visible').count():
+                    await pg.click('.seg-btn:has-text("Година"):visible >> nth=0'); await pg.wait_for_timeout(700)
                 r = await pg.evaluate(CHECK)
                 ok = not r['bad'] and r['sw'] <= r['w']
                 fails += not ok

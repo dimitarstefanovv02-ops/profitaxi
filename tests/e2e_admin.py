@@ -107,6 +107,8 @@ async def main():
                     await a.click(f'.adm-picker .seg-btn >> nth={i}'); await a.wait_for_timeout(400)
         for label in ['Днес']:
             await a.click(f'.adm-nav >> text={label}'); await a.wait_for_timeout(600)
+            ok('Днес: карта, „Активни“ и „Шофьори общо“', await a.locator('.map-card').count()==1 and 'Активни' in await a.inner_text('.big-nums') and 'Шофьори общо' in await a.inner_text('.big-nums'))
+            if not await a.evaluate("document.querySelector('.adm-main details.more').open"): await a.click('.adm-main details.more summary'); await a.wait_for_timeout(300)
             for i in range(5):
                 if await a.locator('.adm-picker .seg-btn').count():
                     await a.click(f'.adm-picker .seg-btn >> nth={i}'); await a.wait_for_timeout(400)

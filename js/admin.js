@@ -326,6 +326,76 @@ function market() {
 }
 
 // ---------- Общ преглед ----------
+
+// ---------- Карта на България на живо ----------
+// Колко шофьори има във всеки град и колко са на смяна в момента (смяна без край).
+const CITY_POS = { 'София': [23.32, 42.70], 'Пловдив': [24.75, 42.15], 'Варна': [27.91, 43.21], 'Бургас': [27.47, 42.50], 'Стара Загора': [25.63, 42.43], 'Русе': [25.97, 43.85],
+  'Сливен': [26.32, 42.68], 'Нова Загора': [26.01, 42.49], 'Асеновград': [24.87, 42.01], 'Благоевград': [23.10, 42.02], 'Велико Търново': [25.63, 43.08], 'Видин': [22.88, 43.99],
+  'Враца': [23.55, 43.21], 'Габрово': [25.32, 42.87], 'Добрич': [27.83, 43.57], 'Дупница': [23.12, 42.26], 'Казанлък': [25.39, 42.62], 'Кърджали': [25.37, 41.65],
+  'Кюстендил': [22.69, 42.28], 'Ловеч': [24.72, 43.14], 'Монтана': [23.23, 43.41], 'Пазарджик': [24.33, 42.19], 'Перник': [23.03, 42.60], 'Плевен': [24.61, 43.42],
+  'Разград': [26.52, 43.53], 'Сандански': [23.27, 41.57], 'Силистра': [27.26, 44.12], 'Смолян': [24.71, 41.58], 'Търговище': [26.57, 43.25], 'Хасково': [25.55, 41.93],
+  'Шумен': [26.94, 43.27], 'Ямбол': [26.50, 42.48] };
+// Активен = има смяна през последните 7 дни (или е на смяна сега)
+const isActive = (d) => { const from = addDays(todayStr(), -6); return d.shifts.some((x) => !x.end || shiftDate(x) >= from); };
+let mapEl = null, lmap = null, lmarkers = null, mapTheme = null;
+function cityStats(all) {
+  const by = {};
+  all.forEach((d) => { const c = d.user.city; by[c] = by[c] || { total: 0, active: 0 }; by[c].total++; if (isActive(d)) by[c].active++; });
+  return by;
+}
+function drawMap(by) {
+  if (!window.L || !mapEl) return;
+  const dark = isDark();
+  if (!lmap) {
+    lmap = L.map(mapEl, { zoomControl: true, attributionControl: true, scrollWheelZoom: false, minZoom: 6, maxZoom: 12 }).setView([42.75, 25.4], 7);
+    lmap.fitBounds([[41.2, 22.3], [44.25, 28.65]], { padding: [10, 10] });
+  }
+  if (mapTheme !== dark) {
+    lmap.eachLayer((l) => { if (l instanceof L.TileLayer) lmap.removeLayer(l); });
+    L.tileLayer(`https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`, {
+      subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap, &copy; CARTO' }).addTo(lmap);
+    mapTheme = dark;
+  }
+  if (lmarkers) lmarkers.remove();
+  lmarkers = L.layerGroup().addTo(lmap);
+  const max = Math.max(1, ...Object.values(by).map((x) => x.total));
+  Object.entries(by).forEach(([city, v]) => {
+    const pos = CITY_POS[city]; if (!pos) return;
+    const size = Math.round(34 + Math.sqrt(v.total / max) * 34);
+    const icon = L.divIcon({ className: 'lm-wrap', iconSize: [size, size], iconAnchor: [size / 2, size / 2],
+      html: `<div class="lm ${v.active ? 'on' : ''}" style="width:${size}px;height:${size}px"><b>${v.total}</b>${v.active ? `<i>${v.active}</i>` : ''}</div><span class="lm-name">${city}</span>` });
+    L.marker([pos[1], pos[0]], { icon, title: `${city}: ${v.total} шофьори, ${v.active} активни` })
+      .on('click', () => { scope.city = city; scope.company = ''; go('/drivers'); }).addTo(lmarkers);
+  });
+  setTimeout(() => lmap.invalidateSize(), 0);
+}
+function liveMap(all) {
+  const by = cityStats(all);
+  const active = all.filter(isActive).length;
+  if (!mapEl) mapEl = h('div', { class: 'lmap', role: 'img', 'aria-label': 'Карта на шофьорите по градове' });
+  // Leaflet се зарежда само веднъж, при първото отваряне на картата
+  if (!window.L) {
+    if (!document.getElementById('leaflet-js')) {
+      document.head.append(h('link', { rel: 'stylesheet', href: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css' }));
+      const sc = h('script', { id: 'leaflet-js', src: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js' });
+      sc.onload = () => drawMap(cityStats(scoped()));
+      document.head.append(sc);
+    }
+  } else setTimeout(() => drawMap(by), 0);
+  const top = Object.entries(by).sort((a, b) => b[1].total - a[1].total).slice(0, 6);
+  return h('section', { class: 'card map-card' },
+    h('div', { class: 'map-head' },
+      h('div', null, h('h2', null, 'Шофьорите по градове'), h('p', { class: 'muted small' }, 'Числото е колко шофьори има в града, зеленото – колко са активни (смяна през последните 7 дни). Натисни град за списъка.')),
+      h('div', { class: 'live-badge' }, h('i'), `${active} активни от ${all.length}`)),
+    mapEl,
+    h('div', { class: 'map-top' }, top.map(([c, v]) => h('button', { class: 'chip', onclick: () => { scope.city = c; scope.company = ''; go('/drivers'); } }, h('b', null, c), ` ${v.total} · ${v.active} активни`))));
+}
+const bigNum = (label, value, sub, cls) => h('div', { class: cx('big-num', cls) }, h('span', null, label), h('b', null, value), sub && h('small', null, sub));
+
+// „Подробни отчети“ остава отворено, когато смениш периода вътре
+let overviewMoreOpen = false;
+const keepOpen = (det) => { det.open = overviewMoreOpen; det.addEventListener('toggle', () => { overviewMoreOpen = det.open; }); return det; };
+
 function overview() {
   const root = h('div');
   const draw = () => {
@@ -380,15 +450,21 @@ function overview() {
     const risk = all.filter((d) => subState(d.user).key !== 'blocked' && (daysSince(d) == null || daysSince(d) >= 7)).sort((a, b) => (daysSince(b) ?? 999) - (daysSince(a) ?? 999));
 
     fill(root,
-      pageHead('Днес', `${scopeLabel()}: ${all.length} шофьори, ${T.active} активни през периода`),
+      pageHead('Днес', `${scopeLabel()} · обновява се на живо`),
+      liveMap(all),
+      h('div', { class: 'big-nums' },
+        bigNum('Шофьори общо', String(all.length), `${all.filter((d) => isoToDateStr(d.user.createdAt) >= addDays(todayStr(), -6)).length} нови тази седмица`),
+        bigNum('Активни', String(all.filter(isActive).length), 'смяна през последните 7 дни', 'live'),
+        bigNum('Платени абонаменти', String(count('active')), `${count('trial')} на пробен период`),
+        bigNum('Приход от абонаменти', money(mrr), 'на месец')),
       attentionCard(all, risk),
+      keepOpen(more('Подробни отчети и графики',
       h('div', { class: 'adm-picker' }, periodPicker(overviewState, draw)),
       h('div', { class: 'kpis kpis-lg' },
         kpi('coins', 'var(--text)', 'Приход', money(T.income), `${fmtNum(T.shifts)} смени`, '', { lg: true, title: moneyFull(T.income), trend: trendChip(C.income, P.income), spark: sparkline(sparkPts.map((x) => x.income), '#FFC21A') }),
         kpi('wallet', 'var(--text)', 'Чиста печалба', money(T.net), `разходи ${money(T.exp)}`, tone(T.net), { lg: true, title: moneyFull(T.net), trend: trendChip(C.net, P.net), spark: sparkline(sparkPts.map((x) => x.net), '#FFC21A') }),
         kpi('users', 'var(--text)', 'Активни шофьори', `${T.active} от ${all.length}`, `${newRegs} нови регистрации`, '', { lg: true, trend: trendChip(C.active, P.active), spark: activeSpark && sparkline(activeSpark, '#FFC21A'), bar: activeSpark ? null : (all.length ? T.active / all.length : 0) }),
         kpi('receipt', 'var(--text)', 'Абонаменти на месец', money(mrr), `${count('active')} платени по ${money(price, 2)}`, '', { lg: true, title: 'MRR – месечни приходи от абонаменти', bar: all.length ? count('active') / all.length : 0 })),
-      more('Подробни отчети и графики',
       h('div', { class: 'mini-kpis', style: { marginTop: '12px' } },
         miniKpi('clock', 'var(--text)', 'Чисто на час', money2(T.perHour), `приход ${money2(T.incPerHour)}`),
         miniKpi('road', 'var(--text)', 'Чисто на км', money2(T.perKm), `${fmtNum(T.km)} км`),
@@ -420,7 +496,7 @@ function overview() {
           h('section', { class: 'card' }, cardTitle('wallet', 'Разходи на всички'),
             h('div', { class: 'grid2', style: { marginBottom: '14px' } }, stat('От смените', money(T.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(T.fixed), { icon: 'calendar', color: 'var(--c-blue)' })),
             shareRows(Object.values(exp).sort((a, b) => b.value - a.value).slice(0, 8), T.exp)),
-          INVITES_ON && referralCard(all, r)))));
+          INVITES_ON && referralCard(all, r))))));
   };
   draw();
   return root;
@@ -766,3 +842,7 @@ document.addEventListener('focusout', () => setTimeout(() => { if (pending && !b
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
 render();
 export { eachDay, fmtNum1, FUEL_TYPES, MONTHS };
+
+// Картата и числата на „Днес“ се обновяват сами на всеки 20 секунди
+const refreshLive = () => { if (store.adminUser() && parse().name === '/overview' && !document.querySelector('.sheet-wrap, .tour') && document.visibilityState === 'visible') render(); };
+setInterval(refreshLive, 20000);

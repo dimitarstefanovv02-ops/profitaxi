@@ -269,3 +269,44 @@ body.admin .btn-ghost.act-del { border-color: var(--neg); color: #fff; backgroun
 /* Таблицата с шофьорите се побира */
 .tbl .who-cell span { max-width: 230px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
 @media (max-width: 719px) { .kpi-head { flex-wrap: wrap; row-gap: 4px; } .kpi-head .trend-chip { margin-left: 0; } }
+
+/* ===== Карта на България на живо + 4 големи числа ===== */
+.map-card { padding: 18px; }
+.map-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.map-head h2 { margin: 0 0 4px; font-size: 1.25rem; }
+.live-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: color-mix(in srgb, var(--pos) 14%, transparent); color: var(--pos); font-weight: 800; white-space: nowrap; }
+.live-badge i { width: 10px; height: 10px; border-radius: 50%; background: var(--pos); box-shadow: 0 0 0 0 var(--pos); animation: livePing 1.6s ease-out infinite; }
+.map-wrap { margin-top: 10px; }
+.bg-map { display: block; width: 100%; height: auto; }
+.bg-land { fill: var(--surface-2); stroke: var(--v-strong, #8B5CF6); stroke-width: 2; stroke-linejoin: round; }
+.bg-city { cursor: pointer; }
+.bg-dot { fill: var(--violet, #7C3AED); fill-opacity: .85; stroke: var(--surface); stroke-width: 2; }
+.bg-city.live .bg-dot { fill: #12A15E; }
+.bg-city:hover .bg-dot, .bg-city:focus .bg-dot { fill-opacity: 1; stroke: var(--text); }
+.bg-pulse { fill: #12A15E; opacity: .35; transform-box: fill-box; transform-origin: center; animation: mapPulse 2s ease-out infinite; }
+.bg-num { fill: #fff; font: 800 20px var(--font); text-anchor: middle; dominant-baseline: middle; pointer-events: none; }
+.bg-name { fill: var(--text); font: 700 18px var(--font); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; text-anchor: middle; pointer-events: none; }
+.map-top { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.map-top .chip b { margin-right: 4px; }
+.big-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 14px 0; }
+.big-num { background: var(--surface); border: 1px solid var(--v-line, var(--line)); border-radius: 20px; padding: 16px 18px; display: grid; gap: 2px; }
+.big-num span { color: var(--muted); font-weight: 700; font-size: .92rem; }
+.big-num b { font-family: var(--display); font-size: clamp(1.8rem, 5vw, 2.4rem); letter-spacing: -.02em; }
+.big-num small { color: var(--muted); font-size: .85rem; }
+.big-num.live b { color: #12A15E; }
+@media (min-width: 900px) { .big-nums { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@keyframes mapPulse { 0% { transform: scale(.8); opacity: .5; } 100% { transform: scale(1.8); opacity: 0; } }
+@keyframes livePing { 0% { box-shadow: 0 0 0 0 rgba(18, 161, 94, .55); } 100% { box-shadow: 0 0 0 10px rgba(18, 161, 94, 0); } }
+@media (prefers-reduced-motion: reduce) { .bg-pulse, .live-badge i { animation: none; } }
+.map-wrap { max-width: 820px; margin: 10px auto 0; }
+/* Истинска карта (Leaflet + CARTO) */
+.lmap { height: clamp(320px, 52vw, 460px); border-radius: 18px; overflow: hidden; margin-top: 12px; border: 1px solid var(--v-line, var(--line)); background: var(--surface-2); z-index: 0; }
+.lm-wrap { background: none; border: 0; }
+.lm { position: relative; border-radius: 50%; display: grid; place-items: center; background: rgba(124, 58, 237, .88); color: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, .9), 0 8px 22px rgba(0, 0, 0, .35); font-family: var(--font); transition: transform .15s; }
+.lm b { font-size: 1.05rem; font-weight: 800; }
+.lm i { position: absolute; right: -6px; top: -6px; min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: #12A15E; color: #fff; font-style: normal; font-weight: 800; font-size: .8rem; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+.lm.on::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid rgba(18, 161, 94, .7); animation: mapPulse 2.2s ease-out infinite; }
+.lm-wrap:hover .lm { transform: scale(1.08); }
+.lm-name { position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 6px; white-space: nowrap; font: 800 12px var(--font); color: #0A0A0C; background: rgba(255, 255, 255, .92); padding: 2px 8px; border-radius: 999px; box-shadow: 0 2px 8px rgba(0, 0, 0, .2); }
+.leaflet-container { font-family: var(--font); }
+.big-num.live b { color: #12A15E; }
