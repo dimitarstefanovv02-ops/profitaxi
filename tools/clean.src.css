@@ -15,8 +15,8 @@
   --c-violet: var(--text); --c-pink: var(--text);
   --shadow: none;
   --r-xl: 18px; --r-lg: 16px; --r-md: 12px; --r-sm: 10px;
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Onest', 'Helvetica Neue', Arial, sans-serif;
-  --display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Onest', 'Helvetica Neue', Arial, sans-serif;
+  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --display: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
 }
 :root[data-theme="dark"] {
   --bg: #0B0B0C; --surface: #161618; --surface-2: #1F1F22; --surface-3: #2A2A2E; --line: #2A2A2E;
@@ -33,8 +33,9 @@
   }
 }
 :root[data-theme="sun"] { --bg: #FFFFFF; --line: #A1A1AA; --text: #000000; --muted: #27272A; --faint: #3F3F46; }
-/* One Taxi: собственият шрифт и червеното остават */
-:root[data-brand="one"] { --font: 'Base Neue', 'Archivo', -apple-system, system-ui, sans-serif; --display: var(--font); }
+/* Шрифтът е системният на устройството навсякъде – и в One Taxi */
+:root[data-brand="one"] { --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; --display: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
+body, button, input, select, textarea { font-family: var(--font); }
 
 /* ---------- Основа ---------- */
 body { letter-spacing: -.005em; }

@@ -6,8 +6,6 @@
    ====================================================================== */
 
 :root, [data-page] {
-  --font: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --display: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --c-green: #16A34A; --c-blue: #2563EB; --c-violet: #7C3AED; --c-amber: #D97706; --c-orange: #EA580C;
   --c-sky: #0284C7; --c-red: #DC2626; --c-teal: #0D9488; --c-pink: #DB2777; --c-slate: #475569; --c-gray: #71717A;
   --violet: #7C3AED; --v-soft: rgba(124, 58, 237, .09); --v-line: rgba(124, 58, 237, .28); --v-strong: rgba(124, 58, 237, .5);
@@ -37,8 +35,6 @@
 [data-page="shift"] { --pc: var(--c-blue); }
 [data-page="me"], [data-page="profile"], [data-page="car"], [data-page="vehicle"] { --pc: var(--c-teal); }
 
-/* Големите числа отново с характер */
-.meter-value, .hero-num, .ms-total b, .result-net, .week-net, .car-inv .ci-big, .kpi-value { font-family: 'Unbounded', 'Onest', sans-serif !important; font-weight: 700; letter-spacing: -.03em; }
 
 /* ---------- Карти: лека сянка, контур ---------- */
 .card, .stat-card, .tile, .big-link, .home-link, .cover, .reg-group, .msg, .drive, .more > summary, .kpi, .mini-kpis, .scope-bar, .adm-picker, .week-sum { box-shadow: var(--shadow) !important; }
@@ -144,4 +140,3 @@ body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--
 .attention { border-color: var(--y-line) !important; }
 .goal-bar i { background: linear-gradient(90deg, var(--violet), #A78BFA); }
 body.admin { --pc: var(--violet); }
-:root[data-brand="one"] .meter-value, :root[data-brand="one"] .hero-num, :root[data-brand="one"] .ms-total b, :root[data-brand="one"] .result-net, :root[data-brand="one"] .week-net, :root[data-brand="one"] .car-inv .ci-big { font-family: var(--font) !important; }
