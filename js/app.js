@@ -23,7 +23,6 @@ import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } fro
 import { vehicleView } from './views/vehicle.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
-import { showDueSheet } from './notify.js';
 import { BRAND, isBrandUser, collabBar, oneIntro } from './brand.js';
 import { installBar, installBarVisible } from './quick.js';
 
@@ -42,7 +41,7 @@ const TABS = [
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Профил'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/me', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/profile', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
 export const go = (path, replace) => {
@@ -94,7 +93,7 @@ function render() {
     notified = true;
     setTimeout(() => { if (location.hash.startsWith('#/home') && !tourOpen()) startTour(DRIVER_TOUR, { home: '/home', onDone: () => { if (store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
   }
-  if (!notified) { notified = true; checkNotifications(ctx.data); if (route.name === '/home') setTimeout(() => showDueSheet(store.myData(), go), 600); }
+  if (!notified) { notified = true; checkNotifications(ctx.data); }
 }
 let notified = false;
 let autoRan = false;

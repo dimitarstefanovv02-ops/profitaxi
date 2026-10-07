@@ -178,6 +178,8 @@ p { margin: 0; }
 .meter-value.neg { color: #FF8A8A; }
 .meter-goal { color: #C9D1DC; font-size: .92rem; }
 .meter-goal b { color: #fff; }
+.goal-edit { background: none; border: 0; padding: 4px 0; margin: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; text-decoration: underline dotted; text-underline-offset: 3px; -webkit-tap-highlight-color: transparent; }
+.goal-edit:active { opacity: .7; }
 .meter .road { margin-top: 18px; }
 .meter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
 .meter-cell { background: rgba(255,255,255,.06); border-radius: 14px; padding: 10px 11px; }
@@ -1112,3 +1114,17 @@ body:not(.admin) .arr-tip .ic { color: var(--c-violet, #7C3AED); flex: none; }
 body:not(.admin) .arr-btns { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; }
 body:not(.admin) .arr-btns .btn { flex: 1 1 auto; }
 body:not(.admin) .arr-btns .btn:disabled { opacity: .4; }
+
+/* Сравнение по месеци */
+.mcmp .mc-row { display: block; width: 100%; background: none; border: 0; padding: 10px 0; text-align: left; color: inherit; font: inherit; border-top: 1px solid var(--line, rgba(255,255,255,.08)); cursor: pointer; }
+.mcmp .mc-row:first-of-type { border-top: 0; }
+.mcmp .mc-row.sel .mc-name { color: var(--brand, #F5B800); }
+.mc-top { display: flex; align-items: center; gap: 10px; }
+.mc-name { flex: 1; min-width: 0; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.mc-name small { color: var(--muted, #8A94A6); font-weight: 400; }
+.mc-best { display: inline-flex; align-items: center; gap: 3px; font-size: .72rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; background: rgba(245,184,0,.16); color: var(--c-amber, #F5B800); }
+.mc-pct { min-width: 64px; text-align: right; font-size: .85rem; font-weight: 700; }
+.mc-pct.up { color: var(--c-green, #22C55E); } .mc-pct.down { color: var(--c-red, #EF4444); } .mc-pct.none { color: var(--muted, #8A94A6); }
+.mc-bar { height: 6px; border-radius: 6px; background: var(--track, rgba(255,255,255,.07)); margin-top: 7px; overflow: hidden; }
+.mc-bar span { display: block; height: 100%; border-radius: 6px; background: var(--c-blue, #3B82F6); opacity: .75; }
+.mc-bar span.best { background: var(--c-amber, #F5B800); opacity: 1; }

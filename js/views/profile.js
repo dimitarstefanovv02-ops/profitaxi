@@ -5,7 +5,7 @@ import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, pars
 import * as store from '../store.js';
 import { zone } from '../arrange.js';
 import { CAR_TYPES, FUELS } from '../constants.js';
-import { carBlock, fuelBlock, dispatchBlock, shareBlock, goalBlock } from './carSettings.js';
+import { carBlock, fuelBlock, dispatchBlock, shareBlock } from './carSettings.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero, THEMES, TEXT_SIZES, getTextSize, setTextSize } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { cityCompanyPicker } from './cityPicker.js';
@@ -21,7 +21,6 @@ export function profileView({ go, user, data, route }) {
     const d = store.getProfile();
     fill(root,
       h('div', { class: 'page-title' }, h('h1', null, 'Лични данни')),
-      profileCover(user, d),
       zone('drv.profile', { class: 'dz' }, [
       ['data', h('div', null, h('h2', { class: 'section-title' }, 'Лични данни'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
@@ -44,19 +43,11 @@ export function profileView({ go, user, data, route }) {
         h('div', { class: 'field-label', style: { marginBottom: '8px' } }, 'Размер на текста'),
         segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true })))],
 
-      ['reports', h('div', null, h('h2', { class: 'section-title' }, 'Отчети'),
-      h('section', { class: 'card', style: { padding: '8px 18px' } },
-        listBtn('print', 'Отчет в PDF', () => { go('/stats'); setTimeout(() => window.print(), 700); }, true),
-        listBtn('download', 'Всички смени (Excel)', () => exportCsv(data, { from: '2000-01-01', to: todayStr() }))))],
-
-      ['help', h('div', null, h('h2', { class: 'section-title' }, 'Сигурност и помощ'),
+      ['help', h('div', null, h('h2', { class: 'section-title' }, 'Сигурност'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('lock', 'Смяна на паролата', changePw, true),
-        listBtn('sparkle', 'Помощ: кратка разходка', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }, true),
-        h('a', { class: 'list-btn', href: '#/help' }, h('span', { class: 'l-ic' }, icon('inbox', 18)), h('span', { class: 'grow' }, 'Пиши ни'), store.myUnreadTickets() > 0 && h('span', { class: 'chip warn' }, 'Нов отговор'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))))],
-
       ['exit', h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
         h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта')))],
@@ -77,7 +68,7 @@ async function setPhoto(key, redraw) {
   catch { toast('Снимката е твърде голяма', 'err'); }
 }
 
-// „Колата и ефирът“: вид кола (своя / под наем), данни за колата, гориво, ефир, споделяне, цел
+// „Настройки на колата“: вид кола (своя / под наем), данни за колата, гориво, ефир, споделяне, цел
 export function carView({ go, user, data }) {
   const root = h('div', { class: 'screen', 'data-page': 'car' });
   const d = store.getProfile();
@@ -109,13 +100,12 @@ export function carView({ go, user, data }) {
         field('Модел', carInput('model', 'напр. Toyota Corolla Hybrid'))),
       h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
       h('section', { class: 'card' }, cardTitle('radio', 'Ефир / диспечер'), dispatchBlock(d, draw)),
-      h('section', { class: 'card' }, shareBlock(d, draw)),
-      h('section', { class: 'card' }, cardTitle('target', 'Цел за месеца'), goalBlock(d, draw)));
+      h('section', { class: 'card' }, shareBlock(d, draw)));
     refreshBar();
   };
   draw();
-  fill(root, h('div', { class: 'page-title' }, h('h1', null, 'Колата и ефирът')),
-    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя или под наем, горивото, ефирът и целта ти за месеца.'),
+  fill(root, h('div', { class: 'page-title' }, h('h1', null, 'Настройки на колата')),
+    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя или под наем, данните за колата, горивото и ефирът. Целта за месеца се сменя от „Днес“.'),
     body, bar);
   return root;
 }

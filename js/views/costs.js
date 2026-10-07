@@ -30,7 +30,6 @@ export function costsView({ go, data }) {
         next && h('span', { class: 'hero-chip' }, icon('bell', 14), `следващо: ${next.title}, ${next.daysLeft === 0 ? 'днес' : next.daysLeft === 1 ? 'утре' : `след ${next.daysLeft} дни`}`),
         data.profile.sharePct < 100 && h('span', { class: 'hero-chip' }, icon('users', 14), `твоят дял ${data.profile.sharePct}%`))),
 
-    notifyBox(data),
 
     // Плащания и напомняния
     h('div', { class: 'month-head' }, h('h2', null, 'Предстоящи плащания'),

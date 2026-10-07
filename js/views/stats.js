@@ -61,6 +61,7 @@ export function statsView({ data }) {
           h('span', { class: 'hero-chip' }, icon('calendar', 14), `${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}`)),
         h('div', { style: { marginTop: '16px' } }, periodPicker(state, draw))),
       h('div', { class: 'print-only' }, h('h2', null, `ProfiTaxi – ${data.user.name}`), h('p', null, r.label)),
+      (state.unit === 'month' || state.unit === 'year') && monthsCompare(data, state, draw),
       statsBody(data, r.from, r.to, state.unit, { st }),
     ].filter(Boolean));
   };
@@ -124,6 +125,54 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
 
     timeCard(tiAll, usePeriod),
     recordsCard(rec, admin)));
+}
+
+// Сравнение по месеци: чистото за всеки месец и с колко % е по-добре/по-зле от предишния.
+// Текущият месец се сравнява със същите дни от миналия месец, за да е честно.
+const prevYm = (ym) => { const d = parseDate(ym + '-01'); d.setMonth(d.getMonth() - 1, 1); return dateStr(d).slice(0, 7); };
+const pctChange = (now, before) => (Math.abs(before) < 0.5 ? null : ((now - before) / Math.abs(before)) * 100);
+export function monthRows(data, endYm, stopYm) {
+  const done = data.shifts.filter((s) => s.end);
+  if (!done.length) return [];
+  const first = done.map(shiftDate).sort()[0].slice(0, 7);
+  const today = todayStr();
+  const rows = [];
+  for (let ym = minStr(endYm, today.slice(0, 7)); rows.length < 12 && ym >= first && (!stopYm || ym >= stopYm); ym = prevYm(ym)) {
+    const from = ym + '-01', to = endOfMonth(from);
+    rows.push({ ym, from, partial: to > today, st: periodStats(data, from, to) });
+  }
+  for (const r of rows) {
+    const p = prevYm(r.ym);
+    if (p < first) { r.pct = null; continue; }
+    const pFrom = p + '-01', pEnd = endOfMonth(pFrom);
+    let pTo = pEnd;
+    if (r.partial) { const day = Number(today.slice(8, 10)); pTo = minStr(`${p}-${String(day).padStart(2, '0')}`, pEnd); }
+    r.prevNet = periodStats(data, pFrom, pTo).net;
+    r.pct = pctChange(r.st.net, r.prevNet);
+  }
+  return rows;
+}
+function monthsCompare(data, st, redraw) {
+  const end = st.unit === 'year' ? st.anchor.slice(0, 4) + '-12' : st.anchor.slice(0, 7);
+  const rows = monthRows(data, end, st.unit === 'year' ? st.anchor.slice(0, 4) + '-01' : null);
+  if (rows.length < 2) return null;
+  const max = Math.max(...rows.map((r) => r.st.net), 1);
+  const best = rows.reduce((a, b) => (b.st.net > a.st.net ? b : a));
+  const sel = st.unit === 'month' ? st.anchor.slice(0, 7) : null;
+  const chip = (r) => r.pct == null ? h('span', { class: 'mc-pct none' }, '—')
+    : h('span', { class: cx('mc-pct', r.pct >= 0 ? 'up' : 'down') }, `${r.pct >= 0 ? '▲ +' : '▼ −'}${Math.round(Math.abs(r.pct))}%`);
+  return h('section', { class: 'card mcmp' },
+    cardTitle('chart', 'Сравнение по месеци'),
+    h('p', { class: 'muted small', style: { marginBottom: '10px' } }, 'Чисто след всички разходи. Процентът е спрямо предишния месец; текущият месец – спрямо същите дни на миналия.'),
+    rows.map((r) => {
+      const d = parseDate(r.from);
+      return h('button', { class: cx('mc-row', r.ym === sel && 'sel'), onclick: () => { st.unit = 'month'; st.anchor = r.from; redraw(); } },
+        h('div', { class: 'mc-top' },
+          h('span', { class: 'mc-name' }, `${MONTHS[d.getMonth()]} ${d.getFullYear()}`, r.partial && h('small', null, ' до днес'), r === best && best.st.net > 0 && h('span', { class: 'mc-best' }, icon('trophy', 12), 'най-печеливш')),
+          h('b', { class: cx('num', tone(r.st.net)) }, money(r.st.net)),
+          chip(r)),
+        h('div', { class: 'mc-bar' }, h('span', { class: cx(r === best && 'best'), style: { width: `${Math.max(0, r.st.net) / max * 100}%` } })));
+    }));
 }
 
 function stackBar(items, total) {

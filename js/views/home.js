@@ -4,7 +4,7 @@
 import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx, round2, uid, fmtDate } from '../util.js';
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
-import { roadProgress, openNumpad, stat, tone, toast, cardTitle, themeToggle, more } from '../ui.js';
+import { roadProgress, openNumpad, stat, tone, toast, cardTitle, more } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
 import { INCOME_TYPES, FUELS, FUEL_TYPES } from '../constants.js';
@@ -68,8 +68,8 @@ export function homeView({ go, user, data, rerender, route }) {
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),
-      h('div', { class: 'row gap' }, themeToggle(),
-        data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/profile', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/profile', 'aria-label': 'Профил' }, initials))),
+      h('div', { class: 'row gap' },
+        data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/me', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/me', 'aria-label': 'Профил' }, initials))),
 
     messagesBox(rerender || (() => go('/home'))),
     store.flagOn('nps') && store.npsDue() && npsCard(rerender || (() => go('/home'))),
@@ -117,9 +117,6 @@ export function homeView({ go, user, data, rerender, route }) {
         rec.current >= 2 && ['streak', h('div', { class: 'card tip' },
           h('div', { class: 'tip-ic' }, icon('flame', 22)),
           h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`)))],
-        recent.length > 0 && ['recent', h('div', { class: 'card' },
-          cardTitle('list', 'Последни смени', h('a', { class: 'link', href: '#/shifts' }, 'Всички', icon('right', 16))),
-          recent.slice(0, 3).map((s) => shiftRow(data, s)))],
       ]))],
     ])]));
 }
@@ -201,15 +198,21 @@ function firstDay() {
       h('li', null, 'Виж колко ти остава за деня и месеца')));
 }
 
+// Целта за месеца се сменя направо от „Днес“
+function editGoal() {
+  const p = store.getProfile();
+  openNumpad({ title: 'Цел за месеца', sub: 'Колко искаш да изкараш чисто този месец', fields: [{ key: 'v', label: 'Цел', value: p.monthlyGoal || '', decimals: 0 }],
+    actions: [{ label: 'Готово', primary: true, run: ({ v }) => { store.updateProfile({ monthlyGoal: Math.max(0, Math.round(v || 0)) }); toast('Целта е запазена'); } }] });
+}
 function meter(g, month) {
   const hours = g.hoursNeeded;
   const st = g.stats;
   return h('section', { class: 'meter', 'aria-label': 'Печалба за месеца' },
-    h('div', { class: 'meter-label' }, h('span', null, `Чисто за ${month} досега`), g.goal > 0 && h('span', { class: 'meter-pct' }, `${Math.max(0, Math.round(g.pct * 100))}%`)),
+    h('div', { class: 'meter-label' }, h('span', null, 'Чисто този месец'), g.goal > 0 && h('span', { class: 'meter-pct' }, `${Math.max(0, Math.round(g.pct * 100))}%`)),
     h('div', { class: cx('meter-value', g.net < 0 && 'neg') }, money(g.net)),
     g.goal > 0
-      ? h('div', { class: 'meter-goal' }, g.done ? h('span', null, `Целта от ${money(g.goal)} е постигната. Браво!`) : h('span', null, `Цел ${money(g.goal)} · от смените трябват още `, h('b', null, money(g.remaining))))
-      : h('a', { class: 'meter-goal', href: '#/car' }, 'Задай цел за месеца'),
+      ? h('div', { class: 'meter-goal' }, g.done ? h('button', { class: 'goal-edit', onclick: editGoal }, `Целта от ${money(g.goal)} е постигната. Браво!`) : h('button', { class: 'goal-edit', onclick: editGoal, 'aria-label': 'Смени целта' }, `Цел ${money(g.goal)}`, icon('edit', 13)), h('span', null, ' · от смените трябват още ', h('b', null, money(g.remaining))))
+      : h('button', { class: 'meter-goal goal-edit', onclick: editGoal }, icon('target', 15), 'Задай цел за месеца'),
     g.goal > 0 && roadProgress(g.pct),
     // Колко трябва днес – едно число
     g.goal > 0 && !g.done && hours != null && h('div', { class: 'meter-today' }, icon('target', 18),

@@ -52,19 +52,20 @@ export const COST_CATS = {
   dispatch: { label: 'Ефир / диспечер', icon: 'radio', system: true, color: 'var(--c-violet)' },
   leasing: { label: 'Лизинг', icon: 'doc', car: true, owner: true, period: 'month', color: 'var(--c-blue)' },
   rent: { label: 'Наем на колата', icon: 'key', system: true, car: true, color: 'var(--c-blue)' },
-  fuel: { label: 'Гориво', icon: 'fuel', period: 'week', color: 'var(--c-orange)' },
-  wash: { label: 'Автомивка', icon: 'wash', period: 'week', color: 'var(--c-sky)' },
+  // noAdd: вече не се добавят като постоянен разход (въвеждат се в смяната или в „Колата ми“) – старите записи се смятат
+  fuel: { label: 'Гориво', icon: 'fuel', period: 'week', color: 'var(--c-orange)', noAdd: true },
+  wash: { label: 'Автомивка', icon: 'wash', period: 'week', color: 'var(--c-sky)', noAdd: true },
   insurance: { label: 'Гражданска отговорност', icon: 'shield', car: true, owner: true, period: 'year', color: 'var(--c-teal)' },
   casco: { label: 'Каско', icon: 'shield', car: true, owner: true, period: 'year', color: 'var(--c-teal)' },
   insure: { label: 'Застраховка', icon: 'shield', period: 'year', color: 'var(--c-teal)' },
   vignette: { label: 'Винетка', icon: 'road', car: true, owner: true, period: 'year', color: 'var(--c-green)' },
   inspection: { label: 'Технически преглед', icon: 'gauge', car: true, owner: true, period: 'year', color: 'var(--c-sky)' },
-  service: { label: 'Обслужване', icon: 'wrench', car: true, owner: true, period: 'month', color: 'var(--c-slate)' },
-  repair: { label: 'Ремонти', icon: 'tool', car: true, owner: true, period: 'month', color: 'var(--c-red)' },
-  tires: { label: 'Гуми', icon: 'tire', car: true, owner: true, period: 'year', color: 'var(--c-gray)' },
+  service: { label: 'Обслужване', icon: 'wrench', car: true, owner: true, period: 'month', color: 'var(--c-slate)', noAdd: true },
+  repair: { label: 'Ремонти', icon: 'tool', car: true, owner: true, period: 'month', color: 'var(--c-red)', noAdd: true },
+  tires: { label: 'Гуми', icon: 'tire', car: true, owner: true, period: 'year', color: 'var(--c-gray)', noAdd: true },
   meter: { label: 'Таксиметров апарат', icon: 'receipt', car: true, owner: true, period: 'month', color: 'var(--c-amber)' },
   license: { label: 'Разрешително', icon: 'doc', period: 'year', color: 'var(--c-orange)' },
-  parking: { label: 'Паркинг', icon: 'parking', period: 'month', color: 'var(--c-blue)' },
+  parking: { label: 'Паркинг', icon: 'parking', period: 'month', color: 'var(--c-blue)', noAdd: true },
   phone: { label: 'Телефон и интернет', icon: 'phone', period: 'month', color: 'var(--c-violet)' },
   taxes: { label: 'Данъци и осигуровки', icon: 'bank', period: 'month', color: 'var(--c-red)' },
   accountant: { label: 'Счетоводител', icon: 'receipt', period: 'month', color: 'var(--c-pink)' },
@@ -92,7 +93,7 @@ export function shiftCats(profile = {}) {
 export function fixedCats(profile = {}) {
   const hidden = new Set(profile.hiddenCats || []);
   const rent = profile.carType === 'rent';
-  const out = Object.entries(COST_CATS).filter(([k, v]) => !v.system && !(rent && v.owner) && !hidden.has('f:' + k) && k !== 'other').map(([k, v]) => ({ key: k, ...v }));
+  const out = Object.entries(COST_CATS).filter(([k, v]) => !v.system && !v.noAdd && !(rent && v.owner) && !hidden.has('f:' + k) && k !== 'other').map(([k, v]) => ({ key: k, ...v }));
   (profile.customCats || []).filter((c) => c.kind !== 'shift').forEach((c) => out.push({ key: c.id, ...costCat(c.id), period: 'month' }));
   out.push({ key: 'other', ...COST_CATS.other });
   return out;
