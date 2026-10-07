@@ -1,0 +1,316 @@
+/* СГЛОБЕНО от tools/clean.src.css и tools/mid.src.css с tools/build_clean.py – не редактирай ръчно */
+:root[data-skin="clean"], :root[data-skin="mid"] {--bg: #F7F7F8; --surface: #FFFFFF; --surface-2: #EFEFF1; --surface-3: #E4E4E7; --line: #E4E4E7; --text: #111113; --muted: #52525B; --faint: #71717A; --accent-soft: #FFF4CC; --accent-text: #7A5600; --pos: #15803D; --pos-soft: #DCFCE7; --neg: #DC2626; --neg-soft: #FEE2E2; --violet: var(--text); --v-soft: var(--surface-2); --v-line: var(--line); --v-strong: var(--line); --v-glow: transparent; --c-violet: var(--text); --c-pink: var(--text); --shadow: none; --r-xl: 18px; --r-lg: 16px; --r-md: 12px; --r-sm: 10px; --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Onest', 'Helvetica Neue', Arial, sans-serif; --display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Onest', 'Helvetica Neue', Arial, sans-serif;}
+:root[data-skin="clean"][data-theme="dark"], :root[data-skin="mid"][data-theme="dark"] {--bg: #0B0B0C; --surface: #161618; --surface-2: #1F1F22; --surface-3: #2A2A2E; --line: #2A2A2E; --text: #F4F4F5; --muted: #A1A1AA; --faint: #8A8A93; --accent-soft: #3A3011; --accent-text: #FFC21A; --pos: #4ADE80; --pos-soft: #12301F; --neg: #F87171; --neg-soft: #3A1717; --violet: var(--text); --v-soft: var(--surface-2); --v-line: var(--line); --v-strong: var(--line); --v-glow: transparent;}
+@media (prefers-color-scheme: dark) {
+:root[data-skin="clean"]:not([data-theme="light"]):not([data-theme="sun"]), :root[data-skin="mid"]:not([data-theme="light"]):not([data-theme="sun"]) {--bg: #0B0B0C; --surface: #161618; --surface-2: #1F1F22; --surface-3: #2A2A2E; --line: #2A2A2E; --text: #F4F4F5; --muted: #A1A1AA; --faint: #8A8A93; --accent-soft: #3A3011; --accent-text: #FFC21A; --pos: #4ADE80; --pos-soft: #12301F; --neg: #F87171; --neg-soft: #3A1717; --violet: var(--text); --v-soft: var(--surface-2); --v-line: var(--line); --v-strong: var(--line); --v-glow: transparent;}
+}
+:root[data-skin="clean"][data-theme="sun"], :root[data-skin="mid"][data-theme="sun"] {--bg: #FFFFFF; --line: #A1A1AA; --text: #000000; --muted: #27272A; --faint: #3F3F46;}
+:root[data-skin="clean"][data-brand="one"], :root[data-skin="mid"][data-brand="one"] {--font: 'Base Neue', 'Archivo', -apple-system, system-ui, sans-serif; --display: var(--font);}
+:root[data-skin="clean"] body, :root[data-skin="mid"] body {letter-spacing: -.005em;}
+:root[data-skin="clean"] .num, :root[data-skin="mid"] .num, :root[data-skin="clean"] .stat-value, :root[data-skin="mid"] .stat-value, :root[data-skin="clean"] .tile-val, :root[data-skin="mid"] .tile-val, :root[data-skin="clean"] .np-val, :root[data-skin="mid"] .np-val, :root[data-skin="clean"] .np-key, :root[data-skin="mid"] .np-key, :root[data-skin="clean"] .shift-amt b, :root[data-skin="mid"] .shift-amt b, :root[data-skin="clean"] .cost-amt b, :root[data-skin="mid"] .cost-amt b, :root[data-skin="clean"] .day-badge b, :root[data-skin="mid"] .day-badge b, :root[data-skin="clean"] .rem-days b, :root[data-skin="mid"] .rem-days b, :root[data-skin="clean"] .res-when b, :root[data-skin="mid"] .res-when b, :root[data-skin="clean"] .next-when b, :root[data-skin="mid"] .next-when b, :root[data-skin="clean"] .cal-ev-amt, :root[data-skin="mid"] .cal-ev-amt, :root[data-skin="clean"] .cl-amt, :root[data-skin="mid"] .cl-amt, :root[data-skin="clean"] .exp-item .amt, :root[data-skin="mid"] .exp-item .amt, :root[data-skin="clean"] .ms-row b, :root[data-skin="mid"] .ms-row b, :root[data-skin="clean"] .rec-title b, :root[data-skin="mid"] .rec-title b, :root[data-skin="clean"] .win b, :root[data-skin="mid"] .win b, :root[data-skin="clean"] .drive-sum b, :root[data-skin="mid"] .drive-sum b, :root[data-skin="clean"] .result-cell b, :root[data-skin="mid"] .result-cell b, :root[data-skin="clean"] .ci-grid b, :root[data-skin="mid"] .ci-grid b, :root[data-skin="clean"] .kpi-value, :root[data-skin="mid"] .kpi-value, :root[data-skin="clean"] .mini-kpi b, :root[data-skin="mid"] .mini-kpi b, :root[data-skin="clean"] .att-n, :root[data-skin="mid"] .att-n, :root[data-skin="clean"] .hap b, :root[data-skin="mid"] .hap b, :root[data-skin="clean"] .goal-num b, :root[data-skin="mid"] .goal-num b, :root[data-skin="clean"] .week-net, :root[data-skin="mid"] .week-net, :root[data-skin="clean"] .timer, :root[data-skin="mid"] .timer, :root[data-skin="clean"] .save-bar .sum b, :root[data-skin="mid"] .save-bar .sum b, :root[data-skin="clean"] .cover-info h1, :root[data-skin="mid"] .cover-info h1, :root[data-skin="clean"] .first-day h2, :root[data-skin="mid"] .first-day h2 {font-family: var(--font); font-weight: 700; letter-spacing: -.02em;}
+:root[data-skin="clean"] h1, :root[data-skin="mid"] h1 {font-weight: 800; letter-spacing: -.025em;}
+:root[data-skin="clean"] :focus-visible, :root[data-skin="mid"] :focus-visible {outline-color: var(--text);}
+:root[data-skin="clean"] .card, :root[data-skin="mid"] .card, :root[data-skin="clean"] .stat-card, :root[data-skin="mid"] .stat-card, :root[data-skin="clean"] .live, :root[data-skin="mid"] .live, :root[data-skin="clean"] .tile, :root[data-skin="mid"] .tile, :root[data-skin="clean"] .big-link, :root[data-skin="mid"] .big-link, :root[data-skin="clean"] .home-link, :root[data-skin="mid"] .home-link, :root[data-skin="clean"] .cover, :root[data-skin="mid"] .cover, :root[data-skin="clean"] .ql, :root[data-skin="mid"] .ql, :root[data-skin="clean"] .reg-group, :root[data-skin="mid"] .reg-group, :root[data-skin="clean"] .first-day, :root[data-skin="mid"] .first-day, :root[data-skin="clean"] .msg, :root[data-skin="mid"] .msg, :root[data-skin="clean"] .drive, :root[data-skin="mid"] .drive, :root[data-skin="clean"] .install-bar, :root[data-skin="mid"] .install-bar, :root[data-skin="clean"] .more > summary, :root[data-skin="mid"] .more > summary, :root[data-skin="clean"] .invite-card, :root[data-skin="mid"] .invite-card, :root[data-skin="clean"] .kpi, :root[data-skin="mid"] .kpi, :root[data-skin="clean"] .mini-kpis, :root[data-skin="mid"] .mini-kpis, :root[data-skin="clean"] .scope-bar, :root[data-skin="mid"] .scope-bar, :root[data-skin="clean"] .adm-picker, :root[data-skin="mid"] .adm-picker, :root[data-skin="clean"] .week-sum, :root[data-skin="mid"] .week-sum, :root[data-skin="clean"] .month-sum, :root[data-skin="mid"] .month-sum {background: var(--surface); border: 1px solid var(--line) !important; box-shadow: none !important; border-radius: var(--r-lg);}
+:root[data-skin="clean"] .card .shift-row, :root[data-skin="mid"] .card .shift-row, :root[data-skin="clean"] .card .cost-row, :root[data-skin="mid"] .card .cost-row, :root[data-skin="clean"] .card .res-row, :root[data-skin="mid"] .card .res-row {border-color: var(--line);}
+:root[data-skin="clean"] .card:focus-within, :root[data-skin="mid"] .card:focus-within {border-color: var(--line);}
+:root[data-skin="clean"] .more > summary, :root[data-skin="mid"] .more > summary {border-left-width: 1px !important;}
+:root[data-skin="clean"] .more > summary .ic, :root[data-skin="mid"] .more > summary .ic {color: var(--muted);}
+:root[data-skin="clean"] .section-title, :root[data-skin="mid"] .section-title {font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 26px 2px 10px;}
+:root[data-skin="clean"] .section-title::before, :root[data-skin="mid"] .section-title::before {display: none;}
+:root[data-skin="clean"] .page-title h1::after, :root[data-skin="mid"] .page-title h1::after {display: none;}
+:root[data-skin="clean"] .page-title h1, :root[data-skin="mid"] .page-title h1 {font-size: 1.75rem;}
+:root[data-skin="clean"] .sub-back, :root[data-skin="mid"] .sub-back, :root[data-skin="clean"] .back, :root[data-skin="mid"] .back, :root[data-skin="clean"] .adm-back, :root[data-skin="mid"] .adm-back {color: var(--muted);}
+:root[data-skin="clean"] .t-ic, :root[data-skin="mid"] .t-ic, :root[data-skin="clean"] .bl-ic, :root[data-skin="mid"] .bl-ic, :root[data-skin="clean"] .ql-ic, :root[data-skin="mid"] .ql-ic, :root[data-skin="clean"] .cost-ic, :root[data-skin="mid"] .cost-ic, :root[data-skin="clean"] .mini-ic, :root[data-skin="mid"] .mini-ic, :root[data-skin="clean"] .kpi-ic, :root[data-skin="mid"] .kpi-ic, :root[data-skin="clean"] .list-btn .l-ic, :root[data-skin="mid"] .list-btn .l-ic, :root[data-skin="clean"] .info-row .l-ic, :root[data-skin="mid"] .info-row .l-ic, :root[data-skin="clean"] .tip-ic, :root[data-skin="mid"] .tip-ic, :root[data-skin="clean"] .msg-ic, :root[data-skin="mid"] .msg-ic, :root[data-skin="clean"] .hl-ic, :root[data-skin="mid"] .hl-ic, :root[data-skin="clean"] .empty-ic, :root[data-skin="mid"] .empty-ic, :root[data-skin="clean"] .rec-ic, :root[data-skin="mid"] .rec-ic, :root[data-skin="clean"] .cal-ev-ic, :root[data-skin="mid"] .cal-ev-ic, :root[data-skin="clean"] .gs-ic, :root[data-skin="mid"] .gs-ic, :root[data-skin="clean"] .att-ic, :root[data-skin="mid"] .att-ic, :root[data-skin="clean"] .hap-ic, :root[data-skin="mid"] .hap-ic, :root[data-skin="clean"] .due-ic, :root[data-skin="mid"] .due-ic, :root[data-skin="clean"] .quote-ic, :root[data-skin="mid"] .quote-ic {background: transparent !important; color: var(--muted) !important; box-shadow: none !important;}
+:root[data-skin="clean"] .t-ic, :root[data-skin="mid"] .t-ic {width: 22px; height: 22px;}
+:root[data-skin="clean"] .bl-ic, :root[data-skin="mid"] .bl-ic, :root[data-skin="clean"] .cost-ic, :root[data-skin="mid"] .cost-ic, :root[data-skin="clean"] .rec-ic, :root[data-skin="mid"] .rec-ic, :root[data-skin="clean"] .cal-ev-ic, :root[data-skin="mid"] .cal-ev-ic, :root[data-skin="clean"] .att-ic, :root[data-skin="mid"] .att-ic {width: 28px !important; height: 28px !important;}
+:root[data-skin="clean"] .list-btn.danger .l-ic, :root[data-skin="mid"] .list-btn.danger .l-ic, :root[data-skin="clean"] .att-row.bad .att-ic, :root[data-skin="mid"] .att-row.bad .att-ic, :root[data-skin="clean"] .cal-ev.late .cal-ev-ic, :root[data-skin="mid"] .cal-ev.late .cal-ev-ic, :root[data-skin="clean"] .due-row.late .due-ic, :root[data-skin="mid"] .due-row.late .due-ic {color: var(--neg) !important;}
+:root[data-skin="clean"] .empty-ic, :root[data-skin="mid"] .empty-ic {color: var(--faint) !important;}
+:root[data-skin="clean"] .tile-top .ic-chip, :root[data-skin="mid"] .tile-top .ic-chip, :root[data-skin="clean"] .quick .q-ic, :root[data-skin="mid"] .quick .q-ic, :root[data-skin="clean"] .exp-item .e-ic, :root[data-skin="mid"] .exp-item .e-ic {background: transparent; color: var(--muted); width: 22px; height: 22px;}
+:root[data-skin="clean"] .stat-label .ic, :root[data-skin="mid"] .stat-label .ic {color: var(--faint);}
+:root[data-skin="clean"] .share-name .ic, :root[data-skin="mid"] .share-name .ic {color: var(--muted);}
+:root[data-skin="clean"] .btn, :root[data-skin="mid"] .btn {border-radius: var(--r-md); font-weight: 700;}
+:root[data-skin="clean"] .btn-lg, :root[data-skin="mid"] .btn-lg, :root[data-skin="clean"] .btn-xl, :root[data-skin="mid"] .btn-xl {border-radius: 14px;}
+:root[data-skin="clean"] .btn:active, :root[data-skin="mid"] .btn:active {transform: none; opacity: .85;}
+:root[data-skin="clean"] .btn-primary, :root[data-skin="mid"] .btn-primary, :root[data-skin="clean"] .btn-page, :root[data-skin="mid"] .btn-page, :root[data-skin="clean"] .shift-cta, :root[data-skin="mid"] .shift-cta, :root[data-skin="clean"] .fab, :root[data-skin="mid"] .fab {box-shadow: none !important;}
+:root[data-skin="clean"] .btn-ghost, :root[data-skin="mid"] .btn-ghost {background: var(--surface); border: 1px solid var(--line); color: var(--text);}
+:root[data-skin="clean"] .btn-ghost:hover, :root[data-skin="mid"] .btn-ghost:hover {border-color: var(--faint);}
+:root[data-skin="clean"] .btn-outline, :root[data-skin="mid"] .btn-outline {border: 1px solid var(--line);}
+:root[data-skin="clean"] .icon-btn, :root[data-skin="mid"] .icon-btn {background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md);}
+:root[data-skin="clean"] .icon-btn.plain, :root[data-skin="mid"] .icon-btn.plain {background: transparent; border: 0;}
+:root[data-skin="clean"] .chip, :root[data-skin="mid"] .chip, :root[data-skin="clean"] .chip.page, :root[data-skin="mid"] .chip.page, :root[data-skin="clean"] .chip.warn, :root[data-skin="mid"] .chip.warn, :root[data-skin="clean"] .chip.good, :root[data-skin="mid"] .chip.good, :root[data-skin="clean"] .chip.bad, :root[data-skin="mid"] .chip.bad {background: var(--surface-2); color: var(--muted);}
+:root[data-skin="clean"] .chip.bad, :root[data-skin="mid"] .chip.bad {color: var(--neg);}
+:root[data-skin="clean"] .chip.good, :root[data-skin="mid"] .chip.good {color: var(--pos);}
+:root[data-skin="clean"] .ic-fill, :root[data-skin="mid"] .ic-fill {opacity: 0 !important;}
+:root[data-skin="clean"] .seg, :root[data-skin="mid"] .seg {background: var(--surface-2); border: 0 !important; border-radius: var(--r-md); padding: 3px;}
+:root[data-skin="clean"] .seg-btn, :root[data-skin="mid"] .seg-btn {border-radius: 9px;}
+:root[data-skin="clean"] .seg-btn.on, :root[data-skin="mid"] .seg-btn.on, :root[data-skin="clean"] .seg.on-page .seg-btn.on, :root[data-skin="mid"] .seg.on-page .seg-btn.on, :root[data-skin="clean"] body.admin .seg-btn.on, :root[data-skin="mid"] body.admin .seg-btn.on, :root[data-skin="clean"] body.admin .seg.on-page .seg-btn.on, :root[data-skin="mid"] body.admin .seg.on-page .seg-btn.on {background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--line) !important;}
+:root[data-skin="clean"] .nav, :root[data-skin="mid"] .nav {background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; border-top: 1px solid var(--line);}
+:root[data-skin="clean"] .nav a, :root[data-skin="mid"] .nav a {color: var(--faint);}
+:root[data-skin="clean"] .nav a.on, :root[data-skin="mid"] .nav a.on {color: var(--text); font-weight: 800;}
+:root[data-skin="clean"] .nav-ic, :root[data-skin="mid"] .nav-ic, :root[data-skin="clean"] .nav.nav-3 .nav-ic, :root[data-skin="mid"] .nav.nav-3 .nav-ic {width: 44px; height: 30px; border-radius: 0; position: relative;}
+:root[data-skin="clean"] .nav a:not(.on) .nav-ic, :root[data-skin="mid"] .nav a:not(.on) .nav-ic {color: var(--faint);}
+:root[data-skin="clean"] .nav a.on .nav-ic, :root[data-skin="mid"] .nav a.on .nav-ic {background: transparent !important; color: var(--text) !important; box-shadow: none !important;}
+:root[data-skin="clean"] .nav a.on .nav-ic::before, :root[data-skin="mid"] .nav a.on .nav-ic::before {content: ''; position: absolute; left: 8px; right: 8px; top: -7px; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent);}
+:root[data-skin="clean"] .hero, :root[data-skin="mid"] .hero {background: var(--surface) !important; color: var(--text); border: 1px solid var(--line) !important; box-shadow: none !important; padding: 18px;}
+:root[data-skin="clean"] .hero::before, :root[data-skin="mid"] .hero::before, :root[data-skin="clean"] .hero::after, :root[data-skin="mid"] .hero::after {display: none !important;}
+:root[data-skin="clean"] .hero h1, :root[data-skin="mid"] .hero h1 {font-family: var(--font); font-size: 1.5rem;}
+:root[data-skin="clean"] .hero .hero-sub, :root[data-skin="mid"] .hero .hero-sub {color: var(--muted);}
+:root[data-skin="clean"] .hero-num, :root[data-skin="mid"] .hero-num {color: var(--text); font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .hero-chip, :root[data-skin="mid"] .hero-chip {background: var(--surface-2); border: 0; color: var(--muted); backdrop-filter: none;}
+:root[data-skin="clean"] .hero-btn, :root[data-skin="mid"] .hero-btn {background: var(--surface); border: 1px solid var(--line); color: var(--text); border-radius: var(--r-md);}
+:root[data-skin="clean"] .hero .seg, :root[data-skin="mid"] .hero .seg {background: var(--surface-2);}
+:root[data-skin="clean"] .hero .seg-btn, :root[data-skin="mid"] .hero .seg-btn {color: var(--muted); opacity: 1;}
+:root[data-skin="clean"] .hero .seg-btn.on, :root[data-skin="mid"] .hero .seg-btn.on {background: var(--surface); color: var(--text);}
+:root[data-skin="clean"] .hero .period-nav .icon-btn, :root[data-skin="mid"] .hero .period-nav .icon-btn {background: transparent; color: var(--text);}
+:root[data-skin="clean"] .hero .time-in, :root[data-skin="mid"] .hero .time-in {background: var(--surface-2);}
+:root[data-skin="clean"] .hero .time-in span, :root[data-skin="mid"] .hero .time-in span {color: var(--muted); opacity: 1;}
+:root[data-skin="clean"] .hero .time-in input, :root[data-skin="mid"] .hero .time-in input {color: var(--text); color-scheme: light dark;}
+:root[data-skin="clean"] .hero .pos, :root[data-skin="mid"] .hero .pos, :root[data-skin="clean"] .meter .pos, :root[data-skin="mid"] .meter .pos {color: var(--text);}
+:root[data-skin="clean"] .code-box, :root[data-skin="mid"] .code-box {background: var(--surface-2); border: 1px dashed var(--line);}
+:root[data-skin="clean"] .code-btn, :root[data-skin="mid"] .code-btn {background: var(--surface); color: var(--text); border: 1px solid var(--line);}
+:root[data-skin="clean"] .code-btn.solid, :root[data-skin="mid"] .code-btn.solid {background: var(--accent); color: var(--accent-ink); border: 0;}
+:root[data-skin="clean"] .meter, :root[data-skin="mid"] .meter {background: var(--surface) !important; color: var(--text); border: 1px solid var(--line) !important; box-shadow: none !important; padding: 18px 16px 14px;}
+:root[data-skin="clean"] .meter::before, :root[data-skin="mid"] .meter::before, :root[data-skin="clean"] .meter::after, :root[data-skin="mid"] .meter::after {display: none !important;}
+:root[data-skin="clean"] .meter-label, :root[data-skin="mid"] .meter-label {color: var(--muted);}
+:root[data-skin="clean"] .meter-pct, :root[data-skin="mid"] .meter-pct {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .meter-value, :root[data-skin="mid"] .meter-value {color: var(--text) !important; font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .meter-value.neg, :root[data-skin="mid"] .meter-value.neg {color: var(--neg) !important;}
+:root[data-skin="clean"] .meter-goal, :root[data-skin="mid"] .meter-goal {color: var(--muted);}
+:root[data-skin="clean"] .meter-goal b, :root[data-skin="mid"] .meter-goal b {color: var(--text);}
+:root[data-skin="clean"] .meter .road, :root[data-skin="mid"] .meter .road, :root[data-skin="clean"] .road, :root[data-skin="mid"] .road {height: 8px !important; border-radius: 999px; background: var(--surface-3); margin-top: 14px;}
+:root[data-skin="clean"] .road-fill, :root[data-skin="mid"] .road-fill {background: var(--accent) !important; border-radius: 999px;}
+:root[data-skin="clean"] .road-lane, :root[data-skin="mid"] .road-lane, :root[data-skin="clean"] .road-car, :root[data-skin="mid"] .road-car, :root[data-skin="clean"] .road-flag, :root[data-skin="mid"] .road-flag {display: none !important;}
+:root[data-skin="clean"] .meter-today, :root[data-skin="mid"] .meter-today {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .meter-today b, :root[data-skin="mid"] .meter-today b {color: var(--text) !important;}
+:root[data-skin="clean"] .meter-forecast, :root[data-skin="mid"] .meter-forecast {color: var(--muted);}
+:root[data-skin="clean"] .meter-forecast b, :root[data-skin="mid"] .meter-forecast b {color: var(--text);}
+:root[data-skin="clean"] .meter-forecast b.neg, :root[data-skin="mid"] .meter-forecast b.neg {color: var(--neg);}
+:root[data-skin="clean"] .meter-hours, :root[data-skin="mid"] .meter-hours {color: var(--muted);}
+:root[data-skin="clean"] .meter-hours b, :root[data-skin="mid"] .meter-hours b {color: var(--text); font-family: var(--font);}
+:root[data-skin="clean"] .meter-more > summary, :root[data-skin="mid"] .meter-more > summary {color: var(--muted);}
+:root[data-skin="clean"] .meter-cell, :root[data-skin="mid"] .meter-cell {background: var(--surface-2);}
+:root[data-skin="clean"] .meter-cell span, :root[data-skin="mid"] .meter-cell span {color: var(--muted);}
+:root[data-skin="clean"] .meter-cell b, :root[data-skin="mid"] .meter-cell b, :root[data-skin="clean"] .meter-cell b.hl, :root[data-skin="mid"] .meter-cell b.hl {color: var(--text);}
+:root[data-skin="clean"] .meter-note, :root[data-skin="mid"] .meter-note {color: var(--muted);}
+:root[data-skin="clean"] .goal-edit, :root[data-skin="mid"] .goal-edit {text-decoration-color: var(--faint);}
+:root[data-skin="clean"] .avatar, :root[data-skin="mid"] .avatar, :root[data-skin="clean"] .cover-avatar, :root[data-skin="mid"] .cover-avatar {background: var(--surface-2); color: var(--text); box-shadow: none !important; border-radius: 50%; font-family: var(--font);}
+:root[data-skin="clean"] .avatar.has-photo, :root[data-skin="mid"] .avatar.has-photo {border-radius: 50%;}
+:root[data-skin="clean"] .cover-avatar img, :root[data-skin="mid"] .cover-avatar img {border-radius: 50%;}
+:root[data-skin="clean"] .first-day h2, :root[data-skin="mid"] .first-day h2 {font-family: var(--font);}
+:root[data-skin="clean"] .fd-ic, :root[data-skin="mid"] .fd-ic {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .fd-steps li::before, :root[data-skin="mid"] .fd-steps li::before {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .home-link.on, :root[data-skin="mid"] .home-link.on {box-shadow: none !important; border-color: var(--faint) !important;}
+:root[data-skin="clean"] .home-link.on .hl-chev, :root[data-skin="mid"] .home-link.on .hl-chev {color: var(--text);}
+:root[data-skin="clean"] .home-link:nth-child(2) .hl-ic, :root[data-skin="mid"] .home-link:nth-child(2) .hl-ic {background: transparent; color: var(--muted);}
+:root[data-skin="clean"] .quote, :root[data-skin="mid"] .quote {background: var(--surface); border: 1px solid var(--line);}
+:root[data-skin="clean"] .live, :root[data-skin="mid"] .live, :root[data-skin="clean"] .drive, :root[data-skin="mid"] .drive {border: 1px solid var(--line) !important;}
+:root[data-skin="clean"] .live-dot, :root[data-skin="mid"] .live-dot {animation: none;}
+:root[data-skin="clean"] .next-when, :root[data-skin="mid"] .next-when, :root[data-skin="clean"] .next-item.pay .next-when, :root[data-skin="mid"] .next-item.pay .next-when, :root[data-skin="clean"] .res-when, :root[data-skin="mid"] .res-when, :root[data-skin="clean"] .day-badge, :root[data-skin="mid"] .day-badge, :root[data-skin="clean"] .day-badge.night, :root[data-skin="mid"] .day-badge.night, :root[data-skin="clean"] .rem-days, :root[data-skin="mid"] .rem-days {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .next-when b, :root[data-skin="mid"] .next-when b {color: var(--text);}
+:root[data-skin="clean"] .next-item.late .next-when, :root[data-skin="mid"] .next-item.late .next-when, :root[data-skin="clean"] .rem-days.bad, :root[data-skin="mid"] .rem-days.bad {background: var(--neg-soft); color: var(--neg);}
+:root[data-skin="clean"] .res-when span, :root[data-skin="mid"] .res-when span {color: var(--muted);}
+:root[data-skin="clean"] .trend.up, :root[data-skin="mid"] .trend.up, :root[data-skin="clean"] .trend.down, :root[data-skin="mid"] .trend.down {background: var(--surface-2);}
+:root[data-skin="clean"] .week-bar.pos, :root[data-skin="mid"] .week-bar.pos, :root[data-skin="clean"] .bar.pos, :root[data-skin="mid"] .bar.pos, :root[data-skin="clean"] .bars.violet .bar.pos, :root[data-skin="mid"] .bars.violet .bar.pos {background: var(--accent); fill: var(--accent);}
+:root[data-skin="clean"] .week-bar.neg, :root[data-skin="mid"] .week-bar.neg {background: var(--neg);}
+:root[data-skin="clean"] .wd-row .wd-fill, :root[data-skin="mid"] .wd-row .wd-fill, :root[data-skin="clean"] .hours span, :root[data-skin="mid"] .hours span {background: var(--surface-3);}
+:root[data-skin="clean"] .wd-row.best .wd-fill, :root[data-skin="mid"] .wd-row.best .wd-fill, :root[data-skin="clean"] .hours span.best, :root[data-skin="mid"] .hours span.best {background: var(--accent);}
+:root[data-skin="clean"] .win-rank, :root[data-skin="mid"] .win-rank, :root[data-skin="clean"] .win:nth-child(2) .win-rank, :root[data-skin="mid"] .win:nth-child(2) .win-rank, :root[data-skin="clean"] .win:nth-child(3) .win-rank, :root[data-skin="mid"] .win:nth-child(3) .win-rank {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .tile, :root[data-skin="mid"] .tile {background: var(--surface);}
+:root[data-skin="clean"] .tile:active, :root[data-skin="mid"] .tile:active {border-color: var(--text) !important;}
+:root[data-skin="clean"] .quick button, :root[data-skin="mid"] .quick button {background: var(--surface); border: 1px solid var(--line);}
+:root[data-skin="clean"] .quick .quick-edit, :root[data-skin="mid"] .quick .quick-edit, :root[data-skin="clean"] .quick .quick-more, :root[data-skin="mid"] .quick .quick-more {border-style: dashed;}
+:root[data-skin="clean"] .exp-item, :root[data-skin="mid"] .exp-item, :root[data-skin="clean"] .time-in, :root[data-skin="mid"] .time-in, :root[data-skin="clean"] .np-field, :root[data-skin="mid"] .np-field, :root[data-skin="clean"] .stat, :root[data-skin="mid"] .stat, :root[data-skin="clean"] .result-cell, :root[data-skin="mid"] .result-cell, :root[data-skin="clean"] .result-goal, :root[data-skin="mid"] .result-goal, :root[data-skin="clean"] .ci-grid > div, :root[data-skin="mid"] .ci-grid > div, :root[data-skin="clean"] .fuel-line, :root[data-skin="mid"] .fuel-line, :root[data-skin="clean"] .drive-need, :root[data-skin="mid"] .drive-need, :root[data-skin="clean"] .info-box, :root[data-skin="mid"] .info-box, :root[data-skin="clean"] .next-empty, :root[data-skin="mid"] .next-empty, :root[data-skin="clean"] .hap, :root[data-skin="mid"] .hap, :root[data-skin="clean"] .step-row, :root[data-skin="mid"] .step-row {background: var(--surface-2);}
+:root[data-skin="clean"] .stat-card, :root[data-skin="mid"] .stat-card {background: var(--surface);}
+:root[data-skin="clean"] .np-field.active, :root[data-skin="mid"] .np-field.active {border-color: var(--text); background: var(--surface);}
+:root[data-skin="clean"] .np-key, :root[data-skin="mid"] .np-key {background: var(--surface-2); font-family: var(--font); font-weight: 600; border-radius: var(--r-md);}
+:root[data-skin="clean"] .save-bar, :root[data-skin="mid"] .save-bar {background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none;}
+:root[data-skin="clean"] .sheet, :root[data-skin="mid"] .sheet {border-radius: 20px 20px 0 0;}
+:root[data-skin="clean"] .sheet-backdrop, :root[data-skin="mid"] .sheet-backdrop {background: rgba(0, 0, 0, .45);}
+:root[data-skin="clean"] .chip-btn.on, :root[data-skin="mid"] .chip-btn.on, :root[data-skin="clean"] .option.on, :root[data-skin="mid"] .option.on {background: var(--surface); border-color: var(--text);}
+:root[data-skin="clean"] .option.on .ic, :root[data-skin="mid"] .option.on .ic {color: var(--text);}
+:root[data-skin="clean"] .option, :root[data-skin="mid"] .option {background: var(--surface-2);}
+:root[data-skin="clean"] .input, :root[data-skin="mid"] .input, :root[data-skin="clean"] select.input, :root[data-skin="mid"] select.input {border: 1px solid var(--line); border-radius: var(--r-md);}
+:root[data-skin="clean"] .input:focus, :root[data-skin="mid"] .input:focus {border-color: var(--text); box-shadow: none;}
+:root[data-skin="clean"] .toggle.on, :root[data-skin="mid"] .toggle.on {background: var(--pos);}
+:root[data-skin="clean"] .drive-btn, :root[data-skin="mid"] .drive-btn {background: var(--surface); border: 1px solid var(--line);}
+:root[data-skin="clean"] .drive-btn .db-ic, :root[data-skin="mid"] .drive-btn .db-ic {background: var(--surface-2); color: var(--text) !important;}
+:root[data-skin="clean"] .result-net, :root[data-skin="mid"] .result-net {color: var(--text); font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .result-badge, :root[data-skin="mid"] .result-badge {background: var(--surface-2);}
+:root[data-skin="clean"] .result-badge .ic, :root[data-skin="mid"] .result-badge .ic {color: var(--text);}
+:root[data-skin="clean"] .result-bar span, :root[data-skin="mid"] .result-bar span, :root[data-skin="clean"] .inv-track span, :root[data-skin="mid"] .inv-track span, :root[data-skin="clean"] .ladder-track span, :root[data-skin="mid"] .ladder-track span, :root[data-skin="clean"] .drive-bar i, :root[data-skin="mid"] .drive-bar i, :root[data-skin="clean"] .ci-bar i, :root[data-skin="mid"] .ci-bar i {background: var(--accent);}
+:root[data-skin="clean"] .result-verdict.up, :root[data-skin="mid"] .result-verdict.up, :root[data-skin="clean"] .result-verdict.down, :root[data-skin="mid"] .result-verdict.down {background: var(--surface-2);}
+:root[data-skin="clean"] .ms-total b, :root[data-skin="mid"] .ms-total b, :root[data-skin="clean"] .ms-total b:not(.neg), :root[data-skin="mid"] .ms-total b:not(.neg) {color: var(--text); font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .ms-total b.neg, :root[data-skin="mid"] .ms-total b.neg {color: var(--neg);}
+:root[data-skin="clean"] .ms-row b, :root[data-skin="mid"] .ms-row b {color: var(--text);}
+:root[data-skin="clean"] .big-link > .ic:last-child, :root[data-skin="mid"] .big-link > .ic:last-child {color: var(--faint);}
+:root[data-skin="clean"] .big-link:hover, :root[data-skin="mid"] .big-link:hover, :root[data-skin="clean"] .home-link:hover, :root[data-skin="mid"] .home-link:hover {border-color: var(--faint) !important;}
+:root[data-skin="clean"] .mcmp .mc-row.sel .mc-name, :root[data-skin="mid"] .mcmp .mc-row.sel .mc-name {color: var(--text); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--accent); text-decoration-thickness: 2px;}
+:root[data-skin="clean"] .mc-best, :root[data-skin="mid"] .mc-best {background: var(--accent-soft); color: var(--accent-text);}
+:root[data-skin="clean"] .mc-pct.up, :root[data-skin="mid"] .mc-pct.up {color: var(--pos);}
+:root[data-skin="clean"] .mc-pct.down, :root[data-skin="mid"] .mc-pct.down {color: var(--neg);}
+:root[data-skin="clean"] .mc-bar, :root[data-skin="mid"] .mc-bar {background: var(--surface-2);}
+:root[data-skin="clean"] .mc-bar span, :root[data-skin="mid"] .mc-bar span {background: var(--surface-3); opacity: 1;}
+:root[data-skin="clean"][data-theme="dark"] .mc-bar span, :root[data-skin="mid"][data-theme="dark"] .mc-bar span {background: #3F3F46;}
+:root[data-skin="clean"] .mc-bar span.best, :root[data-skin="mid"] .mc-bar span.best {background: var(--accent);}
+:root[data-skin="clean"] .bar.hl, :root[data-skin="mid"] .bar.hl {fill: var(--text);}
+:root[data-skin="clean"] .share-fill, :root[data-skin="mid"] .share-fill {background: var(--text);}
+:root[data-skin="clean"] .car-inv .ci-big, :root[data-skin="mid"] .car-inv .ci-big {color: var(--text); font-family: var(--font);}
+:root[data-skin="clean"] .cover-img, :root[data-skin="mid"] .cover-img {height: 120px;}
+:root[data-skin="clean"] .cover-img::after, :root[data-skin="mid"] .cover-img::after {background: transparent;}
+:root[data-skin="clean"] .cover-btn, :root[data-skin="mid"] .cover-btn {background: rgba(0, 0, 0, .55); backdrop-filter: none;}
+:root[data-skin="clean"] .cover-code, :root[data-skin="mid"] .cover-code {box-shadow: none; font-family: var(--font);}
+:root[data-skin="clean"] .cover-info h1, :root[data-skin="mid"] .cover-info h1 {font-size: 1.25rem;}
+:root[data-skin="clean"] .plate em, :root[data-skin="mid"] .plate em {background: #1D4ED8;}
+:root[data-skin="clean"] .notify-box, :root[data-skin="mid"] .notify-box {background: var(--surface-2);}
+:root[data-skin="clean"] .idea-vote.on, :root[data-skin="mid"] .idea-vote.on {background: var(--accent-soft); color: var(--text);}
+:root[data-skin="clean"] .ticket .bubble.them, :root[data-skin="mid"] .ticket .bubble.them {border: 1px solid var(--line);}
+:root[data-skin="clean"] .msg-reply, :root[data-skin="mid"] .msg-reply {border-color: var(--line) !important;}
+:root[data-skin="clean"] .preview-bar, :root[data-skin="mid"] .preview-bar {background: var(--text); color: var(--bg);}
+:root[data-skin="clean"] .auth::before, :root[data-skin="mid"] .auth::before {display: none;}
+:root[data-skin="clean"] .brand-mark, :root[data-skin="mid"] .brand-mark, :root[data-skin="clean"] .brand-logo, :root[data-skin="mid"] .brand-logo {box-shadow: none !important;}
+:root[data-skin="clean"] .auth-hero h1, :root[data-skin="mid"] .auth-hero h1 {font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .brand-name, :root[data-skin="mid"] .brand-name {font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .brand-name b, :root[data-skin="mid"] .brand-name b {color: inherit;}
+:root[data-skin="clean"] .demo-box, :root[data-skin="mid"] .demo-box {border: 1px dashed var(--line);}
+:root[data-skin="clean"] .tour-card, :root[data-skin="mid"] .tour-card {border: 1px solid var(--line); box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .45);}
+:root[data-skin="clean"] .tour-hole, :root[data-skin="mid"] .tour-hole {border-color: var(--accent);}
+:root[data-skin="clean"] .toast, :root[data-skin="mid"] .toast {box-shadow: none;}
+:root[data-skin="clean"] body:not(.admin) .arr-bar, :root[data-skin="mid"] body:not(.admin) .arr-bar {border: 1px solid var(--line); box-shadow: 0 16px 40px -16px rgba(0, 0, 0, .35);}
+:root[data-skin="clean"] body.admin, :root[data-skin="mid"] body.admin {--side: var(--surface); --side-2: var(--surface-2); --side-text: var(--muted);}
+:root[data-skin="clean"] .adm-side, :root[data-skin="mid"] .adm-side {background: var(--surface); color: var(--text); border-bottom: 1px solid var(--line); border-right: 0;}
+:root[data-skin="clean"] .adm-side .brand-name, :root[data-skin="mid"] .adm-side .brand-name {color: var(--text);}
+:root[data-skin="clean"] .adm-side .brand-name b, :root[data-skin="mid"] .adm-side .brand-name b {color: inherit;}
+:root[data-skin="clean"] .adm-side .brand-logo, :root[data-skin="mid"] .adm-side .brand-logo {box-shadow: none !important;}
+:root[data-skin="clean"] .adm-badge, :root[data-skin="mid"] .adm-badge {color: var(--muted); border-color: var(--line);}
+:root[data-skin="clean"] .adm-nav a, :root[data-skin="mid"] .adm-nav a {color: var(--muted);}
+:root[data-skin="clean"] .adm-nav a:hover, :root[data-skin="mid"] .adm-nav a:hover {background: var(--surface-2); color: var(--text);}
+:root[data-skin="clean"] .adm-nav a.on, :root[data-skin="mid"] .adm-nav a.on {background: var(--accent); color: var(--accent-ink); box-shadow: none;}
+:root[data-skin="clean"] .adm-nav .count, :root[data-skin="mid"] .adm-nav .count {background: var(--surface-2); color: var(--muted);}
+:root[data-skin="clean"] .adm-nav a.on .count, :root[data-skin="mid"] .adm-nav a.on .count {background: rgba(0, 0, 0, .1); color: inherit;}
+:root[data-skin="clean"] .adm-side-foot .who, :root[data-skin="mid"] .adm-side-foot .who {color: var(--faint);}
+:root[data-skin="clean"] .adm-side-foot .icon-btn, :root[data-skin="mid"] .adm-side-foot .icon-btn, :root[data-skin="clean"] .adm-side-foot .btn, :root[data-skin="mid"] .adm-side-foot .btn {background: var(--surface); color: var(--text); border: 1px solid var(--line);}
+:root[data-skin="clean"] .adm-side-foot a.icon-btn.on, :root[data-skin="mid"] .adm-side-foot a.icon-btn.on {background: var(--accent); color: var(--accent-ink); border-color: transparent;}
+:root[data-skin="clean"] .adm-head h1, :root[data-skin="mid"] .adm-head h1 {font-family: var(--font); font-weight: 800;}
+:root[data-skin="clean"] .adm-tabs, :root[data-skin="mid"] .adm-tabs {background: var(--surface-2); border: 0 !important; border-radius: var(--r-md); padding: 3px;}
+:root[data-skin="clean"] .adm-tab, :root[data-skin="mid"] .adm-tab {border-radius: 9px;}
+:root[data-skin="clean"] .adm-tab:hover, :root[data-skin="mid"] .adm-tab:hover {background: transparent; color: var(--text);}
+:root[data-skin="clean"] .adm-tab.on, :root[data-skin="mid"] .adm-tab.on {background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--line) !important;}
+:root[data-skin="clean"] .adm-tab .count, :root[data-skin="mid"] .adm-tab .count {background: var(--surface-3);}
+:root[data-skin="clean"] .adm-tab.on .count, :root[data-skin="mid"] .adm-tab.on .count {background: var(--surface-2); color: var(--muted);}
+:root[data-skin="clean"] .adm-tab .count.alert, :root[data-skin="mid"] .adm-tab .count.alert, :root[data-skin="clean"] .adm-nav .count.alert, :root[data-skin="mid"] .adm-nav .count.alert {background: var(--neg); color: #fff;}
+:root[data-skin="clean"] body.admin .card, :root[data-skin="mid"] body.admin .card, :root[data-skin="clean"] body.admin .kpi, :root[data-skin="mid"] body.admin .kpi, :root[data-skin="clean"] body.admin .mini-kpis, :root[data-skin="mid"] body.admin .mini-kpis, :root[data-skin="clean"] body.admin .scope-bar, :root[data-skin="mid"] body.admin .scope-bar, :root[data-skin="clean"] body.admin .tbl-wrap, :root[data-skin="mid"] body.admin .tbl-wrap {border-color: var(--line) !important;}
+:root[data-skin="clean"] .icon-btn.top-btn, :root[data-skin="mid"] .icon-btn.top-btn {background: var(--surface);}
+:root[data-skin="clean"] .icon-btn.top-btn.has, :root[data-skin="mid"] .icon-btn.top-btn.has {color: var(--text); border-color: var(--faint);}
+:root[data-skin="clean"] .gs-row em, :root[data-skin="mid"] .gs-row em, :root[data-skin="clean"] .tag, :root[data-skin="mid"] .tag {background: var(--surface-2); color: var(--muted); border-color: var(--line);}
+:root[data-skin="clean"] .arr-toggle.on, :root[data-skin="mid"] .arr-toggle.on {background: var(--text); color: var(--bg);}
+:root[data-skin="clean"] .goal-bar i, :root[data-skin="mid"] .goal-bar i {background: var(--accent);}
+:root[data-skin="clean"] .hap, :root[data-skin="mid"] .hap {color: var(--muted);}
+:root[data-skin="clean"] .hap.good .hap-ic, :root[data-skin="mid"] .hap.good .hap-ic, :root[data-skin="clean"] .hap.warn .hap-ic, :root[data-skin="mid"] .hap.warn .hap-ic, :root[data-skin="clean"] .hap.bad .hap-ic, :root[data-skin="mid"] .hap.bad .hap-ic {background: transparent;}
+:root[data-skin="clean"] .hap.good .hap-ic, :root[data-skin="mid"] .hap.good .hap-ic {color: var(--pos) !important;}
+:root[data-skin="clean"] .hap.bad .hap-ic, :root[data-skin="mid"] .hap.bad .hap-ic {color: var(--neg) !important;}
+:root[data-skin="clean"] .kpi-value, :root[data-skin="mid"] .kpi-value {color: var(--text);}
+:root[data-skin="clean"] .trend-chip.up, :root[data-skin="mid"] .trend-chip.up, :root[data-skin="clean"] .trend-chip.down, :root[data-skin="mid"] .trend-chip.down {background: var(--surface-2);}
+:root[data-skin="clean"] .attention, :root[data-skin="mid"] .attention {border-color: var(--line) !important;}
+:root[data-skin="clean"] .scope-ic, :root[data-skin="mid"] .scope-ic, :root[data-skin="clean"] .drv-av, :root[data-skin="mid"] .drv-av {background: var(--surface-2); color: var(--text);}
+@media (min-width: 1000px) {
+:root[data-skin="clean"] .adm-side, :root[data-skin="mid"] .adm-side {border-right: 1px solid var(--line); border-bottom: 0;}
+}
+:root[data-skin="clean"] body.admin .adm-head h1::after, :root[data-skin="mid"] body.admin .adm-head h1::after {display: none;}
+:root[data-skin="clean"] .hap.hc, :root[data-skin="mid"] .hap.hc, :root[data-skin="clean"] .hap.hc.has, :root[data-skin="mid"] .hap.hc.has {border-left: 0;}
+:root[data-skin="clean"] .fuel-line .ic, :root[data-skin="mid"] .fuel-line .ic {color: var(--muted);}
+:root[data-skin="clean"] .cover-img, :root[data-skin="mid"] .cover-img {background-color: var(--surface-2);}
+:root[data-skin="clean"] .adm-side-foot .icon-btn, :root[data-skin="mid"] .adm-side-foot .icon-btn, :root[data-skin="clean"] .adm-side-foot .btn, :root[data-skin="mid"] .adm-side-foot .btn {border-color: var(--line) !important; box-shadow: none !important;}
+:root[data-skin="mid"], :root[data-skin="mid"] [data-page] {--font: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; --display: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; --c-green: #16A34A; --c-blue: #2563EB; --c-violet: #7C3AED; --c-amber: #D97706; --c-orange: #EA580C; --c-sky: #0284C7; --c-red: #DC2626; --c-teal: #0D9488; --c-pink: #DB2777; --c-slate: #475569; --c-gray: #71717A; --violet: #7C3AED; --v-soft: rgba(124, 58, 237, .09); --v-line: rgba(124, 58, 237, .28); --v-strong: rgba(124, 58, 237, .5); --y-line: rgba(245, 165, 0, .55); --shadow: 0 1px 2px rgba(17, 17, 19, .04), 0 6px 18px -12px rgba(17, 17, 19, .14);}
+:root[data-skin="mid"][data-theme="dark"], :root[data-skin="mid"][data-theme="dark"] [data-page] {--c-green: #4ADE80; --c-blue: #60A5FA; --c-violet: #A78BFA; --c-amber: #FBBF24; --c-orange: #FB923C; --c-sky: #38BDF8; --c-red: #F87171; --c-teal: #2DD4BF; --c-pink: #F472B6; --c-slate: #94A3B8; --violet: #A78BFA; --v-soft: rgba(167, 139, 250, .13); --v-line: rgba(167, 139, 250, .3); --v-strong: rgba(167, 139, 250, .55); --y-line: rgba(255, 194, 26, .5); --shadow: none;}
+@media (prefers-color-scheme: dark) {
+:root[data-skin="mid"]:not([data-theme="light"]):not([data-theme="sun"]), :root[data-skin="mid"]:not([data-theme="light"]):not([data-theme="sun"]) [data-page] {--c-green: #4ADE80; --c-blue: #60A5FA; --c-violet: #A78BFA; --c-amber: #FBBF24; --c-orange: #FB923C; --c-sky: #38BDF8; --c-red: #F87171; --c-teal: #2DD4BF; --c-pink: #F472B6; --c-slate: #94A3B8; --violet: #A78BFA; --v-soft: rgba(167, 139, 250, .13); --v-line: rgba(167, 139, 250, .3); --v-strong: rgba(167, 139, 250, .55); --y-line: rgba(255, 194, 26, .5); --shadow: none;}
+}
+:root[data-skin="mid"] [data-page] {--pc: var(--c-violet);}
+:root[data-skin="mid"] [data-page="home"] {--pc: var(--c-amber);}
+:root[data-skin="mid"] [data-page="money"], :root[data-skin="mid"] [data-page="shifts"] {--pc: var(--c-green);}
+:root[data-skin="mid"] [data-page="stats"] {--pc: var(--c-violet);}
+:root[data-skin="mid"] [data-page="costs"] {--pc: var(--c-orange);}
+:root[data-skin="mid"] [data-page="shift"] {--pc: var(--c-blue);}
+:root[data-skin="mid"] [data-page="me"], :root[data-skin="mid"] [data-page="profile"], :root[data-skin="mid"] [data-page="car"], :root[data-skin="mid"] [data-page="vehicle"] {--pc: var(--c-teal);}
+:root[data-skin="mid"] .meter-value, :root[data-skin="mid"] .hero-num, :root[data-skin="mid"] .ms-total b, :root[data-skin="mid"] .result-net, :root[data-skin="mid"] .week-net, :root[data-skin="mid"] .car-inv .ci-big, :root[data-skin="mid"] .kpi-value {font-family: 'Unbounded', 'Onest', sans-serif !important; font-weight: 700; letter-spacing: -.03em;}
+:root[data-skin="mid"] .card, :root[data-skin="mid"] .stat-card, :root[data-skin="mid"] .tile, :root[data-skin="mid"] .big-link, :root[data-skin="mid"] .home-link, :root[data-skin="mid"] .cover, :root[data-skin="mid"] .reg-group, :root[data-skin="mid"] .msg, :root[data-skin="mid"] .drive, :root[data-skin="mid"] .more > summary, :root[data-skin="mid"] .kpi, :root[data-skin="mid"] .mini-kpis, :root[data-skin="mid"] .scope-bar, :root[data-skin="mid"] .adm-picker, :root[data-skin="mid"] .week-sum {box-shadow: var(--shadow) !important;}
+:root[data-skin="mid"][data-theme="dark"] .card {box-shadow: none !important;}
+:root[data-skin="mid"] .meter, :root[data-skin="mid"] .month-sum, :root[data-skin="mid"] .hero, :root[data-skin="mid"] .first-day {border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important;}
+:root[data-skin="mid"] .meter, :root[data-skin="mid"] .hero {position: relative; overflow: hidden; padding-top: 24px !important;}
+:root[data-skin="mid"] .meter::before, :root[data-skin="mid"] .hero::before {display: block !important; content: '' !important; position: absolute; left: 0 !important; right: 0 !important; top: 0 !important; height: 8px !important; border-radius: 0 !important; background: conic-gradient(#FFC21A 25%, #111 0 50%, #FFC21A 0 75%, #111 0) 0 0 / 16px 16px !important; opacity: 1 !important;}
+:root[data-skin="mid"] .hero::after, :root[data-skin="mid"] .meter::after {display: none !important;}
+:root[data-skin="mid"][data-brand="one"] .meter::before, :root[data-skin="mid"][data-brand="one"] .hero::before {background: var(--accent) !important; height: 5px !important;}
+:root[data-skin="mid"] .meter .road, :root[data-skin="mid"] .road {height: 26px !important; border-radius: 10px; background: var(--surface-2); margin-top: 14px;}
+:root[data-skin="mid"] .road-fill {border-radius: 10px;}
+:root[data-skin="mid"] .road-lane {display: block !important; background: repeating-linear-gradient(90deg, var(--faint) 0 10px, transparent 10px 20px) !important; opacity: .45; height: 2px;}
+:root[data-skin="mid"] .road-car {display: grid !important; width: 26px !important; height: 26px !important; border-radius: 8px; background: var(--text); color: var(--accent); box-shadow: none;}
+:root[data-skin="mid"] .road-flag {display: block !important; color: var(--muted);}
+:root[data-skin="mid"] .meter-pct {background: var(--accent-soft); color: var(--accent-text);}
+:root[data-skin="mid"] .meter-today {background: var(--accent-soft); border: 1px solid var(--y-line);}
+:root[data-skin="mid"] .t-ic, :root[data-skin="mid"] .bl-ic, :root[data-skin="mid"] .ql-ic, :root[data-skin="mid"] .list-btn .l-ic, :root[data-skin="mid"] .info-row .l-ic, :root[data-skin="mid"] .msg-ic, :root[data-skin="mid"] .hl-ic, :root[data-skin="mid"] .empty-ic, :root[data-skin="mid"] .gs-ic, :root[data-skin="mid"] .kpi-ic, :root[data-skin="mid"] .mini-ic {background: color-mix(in srgb, var(--pc) 12%, var(--surface)) !important; color: var(--pc) !important; border-radius: 10px;}
+:root[data-skin="mid"] .t-ic {width: 30px; height: 30px;}
+:root[data-skin="mid"] .bl-ic {width: 40px !important; height: 40px !important; border-radius: 12px;}
+:root[data-skin="mid"] .cost-ic, :root[data-skin="mid"] .rec-ic, :root[data-skin="mid"] .cal-ev-ic, :root[data-skin="mid"] .tip-ic, :root[data-skin="mid"] .att-ic, :root[data-skin="mid"] .hap-ic, :root[data-skin="mid"] .due-ic {background: color-mix(in srgb, var(--rc, var(--pc)) 12%, var(--surface)) !important; color: var(--rc, var(--pc)) !important; border-radius: 10px;}
+:root[data-skin="mid"] .cost-ic, :root[data-skin="mid"] .rec-ic, :root[data-skin="mid"] .cal-ev-ic, :root[data-skin="mid"] .att-ic {width: 38px !important; height: 38px !important;}
+:root[data-skin="mid"] .tile-top .ic-chip, :root[data-skin="mid"] .quick .q-ic, :root[data-skin="mid"] .exp-item .e-ic {background: color-mix(in srgb, var(--tc, var(--qc, var(--pc))) 13%, transparent); color: var(--tc, var(--qc, var(--pc))); width: 28px; height: 28px; border-radius: 9px;}
+:root[data-skin="mid"] .quick .q-ic {width: 36px; height: 36px; border-radius: 11px;}
+:root[data-skin="mid"] .stat-label .ic {color: var(--pc);}
+:root[data-skin="mid"] .share-name .ic {color: var(--rc, var(--muted));}
+:root[data-skin="mid"] .share-fill {background: var(--rc, var(--text));}
+:root[data-skin="mid"] .list-btn.danger .l-ic {background: var(--neg-soft) !important; color: var(--neg) !important;}
+:root[data-skin="mid"] .big-links > [data-k="stats"] .bl-ic, :root[data-skin="mid"] .big-links > [data-k="ideas"] .bl-ic {--pc: var(--c-violet);}
+:root[data-skin="mid"] .big-links > [data-k="shifts"] .bl-ic, :root[data-skin="mid"] .big-links > [data-k="profile"] .bl-ic {--pc: var(--c-blue);}
+:root[data-skin="mid"] .big-links > [data-k="costs"] .bl-ic, :root[data-skin="mid"] .big-links > [data-k="vehicle"] .bl-ic {--pc: var(--c-orange);}
+:root[data-skin="mid"] .big-links > [data-k="excel"] .bl-ic, :root[data-skin="mid"] .big-links > [data-k="guide"] .bl-ic {--pc: var(--c-green);}
+:root[data-skin="mid"] .big-links > [data-k="carset"] .bl-ic, :root[data-skin="mid"] .big-links > [data-k="write"] .bl-ic {--pc: var(--c-teal);}
+:root[data-skin="mid"] .big-links > [data-k="tour"] .bl-ic, :root[data-skin="mid"] .big-links > [data-k="arrange"] .bl-ic {--pc: var(--c-amber);}
+:root[data-skin="mid"] .home-link:nth-child(1) .hl-ic {--pc: var(--c-blue);}
+:root[data-skin="mid"] .home-link:nth-child(2) .hl-ic {--pc: var(--c-violet); background: color-mix(in srgb, var(--c-violet) 12%, var(--surface)) !important; color: var(--c-violet) !important;}
+:root[data-skin="mid"] .big-link:hover, :root[data-skin="mid"] .home-link:hover, :root[data-skin="mid"] .home-link.on {border-color: color-mix(in srgb, var(--pc) 45%, var(--line)) !important;}
+:root[data-skin="mid"] .tile:active {border-color: var(--tc, var(--pc)) !important;}
+:root[data-skin="mid"] .section-title {text-transform: none; letter-spacing: 0; font-size: .92rem; color: var(--muted); display: flex; align-items: center; gap: 8px;}
+:root[data-skin="mid"] .section-title::before {display: block; content: ''; width: 4px; height: 15px; border-radius: 4px; background: var(--pc); flex: none;}
+:root[data-skin="mid"] .nav a.on .nav-ic {background: var(--accent) !important; color: var(--accent-ink) !important; border-radius: 999px;}
+:root[data-skin="mid"] .nav a.on .nav-ic::before {display: none;}
+:root[data-skin="mid"] .nav-ic, :root[data-skin="mid"] .nav.nav-3 .nav-ic {width: 56px; height: 32px; border-radius: 999px;}
+:root[data-skin="mid"] .seg-btn.on, :root[data-skin="mid"] .seg.on-page .seg-btn.on, :root[data-skin="mid"] .hero .seg-btn.on {background: var(--accent); color: var(--accent-ink); box-shadow: none !important;}
+:root[data-skin="mid"] body.admin .seg-btn.on, :root[data-skin="mid"] body.admin .seg.on-page .seg-btn.on {background: var(--violet); color: #fff; box-shadow: none !important;}
+:root[data-skin="mid"] .hero-chip {background: color-mix(in srgb, var(--pc) 10%, var(--surface)); color: var(--text); border: 1px solid color-mix(in srgb, var(--pc) 25%, transparent);}
+:root[data-skin="mid"] .chip.good {background: var(--pos-soft);}
+:root[data-skin="mid"] .chip.bad {background: var(--neg-soft);}
+:root[data-skin="mid"] .trend.up {background: var(--pos-soft); color: var(--pos);}
+:root[data-skin="mid"] .trend.down {background: var(--neg-soft); color: var(--neg);}
+:root[data-skin="mid"] .mc-bar span {background: color-mix(in srgb, var(--c-violet) 45%, var(--surface-2));}
+:root[data-skin="mid"] .mc-best {background: var(--accent-soft);}
+:root[data-skin="mid"] .week-bar.pos, :root[data-skin="mid"] .bar.pos {background: var(--accent); fill: var(--accent);}
+:root[data-skin="mid"] .wd-row .wd-fill, :root[data-skin="mid"] .hours span {background: color-mix(in srgb, var(--c-violet) 35%, var(--surface-2));}
+:root[data-skin="mid"] .next-when {background: var(--v-soft);}
+:root[data-skin="mid"] .next-when b {color: var(--violet);}
+:root[data-skin="mid"] .day-badge {background: color-mix(in srgb, var(--c-green) 10%, var(--surface));}
+:root[data-skin="mid"] .day-badge.night {background: var(--v-soft);}
+:root[data-skin="mid"] .rem-days {background: var(--accent-soft);}
+:root[data-skin="mid"] .np-field.active {border-color: var(--accent);}
+:root[data-skin="mid"] .option.on, :root[data-skin="mid"] .chip-btn.on {border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface));}
+:root[data-skin="mid"] .input:focus {border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 194, 26, .25);}
+:root[data-skin="mid"] .avatar, :root[data-skin="mid"] .cover-avatar {background: var(--accent); color: var(--accent-ink);}
+:root[data-skin="mid"] .cover-avatar {box-shadow: 0 0 0 3px var(--accent) !important;}
+:root[data-skin="mid"] .live, :root[data-skin="mid"] .drive {border: 1.5px solid color-mix(in srgb, var(--pos) 45%, transparent) !important;}
+:root[data-skin="mid"] .live-dot {animation: pulse 2s infinite;}
+:root[data-skin="mid"] .msg {border-left: 4px solid var(--violet) !important;}
+:root[data-skin="mid"] .more > summary {border-left: 4px solid var(--pc) !important;}
+:root[data-skin="mid"] .sub-back {color: var(--pc);}
+:root[data-skin="mid"] .fuel-line .ic {color: var(--c-orange);}
+:root[data-skin="mid"] .adm-side .brand-name b {color: var(--violet);}
+:root[data-skin="mid"] .adm-nav a.on {background: var(--accent); color: var(--accent-ink);}
+:root[data-skin="mid"] .adm-tab.on {background: var(--violet); color: #fff; box-shadow: none !important;}
+:root[data-skin="mid"] .adm-tab.on .count {background: rgba(255, 255, 255, .22); color: #fff;}
+:root[data-skin="mid"] .hap.hc {border-left: 4px solid transparent;}
+:root[data-skin="mid"] .hap.hc.has {border-left-color: var(--hc);}
+:root[data-skin="mid"] .hap.good .hap-ic {background: var(--pos-soft) !important;}
+:root[data-skin="mid"] .hap.warn .hap-ic {background: var(--accent-soft) !important; color: var(--accent-text) !important;}
+:root[data-skin="mid"] .hap.bad .hap-ic {background: var(--neg-soft) !important;}
+:root[data-skin="mid"] .kpi-ic, :root[data-skin="mid"] .mini-ic {--pc: var(--kc, var(--violet));}
+:root[data-skin="mid"] .attention {border-color: var(--y-line) !important;}
+:root[data-skin="mid"] .goal-bar i {background: linear-gradient(90deg, var(--violet), #A78BFA);}
+:root[data-skin="mid"] body.admin {--pc: var(--violet);}
+:root[data-skin="mid"][data-brand="one"] .meter-value, :root[data-skin="mid"][data-brand="one"] .hero-num, :root[data-skin="mid"][data-brand="one"] .ms-total b, :root[data-skin="mid"][data-brand="one"] .result-net, :root[data-skin="mid"][data-brand="one"] .week-net, :root[data-skin="mid"][data-brand="one"] .car-inv .ci-big {font-family: var(--font) !important;}

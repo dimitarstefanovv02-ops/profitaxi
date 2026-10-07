@@ -19,7 +19,6 @@ function carSub(data) {
 }
 
 export function meView({ go, user, data }) {
-  const ref = store.referralsOn() && store.myReferrals();
   const row = (k, ic, title, sub, onclick, href) => [k, h(href ? 'a' : 'button', { class: 'big-link', href, onclick },
     h('span', { class: 'bl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), sub && h('span', null, sub)), icon('right', 18))];
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
@@ -36,7 +35,6 @@ export function meView({ go, user, data }) {
       row('tour', 'sparkle', 'Кратка разходка', '20 стъпки из приложението', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }),
       row('write', 'inbox', 'Пиши ни', store.myUnreadTickets() > 0 ? 'Имаш нов отговор' : 'Въпрос или проблем – отговаряме тук', null, '#/help')),
     group('more', 'Още',
-      ref && row('invite', 'gift', 'Покани колеги', `Месец безплатно за всеки колега, който плати · ${ref.paid} досега`, null, '#/invite'),
       row('arrange', 'grid', 'Подреди екраните', 'Мести и скривай картите и бутоните, както ти е удобно', () => startArrange()),
       row('ideas', 'sparkle', 'Предложи функция', 'Напиши идея или гласувай за чужда', null, '#/ideas')),
     ]));

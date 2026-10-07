@@ -13,7 +13,6 @@ import { statsView } from './views/stats.js';
 import { costsView } from './views/costs.js';
 import { profileView, carView } from './views/profile.js';
 import { reservationsView } from './views/reservations.js';
-import { inviteView } from './views/invite.js';
 import { moneyView } from './views/money.js';
 import { meView } from './views/me.js';
 import { ideasView } from './views/ideas.js';
@@ -32,7 +31,7 @@ const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forg
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
-  '/reservations': reservationsView, '/invite': inviteView, '/calendar': calendarView,
+  '/reservations': reservationsView, '/calendar': calendarView,
   '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/vehicle': vehicleView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.

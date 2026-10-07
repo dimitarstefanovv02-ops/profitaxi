@@ -1,0 +1,147 @@
+/* ======================================================================
+   ВАРИАНТ 3 (skin "mid") – средата между вариант 1 (fancy) и вариант 2 (clean).
+   Взима всичко от вариант 2 (бяло, чисто, без сияния) и добавя:
+   цветни контури на главните карти, цветни иконки в меки квадратчета,
+   жълто-черната шахматна лента, колата по пътя, жълто хапче в менюто.
+   ====================================================================== */
+
+:root, [data-page] {
+  --font: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --display: 'Onest', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --c-green: #16A34A; --c-blue: #2563EB; --c-violet: #7C3AED; --c-amber: #D97706; --c-orange: #EA580C;
+  --c-sky: #0284C7; --c-red: #DC2626; --c-teal: #0D9488; --c-pink: #DB2777; --c-slate: #475569; --c-gray: #71717A;
+  --violet: #7C3AED; --v-soft: rgba(124, 58, 237, .09); --v-line: rgba(124, 58, 237, .28); --v-strong: rgba(124, 58, 237, .5);
+  --y-line: rgba(245, 165, 0, .55);
+  --shadow: 0 1px 2px rgba(17, 17, 19, .04), 0 6px 18px -12px rgba(17, 17, 19, .14);
+}
+:root[data-theme="dark"], :root[data-theme="dark"] [data-page] {
+  --c-green: #4ADE80; --c-blue: #60A5FA; --c-violet: #A78BFA; --c-amber: #FBBF24; --c-orange: #FB923C;
+  --c-sky: #38BDF8; --c-red: #F87171; --c-teal: #2DD4BF; --c-pink: #F472B6; --c-slate: #94A3B8;
+  --violet: #A78BFA; --v-soft: rgba(167, 139, 250, .13); --v-line: rgba(167, 139, 250, .3); --v-strong: rgba(167, 139, 250, .55);
+  --y-line: rgba(255, 194, 26, .5); --shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="sun"]), :root:not([data-theme="light"]):not([data-theme="sun"]) [data-page] {
+    --c-green: #4ADE80; --c-blue: #60A5FA; --c-violet: #A78BFA; --c-amber: #FBBF24; --c-orange: #FB923C;
+    --c-sky: #38BDF8; --c-red: #F87171; --c-teal: #2DD4BF; --c-pink: #F472B6; --c-slate: #94A3B8;
+    --violet: #A78BFA; --v-soft: rgba(167, 139, 250, .13); --v-line: rgba(167, 139, 250, .3); --v-strong: rgba(167, 139, 250, .55);
+    --y-line: rgba(255, 194, 26, .5); --shadow: none;
+  }
+}
+/* Всяка страница с цвят – за иконките и контурите */
+[data-page] { --pc: var(--c-violet); }
+[data-page="home"] { --pc: var(--c-amber); }
+[data-page="money"], [data-page="shifts"] { --pc: var(--c-green); }
+[data-page="stats"] { --pc: var(--c-violet); }
+[data-page="costs"] { --pc: var(--c-orange); }
+[data-page="shift"] { --pc: var(--c-blue); }
+[data-page="me"], [data-page="profile"], [data-page="car"], [data-page="vehicle"] { --pc: var(--c-teal); }
+
+/* Големите числа отново с характер */
+.meter-value, .hero-num, .ms-total b, .result-net, .week-net, .car-inv .ci-big, .kpi-value { font-family: 'Unbounded', 'Onest', sans-serif !important; font-weight: 700; letter-spacing: -.03em; }
+
+/* ---------- Карти: лека сянка, контур ---------- */
+.card, .stat-card, .tile, .big-link, .home-link, .cover, .reg-group, .msg, .drive, .more > summary, .kpi, .mini-kpis, .scope-bar, .adm-picker, .week-sum { box-shadow: var(--shadow) !important; }
+:root[data-theme="dark"] .card { box-shadow: none !important; }
+
+/* Главните карти: жълт контур (като таксиметрова табела) */
+.meter, .month-sum, .hero, .first-day { border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important; }
+/* Шахматна лента горе на „Чисто този месец“ и шапките */
+.meter, .hero { position: relative; overflow: hidden; padding-top: 24px !important; }
+.meter::before, .hero::before { display: block !important; content: '' !important; position: absolute; left: 0 !important; right: 0 !important; top: 0 !important; height: 8px !important; border-radius: 0 !important;
+  background: conic-gradient(#FFC21A 25%, #111 0 50%, #FFC21A 0 75%, #111 0) 0 0 / 16px 16px !important; opacity: 1 !important; }
+.hero::after, .meter::after { display: none !important; }
+:root[data-brand="one"] .meter::before, :root[data-brand="one"] .hero::before { background: var(--accent) !important; height: 5px !important; }
+
+/* Колата по пътя се връща */
+.meter .road, .road { height: 26px !important; border-radius: 10px; background: var(--surface-2); margin-top: 14px; }
+.road-fill { border-radius: 10px; }
+.road-lane { display: block !important; background: repeating-linear-gradient(90deg, var(--faint) 0 10px, transparent 10px 20px) !important; opacity: .45; height: 2px; }
+.road-car { display: grid !important; width: 26px !important; height: 26px !important; border-radius: 8px; background: var(--text); color: var(--accent); box-shadow: none; }
+.road-flag { display: block !important; color: var(--muted); }
+.meter-pct { background: var(--accent-soft); color: var(--accent-text); }
+.meter-today { background: var(--accent-soft); border: 1px solid var(--y-line); }
+
+/* ---------- Цветни иконки в меки квадратчета ---------- */
+.t-ic, .bl-ic, .ql-ic, .list-btn .l-ic, .info-row .l-ic, .msg-ic, .hl-ic, .empty-ic, .gs-ic, .kpi-ic, .mini-ic {
+  background: color-mix(in srgb, var(--pc) 12%, var(--surface)) !important; color: var(--pc) !important; border-radius: 10px; }
+.t-ic { width: 30px; height: 30px; }
+.bl-ic { width: 40px !important; height: 40px !important; border-radius: 12px; }
+.cost-ic, .rec-ic, .cal-ev-ic, .tip-ic, .att-ic, .hap-ic, .due-ic {
+  background: color-mix(in srgb, var(--rc, var(--pc)) 12%, var(--surface)) !important; color: var(--rc, var(--pc)) !important; border-radius: 10px; }
+.cost-ic, .rec-ic, .cal-ev-ic, .att-ic { width: 38px !important; height: 38px !important; }
+.tile-top .ic-chip, .quick .q-ic, .exp-item .e-ic { background: color-mix(in srgb, var(--tc, var(--qc, var(--pc))) 13%, transparent); color: var(--tc, var(--qc, var(--pc))); width: 28px; height: 28px; border-radius: 9px; }
+.quick .q-ic { width: 36px; height: 36px; border-radius: 11px; }
+.stat-label .ic { color: var(--pc); }
+.share-name .ic { color: var(--rc, var(--muted)); }
+.share-fill { background: var(--rc, var(--text)); }
+.list-btn.danger .l-ic { background: var(--neg-soft) !important; color: var(--neg) !important; }
+/* Бутоните в „Пари“ и „Профил“ – всеки със свой цвят */
+.big-links > [data-k="stats"] .bl-ic, .big-links > [data-k="ideas"] .bl-ic { --pc: var(--c-violet); }
+.big-links > [data-k="shifts"] .bl-ic, .big-links > [data-k="profile"] .bl-ic { --pc: var(--c-blue); }
+.big-links > [data-k="costs"] .bl-ic, .big-links > [data-k="vehicle"] .bl-ic { --pc: var(--c-orange); }
+.big-links > [data-k="excel"] .bl-ic, .big-links > [data-k="guide"] .bl-ic { --pc: var(--c-green); }
+.big-links > [data-k="carset"] .bl-ic, .big-links > [data-k="write"] .bl-ic { --pc: var(--c-teal); }
+.big-links > [data-k="tour"] .bl-ic, .big-links > [data-k="arrange"] .bl-ic { --pc: var(--c-amber); }
+.home-link:nth-child(1) .hl-ic { --pc: var(--c-blue); }
+.home-link:nth-child(2) .hl-ic { --pc: var(--c-violet); background: color-mix(in srgb, var(--c-violet) 12%, var(--surface)) !important; color: var(--c-violet) !important; }
+
+/* Контур на бутоните при докосване/посочване – в цвета на страницата */
+.big-link:hover, .home-link:hover, .home-link.on { border-color: color-mix(in srgb, var(--pc) 45%, var(--line)) !important; }
+.tile:active { border-color: var(--tc, var(--pc)) !important; }
+
+/* Заглавия на секции: нормални букви, цветна черта отпред */
+.section-title { text-transform: none; letter-spacing: 0; font-size: .92rem; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.section-title::before { display: block; content: ''; width: 4px; height: 15px; border-radius: 4px; background: var(--pc); flex: none; }
+
+/* ---------- Меню: жълто хапче ---------- */
+.nav a.on .nav-ic { background: var(--accent) !important; color: var(--accent-ink) !important; border-radius: 999px; }
+.nav a.on .nav-ic::before { display: none; }
+.nav-ic, .nav.nav-3 .nav-ic { width: 56px; height: 32px; border-radius: 999px; }
+
+/* Сегменти: активното – жълто */
+.seg-btn.on, .seg.on-page .seg-btn.on, .hero .seg-btn.on { background: var(--accent); color: var(--accent-ink); box-shadow: none !important; }
+body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--violet); color: #fff; box-shadow: none !important; }
+
+/* Чипове и проценти с цвят */
+.hero-chip { background: color-mix(in srgb, var(--pc) 10%, var(--surface)); color: var(--text); border: 1px solid color-mix(in srgb, var(--pc) 25%, transparent); }
+.chip.good { background: var(--pos-soft); }
+.chip.bad { background: var(--neg-soft); }
+.trend.up { background: var(--pos-soft); color: var(--pos); }
+.trend.down { background: var(--neg-soft); color: var(--neg); }
+.mc-bar span { background: color-mix(in srgb, var(--c-violet) 45%, var(--surface-2)); }
+.mc-best { background: var(--accent-soft); }
+.week-bar.pos, .bar.pos { background: var(--accent); fill: var(--accent); }
+.wd-row .wd-fill, .hours span { background: color-mix(in srgb, var(--c-violet) 35%, var(--surface-2)); }
+.next-when { background: var(--v-soft); }
+.next-when b { color: var(--violet); }
+.day-badge { background: color-mix(in srgb, var(--c-green) 10%, var(--surface)); }
+.day-badge.night { background: var(--v-soft); }
+.rem-days { background: var(--accent-soft); }
+.np-field.active { border-color: var(--accent); }
+.option.on, .chip-btn.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 194, 26, .25); }
+.avatar, .cover-avatar { background: var(--accent); color: var(--accent-ink); }
+.cover-avatar { box-shadow: 0 0 0 3px var(--accent) !important; }
+.live, .drive { border: 1.5px solid color-mix(in srgb, var(--pos) 45%, transparent) !important; }
+.live-dot { animation: pulse 2s infinite; }
+.msg { border-left: 4px solid var(--violet) !important; }
+.more > summary { border-left: 4px solid var(--pc) !important; }
+.sub-back { color: var(--pc); }
+.fuel-line .ic { color: var(--c-orange); }
+
+/* ---------- Админ ---------- */
+.adm-side .brand-name b { color: var(--violet); }
+.adm-nav a.on { background: var(--accent); color: var(--accent-ink); }
+.adm-tab.on { background: var(--violet); color: #fff; box-shadow: none !important; }
+.adm-tab.on .count { background: rgba(255, 255, 255, .22); color: #fff; }
+.hap.hc { border-left: 4px solid transparent; }
+.hap.hc.has { border-left-color: var(--hc); }
+.hap.good .hap-ic { background: var(--pos-soft) !important; }
+.hap.warn .hap-ic { background: var(--accent-soft) !important; color: var(--accent-text) !important; }
+.hap.bad .hap-ic { background: var(--neg-soft) !important; }
+.kpi-ic, .mini-ic { --pc: var(--kc, var(--violet)); }
+.attention { border-color: var(--y-line) !important; }
+.goal-bar i { background: linear-gradient(90deg, var(--violet), #A78BFA); }
+body.admin { --pc: var(--violet); }
+:root[data-brand="one"] .meter-value, :root[data-brand="one"] .hero-num, :root[data-brand="one"] .ms-total b, :root[data-brand="one"] .result-net, :root[data-brand="one"] .week-net, :root[data-brand="one"] .car-inv .ci-big { font-family: var(--font) !important; }

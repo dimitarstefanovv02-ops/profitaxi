@@ -119,8 +119,7 @@ export function registerView({ go }) {
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
         (store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true)),
-        !BRAND && field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
-        !BRAND && store.referralsOn() && field('Код за покана', ref, refFromLink ? 'Поканен си от колега' : 'По желание, ако колега ти е дал код')),
+        !BRAND && field('Промо код', promo, 'По желание – ако имаш код за отстъпка')),
       BRAND ? group('target', 'One Taxi',
         h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Акаунтът е само за шофьори на One Taxi'))),
         field('Код от One Taxi', code, 'Дава ти го диспечерът или офисът на One', true))
