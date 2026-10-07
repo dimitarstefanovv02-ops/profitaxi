@@ -1,0 +1,287 @@
+/* ======================================================================
+   ИЗЧИСТЕН ИЗГЛЕД (skin "clean") – източник. Сглобява се в css/clean.css
+   с tools/build_clean.py: всеки селектор получава :root[data-skin="clean"].
+   Принцип: бял фон, тънки сиви рамки, без сенки, градиенти, сияния и
+   цветни иконки. Цвят само за главния бутон (жълт), загуба (червено)
+   и успех (зелено). Старият изглед: data-skin="fancy".
+   ====================================================================== */
+
+:root {
+  --bg: #F7F7F8; --surface: #FFFFFF; --surface-2: #EFEFF1; --surface-3: #E4E4E7; --line: #E4E4E7;
+  --text: #111113; --muted: #52525B; --faint: #71717A;
+  --accent-soft: #FFF4CC; --accent-text: #7A5600;
+  --pos: #15803D; --pos-soft: #DCFCE7; --neg: #DC2626; --neg-soft: #FEE2E2;
+  --violet: var(--text); --v-soft: var(--surface-2); --v-line: var(--line); --v-strong: var(--line); --v-glow: transparent;
+  --c-violet: var(--text); --c-pink: var(--text);
+  --shadow: none;
+  --r-xl: 18px; --r-lg: 16px; --r-md: 12px; --r-sm: 10px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Onest', 'Helvetica Neue', Arial, sans-serif;
+  --display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Onest', 'Helvetica Neue', Arial, sans-serif;
+}
+:root[data-theme="dark"] {
+  --bg: #0B0B0C; --surface: #161618; --surface-2: #1F1F22; --surface-3: #2A2A2E; --line: #2A2A2E;
+  --text: #F4F4F5; --muted: #A1A1AA; --faint: #8A8A93;
+  --accent-soft: #3A3011; --accent-text: #FFC21A; --pos: #4ADE80; --pos-soft: #12301F; --neg: #F87171; --neg-soft: #3A1717;
+  --violet: var(--text); --v-soft: var(--surface-2); --v-line: var(--line); --v-strong: var(--line); --v-glow: transparent;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="sun"]) {
+    --bg: #0B0B0C; --surface: #161618; --surface-2: #1F1F22; --surface-3: #2A2A2E; --line: #2A2A2E;
+    --text: #F4F4F5; --muted: #A1A1AA; --faint: #8A8A93;
+    --accent-soft: #3A3011; --accent-text: #FFC21A; --pos: #4ADE80; --pos-soft: #12301F; --neg: #F87171; --neg-soft: #3A1717;
+  --violet: var(--text); --v-soft: var(--surface-2); --v-line: var(--line); --v-strong: var(--line); --v-glow: transparent;
+  }
+}
+:root[data-theme="sun"] { --bg: #FFFFFF; --line: #A1A1AA; --text: #000000; --muted: #27272A; --faint: #3F3F46; }
+/* One Taxi: собственият шрифт и червеното остават */
+:root[data-brand="one"] { --font: 'Base Neue', 'Archivo', -apple-system, system-ui, sans-serif; --display: var(--font); }
+
+/* ---------- Основа ---------- */
+body { letter-spacing: -.005em; }
+.num, .stat-value, .tile-val, .np-val, .np-key, .shift-amt b, .cost-amt b, .day-badge b, .rem-days b, .res-when b, .next-when b, .cal-ev-amt, .cl-amt, .exp-item .amt, .ms-row b, .rec-title b, .win b, .drive-sum b, .result-cell b, .ci-grid b, .kpi-value, .mini-kpi b, .att-n, .hap b, .goal-num b, .week-net, .timer, .save-bar .sum b, .cover-info h1, .first-day h2 { font-family: var(--font); font-weight: 700; letter-spacing: -.02em; }
+h1 { font-weight: 800; letter-spacing: -.025em; }
+:focus-visible { outline-color: var(--text); }
+
+/* ---------- Карти: бяло, тънка рамка, без сенки ---------- */
+.card, .stat-card, .live, .tile, .big-link, .home-link, .cover, .ql, .reg-group, .first-day, .msg, .drive, .install-bar, .more > summary, .invite-card, .kpi, .mini-kpis, .scope-bar, .adm-picker, .week-sum, .month-sum {
+  background: var(--surface); border: 1px solid var(--line) !important; box-shadow: none !important; border-radius: var(--r-lg); }
+.card .shift-row, .card .cost-row, .card .res-row { border-color: var(--line); }
+.card:focus-within { border-color: var(--line); }
+.more > summary { border-left-width: 1px !important; }
+.more > summary .ic { color: var(--muted); }
+
+/* Заглавия на секции: малки главни букви, сиво, без черти и точки */
+.section-title { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 26px 2px 10px; }
+.section-title::before { display: none; }
+.page-title h1::after { display: none; }
+.page-title h1 { font-size: 1.75rem; }
+.sub-back, .back, .adm-back { color: var(--muted); }
+
+/* Иконки: без цветни квадратчета */
+.t-ic, .bl-ic, .ql-ic, .cost-ic, .mini-ic, .kpi-ic, .list-btn .l-ic, .info-row .l-ic, .tip-ic, .msg-ic, .hl-ic, .empty-ic, .rec-ic, .cal-ev-ic, .gs-ic, .att-ic, .hap-ic, .due-ic, .quote-ic {
+  background: transparent !important; color: var(--muted) !important; box-shadow: none !important; }
+.t-ic { width: 22px; height: 22px; }
+.bl-ic, .cost-ic, .rec-ic, .cal-ev-ic, .att-ic { width: 28px !important; height: 28px !important; }
+.list-btn.danger .l-ic, .att-row.bad .att-ic, .cal-ev.late .cal-ev-ic, .due-row.late .due-ic { color: var(--neg) !important; }
+.empty-ic { color: var(--faint) !important; }
+.tile-top .ic-chip, .quick .q-ic, .exp-item .e-ic { background: transparent; color: var(--muted); width: 22px; height: 22px; }
+.stat-label .ic { color: var(--faint); }
+.share-name .ic { color: var(--muted); }
+
+/* ---------- Бутони ---------- */
+.btn { border-radius: var(--r-md); font-weight: 700; }
+.btn-lg, .btn-xl { border-radius: 14px; }
+.btn:active { transform: none; opacity: .85; }
+.btn-primary, .btn-page, .shift-cta, .fab { box-shadow: none !important; }
+.btn-ghost { background: var(--surface); border: 1px solid var(--line); color: var(--text); }
+.btn-ghost:hover { border-color: var(--faint); }
+.btn-outline { border: 1px solid var(--line); }
+.icon-btn { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); }
+.icon-btn.plain { background: transparent; border: 0; }
+.chip, .chip.page, .chip.warn, .chip.good, .chip.bad { background: var(--surface-2); color: var(--muted); }
+.chip.bad { color: var(--neg); }
+.chip.good { color: var(--pos); }
+.ic-fill { opacity: 0 !important; }
+
+/* Сегменти: сива лента, активното – бяло с рамка */
+.seg { background: var(--surface-2); border: 0 !important; border-radius: var(--r-md); padding: 3px; }
+.seg-btn { border-radius: 9px; }
+.seg-btn.on, .seg.on-page .seg-btn.on, body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--line) !important; }
+
+/* ---------- Долно меню ---------- */
+.nav { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; border-top: 1px solid var(--line); }
+.nav a { color: var(--faint); }
+.nav a.on { color: var(--text); font-weight: 800; }
+.nav-ic, .nav.nav-3 .nav-ic { width: 44px; height: 30px; border-radius: 0; position: relative; }
+.nav a:not(.on) .nav-ic { color: var(--faint); }
+.nav a.on .nav-ic { background: transparent !important; color: var(--text) !important; box-shadow: none !important; }
+.nav a.on .nav-ic::before { content: ''; position: absolute; left: 8px; right: 8px; top: -7px; height: 3px; border-radius: 0 0 3px 3px; background: var(--accent); }
+
+/* ---------- Шапки на страниците (hero): вече бели карти ---------- */
+.hero { background: var(--surface) !important; color: var(--text); border: 1px solid var(--line) !important; box-shadow: none !important; padding: 18px; }
+.hero::before, .hero::after { display: none !important; }
+.hero h1 { font-family: var(--font); font-size: 1.5rem; }
+.hero .hero-sub { color: var(--muted); }
+.hero-num { color: var(--text); font-family: var(--font); font-weight: 800; }
+.hero-chip { background: var(--surface-2); border: 0; color: var(--muted); backdrop-filter: none; }
+.hero-btn { background: var(--surface); border: 1px solid var(--line); color: var(--text); border-radius: var(--r-md); }
+.hero .seg { background: var(--surface-2); }
+.hero .seg-btn { color: var(--muted); opacity: 1; }
+.hero .seg-btn.on { background: var(--surface); color: var(--text); }
+.hero .period-nav .icon-btn { background: transparent; color: var(--text); }
+.hero .time-in { background: var(--surface-2); }
+.hero .time-in span { color: var(--muted); opacity: 1; }
+.hero .time-in input { color: var(--text); color-scheme: light dark; }
+.hero .pos, .meter .pos { color: var(--text); }
+.code-box { background: var(--surface-2); border: 1px dashed var(--line); }
+.code-btn { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+.code-btn.solid { background: var(--accent); color: var(--accent-ink); border: 0; }
+
+/* ---------- Днес: картата на месеца ---------- */
+.meter { background: var(--surface) !important; color: var(--text); border: 1px solid var(--line) !important; box-shadow: none !important; padding: 18px 16px 14px; }
+.meter::before, .meter::after { display: none !important; }
+.meter-label { color: var(--muted); }
+.meter-pct { background: var(--surface-2); color: var(--text); }
+.meter-value { color: var(--text) !important; font-family: var(--font); font-weight: 800; }
+.meter-value.neg { color: var(--neg) !important; }
+.meter-goal { color: var(--muted); }
+.meter-goal b { color: var(--text); }
+.meter .road, .road { height: 8px !important; border-radius: 999px; background: var(--surface-3); margin-top: 14px; }
+.road-fill { background: var(--accent) !important; border-radius: 999px; }
+.road-lane, .road-car, .road-flag { display: none !important; }
+.meter-today { background: var(--surface-2); color: var(--text); }
+.meter-today b { color: var(--text) !important; }
+.meter-forecast { color: var(--muted); }
+.meter-forecast b { color: var(--text); }
+.meter-forecast b.neg { color: var(--neg); }
+.meter-hours { color: var(--muted); }
+.meter-hours b { color: var(--text); font-family: var(--font); }
+.meter-more > summary { color: var(--muted); }
+.meter-cell { background: var(--surface-2); }
+.meter-cell span { color: var(--muted); }
+.meter-cell b, .meter-cell b.hl { color: var(--text); }
+.meter-note { color: var(--muted); }
+.goal-edit { text-decoration-color: var(--faint); }
+.avatar, .cover-avatar { background: var(--surface-2); color: var(--text); box-shadow: none !important; border-radius: 50%; font-family: var(--font); }
+.avatar.has-photo { border-radius: 50%; }
+.cover-avatar img { border-radius: 50%; }
+.first-day h2 { font-family: var(--font); }
+.fd-ic { background: var(--surface-2); color: var(--text); }
+.fd-steps li::before { background: var(--surface-2); color: var(--text); }
+.home-link.on { box-shadow: none !important; border-color: var(--faint) !important; }
+.home-link.on .hl-chev { color: var(--text); }
+.home-link:nth-child(2) .hl-ic { background: transparent; color: var(--muted); }
+.quote { background: var(--surface); border: 1px solid var(--line); }
+.live, .drive { border: 1px solid var(--line) !important; }
+.live-dot { animation: none; }
+.next-when, .next-item.pay .next-when, .res-when, .day-badge, .day-badge.night, .rem-days { background: var(--surface-2); color: var(--text); }
+.next-when b { color: var(--text); }
+.next-item.late .next-when, .rem-days.bad { background: var(--neg-soft); color: var(--neg); }
+.res-when span { color: var(--muted); }
+.trend.up, .trend.down { background: var(--surface-2); }
+.week-bar.pos, .bar.pos, .bars.violet .bar.pos { background: var(--accent); fill: var(--accent); }
+.week-bar.neg { background: var(--neg); }
+.wd-row .wd-fill, .hours span { background: var(--surface-3); }
+.wd-row.best .wd-fill, .hours span.best { background: var(--accent); }
+.win-rank, .win:nth-child(2) .win-rank, .win:nth-child(3) .win-rank { background: var(--surface-2); color: var(--text); }
+
+/* ---------- Смяна, клавиатура ---------- */
+.tile { background: var(--surface); }
+.tile:active { border-color: var(--text) !important; }
+.quick button { background: var(--surface); border: 1px solid var(--line); }
+.quick .quick-edit, .quick .quick-more { border-style: dashed; }
+.exp-item, .time-in, .np-field, .stat, .result-cell, .result-goal, .ci-grid > div, .fuel-line, .drive-need, .info-box, .next-empty, .hap, .step-row { background: var(--surface-2); }
+.stat-card { background: var(--surface); }
+.np-field.active { border-color: var(--text); background: var(--surface); }
+.np-key { background: var(--surface-2); font-family: var(--font); font-weight: 600; border-radius: var(--r-md); }
+.save-bar { background: var(--surface); backdrop-filter: none; -webkit-backdrop-filter: none; }
+.sheet { border-radius: 20px 20px 0 0; }
+.sheet-backdrop { background: rgba(0, 0, 0, .45); }
+.chip-btn.on, .option.on { background: var(--surface); border-color: var(--text); }
+.option.on .ic { color: var(--text); }
+.option { background: var(--surface-2); }
+.input, select.input { border: 1px solid var(--line); border-radius: var(--r-md); }
+.input:focus { border-color: var(--text); box-shadow: none; }
+.toggle.on { background: var(--pos); }
+.drive-btn { background: var(--surface); border: 1px solid var(--line); }
+.drive-btn .db-ic { background: var(--surface-2); color: var(--text) !important; }
+.result-net { color: var(--text); font-family: var(--font); font-weight: 800; }
+.result-badge { background: var(--surface-2); }
+.result-badge .ic { color: var(--text); }
+.result-bar span, .inv-track span, .ladder-track span, .drive-bar i, .ci-bar i { background: var(--accent); }
+.result-verdict.up, .result-verdict.down { background: var(--surface-2); }
+
+/* ---------- Пари, статистика ---------- */
+.ms-total b, .ms-total b:not(.neg) { color: var(--text); font-family: var(--font); font-weight: 800; }
+.ms-total b.neg { color: var(--neg); }
+.ms-row b { color: var(--text); }
+.big-link > .ic:last-child { color: var(--faint); }
+.big-link:hover, .home-link:hover { border-color: var(--faint) !important; }
+.mcmp .mc-row.sel .mc-name { color: var(--text); text-decoration: underline; text-underline-offset: 4px; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+.mc-best { background: var(--accent-soft); color: var(--accent-text); }
+.mc-pct.up { color: var(--pos); }
+.mc-pct.down { color: var(--neg); }
+.mc-bar { background: var(--surface-2); }
+.mc-bar span { background: var(--surface-3); opacity: 1; }
+:root[data-theme="dark"] .mc-bar span { background: #3F3F46; }
+.mc-bar span.best { background: var(--accent); }
+.bar.hl { fill: var(--text); }
+.share-fill { background: var(--text); }
+.car-inv .ci-big { color: var(--text); font-family: var(--font); }
+
+/* ---------- Профил ---------- */
+.cover-img { height: 120px; }
+.cover-img::after { background: transparent; }
+.cover-btn { background: rgba(0, 0, 0, .55); backdrop-filter: none; }
+.cover-code { box-shadow: none; font-family: var(--font); }
+.cover-info h1 { font-size: 1.25rem; }
+.plate em { background: #1D4ED8; }
+.notify-box { background: var(--surface-2); }
+.idea-vote.on { background: var(--accent-soft); color: var(--text); }
+.ticket .bubble.them { border: 1px solid var(--line); }
+.msg-reply { border-color: var(--line) !important; }
+.preview-bar { background: var(--text); color: var(--bg); }
+
+/* ---------- Вход ---------- */
+.auth::before { display: none; }
+.brand-mark, .brand-logo { box-shadow: none !important; }
+.auth-hero h1 { font-family: var(--font); font-weight: 800; }
+.brand-name { font-family: var(--font); font-weight: 800; }
+.brand-name b { color: inherit; }
+.demo-box { border: 1px dashed var(--line); }
+
+/* ---------- Разходка, тост, подреждане ---------- */
+.tour-card { border: 1px solid var(--line); box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .45); }
+.tour-hole { border-color: var(--accent); }
+.toast { box-shadow: none; }
+body:not(.admin) .arr-bar { border: 1px solid var(--line); box-shadow: 0 16px 40px -16px rgba(0, 0, 0, .35); }
+
+/* ======================================================================
+   АДМИН ПАНЕЛ
+   ====================================================================== */
+body.admin { --side: var(--surface); --side-2: var(--surface-2); --side-text: var(--muted); }
+.adm-side { background: var(--surface); color: var(--text); border-bottom: 1px solid var(--line); border-right: 0; }
+.adm-side .brand-name { color: var(--text); }
+.adm-side .brand-name b { color: inherit; }
+.adm-side .brand-logo { box-shadow: none !important; }
+.adm-badge { color: var(--muted); border-color: var(--line); }
+.adm-nav a { color: var(--muted); }
+.adm-nav a:hover { background: var(--surface-2); color: var(--text); }
+.adm-nav a.on { background: var(--accent); color: var(--accent-ink); box-shadow: none; }
+.adm-nav .count { background: var(--surface-2); color: var(--muted); }
+.adm-nav a.on .count { background: rgba(0, 0, 0, .1); color: inherit; }
+.adm-side-foot .who { color: var(--faint); }
+.adm-side-foot .icon-btn, .adm-side-foot .btn { background: var(--surface); color: var(--text); border: 1px solid var(--line); }
+.adm-side-foot a.icon-btn.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.adm-head h1 { font-family: var(--font); font-weight: 800; }
+.adm-tabs { background: var(--surface-2); border: 0 !important; border-radius: var(--r-md); padding: 3px; }
+.adm-tab { border-radius: 9px; }
+.adm-tab:hover { background: transparent; color: var(--text); }
+.adm-tab.on { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--line) !important; }
+.adm-tab .count { background: var(--surface-3); }
+.adm-tab.on .count { background: var(--surface-2); color: var(--muted); }
+.adm-tab .count.alert, .adm-nav .count.alert { background: var(--neg); color: #fff; }
+body.admin .card, body.admin .kpi, body.admin .mini-kpis, body.admin .scope-bar, body.admin .tbl-wrap { border-color: var(--line) !important; }
+.icon-btn.top-btn { background: var(--surface); }
+.icon-btn.top-btn.has { color: var(--text); border-color: var(--faint); }
+.gs-row em, .tag { background: var(--surface-2); color: var(--muted); border-color: var(--line); }
+.arr-toggle.on { background: var(--text); color: var(--bg); }
+.goal-bar i { background: var(--accent); }
+.hap { color: var(--muted); }
+.hap.good .hap-ic, .hap.warn .hap-ic, .hap.bad .hap-ic { background: transparent; }
+.hap.good .hap-ic { color: var(--pos) !important; }
+.hap.bad .hap-ic { color: var(--neg) !important; }
+.kpi-value { color: var(--text); }
+.trend-chip.up, .trend-chip.down { background: var(--surface-2); }
+.attention { border-color: var(--line) !important; }
+.scope-ic, .drv-av { background: var(--surface-2); color: var(--text); }
+@media (min-width: 1000px) {
+  .adm-side { border-right: 1px solid var(--line); border-bottom: 0; }
+}
+
+/* ---------- Дребни довършвания ---------- */
+body.admin .adm-head h1::after { display: none; }
+.hap.hc, .hap.hc.has { border-left: 0; }
+.fuel-line .ic { color: var(--muted); }
+.cover-img { background-color: var(--surface-2); }
+.adm-side-foot .icon-btn, .adm-side-foot .btn { border-color: var(--line) !important; box-shadow: none !important; }

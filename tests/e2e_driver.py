@@ -157,7 +157,7 @@ async def main():
         ok('Смяна на ефира на 40 €/седм. от профила', '40 € на седмица' in await T('#app').inner_text())
         await pg.goto(base+'/app#/profile'); await pg.wait_for_timeout(300)
         txt = await T('#app').inner_text()
-        ok('„Лични данни“ е само личното: данни, снимки, изглед, парола, изход', all(x in txt for x in ['Лични данни','Снимки','Изглед','Смяна на паролата','Поверителност','Общи условия','Изход']) and not any(x in txt for x in ['Ефир / диспечер','Отчет в PDF','Всички смени (Excel)','Пиши ни']))
+        ok('„Лични данни“ е само личното: данни, снимки, изглед, парола, изход', all(x.lower() in txt.lower() for x in ['Лични данни','Снимки','Изглед','Смяна на паролата','Поверителност','Общи условия','Изход']) and not any(x.lower() in txt.lower() for x in ['Ефир / диспечер','Отчет в PDF','Всички смени (Excel)','Пиши ни']))
         await pg.click('.seg-btn:has-text("Тъмна")'); await pg.wait_for_timeout(150)
         ok('Тъмна тема се включва', await pg.evaluate('document.documentElement.dataset.theme')=='dark')
         await pg.click('.seg-btn:has-text("За слънце")'); await pg.wait_for_timeout(150)
