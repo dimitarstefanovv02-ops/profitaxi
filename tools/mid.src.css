@@ -41,7 +41,7 @@
 :root[data-theme="dark"] .card { box-shadow: none !important; }
 
 /* Главните карти: жълт контур (като таксиметрова табела) */
-.meter, .month-sum, .hero, .first-day { border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important; }
+.meter, .month-sum, .hero { border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important; }
 /* Шахматна лента горе на „Чисто този месец“ и шапките */
 .meter, .hero { position: relative; overflow: hidden; padding-top: 24px !important; }
 .meter::before, .hero::before { display: block !important; content: '' !important; position: absolute; left: 0 !important; right: 0 !important; top: 0 !important; height: 8px !important; border-radius: 0 !important;

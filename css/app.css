@@ -888,13 +888,9 @@ body:not(.admin) .home-link small { white-space: normal; }
 .meter-hours { margin-top: 10px; }
 .meter-more summary { padding-top: 8px; }
 /* Първият ден: вместо нули – какво да направи */
-.first-day { border: 1.5px solid var(--v-strong); border-radius: var(--r-xl); padding: 20px 18px; background: var(--surface); box-shadow: 0 0 0 4px var(--v-glow); }
-.first-day h2 { font-family: var(--display); font-size: 1.45rem; margin: 10px 0 6px; letter-spacing: -.02em; }
-.first-day p { color: var(--muted); margin: 0 0 14px; font-size: 1rem; }
-.fd-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); }
-.fd-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; counter-reset: fd; }
-.fd-steps li { display: flex; gap: 12px; align-items: center; font-weight: 600; font-size: 1rem; }
-.fd-steps li::before { counter-increment: fd; content: counter(fd); flex: none; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center; background: var(--v-soft); color: var(--violet); font-weight: 800; }
+.first-day { border: 1px solid var(--line); border-radius: var(--r-xl); padding: 14px 16px; background: var(--surface); }
+.first-day h2 { font-family: var(--font); font-size: 1rem; font-weight: 700; margin: 0; }
+.fd-steps { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 4px; color: var(--muted); font-size: .95rem; }
 /* Празна смяна: без червен минус */
 .save-bar .sum .hint { display: block; font-weight: 700; color: var(--muted); font-size: 1rem; }
 /* Награда: конфети */

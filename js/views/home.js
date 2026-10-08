@@ -26,6 +26,10 @@ const WD_LONG = ['понеделник', 'вторник', 'сряда', 'чет
 // Режим „шофирам“: докато смяната тече – само големите бутони. „Покажи всичко“ връща целия екран.
 let showAll = false;
 
+// „Добре дошъл“ се показва само при първото влизане: запомняме го веднага,
+// а до следващото отваряне на приложението остава на екрана (може и да се затвори с ×)
+let introNow = false;
+
 export function homeView({ go, user, data, rerender, route }) {
   const today = todayStr();
   const g = goalProgress(data);
@@ -62,6 +66,8 @@ export function homeView({ go, user, data, rerender, route }) {
   }, 350);
   const recent = data.shifts.filter((s) => s.end).slice(0, 3);
   const resCount = upcomingReservations(data.reservations || []).length;
+  if (!data.shifts.length && !store.introSeen()) { introNow = true; setTimeout(() => store.markIntroSeen(), 0); }
+  const redrawHome = rerender || (() => go('/home'));
 
   return h('div', { class: 'screen', 'data-page': 'home' },
     h('div', { class: 'hello' },
@@ -84,7 +90,7 @@ export function homeView({ go, user, data, rerender, route }) {
     ...(active && !showAll ? [] : [zone('drv.home', { class: 'dz' }, [
 
     // 1. Колко ти остава този месец (първия ден – какво да направи)
-    ['meter', data.shifts.length ? meter(g, month) : firstDay()],
+    ['meter', !data.shifts.length && introNow ? firstDay(() => { introNow = false; redrawHome(); }) : meter(g, month)],
 
     // 2. Главното действие: смяната
     ['shift', h('div', { class: 'home-shift' },
@@ -187,15 +193,14 @@ function npsCard(redraw) {
       h('button', { class: 'btn btn-primary', onclick: () => { store.submitNps(npsScore, comment.value); npsScore = null; toast('Благодарим за отговора!'); redraw(); } }, 'Изпрати')));
 }
 
-function firstDay() {
+function firstDay(close) {
   return h('section', { class: 'first-day', 'aria-label': 'Първи стъпки' },
-    h('div', { class: 'fd-ic' }, icon('flame', 26)),
-    h('h2', null, 'Добре дошъл в ProfiTaxi!'),
-    h('p', null, 'Запиши първата си смяна и тук ще видиш колко ти остава чисто.'),
+    h('div', { class: 'row between' }, h('h2', null, 'Първи стъпки'),
+      h('button', { class: 'icon-btn plain', 'aria-label': 'Затвори', onclick: close }, icon('x', 18))),
     h('ol', { class: 'fd-steps' },
-      h('li', null, 'Натисни „Започни смяна“ отдолу'),
+      h('li', null, 'Натисни „Започни смяна“'),
       h('li', null, 'В края въведи кеш, карта и гориво'),
-      h('li', null, 'Виж колко ти остава за деня и месеца')));
+      h('li', null, 'Тук ще видиш колко ти остава чисто')));
 }
 
 // Целта за месеца се сменя направо от „Днес“

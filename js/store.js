@@ -264,6 +264,9 @@ export function npsDue() {
 }
 export function submitNps(score, comment = '') { const u = me(); if (!u) return; db.nps.push({ id: uid(), userId: u.id, score, comment: comment.trim(), at: new Date().toISOString(), city: u.city, company: u.company }); commit(); }
 export function skipNps() { const u = me(); if (!u) return; db.dismissed[u.id] = { ...(db.dismissed[u.id] || {}), nps: Date.now() }; commit(); }
+// „Добре дошъл“ на „Днес“ – показва се само при първото влизане
+export function introSeen() { const u = me(); return !u || !!db.dismissed[u.id]?.intro; }
+export function markIntroSeen() { const u = me(); if (!u || db.dismissed[u.id]?.intro) return; db.dismissed[u.id] = { ...(db.dismissed[u.id] || {}), intro: Date.now() }; commit(); }
 export function ideas() { load(); return clone(db.ideas.filter((x) => x.status !== 'hidden')).sort((a, b) => b.votes.length - a.votes.length); }
 export function submitIdea(text) { const u = me(); if (!u || !text.trim()) return; db.ideas.push({ id: uid(), userId: u.id, text: text.trim(), votes: [u.id], status: 'new', at: new Date().toISOString() }); commit(); }
 export function voteIdea(id) { const u = me(); const i = db.ideas.find((x) => x.id === id); if (!u || !i) return; i.votes = i.votes.includes(u.id) ? i.votes.filter((x) => x !== u.id) : [...i.votes, u.id]; commit(); }

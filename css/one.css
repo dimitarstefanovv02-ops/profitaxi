@@ -70,9 +70,6 @@
 [data-brand="one"] .next-when b { color: var(--text); }
 [data-brand="one"] .avatar, [data-brand="one"] .cover-avatar { background: var(--one-red); color: #fff; }
 [data-brand="one"] .cover-avatar { box-shadow: 0 0 0 3px var(--surface); }
-[data-brand="one"] .first-day { border-color: var(--line); box-shadow: none; }
-[data-brand="one"] .fd-ic { background: var(--one-red); color: #fff; }
-[data-brand="one"] .fd-steps li::before { background: var(--accent-soft); color: var(--accent-text); }
 [data-brand="one"] .bar.pos, [data-brand="one"] .bars.violet .bar.pos { fill: var(--text); }
 [data-brand="one"] .bar.hl { fill: var(--one-red); }
 [data-brand="one"] .week-bar.pos { background: var(--text); }

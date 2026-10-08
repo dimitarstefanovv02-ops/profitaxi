@@ -147,8 +147,6 @@ h1 { font-weight: 800; letter-spacing: -.025em; }
 .avatar.has-photo { border-radius: 50%; }
 .cover-avatar img { border-radius: 50%; }
 .first-day h2 { font-family: var(--font); }
-.fd-ic { background: var(--surface-2); color: var(--text); }
-.fd-steps li::before { background: var(--surface-2); color: var(--text); }
 .home-link.on { box-shadow: none !important; border-color: var(--faint) !important; }
 .home-link.on .hl-chev { color: var(--text); }
 .home-link:nth-child(2) .hl-ic { background: transparent; color: var(--muted); }

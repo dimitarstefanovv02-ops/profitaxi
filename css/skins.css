@@ -98,8 +98,6 @@
 :root[data-skin="clean"] .avatar.has-photo, :root[data-skin="mid"] .avatar.has-photo {border-radius: 50%;}
 :root[data-skin="clean"] .cover-avatar img, :root[data-skin="mid"] .cover-avatar img {border-radius: 50%;}
 :root[data-skin="clean"] .first-day h2, :root[data-skin="mid"] .first-day h2 {font-family: var(--font);}
-:root[data-skin="clean"] .fd-ic, :root[data-skin="mid"] .fd-ic {background: var(--surface-2); color: var(--text);}
-:root[data-skin="clean"] .fd-steps li::before, :root[data-skin="mid"] .fd-steps li::before {background: var(--surface-2); color: var(--text);}
 :root[data-skin="clean"] .home-link.on, :root[data-skin="mid"] .home-link.on {box-shadow: none !important; border-color: var(--faint) !important;}
 :root[data-skin="clean"] .home-link.on .hl-chev, :root[data-skin="mid"] .home-link.on .hl-chev {color: var(--text);}
 :root[data-skin="clean"] .home-link:nth-child(2) .hl-ic, :root[data-skin="mid"] .home-link:nth-child(2) .hl-ic {background: transparent; color: var(--muted);}
@@ -235,7 +233,7 @@
 :root[data-skin="mid"] [data-page="me"], :root[data-skin="mid"] [data-page="profile"], :root[data-skin="mid"] [data-page="car"], :root[data-skin="mid"] [data-page="vehicle"] {--pc: var(--c-teal);}
 :root[data-skin="mid"] .card, :root[data-skin="mid"] .stat-card, :root[data-skin="mid"] .tile, :root[data-skin="mid"] .big-link, :root[data-skin="mid"] .home-link, :root[data-skin="mid"] .cover, :root[data-skin="mid"] .reg-group, :root[data-skin="mid"] .msg, :root[data-skin="mid"] .drive, :root[data-skin="mid"] .more > summary, :root[data-skin="mid"] .kpi, :root[data-skin="mid"] .mini-kpis, :root[data-skin="mid"] .scope-bar, :root[data-skin="mid"] .adm-picker, :root[data-skin="mid"] .week-sum {box-shadow: var(--shadow) !important;}
 :root[data-skin="mid"][data-theme="dark"] .card {box-shadow: none !important;}
-:root[data-skin="mid"] .meter, :root[data-skin="mid"] .month-sum, :root[data-skin="mid"] .hero, :root[data-skin="mid"] .first-day {border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important;}
+:root[data-skin="mid"] .meter, :root[data-skin="mid"] .month-sum, :root[data-skin="mid"] .hero {border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important;}
 :root[data-skin="mid"] .meter, :root[data-skin="mid"] .hero {position: relative; overflow: hidden; padding-top: 24px !important;}
 :root[data-skin="mid"] .meter::before, :root[data-skin="mid"] .hero::before {display: block !important; content: '' !important; position: absolute; left: 0 !important; right: 0 !important; top: 0 !important; height: 8px !important; border-radius: 0 !important; background: conic-gradient(#FFC21A 25%, #111 0 50%, #FFC21A 0 75%, #111 0) 0 0 / 16px 16px !important; opacity: 1 !important;}
 :root[data-skin="mid"] .hero::after, :root[data-skin="mid"] .meter::after {display: none !important;}
