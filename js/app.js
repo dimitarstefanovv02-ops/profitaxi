@@ -169,8 +169,14 @@ function lockView(user, access) {
 }
 
 // Грешките в приложението стигат до админа („Контрол → Грешки“)
-window.addEventListener('error', (e) => { if (e.message) store.logError(e.message, parse().name.slice(1)); });
-window.addEventListener('unhandledrejection', (e) => store.logError(e.reason?.message || String(e.reason), parse().name.slice(1)));
+// „Script error.“ идва от чужди скриптове или добавки в браузъра – без никаква информация, затова не я пазим.
+// Към съобщението добавяме файла и реда, за да се намира причината.
+const where = (st) => { const m = String(st || '').match(/\/(js\/[\w/.-]+\.js):(\d+)/); return m ? ` @ ${m[1]}:${m[2]}` : ''; };
+window.addEventListener('error', (e) => {
+  if (!e.message || /^Script error\.?$/.test(e.message)) return;
+  store.logError(e.message + (where(e.error?.stack) || (e.filename && /\/js\//.test(e.filename) ? ` @ ${e.filename.replace(/^.*\/(js\/)/, '$1')}:${e.lineno}` : '')), parse().name.slice(1));
+});
+window.addEventListener('unhandledrejection', (e) => store.logError((e.reason?.message || String(e.reason)) + where(e.reason?.stack), parse().name.slice(1)));
 
 // Живите таймери на активната смяна
 function tickTimers() {

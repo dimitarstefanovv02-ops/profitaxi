@@ -164,7 +164,7 @@ export function confirmSheet({ title, text, okLabel = 'Да', danger, onOk }) {
     text && h('p', { class: 'muted', style: { margin: '0 0 20px' } }, text),
     h('div', { class: 'row gap' },
       h('button', { class: 'btn btn-ghost btn-lg grow', onclick: close }, 'Отказ'),
-      h('button', { class: cx('btn btn-lg grow', danger ? 'btn-danger' : 'btn-primary'), onclick: () => { close(); onOk(); } }, okLabel))));
+      h('button', { class: cx('btn btn-lg grow', danger ? 'btn-danger' : 'btn-primary'), onclick: (e) => { if (e.currentTarget.dataset.done) return; e.currentTarget.dataset.done = '1'; close(); onOk(); } }, okLabel))));
 }
 
 // ---------- Сегментиран избор ----------

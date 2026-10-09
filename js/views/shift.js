@@ -53,6 +53,7 @@ export function shiftEditorView(ctx) {
   const wasActive = !isNew && !store.getShift(draft.id)?.end;
 
   function draw() {
+    if (!draft) return;
     const inc = shiftIncome(draft), exp = shiftExpenses(draft);
     const day = isoToDateStr(draft.start);
     const sameDay = data.shifts.filter((s) => s.end && s.id !== draft.id && shiftDate(s) === day).length + 1;
@@ -212,6 +213,7 @@ export function shiftEditorView(ctx) {
     });
   }
   function copyLast() {
+    if (!draft) return;
     const prev = data.shifts.find((s) => s.end && s.id !== draft.id && s.expenses.length);
     if (!prev) { toast('Няма предишна смяна с разходи', 'err'); return; }
     const copied = prev.expenses.map((e) => ({ ...e, id: uid() }));
@@ -220,6 +222,7 @@ export function shiftEditorView(ctx) {
     toast(`Добавени ${copied.length} разхода. Смени сумите, ако трябва.`);
   }
   function save(force = false) {
+    if (!draft) return; // двойно натискане след запис
     if (draft.end && new Date(draft.end) <= new Date(draft.start)) { toast('Краят трябва да е след началото', 'err'); return; }
     if (draft.kmEnd > 0 && draft.kmEnd < draft.kmStart) { toast('Провери километража', 'err'); return; }
     // Необичайна смяна (над 24 часа или с край в бъдещето) – питаме, но позволяваме
@@ -239,7 +242,7 @@ export function shiftEditorView(ctx) {
   }
   function del() {
     confirmSheet({ title: 'Изтриване на смяната?', text: 'Приходите и разходите от тази смяна ще бъдат изтрити.', okLabel: 'Изтрий', danger: true,
-      onOk: () => { store.deleteShift(draft.id); draft = null; draftKey = null; toast('Смяната е изтрита'); go('/shifts', true); } });
+      onOk: () => { if (!draft) return; store.deleteShift(draft.id); draft = null; draftKey = null; toast('Смяната е изтрита'); go('/shifts', true); } });
   }
   function leave() { draft = null; draftKey = null; history.length > 1 ? history.back() : go('/home'); }
 

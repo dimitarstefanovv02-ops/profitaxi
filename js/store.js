@@ -319,7 +319,7 @@ export function logError(msg, page = '') {
     const device = /iPhone|iPad/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'Друго';
     const browser = /Edg\//.test(ua) ? 'Edge' : /SamsungBrowser/.test(ua) ? 'Samsung' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Друг';
     const u = me();
-    db.errors.unshift({ id: uid(), msg: String(msg).slice(0, 200), page, userId: u?.id || null, name: u?.name || '—', device, browser, at: new Date().toISOString() });
+    db.errors.unshift({ id: uid(), msg: String(msg).slice(0, 260), page, userId: u?.id || null, name: u?.name || '—', device, browser, at: new Date().toISOString() });
     db.errors = db.errors.slice(0, 300); persist();
   } catch { /* грешка при записа на грешка – пропускаме */ }
 }
