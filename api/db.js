@@ -13,6 +13,13 @@
 import crypto from 'node:crypto';
 import { fieldColl, fieldKey } from '../js/schema.js';
 import { sendPush, pushReady } from '../lib/webpush.js';
+import { GUIDE } from '../lib/guide.js';
+import * as PK from '../lib/passkey.js';
+import { periodStats, shiftDate } from '../js/calc.js';
+import { todayStr } from '../js/util.js';
+
+// Датите (вчера, понеделник, 10:00 и 20:00) са по българско време
+process.env.TZ ||= 'Europe/Sofia';
 
 // ---------- известия на телефона на админа ----------
 // pt:push – hash: sha1(endpoint) → { id (админ), sub, types: ['reg','ticket'], at }
@@ -22,7 +29,7 @@ async function notifyAdmins(type, data, onlyId) {
   if (!pushReady()) return 0;
   try {
     const all = pairs(await one(['HGETALL', 'pt:push']));
-    const list = Object.entries(all).filter(([, r]) => r?.sub && (onlyId ? r.id === onlyId : (r.types || PUSH_TYPES).includes(type)));
+    const list = Object.entries(all).filter(([, r]) => r?.sub && r.role !== 'driver' && (onlyId ? r.id === onlyId : (r.types || PUSH_TYPES).includes(type)));
     const dead = [];
     const res = await Promise.race([
       Promise.allSettled(list.map(async ([k, r]) => { const st = await sendPush(r.sub, data); if (st === 404 || st === 410) dead.push(k); return st; })),
@@ -53,6 +60,7 @@ function memCmd([cmd, key, ...a]) {
     case 'HDEL': { let n = 0; a.forEach((f) => { if (hmap(key).delete(f)) n++; }); return n; }
     case 'GET': return mem.s.get(key) ?? null;
     case 'INCR': { const v = Number(mem.s.get(key) || 0) + 1; mem.s.set(key, String(v)); return v; }
+    case 'HINCRBY': { const v = Number(hmap(key).get(a[0]) || 0) + Number(a[1]); hmap(key).set(a[0], String(v)); return v; }
     default: throw new Error('memory: ' + cmd);
   }
 }
@@ -301,6 +309,10 @@ const ops = {
     });
     const rec = parse(await one(['HGET', 'pt:auth', s.id]));
     const cmds = [['HDEL', 'pt:auth', s.id]];
+    const pks = Object.entries(pairs(await one(['HGETALL', 'pt:pk']))).filter(([, v]) => v?.userId === s.id).map(([k]) => k);
+    const subs = Object.entries(pairs(await one(['HGETALL', 'pt:push']))).filter(([, v]) => v?.id === s.id).map(([k]) => k);
+    if (pks.length) cmds.push(['HDEL', 'pt:pk', ...pks]);
+    if (subs.length) cmds.push(['HDEL', 'pt:push', ...subs]);
     if (mine.length) cmds.push(['HDEL', 'pt:db', ...mine]);
     if (rec) cmds.push(['HDEL', 'pt:email', rec.email]);
     cmds.push(['INCR', 'pt:rev']);
@@ -380,11 +392,219 @@ const ops = {
     return n ? { ok: true, sent: n } : { error: 'Няма телефон, на който да се прати. Включи известията отново.' };
   },
 
+  // ---------- известия за шофьора: напомняне за смяната и седмичен отчет ----------
+  async drvPushSub({ sub, types }, s) {
+    if (s.role !== 'driver') return { error: 'Само за шофьори' };
+    if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return { error: 'Невалиден абонамент' };
+    if (!/^https:\/\//.test(sub.endpoint) && !MEMORY) return { error: 'Невалиден адрес' };
+    const t = (Array.isArray(types) ? types : DRV_TYPES).filter((x) => DRV_TYPES.includes(x));
+    await one(['HSET', 'pt:push', 'd:' + subKey(sub.endpoint), JSON.stringify({ id: s.id, role: 'driver', sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, types: t, at: new Date().toISOString() })]);
+    return { ok: true, ready: pushReady() };
+  },
+  async drvPushUnsub({ endpoint }, s) { if (endpoint) await one(['HDEL', 'pt:push', 'd:' + subKey(endpoint)]); return { ok: true }; },
+  // Админ: пусни напомнянията сега (за проба), без да чака 10:00 / 20:00
+  async cronRun({ slot }, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    return runCron(slot === 'pm' ? 'pm' : 'am', { force: true });
+  },
+
+  // ---------- гласово въвеждане (Whisper през Groq) ----------
+  async voice({ audio, mime, mockText }, s) {
+    if (!audio || typeof audio !== 'string') return { error: 'Няма запис' };
+    if (audio.length > 5_000_000) return { error: 'Записът е твърде дълъг. Говори до 30 секунди.' };
+    if (!(await quota(s.id, 'voice', 80))) return { error: 'За днес гласовото въвеждане е изчерпано. Въведи с пръст или опитай утре.' };
+    if (groqMock()) return { text: mockText || 'Кеш 120, карта 80, гориво 40 евро 28 литра, автомивка 6' };
+    if (!GROQ) return { error: 'Гласовото въвеждане още не е включено на сървъра.' };
+    try { return { text: await groqTranscribe(Buffer.from(audio, 'base64'), String(mime || 'audio/webm')) }; }
+    catch (e) { console.error('voice', e); return { error: 'Не успях да разпозная записа. Опитай пак.' }; }
+  },
+
+  // ---------- AI отговори в търсачката ----------
+  async ask({ q, mockAnswer }, s) {
+    const text = String(q || '').trim().slice(0, 300);
+    if (text.length < 2) return { error: 'Напиши въпрос' };
+    if (!(await quota(s.id, 'ask', 40))) return { error: 'За днес въпросите към AI са изчерпани. Пиши ни от Профил → Помощ → Пиши ни.' };
+    let a;
+    if (groqMock()) a = mockAnswer || 'Excel файлът е в Пари → „Свали в Excel“.';
+    else if (!GROQ) return { error: 'AI отговорите още не са включени на сървъра.' };
+    else {
+      try { a = await groqChat([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: text }]); }
+      catch (e) { console.error('ask', e); return { error: 'AI не отговаря в момента. Опитай след малко.' }; }
+    }
+    const u = parse(await one(['HGET', 'pt:db', `users:${s.id}`]));
+    const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
+    await redis([['HSET', 'pt:db', `asks:${id}`, JSON.stringify({ id, at: new Date().toISOString(), userId: s.id, name: u?.name || '', city: u?.city || '', company: u?.company || '', q: text, a, kind: 'ai' })], ['INCR', 'pt:rev']]);
+    return { answer: a };
+  },
+
+  // ---------- вход с Face ID / пръстов отпечатък ----------
+  async pkStatus(_, s) {
+    const n = Object.values(pairs(await one(['HGETALL', 'pt:pk']))).filter((v) => v?.userId === s.id).length;
+    return { count: n };
+  },
+  async pkRegOptions(body, s) {
+    if (s.role !== 'driver') return { error: 'Само за шофьори' };
+    const { rpId } = rpFrom(body);
+    const u = parse(await one(['HGET', 'pt:db', `users:${s.id}`]));
+    if (!u) return { error: 'Акаунтът не съществува' };
+    const mine = Object.entries(pairs(await one(['HGETALL', 'pt:pk']))).filter(([, v]) => v?.userId === s.id).map(([k]) => k);
+    const challenge = await newChallenge('reg', s.id);
+    return { publicKey: {
+      challenge, rp: { name: 'ProfiTaxi', id: rpId },
+      user: { id: PK.b64u(Buffer.from(s.id)), name: u.email || u.name, displayName: u.name || u.email },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+      authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'required', requireResidentKey: true, userVerification: 'required' },
+      timeout: 60000, attestation: 'none', excludeCredentials: mine.map((id) => ({ type: 'public-key', id })),
+    } };
+  },
+  async pkRegister(body, s) {
+    const { credential, device } = body;
+    const { rpId, origins } = rpFrom(body);
+    try {
+      const { challenge, rec } = await takeChallenge(credential?.response?.clientDataJSON, 'reg');
+      if (rec.id !== s.id) throw new Error('Друг акаунт');
+      const r = PK.verifyRegistration(credential.response, { challenge, rpId, origins });
+      await one(['HSET', 'pt:pk', r.credId, JSON.stringify({ userId: s.id, jwk: r.jwk, alg: r.alg, counter: r.counter, at: new Date().toISOString(), device: String(device || '').slice(0, 60) })]);
+      return { ok: true };
+    } catch (e) { return { error: 'Не успях да включа входа с Face ID: ' + e.message }; }
+  },
+  async pkLoginOptions(body) {
+    const { rpId } = rpFrom(body);
+    return { publicKey: { challenge: await newChallenge('auth'), rpId, userVerification: 'required', timeout: 60000, allowCredentials: [] } };
+  },
+  async pkLogin(body) {
+    const { credential, company } = body;
+    const { rpId, origins } = rpFrom(body);
+    try {
+      const { challenge } = await takeChallenge(credential?.response?.clientDataJSON, 'auth');
+      const cred = parse(await one(['HGET', 'pt:pk', String(credential?.id || '')]));
+      if (!cred) throw new Error('Този телефон не е включен за вход с Face ID. Влез с паролата и го включи от Лични данни.');
+      const r = PK.verifyLogin(credential.response, cred, { challenge, rpId, origins });
+      await one(['HSET', 'pt:pk', String(credential.id), JSON.stringify({ ...cred, counter: r.counter, lastAt: new Date().toISOString() })]);
+      const id = cred.userId;
+      const rec = parse(await one(['HGET', 'pt:auth', id]));
+      const all = await allFields(); const u = all[`users:${id}`];
+      if (!rec || rec.role !== 'driver' || !u) throw new Error('Акаунтът не съществува');
+      if (company && u.company !== company) return { error: 'Този вход е само за шофьорите на One Taxi. Влез от profitaxi.vercel.app/app.' };
+      const token = await issueToken(id, 'driver');
+      const rev = await one(['GET', 'pt:rev']);
+      return { token, user: u, fields: driverView(all, id), rev: Number(rev || 0) };
+    } catch (e) { await sleep(300); return { error: e.message || 'Неуспешен вход' }; }
+  },
+  async pkRemove(_, s) {
+    const mine = Object.entries(pairs(await one(['HGETALL', 'pt:pk']))).filter(([, v]) => v?.userId === s.id).map(([k]) => k);
+    if (mine.length) await one(['HDEL', 'pt:pk', ...mine]);
+    return { ok: true, removed: mine.length };
+  },
+
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest']);
+const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
+
+// ---------- помощни за известията на шофьора, гласа, AI и Face ID ----------
+const DRV_TYPES = ['remind', 'weekly'];
+const ONE_CO = 'ONE Такси – 032 22 22';
+const WD = ['нд', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+const MON = ['яну', 'фев', 'мар', 'апр', 'май', 'юни', 'юли', 'авг', 'сеп', 'окт', 'ное', 'дек'];
+const fmtDay = (d) => { const x = new Date(d + 'T12:00:00'); return `${WD[x.getDay()]}, ${x.getDate()} ${MON[x.getMonth()]}`; };
+const eur = (v) => `${String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} €`;
+function userData(all, id) {
+  const of = (c) => Object.entries(all).filter(([f, v]) => f.startsWith(c + ':') && v?.userId === id).map(([, v]) => v);
+  return { user: all[`users:${id}`], profile: all[`profiles:${id}`] || {}, shifts: of('shifts').sort((a, b) => String(b.start).localeCompare(String(a.start))), costs: of('costs'), reminders: of('reminders') };
+}
+// Пуска се по график в 10:00 и 20:00 българско време (.github/workflows/reminders.yml).
+// Часът се проверява по София, а всеки час се праща само веднъж на ден (pt:cron).
+const sofiaHour = (d) => Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Sofia', hour: '2-digit', hourCycle: 'h23' }).format(d));
+// Напомня, ако за вчера няма смяна и шофьорът не е отбелязал „Почивах“; в понеделник сутрин – седмичен отчет.
+async function runCron(slot, { force = false } = {}) {
+  if (!['am', 'pm'].includes(slot)) return { error: 'slot' };
+  const now = new Date(); const hour = sofiaHour(now); const want = slot === 'am' ? 10 : 20;
+  if (!force && hour !== want) return { skipped: 'hour', hour };
+  const today = todayStr(); const yest = addDays(today, -1);
+  if (!force && !(await one(['HSETNX', 'pt:cron', `${today}:${slot}`, String(Date.now())]))) return { skipped: 'done' };
+  if (!pushReady()) return { skipped: 'nopush' };
+  const all = await allFields(); const subs = pairs(await one(['HGETALL', 'pt:push']));
+  const byUser = new Map();
+  for (const [k, r] of Object.entries(subs)) if (r?.role === 'driver' && r.sub) { if (!byUser.has(r.id)) byUser.set(r.id, []); byUser.get(r.id).push([k, r]); }
+  const monday = now.getDay() === 1;
+  let sent = 0; const dead = []; const jobs = [];
+  for (const [id, list] of byUser) {
+    const u = all[`users:${id}`]; if (!u || (u.status && u.status !== 'active')) continue;
+    const d = userData(all, id); const base = u.company === ONE_CO ? '/app/onetaxi' : '/app';
+    const msgs = [];
+    const created = new Date(u.createdAt || 0); const createdDay = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
+    const hasY = d.shifts.some((x) => shiftDate(x) === yest);
+    const off = (d.profile.offDays || []).includes(yest);
+    const recent = d.shifts.some((x) => shiftDate(x) >= addDays(today, -14)); // спрял да кара → не досаждаме
+    if (createdDay < today && recent && !hasY && !off) msgs.push({ kind: 'remind', title: 'Вчерашната смяна', body: `Няма записана смяна за вчера (${fmtDay(yest)}). Запиши я за 10 секунди – или натисни „Почивах“.`, url: base + '#/home', tag: 'remind-' + yest });
+    if (slot === 'am' && monday) {
+      const st = periodStats(d, addDays(today, -7), yest);
+      if (st.shifts > 0) {
+        const prev = periodStats(d, addDays(today, -14), addDays(today, -8));
+        const pct = prev.shifts > 0 && Math.abs(prev.net) > 0.5 ? Math.round((st.net - prev.net) / Math.abs(prev.net) * 100) : null;
+        msgs.push({ kind: 'weekly', title: 'Миналата седмица', body: `${eur(st.net)} чисто от ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}${pct != null ? `, ${pct >= 0 ? '+' : '−'}${Math.abs(pct)}% спрямо предната` : ''}.`, url: base + '#/money', tag: 'week-' + yest });
+      }
+    }
+    for (const [k, r] of list) for (const m of msgs) {
+      if (!(r.types || DRV_TYPES).includes(m.kind)) continue;
+      const { kind, ...data } = m;
+      jobs.push(sendPush(r.sub, { ...data, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); else if (st >= 200 && st < 300) sent++; }).catch(() => {}));
+    }
+  }
+  await Promise.race([Promise.allSettled(jobs), sleep(8000)]);
+  if (dead.length) await one(['HDEL', 'pt:push', ...new Set(dead)]);
+  return { ok: true, sent, users: byUser.size };
+}
+// Без тайна: извикването е безопасно – праща само в 10:00/20:00 софийско време и само веднъж на ден.
+const cronAllowed = (req) => { const sec = process.env.CRON_SECRET; return !sec || req.headers.authorization === `Bearer ${sec}`; };
+
+const GROQ = process.env.GROQ_API_KEY;
+const groqMock = () => process.env.GROQ_MOCK === '1' || (MEMORY && !GROQ);
+async function quota(id, kind, max) { return (await one(['HINCRBY', 'pt:quota', `${id}:${todayStr()}:${kind}`, 1])) <= max; }
+async function groqTranscribe(buf, mime) {
+  const ext = /mp4|m4a|aac/.test(mime) ? 'm4a' : /ogg/.test(mime) ? 'ogg' : /wav/.test(mime) ? 'wav' : /mpeg|mp3/.test(mime) ? 'mp3' : 'webm';
+  const fd = new FormData();
+  fd.append('file', new Blob([buf], { type: mime }), 'voice.' + ext);
+  fd.append('model', 'whisper-large-v3-turbo');
+  fd.append('language', 'bg');
+  fd.append('response_format', 'json');
+  fd.append('temperature', '0');
+  fd.append('prompt', 'Кеш 120, карта 80, приложения 30, бакшиш 10, гориво 40 евро, 28 литра, автомивка 6, паркинг 2, начален километраж 250 000.');
+  const r = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', { method: 'POST', headers: { Authorization: `Bearer ${GROQ}` }, body: fd });
+  if (!r.ok) throw new Error('groq ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  return String((await r.json()).text || '').trim();
+}
+const ASK_SYSTEM = `Ти си помощникът в приложението ProfiTaxi. Отговаряй САМО на български, кратко (до 4 изречения), ясно и приятелски, като на шофьор. Отговаряй само за приложението по описанието по-долу и не измисляй функции, които ги няма. Посочвай къде точно се натиска със стрелки, например „Пари → Статистика“. Ако въпросът е за неговите числа (колко е изкарал, колко гориво е платил), кажи му да напише въпроса в търсачката, например „колко изкарах тази седмица“, или да отвори Пари → Статистика. Ако не знаеш или въпросът не е за приложението, кажи го честно и предложи Профил → Помощ → Пиши ни.
+
+ОПИСАНИЕ НА ПРИЛОЖЕНИЕТО:
+${GUIDE}`;
+async function groqChat(messages) {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${GROQ}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, temperature: 0.2, max_tokens: 350 }) });
+  if (!r.ok) throw new Error('groq ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  return String((await r.json()).choices?.[0]?.message?.content || '').trim();
+}
+
+function rpFrom(body) {
+  const host = String(body.__host || 'localhost').split(',')[0].trim();
+  const rpId = host.replace(/:\d+$/, '');
+  const origins = [`https://${host}`]; if (MEMORY) origins.push(`http://${host}`);
+  return { rpId, origins };
+}
+async function newChallenge(kind, id) {
+  const c = PK.b64u(crypto.randomBytes(32));
+  await one(['HSET', 'pt:chal', c, JSON.stringify({ kind, id, at: Date.now() })]);
+  return c;
+}
+async function takeChallenge(clientDataJSON, kind) {
+  let c; try { c = JSON.parse(PK.fromB64u(clientDataJSON).toString('utf8')).challenge; } catch { throw new Error('Невалиден отговор'); }
+  const rec = parse(await one(['HGET', 'pt:chal', String(c)]));
+  if (rec) await one(['HDEL', 'pt:chal', String(c)]);
+  if (!rec || rec.kind !== kind || Date.now() - rec.at > 5 * 60e3) throw new Error('Времето изтече. Опитай пак.');
+  return { challenge: c, rec };
+}
 
 async function readBody(req) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -401,10 +621,19 @@ function send(res, status, obj) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === 'GET') return send(res, 200, { live: !!(URL_ || MEMORY) });
+  if (req.method === 'GET') {
+    const slot = new URL(req.url || '/', 'http://x').searchParams.get('cron');
+    if (slot) {
+      if (!URL_ && !MEMORY) return send(res, 503, { error: 'no db' });
+      if (!cronAllowed(req)) return send(res, 401, { error: 'Забранено' });
+      try { return send(res, 200, await runCron(slot)); } catch (e) { console.error('cron', e); return send(res, 500, { error: 'cron' }); }
+    }
+    return send(res, 200, { live: !!(URL_ || MEMORY) });
+  }
   if (req.method !== 'POST') return send(res, 405, { error: 'POST only' });
   if (!URL_ && !MEMORY) return send(res, 503, { error: 'Базата данни още не е свързана' });
   let body; try { body = await readBody(req); } catch { return send(res, 400, { error: 'Невалидна заявка' }); }
+  if (body && typeof body === 'object') body.__host = req.headers['x-forwarded-host'] || req.headers.host || '';
   const fn = ops[body?.op]; if (!fn) return send(res, 400, { error: 'Непознато действие' });
   try {
     let s = null;

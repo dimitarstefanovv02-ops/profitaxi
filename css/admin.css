@@ -595,3 +595,8 @@ body.admin .btn.arr-toggle.on { background: var(--violet, #7C3AED); color: #fff;
 .live-badge { align-items: flex-start; }
 .live-badge > i { flex: none; margin-top: .45em; }
 .live-badge.bad { border-radius: 14px; }
+.ask-list { display: flex; flex-direction: column; }
+.ask-row { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ask-row:last-child { border-bottom: 0; }
+.ask-row b { overflow-wrap: break-word; min-width: 0; }
+.ask-row p { margin-top: 4px; }

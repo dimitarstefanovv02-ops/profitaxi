@@ -21,8 +21,8 @@ async def main():
     def ok(c,n,x=''):
       print(('PASS ' if c else 'FAIL ')+' '+n+(f'  [{x}]' if x!='' else ''))
       if not c: fails.append(n)
-    ok(18 <= len(seen) <= 21 and str(len(seen))==total, 'Разходката е 18–21 стъпки', len(seen))
-    ok(all(x in pages for x in ['#/home','#/shift/new','#/money','#/stats','#/costs','#/me','#/car','#/profile']), 'Отваря всички основни страници', pages)
+    ok(4 <= len(seen) <= 6 and str(len(seen))==total, 'Разходката е кратка (до 6 стъпки)', len(seen))
+    ok(all(x in pages for x in ['#/home','#/shift/new']), 'Показва „Днес“ и въвеждането на смяна', pages)
     ok(holes >= len(seen)-2, 'Почти всяка стъпка посочва нещо на екрана', holes)
     ok(end=='#/home' and state=='done', 'Накрая се връща на „Днес“ и не се пуска пак', [end,state])
     await pg.reload(); await pg.wait_for_timeout(1200)

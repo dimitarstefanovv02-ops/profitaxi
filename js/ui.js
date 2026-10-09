@@ -116,7 +116,9 @@ export function openNumpad({ title, sub, fields, actions, top, focus = 0 }) {
     });
     const render = () => displays.forEach((d, i) => {
       d.btn.classList.toggle('active', i === active);
-      d.valEl.textContent = vals[i] || '0';
+      // поле с „auto“: ако е празно, показва и записва сметнатата стойност (напр. литри по последната цена)
+      const auto = !vals[i] && fields[i].auto ? fields[i].auto(rawValues()) : 0;
+      d.valEl.textContent = vals[i] || (auto ? '≈ ' + String(Math.round(auto * 10) / 10).replace('.', ',') : '0');
       d.valEl.classList.toggle('placeholder', !vals[i]);
     });
     const press = (k) => {
@@ -132,7 +134,8 @@ export function openNumpad({ title, sub, fields, actions, top, focus = 0 }) {
       vals[active] = v; render();
       navigator.vibrate?.(8);
     };
-    const values = () => Object.fromEntries(fields.map((f, i) => [f.key, parseFloat((vals[i] || '0').replace(',', '.')) || 0]));
+    const rawValues = () => Object.fromEntries(fields.map((f, i) => [f.key, parseFloat((vals[i] || '0').replace(',', '.')) || 0]));
+    const values = () => { const v = rawValues(); fields.forEach((f, i) => { if (!vals[i] && f.auto) v[f.key] = Math.round((f.auto(v) || 0) * 100) / 100; }); return v; };
     const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ',', '0', 'back'].map((k) =>
       h('button', { class: cx('np-key', k === 'back' && 'np-back'), onclick: () => press(k), 'aria-label': k === 'back' ? 'Изтрий' : k },
         k === 'back' ? icon('left', 26) : k));

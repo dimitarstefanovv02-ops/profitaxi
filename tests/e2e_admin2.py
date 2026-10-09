@@ -6,7 +6,7 @@ R=[]
 def ok(n,c,x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  ['+str(x)+']' if x!='' else ''}")
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':1280,'height':1500}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
+        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width':1280,'height':2000}); await ctx.add_init_script("try{localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
         await ctx.add_init_script("try{localStorage.setItem('profitaxi.adminTour','done');sessionStorage.setItem('profitaxi.oneIntro','1')}catch(e){}")
         base='http://localhost:8765'; errs=[]
         d = await ctx.new_page(); d.on('pageerror', lambda e: errs.append('drv:'+str(e)))
@@ -140,7 +140,7 @@ async def main():
         await a.evaluate("location.hash='#/growth'"); await a.wait_for_timeout(500)
         ok('Растеж → Този месец срещу миналия', 'срещу' in await a.inner_text('main') and 'Нови регистрации' in await a.inner_text('main'))
         await a.evaluate("location.hash='#/dev'"); await a.wait_for_timeout(400)
-        ok('Развитие: анкета и предложения са в „Мнения“', await a.locator('.adm-tabs a').count()==3)
+        ok('Развитие: анкета и предложения са в „Мнения“', await a.locator('.adm-tabs a').count()==4)
         auto = await a.evaluate("JSON.parse(localStorage.getItem('profitaxi.v5')).messages.filter(m=>m.auto).length")
         ok('Автоматичните напомняния са изпратени', auto > 0, auto)
         # препоръка: месец безплатно само когато поканеният плати

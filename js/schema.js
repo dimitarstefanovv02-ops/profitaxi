@@ -1,7 +1,7 @@
 // Как данните се разбиват на отделни записи за общата база (ползва се и от сървъра, и от приложението).
 // Всеки запис е отделно поле – така двама души, които пишат едновременно, не си презаписват данните.
 
-export const BY_ID = ['users', 'shifts', 'costs', 'reminders', 'reservations', 'tickets', 'messages', 'payments', 'nps', 'ideas', 'churn', 'errors'];
+export const BY_ID = ['users', 'shifts', 'costs', 'reminders', 'reservations', 'tickets', 'messages', 'payments', 'nps', 'ideas', 'churn', 'errors', 'asks'];
 export const BY_KEY = { codes: 'code', promos: 'code', flags: 'key' };
 export const MAPS = ['profiles', 'notes', 'dismissed', 'autoSent'];
 export const SINGLE = ['settings', 'audit', 'accessLog', 'alertsSeen', 'notDup', 'reviewed'];

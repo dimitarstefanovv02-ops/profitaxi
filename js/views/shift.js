@@ -21,8 +21,19 @@ export function shiftEditorView(ctx) {
   if (draftKey !== key || !draft) {
     draftKey = key;
     if (id === 'new') {
-      const now = new Date(); now.setMinutes(0, 0, 0);
-      const start = new Date(now.getTime() - 10 * 3600000);
+      // Часовете по подразбиране са като на последната смяна (час на тръгване и продължителност)
+      const prev = ctx.data.shifts.find((x) => x.end);
+      const durMs = prev ? Math.min(16, Math.max(2, (new Date(prev.end) - new Date(prev.start)) / 3600000)) * 3600000 : 10 * 3600000;
+      const day = route.query?.get('day');
+      let start, now;
+      if (day && /^\d{4}-\d{2}-\d{2}$/.test(day)) {
+        const ps = prev ? new Date(prev.start) : null;
+        start = new Date(`${day}T${ps ? String(ps.getHours()).padStart(2, '0') + ':' + String(ps.getMinutes()).padStart(2, '0') : '08:00'}:00`);
+        now = new Date(start.getTime() + durMs);
+      } else {
+        now = new Date(); now.setMinutes(0, 0, 0);
+        start = new Date(now.getTime() - durMs);
+      }
       draft = { id: null, start: start.toISOString(), end: now.toISOString(), kmStart: store.lastKm() || 0, kmEnd: 0, income: { cash: 0, card: 0, app: 0, tips: 0 }, expenses: [], note: '' };
     } else {
       const s = store.getShift(id);
@@ -32,6 +43,10 @@ export function shiftEditorView(ctx) {
     }
   }
   const root = h('div', { class: 'screen no-nav', 'data-page': 'shift', style: { paddingBottom: '120px' } });
+  // Подсказки от предишните смени: последната сума по вид разход и последната цена на литър
+  const done = data.shifts.filter((x) => x.end && x.id !== draft?.id);
+  const lastAmount = (cat) => { for (const x of done) { const e = x.expenses.find((y) => y.category === cat && y.amount > 0); if (e) return e.amount; } return 0; };
+  const lastPrice = (() => { for (const x of done) { const e = x.expenses.find((y) => y.category === 'fuel' && y.qty > 0 && y.amount > 0); if (e) return e.amount / e.qty; } return 0; })();
   const profile = data.profile;
   const fuelTypes = FUELS[profile.fuel]?.types || ['petrol'];
   const isNew = !draft.id;
@@ -57,6 +72,7 @@ export function shiftEditorView(ctx) {
         !isNew && h('button', { class: 'icon-btn', 'aria-label': 'Изтрий смяната', onclick: del }, icon('trash', 20))),
       h('h1', null, isNew ? 'Нова смяна' : wasActive ? (draft.end ? 'Приключваш смяната' : 'Текуща смяна') : 'Смяна'),
       h('p', { class: 'muted', style: { margin: '4px 0 16px' } }, fmtDateLong(day)),
+      h('button', { class: 'btn btn-ghost btn-block voice-btn', type: 'button', onclick: sayShift }, icon('mic', 20), 'Кажи смяната на глас'),
 
       // Три полета едно под друго: Данни, Приходи, Разходи. Всеки ред – „+ Въведи“ или сумата.
       h('section', { class: 'card f-card', 'data-sec': 'data' },
@@ -123,6 +139,20 @@ export function shiftEditorView(ctx) {
       h('input', { class: 'f-time', type: 'datetime-local', value: toLocalInput(iso), onchange: (e) => { if (e.target.value) onSet(fromLocalInput(e.target.value)); } }));
   }
 
+  // Гласово въвеждане: „кеш 120, карта 80, гориво 40 евро 28 литра, автомивка 6“
+  async function sayShift() {
+    const { openVoice } = await import('../voice.js');
+    openVoice({ mode: 'shift', title: 'Кажи смяната', kmStart: draft.kmStart, onApply: (p) => {
+      Object.entries(p.income).forEach(([k, v]) => { draft.income[k] = round2((draft.income[k] || 0) + v); });
+      const t = fuelTypes[0];
+      if (p.fuel && (p.fuel.amount || p.fuel.qty)) draft.expenses.push({ id: uid(), category: 'fuel', fuelType: t, amount: p.fuel.amount || 0, qty: p.fuel.qty || 0 });
+      if (p.wash) draft.expenses.push({ id: uid(), category: 'wash', amount: p.wash, label: '' });
+      if (p.parking) draft.expenses.push({ id: uid(), category: 'parking', amount: p.parking, label: '' });
+      if (p.kmStart) draft.kmStart = p.kmStart;
+      if (p.kmEnd) draft.kmEnd = p.kmEnd;
+      draw(); toast('Добавено от гласа. Провери сумите.');
+    } });
+  }
   // Останалите видове разходи + управление на категориите
   function otherExpense() {
     const rest = shiftCats(profile).slice(3);
@@ -149,7 +179,8 @@ export function shiftEditorView(ctx) {
     openNumpad({
       title: expenseCat(e.category).label,
       top: ['other', 'service', 'repair', 'tires', 'fine'].includes(e.category) ? () => h('input', { class: 'input', style: { marginBottom: '12px' }, placeholder: 'Описание (по желание)', value: label, oninput: (ev) => { label = ev.target.value; } }) : null,
-      fields: [{ key: 'v', label: 'Сума', value: e.amount || '' }],
+      sub: isNewE && lastAmount(e.category) ? `Миналия път: ${money(lastAmount(e.category), 2)}` : null,
+      fields: [{ key: 'v', label: 'Сума', value: e.amount || (isNewE ? lastAmount(e.category) || '' : '') }],
       actions: [{ label: isNewE ? 'Добави' : 'Запиши', primary: true, run: ({ v }) => {
         if (!v) return;
         if (isNewE) draft.expenses.push({ id: uid(), category: e.category, amount: v, label });
@@ -169,9 +200,9 @@ export function shiftEditorView(ctx) {
       return chipsEl;
     };
     openNumpad({
-      title: 'Гориво', sub: 'Литрите са по желание, но дават разход на 100 км',
+      title: 'Гориво', sub: lastPrice ? `Литрите се смятат сами по последната цена ${money(lastPrice, 2)}/л – или ги напиши` : 'Литрите са по желание, но дават разход на 100 км',
       top: chips,
-      fields: [{ key: 'amount', label: 'Сума', value: e.amount || '' }, { key: 'qty', label: unit() === 'л' ? 'Литри' : 'Количество', value: e.qty || '', unit: unit() }],
+      fields: [{ key: 'amount', label: 'Сума', value: e.amount || '' }, { key: 'qty', label: unit() === 'л' ? 'Литри' : 'Количество', value: e.qty || '', unit: unit(), auto: lastPrice && !e.id ? ({ amount }) => (amount ? amount / lastPrice : 0) : null }],
       actions: [{ label: isNewE ? 'Добави' : 'Запиши', primary: true, run: ({ amount, qty }) => {
         if (!amount) return;
         if (isNewE) draft.expenses.push({ id: uid(), category: 'fuel', fuelType: type, amount, qty });

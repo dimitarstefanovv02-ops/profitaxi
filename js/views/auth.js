@@ -6,6 +6,7 @@ import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
 import { BRAND, ONE, collabMark } from '../brand.js';
+import { passkeySupported, loginWithPasskey, faceLabel, passkeyOn, shouldOffer, enablePasskey, markOffered } from '../passkey.js';
 
 export const brand = () => BRAND ? collabMark() : h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
   h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }),
@@ -24,7 +25,20 @@ export function loginView({ go }) {
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     go('/home');
+    offerPasskey();
   };
+  // Вход с Face ID / пръст – бутонът се показва, ако телефонът може
+  const pkBox = h('div', { class: 'pk-login' });
+  passkeySupported().then((ok) => {
+    if (!ok) return;
+    pkBox.append(h('button', { class: cx('btn btn-block', passkeyOn() ? 'btn-dark btn-xl' : 'btn-ghost btn-lg'), type: 'button', onclick: async (e) => {
+      const btn = e.currentTarget; btn.disabled = true;
+      const r = await loginWithPasskey(BRAND ? { company: BRAND.company } : {});
+      btn.disabled = false;
+      if (r.error) { err.textContent = r.error; return; }
+      go('/home');
+    } }, icon('faceid', 22), `Вход с ${faceLabel()}`));
+  });
   const fill = () => { email.value = BRAND ? 'one@demo.bg' : 'ivan@demo.bg'; pw.value = 'demo123'; };
   return h('div', { class: 'auth' },
     brand(),
@@ -39,6 +53,7 @@ export function loginView({ go }) {
       field('Парола', pw),
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Вход'),
+      pkBox,
       h('a', { href: '#/forgot', class: 'muted small', style: { textAlign: 'center' } }, 'Забравена парола')),
     !store.live() && h('div', { class: 'demo-box' },
       h('b', null, 'Демо версия. '), `Пробвай с готов профил: ${BRAND ? 'one@demo.bg' : 'ivan@demo.bg'} / demo123. `,
@@ -152,4 +167,13 @@ export function forgotView() {
       h('h1', null, 'Забравена парола'),
       h('p', null, 'Ще ти изпратим линк, с който да зададеш нова.')),
     box);
+}
+
+// След вход с парола: веднъж предлагаме вход с Face ID на този телефон
+async function offerPasskey() {
+  if (!(await shouldOffer())) return;
+  markOffered();
+  const { confirmSheet } = await import('../ui.js');
+  confirmSheet({ title: `Вход с ${faceLabel()}?`, text: `Следващия път влизаш само с ${faceLabel()} – без имейл и парола. Можеш да го изключиш от Лични данни.`, okLabel: 'Включи',
+    onOk: async () => { const r = await enablePasskey(); toast(r.error || `Входът с ${faceLabel()} е включен`, r.error ? 'err' : undefined); } });
 }

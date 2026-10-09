@@ -14,6 +14,7 @@ import { statsView } from './views/stats.js';
 import { costsView } from './views/costs.js';
 import { profileView, carView } from './views/profile.js';
 import { reservationsView } from './views/reservations.js';
+import { searchView } from './views/search.js';
 import { moneyView } from './views/money.js';
 import { meView } from './views/me.js';
 import { ideasView } from './views/ideas.js';
@@ -23,6 +24,7 @@ import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } fro
 import { vehicleView } from './views/vehicle.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
+import { tipFor } from './tips.js';
 import { BRAND, isBrandUser, collabBar, oneIntro } from './brand.js';
 import { installBar, installBarVisible } from './quick.js';
 
@@ -32,7 +34,7 @@ const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forg
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
-  '/reservations': reservationsView, '/calendar': calendarView,
+  '/reservations': reservationsView, '/calendar': calendarView, '/search': searchView,
   '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/vehicle': vehicleView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
@@ -107,6 +109,11 @@ function mount(app, el, route, withNav) {
   // Подстраниците имат връщане към „своя“ бутон от менюто
   const parent = PARENT[route.name];
   if (parent && el.classList?.contains('screen')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent }, icon('left', 20), PARENT_LABEL[parent]));
+  // Първото отваряне на екран: кратка подсказка (не по време на разходката)
+  if (el.classList?.contains('screen') && store.currentUser() && !tourOpen() && !store.previewMode?.()) {
+    const t = tipFor(route.name);
+    if (t) { const after = el.querySelector(':scope > .sub-back, :scope > .top'); if (after) after.after(t); else el.prepend(t); }
+  }
   clear(app).appendChild(el);
   // One изданието: лентата One × ProfiTaxi горе на всяка вътрешна страница
   if (BRAND && store.currentUser()) app.prepend(collabBar());

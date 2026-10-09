@@ -1,6 +1,8 @@
 // „Лични данни“ – личното: данни, снимки, известия, отчети, парола, помощ, изход.
 // „Колата и ефирът“ – работата: вид кола, гориво, ефир, споделяне, цел.
 
+import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
+import { passkeySupported, passkeyOn, enablePasskey, disablePasskey, faceLabel } from '../passkey.js';
 import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, parseDate } from '../util.js';
 import * as store from '../store.js';
 import { zone } from '../arrange.js';
@@ -36,7 +38,7 @@ export function profileView({ go, user, data, route }) {
         listBtn('camera', d.carPhoto ? 'Смени снимката на колата' : 'Качи снимка на колата', () => setPhoto('carPhoto', draw), true)))],
 
       ['notify', h('div', null, h('h2', { class: 'section-title' }, 'Известия'),
-      h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)))],
+      h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), pushRows(draw), notifyRow(d), emailBlock(user, draw)))],
       ['look', h('div', null, h('h2', { class: 'section-title' }, 'Изглед'), h('section', { class: 'card' }, cardTitle('sun', 'Изглед'),
         segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, wrap: true, outline: true }),
         h('p', { class: 'muted small', style: { margin: '8px 2px 14px' } }, '„За слънце“ – по-силен контраст за деня в колата. „Тъмна вечер“ – тъмна от 19 до 7 ч.'),
@@ -46,6 +48,7 @@ export function profileView({ go, user, data, route }) {
       ['help', h('div', null, h('h2', { class: 'section-title' }, 'Сигурност'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('lock', 'Смяна на паролата', changePw, true),
+        faceRow(),
         h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))))],
       ['exit', h('section', { class: 'card', style: { padding: '8px 18px' } },
@@ -160,6 +163,26 @@ export function profileCover(user, d) {
         : h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
 }
 
+// Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)
+function faceRow() {
+  const box = h('div');
+  passkeySupported().then((ok) => {
+    if (!ok) return;
+    const draw = () => {
+      const on = passkeyOn();
+      box.replaceChildren(h('div', { class: 'list-btn' }, h('span', { class: 'l-ic' }, icon('faceid', 18)),
+        h('span', { class: 'grow' }, `Вход с ${faceLabel()}`, h('small', { class: 'muted', style: { display: 'block', fontWeight: 500 } }, on ? 'Включен на този телефон' : 'Без имейл и парола')),
+        h('button', { class: cx('toggle', on && 'on'), role: 'switch', 'aria-checked': String(on), 'aria-label': `Вход с ${faceLabel()}`, onclick: async (e) => {
+          const btn = e.currentTarget; btn.disabled = true;
+          const r = on ? await disablePasskey() : await enablePasskey();
+          toast(r.error || (on ? 'Изключено' : `Входът с ${faceLabel()} е включен`), r.error ? 'err' : undefined);
+          draw();
+        } })));
+    };
+    draw();
+  });
+  return box;
+}
 const listBtn = (ic, label, onclick, arrow) => h('button', { class: 'list-btn', onclick }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, label), arrow && icon('right', 18));
 
 // Напомняния по имейл: включване, кога преди събитието и преглед на следващите
@@ -185,6 +208,27 @@ function emailBlock(user, redraw) {
       queue.length > 0 && h('div', { style: { marginTop: '10px' } },
         h('p', { class: 'small muted', style: { marginBottom: '4px' } }, 'Следващи имейли (преглед):'),
         queue.map((q) => h('div', { class: 'email-q' }, h('b', null, q.subject), h('span', null, q.sendAt.replace('T', ' ')))))));
+}
+
+// Напомняне за смяната и седмичен отчет – идват на телефона, дори приложението да е затворено
+function pushRows(draw) {
+  const types = pushTypes(); const why = pushBlocker();
+  const row = (k, title, sub) => {
+    const on = types.includes(k);
+    return h('div', { class: 'setting', style: { padding: '0 0 12px' } },
+      h('div', { class: 'grow' }, h('div', { class: 'setting-title' }, title), h('div', { class: 'setting-sub' }, sub)),
+      h('button', { class: cx('toggle', on && 'on'), role: 'switch', 'aria-checked': String(on), 'aria-label': title, onclick: async (e) => {
+        const next = on ? types.filter((x) => x !== k) : [...new Set([...types, k])];
+        const btn = e.currentTarget; btn.disabled = true;
+        const r = await setPushTypes(next);
+        if (r.error) toast(r.error, 'err'); else toast(on ? 'Изключено' : 'Включено');
+        draw();
+      } }));
+  };
+  return h('div', null,
+    row('remind', 'Напомняне за смяната', 'В 10:00 и 20:00, ако за вчера няма записана смяна'),
+    row('weekly', 'Седмичен отчет', 'В понеделник сутрин: колко изкара миналата седмица'),
+    why && h('p', { class: 'muted small', style: { margin: '-4px 0 12px' } }, why));
 }
 
 function notifyRow(d) {

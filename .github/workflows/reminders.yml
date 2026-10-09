@@ -1,0 +1,18 @@
+# Напомняния към шофьорите в 10:00 и 20:00 българско време.
+# Пуска се в два часа UTC (лятно и зимно време); сървърът сам проверява часа в София
+# и праща само веднъж на ден за всеки от двата часа.
+name: Напомняния
+on:
+  schedule:
+    - cron: '0 7,8 * * *'
+    - cron: '0 17,18 * * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Сутрин или вечер
+        run: |
+          H=$(TZ=Europe/Sofia date +%H)
+          if [ "$H" -lt 15 ]; then SLOT=am; else SLOT=pm; fi
+          curl -fsS --max-time 30 "https://profitaxi.vercel.app/api/db?cron=$SLOT" || true

@@ -24,6 +24,7 @@ export function meView({ go, user, data }) {
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
   return h('div', { class: 'screen', 'data-page': 'me' },
     profileCover(user, data.profile),
+    h('a', { class: 'search-link', href: '#/search' }, icon('search', 20), h('span', null, 'Търси: „как да…“ или „колко изкарах…“'), icon('mic', 20)),
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',
       row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile')),
@@ -32,7 +33,7 @@ export function meView({ go, user, data }) {
       row('carset', 'car', 'Настройки на колата', 'Своя или под наем, гориво, ефир, данни за колата', null, '#/car')),
     group('help', 'Помощ',
       row('guide', 'doc', 'Презентация', 'Как работи приложението – за преглед и теглене', null, '#/guide'),
-      row('tour', 'sparkle', 'Кратка разходка', '20 стъпки из приложението', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }),
+      row('tour', 'sparkle', 'Кратка разходка', '5 стъпки за 1 минута', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }),
       row('write', 'inbox', 'Пиши ни', store.myUnreadTickets() > 0 ? 'Имаш нов отговор' : 'Въпрос или проблем – отговаряме тук', null, '#/help')),
     group('more', 'Още',
       row('arrange', 'grid', 'Подреди екраните', 'Мести и скривай картите и бутоните, както ти е удобно', () => startArrange()),

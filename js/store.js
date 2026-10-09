@@ -33,7 +33,7 @@ function paidFlag() { try { return localStorage.getItem('profitaxi.paidMode') ==
 function ensureExt() {
   db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
-  db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.churn ||= []; db.audit ||= [];
+  db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.asks ||= []; db.churn ||= []; db.audit ||= [];
   db.notDup ||= []; db.reviewed ||= [];
   // Лизингът вече не е вид кола: колата е „Собствена“, а вноската е обикновен месечен разход
   for (const [, p] of Object.entries(db.profiles || {})) { if (p && p.carType === 'leasing') p.carType = 'own'; if (p && p.fuel === 'cng') p.fuel = 'petrol_cng'; } // само метан – няма такива коли
@@ -114,6 +114,24 @@ export function login(email, password, { company } = {}) {
   u.lastLoginAt = new Date().toISOString();
   commit();
   return { user: clone(u) };
+}
+// Вход с Face ID / пръст (само на живия сайт): credential е отговорът на navigator.credentials.get
+export async function passkeyLogin(credential, { company } = {}) {
+  load();
+  if (!LIVE) return { error: 'Входът с Face ID работи само на живия сайт.' };
+  return liveAuth('pkLogin', { credential, company }, 'app', SESSION_KEY);
+}
+// Сървърни действия на шофьора (глас, AI, известия, Face ID)
+export async function driverCall(op, body = {}) {
+  if (!LIVE) return { error: 'Работи само на живия сайт, с вход в акаунта.' };
+  return call(op, body, 'app');
+}
+// „Почивах“ – денят без смяна не се напомня
+export function setOffDay(day, on = true) {
+  const p = db.profiles[myId()] || {};
+  const set = new Set(p.offDays || []);
+  if (on) set.add(day); else set.delete(day);
+  updateProfile({ offDays: [...set].sort().slice(-90) });
 }
 export function logout() { if (PREVIEW) endPreview(); else { localStorage.removeItem(SESSION_KEY); if (LIVE) dropLive('app'); } listeners.forEach((fn) => fn()); }
 
@@ -672,6 +690,7 @@ export const admin = {
   reviewed() { requireAdmin(); return [...db.reviewed]; },
   markReviewed(ids) { requireAdmin(); db.reviewed = [...new Set([...db.reviewed, ...ids])].slice(-3000); commit(); },
   errors() { requireAdmin(); return clone(db.errors); },
+  asks() { requireAdmin(); return clone(db.asks || []).sort((a, b) => String(b.at).localeCompare(String(a.at))); },
   clearErrors() { requireAdmin(); db.errors = []; audit('Изчисти грешките'); commit(); },
   churn() { requireAdmin(); return clone(db.churn.filter((c) => { const u = db.users.find((x) => x.id === c.userId); return !u || visible(u); })); },
   audit() { requireAdmin(); return clone(db.audit); },

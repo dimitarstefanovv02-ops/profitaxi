@@ -1227,3 +1227,55 @@ html:root .card .cost-row:last-child, html:root .card .shift-row:last-child, htm
 .pk-knob { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); z-index: 1; pointer-events: none; }
 .pk-hand { position: absolute; left: 50%; bottom: 50%; width: 2px; margin-left: -1px; background: var(--accent); transform-origin: bottom center; z-index: 1; pointer-events: none; }
 .pk-center { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); pointer-events: none; }
+
+/* ---------- Търсачка ---------- */
+.hello-search { width: 46px; height: 46px; border-radius: 50%; }
+.search-link { display: flex; align-items: center; gap: 10px; margin: 0 0 4px; padding: 13px 14px; border-radius: 16px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); text-decoration: none; font-weight: 600; }
+.search-link > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-link > .ic:first-child { color: var(--text); }
+.search-bar { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 12px; border-radius: 16px; border: 1.5px solid var(--line); background: var(--surface); margin-bottom: 14px; }
+.search-bar:focus-within { border-color: var(--accent); }
+.search-bar .search-ic { color: var(--muted); display: grid; }
+.search-bar .search-in { flex: 1; min-width: 0; border: 0 !important; box-shadow: none !important; background: transparent; padding: 10px 2px; min-height: 48px; font-size: 1.05rem; }
+.search-bar .search-mic { border-radius: 12px; width: 48px; height: 48px; background: var(--accent); color: var(--accent-ink); border: 0; }
+.search-res { display: flex; flex-direction: column; gap: 12px; }
+.search-res .card + .card { margin-top: 0; }
+.ans h3 { font-size: 1.02rem; margin-bottom: 6px; }
+.ans p { line-height: 1.5; margin-bottom: 10px; }
+.ans .btn { align-self: flex-start; }
+.ans-tag { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
+.ans.mine { border-color: color-mix(in srgb, var(--accent) 55%, var(--line)) !important; }
+.ans.mine p { font-size: 1.08rem; font-weight: 650; }
+.ans-wait { height: 10px; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2), var(--surface-3), var(--surface-2)); background-size: 200% 100%; animation: ansWait 1.2s linear infinite; }
+@keyframes ansWait { to { background-position: -200% 0; } }
+.search-pop { gap: 8px; }
+.search-pop .chip { cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--text); white-space: normal; text-align: left; }
+.search-none { text-align: center; padding: 8px 0; }
+/* Глас */
+.voice-items { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 4px; }
+.voice-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.voice-item .ic { color: var(--pos); }
+.voice-res { text-align: left; margin-top: 6px; }
+/* Вчера няма смяна / предложение за напомняния */
+.yday { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; padding: 14px; border-radius: 18px; border: 1.5px solid color-mix(in srgb, var(--accent) 55%, var(--line)); background: color-mix(in srgb, var(--accent) 9%, var(--surface)); margin-bottom: 12px; }
+.yday.offer { border-color: var(--line); background: var(--surface); }
+.yday-ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: var(--surface); color: var(--text); flex: none; }
+.yday .grow b { display: block; }
+.yday .grow small { display: block; color: var(--muted); font-size: .9rem; }
+.yday-btns { display: flex; gap: 8px; width: 100%; }
+.yday-btns .btn { flex: 1; }
+.voice-btn { margin: -4px 0 14px; }
+/* Подсказка при първо отваряне на екран */
+.first-tip { display: flex; align-items: flex-start; gap: 10px; padding: 12px 12px 12px 14px; border-radius: 16px; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line)); margin: 0 0 14px; }
+.first-tip .ft-ic { color: var(--accent-text, var(--text)); display: grid; margin-top: 2px; flex: none; }
+.first-tip p { flex: 1; min-width: 0; margin: 0; line-height: 1.45; font-size: .95rem; }
+.first-tip .ft-ok { flex: none; align-self: center; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font: inherit; font-weight: 700; font-size: .9rem; color: var(--text); cursor: pointer; }
+.pk-login:empty { display: none; }
+.pk-login .btn { width: 100%; }
+/* Календар / Резервации: по-малка иконка, за да не се режат думите */
+.home-link { padding: 12px 28px 12px 10px; gap: 8px; }
+.home-link .hl-ic { width: 32px !important; height: 32px !important; border-radius: 10px; }
+.home-link b { font-size: .98rem; overflow-wrap: normal; word-break: keep-all; }
+.home-link .hl-chev { right: 6px; }
+@media (max-width: 380px) { .home-link { padding-right: 22px; gap: 6px; } .home-link b { font-size: .9rem; } .home-link .hl-chev { right: 3px; } }
+html:root .search-bar .search-mic { border: 0 !important; background: var(--accent) !important; color: var(--accent-ink) !important; }

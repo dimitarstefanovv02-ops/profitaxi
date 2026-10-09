@@ -1,9 +1,10 @@
 // Начален екран: таксиметърът с целта, смяна с едно натискане, календар и
 // резервации, седмицата, най-добрите часове за днес, напомняния, последни смени
 
-import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx, round2, uid, fmtDate } from '../util.js';
+import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx, round2, uid, fmtDate, isoToDateStr } from '../util.js';
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
+import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
 import { roadProgress, openNumpad, stat, tone, toast, cardTitle, more, reveal } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
@@ -75,6 +76,7 @@ export function homeView({ go, user, data, rerender, route }) {
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),
       h('div', { class: 'row gap' },
+        h('a', { class: 'icon-btn hello-search', href: '#/search', 'aria-label': 'Търси' }, icon('search', 22)),
         data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/me', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/me', 'aria-label': 'Профил' }, initials))),
 
     messagesBox(rerender || (() => go('/home'))),
@@ -83,6 +85,8 @@ export function homeView({ go, user, data, rerender, route }) {
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
 
     weeklyBox(data, rerender || (() => go('/home'))),
+    !active && yesterdayBox(data, go, rerender || (() => go('/home'))),
+    !active && remindOffer(rerender || (() => go('/home'))),
 
     // Докато караш: само големите бутони
     active && !showAll && driveMode(active, data, go, g, rerender || (() => go('/home'))),
@@ -385,4 +389,31 @@ export function shiftRow(data, s) {
         shiftKm(s) > 0 && h('span', null, `${shiftKm(s)} км`),
         h('span', null, `приход ${money(shiftIncome(s))}`))),
     h('div', { class: 'shift-amt' }, h('b', { class: tone(net) }, money(net)), h('span', null, 'чисто')));
+}
+
+// Вчера няма смяна: „Въведи“ или „Почивах“ (тогава не напомняме за този ден)
+function yesterdayBox(data, go, redraw) {
+  const y = addDays(todayStr(), -1);
+  const created = data.user?.createdAt ? isoToDateStr(data.user.createdAt) : y;
+  if (created >= todayStr() || data.shifts.some((s) => shiftDate(s) === y) || (data.profile.offDays || []).includes(y)) return null;
+  // ако изобщо не е карал последната седмица – не досаждаме
+  if (!data.shifts.some((s) => shiftDate(s) >= addDays(y, -10))) return null;
+  return h('div', { class: 'yday' },
+    h('span', { class: 'yday-ic' }, icon('calendar', 20)),
+    h('div', { class: 'grow' }, h('b', null, 'Вчера няма записана смяна'), h('small', null, fmtDateLong(y))),
+    h('div', { class: 'yday-btns' },
+      h('button', { class: 'btn btn-primary btn-sm', onclick: () => go('/shift/new?day=' + y) }, 'Въведи'),
+      h('button', { class: 'btn btn-ghost btn-sm', onclick: () => { store.setOffDay(y); toast('Отбелязано – почивен ден'); redraw(); } }, 'Почивах')));
+}
+// Веднъж предлагаме напомнянията (само на живия сайт, ако телефонът може)
+function remindOffer(redraw) {
+  let seen = '1'; try { seen = localStorage.getItem('profitaxi.remindOffer'); } catch { /* */ }
+  if (seen || !store.live() || pushTypes().length || pushBlocker()) return null;
+  const hide = () => { try { localStorage.setItem('profitaxi.remindOffer', '1'); } catch { /* */ } redraw(); };
+  return h('div', { class: 'yday offer' },
+    h('span', { class: 'yday-ic' }, icon('bell', 20)),
+    h('div', { class: 'grow' }, h('b', null, 'Да ти напомням ли за смяната?'), h('small', null, 'В 10:00 и 20:00, само ако за вчера няма записана смяна')),
+    h('div', { class: 'yday-btns' },
+      h('button', { class: 'btn btn-primary btn-sm', onclick: async () => { const r = await setPushTypes(['remind', 'weekly']); if (r.error) toast(r.error, 'err'); else toast('Напомнянията са включени'); hide(); } }, 'Да'),
+      h('button', { class: 'btn btn-ghost btn-sm', onclick: hide }, 'Не')));
 }

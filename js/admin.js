@@ -1300,7 +1300,13 @@ function monthTab(all) {
 }
 function funnelTab(all) {
   const n = all.length;
-  const st = [['Регистрирали се', n], ['Настроили колата', all.filter((d) => d.profile.onboarded).length], ['Първа смяна', all.filter((d) => d.shifts.some((s) => s.end)).length], ['5+ смени', all.filter((d) => d.shifts.filter((s) => s.end).length >= 5).length], ['Платили', all.filter((d) => d.user.subscription?.paidSince).length]];
+  // Колко стигат до всяка стъпка: регистрация → първа смяна → още карат след 7 дни → след 30 дни.
+  // „След 7/30 дни“ = има смяна поне 7/30 дни след регистрацията (броят се само тези, които са с нас толкова време).
+  const regDay = (d) => isoToDateStr(d.user.createdAt || new Date().toISOString());
+  const after = (days) => { const el = all.filter((d) => addDays(regDay(d), days) <= todayStr()); return [el.filter((d) => d.shifts.some((s) => s.end && shiftDate(s) >= addDays(regDay(d), days))).length, el.length]; };
+  const [a7, e7] = after(7), [a30, e30] = after(30);
+  const scale = (v, e) => (e ? Math.round(v / e * n) : 0); // приравнено към всички регистрирали се
+  const st = [['Регистрирали се', n], ['Първа смяна', all.filter((d) => d.shifts.some((s) => s.end)).length], [`Още карат след 7 дни (${a7} от ${e7})`, scale(a7, e7)], [`Още карат след 30 дни (${a30} от ${e30})`, scale(a30, e30)]];
   let worst = 1; st.forEach((x, i) => { if (i && st[i - 1][1] && x[1] / st[i - 1][1] < st[worst][1] / Math.max(1, st[worst - 1][1])) worst = i; });
   return flow('growth.funnel', [['f', wide(card('chart', 'Фуния на регистрациите', note('Колко шофьори стигат до всяка стъпка. Най-голямото падане показва какво да оправиш.'),
     h('div', { class: 'funnel' }, st.map(([label, v], i) => h('div', { class: cx('fn-row', i === worst && 'worst') },
@@ -1550,9 +1556,17 @@ const PAGE_NAMES = { home: 'Днес', shift: 'Смяна (въвеждане)',
 const IDEA_ST = { new: 'Ново', planned: 'Ще го направим', done: 'Готово', hidden: 'Скрито' };
 function devPage() {
   const ideasL = store.admin.ideas(); const nps = store.admin.nps();
-  const { bar, cur } = tabs('/dev', [['usage', 'Какво се ползва'], ['opinions', 'Мнения', ideasL.filter((i) => i.status === 'new').length, 'alert'], ['flags', 'Нови функции']]);
-  const body = { usage: usageTab, opinions: () => opinionsTab(nps, ideasL), flags: () => flagsTab(ideasL) };
+  const { bar, cur } = tabs('/dev', [['usage', 'Какво се ползва'], ['opinions', 'Мнения', ideasL.filter((i) => i.status === 'new').length, 'alert'], ['asks', 'Въпроси в търсачката', store.admin.asks().length], ['flags', 'Нови функции']]);
+  const body = { usage: usageTab, opinions: () => opinionsTab(nps, ideasL), asks: asksTab, flags: () => flagsTab(ideasL) };
   return h('div', null, pageHead('Развитие', 'Какво ползват шофьорите, какво мислят и какво искат'), bar, body[cur]());
+}
+// Какво питат шофьорите AI-то в търсачката – оттук се добавят нови готови отговори
+function asksTab() {
+  const list = store.admin.asks().slice(0, 100);
+  return flow('dev.asks', [['a', wide(card('search', 'Въпроси към AI в търсачката', note('Това са въпросите, за които готовите отговори не стигнаха и шофьорът е питал AI. Честите кажи на разработчика – ще станат готови отговори.'),
+    list.length ? h('div', { class: 'ask-list' }, list.map((x) => h('div', { class: 'ask-row' },
+      h('div', { class: 'row between' }, h('b', null, x.q), h('small', { class: 'muted' }, `${x.name || '—'} · ${fmtDate(isoToDateStr(x.at))}`)),
+      h('p', { class: 'muted small' }, x.a)))) : h('p', { class: 'muted' }, 'Още няма въпроси.')))]]);
 }
 function usageTab() {
   const N = allDrivers().length || 1;
