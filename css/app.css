@@ -1124,3 +1124,106 @@ body:not(.admin) .arr-btns .btn:disabled { opacity: .4; }
 .mc-bar { height: 6px; border-radius: 6px; background: var(--track, rgba(255,255,255,.07)); margin-top: 7px; overflow: hidden; }
 .mc-bar span { display: block; height: 100%; border-radius: 6px; background: var(--c-blue, #3B82F6); opacity: .75; }
 .mc-bar span.best { background: var(--c-amber, #F5B800); opacity: 1; }
+
+/* Отделни, очертани бутони за избор (Изглед, размер на текста) – във всички изгледи */
+html:root .seg.seg-outline { background: transparent !important; border: 0 !important; padding: 0; gap: 8px; flex-wrap: wrap; box-shadow: none !important; }
+html:root .seg.seg-outline .seg-btn { flex: 1 1 calc(33% - 8px); min-height: 46px; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--text); opacity: 1; box-shadow: none !important; white-space: normal; line-height: 1.2; }
+html:root .seg.seg-outline .seg-btn.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--text); font-weight: 800; box-shadow: none !important; }
+
+/* Дълъг текст никога не излиза от полето си – пренася се на нов ред */
+.grow, .kpi-label, .next-title, .home-link b, .big-link b, .tile-top, .quick button, .rec-title > span, .cost-name, .res-client, .att-main b, .info-row b, .setting-title, .card-title h2, .card-title h3 { overflow-wrap: break-word; word-break: normal; min-width: 0; }
+.next-title, .home-link b { white-space: normal; }
+@media (max-width: 380px) {
+  .home-link { padding: 12px 30px 12px 10px; gap: 8px; }
+  .home-link .hl-ic { width: 34px; height: 34px; }
+  .home-link b { font-size: .95rem; }
+}
+/* Редовете вътре в карта нямат собствена рамка (иначе изглежда като двойно очертание) */
+html:root .card .cost-row, html:root .card .shift-row, html:root .card .res-row { border-width: 0 0 1px; border-style: solid; border-color: var(--line); border-radius: 0; box-shadow: none; background: transparent; }
+html:root .card .cost-row:last-child, html:root .card .shift-row:last-child, html:root .card .res-row:last-child { border-bottom-width: 0; }
+.cost-amt { flex: none; }
+.cost-row > .grow { min-width: 0; }
+.grid2 + .field, .field-hint + .field { margin-top: 12px; }
+
+/* ---------- Смяна: три полета с редове „+ Въведи“ ---------- */
+.f-card { padding-bottom: 8px; }
+.f-card + .f-card { margin-top: 14px; }
+.f-list { display: flex; flex-direction: column; }
+.f-row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 62px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.f-list > .f-row:last-child { border-bottom: 0; }
+.f-row:active { opacity: .75; }
+.f-ic { flex: none; width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: color-mix(in srgb, var(--tc, var(--muted)) 13%, var(--surface)); color: var(--tc, var(--muted)); }
+.f-row .grow b { display: block; font-weight: 650; font-size: 1rem; line-height: 1.25; }
+.f-row .grow small { display: block; color: var(--muted); font-size: .88rem; margin-top: 1px; }
+.f-val { flex: none; font-weight: 800; font-size: 1.12rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.f-btn { flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--text); font-weight: 700; font-size: .95rem; white-space: nowrap; }
+.f-btn .row { gap: 4px; }
+.f-btn.has { width: 40px; padding: 0; background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+.f-row.bad .f-val, .f-row.bad .f-time { color: var(--neg); border-color: var(--neg); }
+.f-row:has(.f-time) { flex-wrap: wrap; row-gap: 6px; cursor: default; }
+.f-row:has(.f-time) .grow { flex: 1 0 auto; min-width: 96px; }
+.f-time { flex: 1 1 190px; min-width: 0; max-width: 100%; min-height: 44px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit; font-weight: 650; }
+.f-note { cursor: text; align-items: flex-start; }
+.f-note .f-ic { margin-top: 2px; }
+.f-input { display: block; width: 100%; margin-top: 4px; padding: 6px 0 2px; border: 0; border-bottom: 1px dashed var(--line); background: transparent; color: var(--text); font: inherit; outline: none; }
+.f-input:focus { border-bottom-color: var(--accent); }
+.f-card .exp-list { margin: 4px 0 2px; }
+.f-card .err { margin: 6px 0 4px; }
+.f-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.f-tools .btn { flex: 1 1 140px; }
+.f-card .auto-note { margin-bottom: 8px; }
+.f-row .grow { min-width: 6.5em; }
+
+/* ---------- Избор на дата и час (календар и часовник) ---------- */
+.pk-hidden { display: none !important; }
+.pk-field { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; cursor: pointer; font: inherit; color: var(--text); min-height: 44px; }
+.pk-field .pk-fi { display: grid; color: var(--muted); flex: none; }
+.pk-field .pk-fv { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.pk-field .pk-fv.empty { color: var(--faint); font-weight: 500; }
+.pk-field:disabled { opacity: .5; cursor: default; }
+.time-in .pk-field { border: 0; background: transparent; padding: 2px 0; min-height: 30px; }
+.f-row .pk-field.f-time { min-height: 44px; }
+.pk-wrap { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; padding: 16px; }
+.pk-back { position: absolute; inset: 0; background: rgba(0, 0, 0, .5); opacity: 0; transition: opacity .18s; }
+.pk { position: relative; width: min(360px, 100%); max-height: calc(100dvh - 32px); overflow: auto; background: var(--surface); color: var(--text); border-radius: 28px; padding: 20px 16px 10px; box-shadow: 0 30px 70px -20px rgba(0, 0, 0, .6); transform: scale(.96); opacity: 0; transition: transform .18s, opacity .18s; font-family: var(--font); }
+.pk-wrap.open .pk-back { opacity: 1; }
+.pk-wrap.open .pk { transform: none; opacity: 1; }
+.pk button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pk-title { font-weight: 700; font-size: .95rem; color: var(--muted); padding: 0 8px; }
+.pk-sub { font-weight: 600; padding: 2px 8px 0; color: var(--text); }
+.pk-big { font-size: 2.3rem; font-weight: 500; letter-spacing: -.01em; padding: 10px 8px 14px; border-bottom: 1px solid var(--line); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.pk-nav { display: flex; align-items: center; padding: 2px 0 4px; }
+.pk .pk-my { display: inline-flex; align-items: center; gap: 5px; padding: 8px; border-radius: 10px; color: var(--muted); font-size: 1rem; }
+.pk-my b { color: var(--text); }
+.pk .pk-arrow { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
+.pk .pk-arrow:active, .pk .pk-my:active, .pk .pk-txt:active, .pk .pk-icon:active { background: var(--surface-2); }
+.pk-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); row-gap: 2px; justify-items: center; }
+.pk-wd { font-weight: 700; font-size: .85rem; padding: 6px 0 8px; color: var(--muted); }
+.pk .pk-day { width: 42px; height: 42px; max-width: 100%; border-radius: 50%; font-size: 1.02rem; font-variant-numeric: tabular-nums; }
+.pk .pk-day.today { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.pk .pk-day.on { background: var(--accent); color: var(--accent-ink); font-weight: 800; box-shadow: none; }
+.pk .pk-day:disabled { color: var(--faint); opacity: .4; cursor: default; }
+.pk-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px 0 4px; }
+.pk .pk-mon { min-height: 46px; border-radius: 999px; border: 1px solid var(--line); }
+.pk .pk-mon.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; font-weight: 800; }
+.pk-foot { display: flex; align-items: center; gap: 2px; margin-top: 10px; }
+.pk-left { display: flex; align-items: center; gap: 2px; }
+.pk-grow { flex: 1; }
+.pk .pk-txt { padding: 10px 12px; border-radius: 999px; font-weight: 700; font-size: 1rem; min-height: 44px; }
+.pk .pk-ok { color: var(--accent-text, var(--text)); font-weight: 800; }
+.pk .pk-muted { color: var(--muted); font-weight: 600; }
+.pk .pk-icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.pk-thead { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 0 16px; }
+.pk .pk-tbox { width: 116px; height: 84px; border-radius: 16px; background: var(--surface-2); font-size: 3.1rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.pk .pk-tbox.on { background: var(--accent); color: var(--accent-ink); }
+.pk-colon { font-size: 3rem; font-weight: 500; }
+.pk-tin { width: 108px; height: 84px; text-align: center; font: inherit; font-size: 3rem; font-variant-numeric: tabular-nums; border: 2px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--text); }
+.pk-tin:focus { border-color: var(--accent); outline: none; }
+.pk-hint { text-align: center; color: var(--muted); font-size: .88rem; margin-bottom: 8px; }
+.pk-dial { position: relative; width: min(280px, 100%); aspect-ratio: 1; margin: 2px auto 6px; border-radius: 50%; background: var(--surface-2); touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer; }
+.pk-num { position: absolute; transform: translate(-50%, -50%); width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%; font-size: 1.05rem; font-variant-numeric: tabular-nums; pointer-events: none; z-index: 2; }
+.pk-num.in { font-size: .9rem; color: var(--muted); }
+.pk-num.on { color: var(--accent-ink); font-weight: 800; }
+.pk-knob { position: absolute; width: 44px; height: 44px; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); z-index: 1; pointer-events: none; }
+.pk-hand { position: absolute; left: 50%; bottom: 50%; width: 2px; margin-left: -1px; background: var(--accent); transform-origin: bottom center; z-index: 1; pointer-events: none; }
+.pk-center { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); transform: translate(-50%, -50%); pointer-events: none; }

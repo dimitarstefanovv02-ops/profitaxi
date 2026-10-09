@@ -4,6 +4,7 @@
 
 import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, endOfMonth, dateStr, startOfWeek } from './util.js';
 import * as store from './store.js';
+import './picker.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, setTheme, shareRows, cardTitle, isDark } from './ui.js';
 import { startTour, ADMIN_TOUR } from './tour.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
@@ -1327,7 +1328,6 @@ function sourcesTab(all) {
     ['bars', card('target', 'Откъде идват регистрациите', hbars(rows.map(([k, l]) => [SOURCES[k] || k, l.length]), all.length))],
     ['conv', card('trophy', 'Кой източник носи платени', table(['Източник', 'Регистрации', 'Платили', 'Дял', 'Активни'], rows.map(([k, l]) => { const p = l.filter((d) => d.user.subscription.paidSince).length; return { cells: [h('b', null, SOURCES[k] || k), String(l.length), String(p), pct(p, l.length), String(l.filter(isActive).length)] }; }), { rightFrom: 1 }),
       note('Сравни източниците: откъдето идват платили шофьори, там си струва да даваш повече за реклама.'))],
-    ['ref', referralCard(all)],
     promos.length > 0 && ['promo', card('gift', 'Промо кодове', table(['Код', 'Отстъпка', 'Ползван', 'Платили'], promos.map((p) => { const l = all.filter((d) => d.user.promo === p.code); return { cells: [h('b', { class: 'code' }, p.code), p.kind === 'months' ? `${p.value} мес. безплатно` : `-${p.value}%`, `${p.uses}${p.limit ? ` от ${p.limit}` : ''}`, String(l.filter((d) => d.user.subscription.paidSince).length)] }; }), { rightFrom: 2 }))],
   ]);
 }
@@ -1739,10 +1739,6 @@ function generalTab() {
       field('Пробен период при регистрация (дни)', days, '0 = без пробен период'),
       field('Цена на месечния абонамент (€)', price, 'Използва се за сметката на приходите'),
       h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ trialDays: Math.max(0, Math.min(90, Number(days.value) || 0)), price: Math.max(0, parseFloat(price.value.replace(',', '.')) || 0) }); toast('Запазено'); } }, 'Запази')))],
-    ['ref', card('gift', 'Препоръки от шофьори',
-      h('div', { class: 'row between' }, h('span', null, 'Месец безплатно за всеки поканен колега, който плати'),
-        h('button', { class: cx('toggle', s.referrals !== false && 'on'), role: 'switch', 'aria-checked': String(s.referrals !== false), 'aria-label': 'Препоръки', onclick: () => { store.admin.saveSettings({ referrals: s.referrals === false }); toast(s.referrals === false ? 'Препоръките са включени' : 'Препоръките са изключени'); } })),
-      note('Когато са изключени, шофьорите не виждат кода си и полето „Код за покана“ при регистрация.'))],
     ['goal', card('target', 'Цел за бизнеса', h('div', { class: 'form' },
       field('Колко платени шофьори', gPaid), field('До дата', gDate),
       h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ goal: { paid: Math.max(1, Number(gPaid.value) || 1), date: gDate.value || todayStr() } }); toast('Целта е запазена'); } }, 'Запази целта')),

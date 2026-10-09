@@ -127,7 +127,7 @@ async def main():
         await a.evaluate(f"location.hash='#/driver/{did}'"); await a.wait_for_timeout(600)
         ok('„Обади се“ и „Viber“ с +359', (await a.get_attribute('a:has-text("Обади се")', 'href')).startswith('tel:+359') and 'viber://chat?number=%2B359' in await a.get_attribute('a:has-text("Viber")', 'href'))
         today = await a.evaluate("(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date())")
-        await a.fill('textarea[placeholder*="Обади се"]', 'Обади се за фактурата'); await a.fill('input[aria-label="Напомни ми на"]', today)
+        await a.fill('textarea[placeholder*="Обади се"]', 'Обади се за фактурата'); await a.evaluate("(v)=>{const i=document.querySelector('input[aria-label=\"Напомни ми на\"]');i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new Event('change',{bubbles:true}))}", today)
         await a.click('.note-add >> text=Добави'); await a.wait_for_timeout(400)
         await a.evaluate("location.hash='#/overview'"); await a.wait_for_timeout(500)
         ok('Бележка със срок излиза в „Изисква внимание“', 'Обади се за фактурата' in await a.inner_text('.attention'))

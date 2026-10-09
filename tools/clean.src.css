@@ -59,7 +59,7 @@ h1 { font-weight: 800; letter-spacing: -.025em; }
 .sub-back, .back, .adm-back { color: var(--muted); }
 
 /* Иконки: без цветни квадратчета */
-.t-ic, .bl-ic, .ql-ic, .cost-ic, .mini-ic, .kpi-ic, .list-btn .l-ic, .info-row .l-ic, .tip-ic, .msg-ic, .hl-ic, .empty-ic, .rec-ic, .cal-ev-ic, .gs-ic, .att-ic, .hap-ic, .due-ic, .quote-ic {
+.f-ic, .t-ic, .bl-ic, .ql-ic, .cost-ic, .mini-ic, .kpi-ic, .list-btn .l-ic, .info-row .l-ic, .tip-ic, .msg-ic, .hl-ic, .empty-ic, .rec-ic, .cal-ev-ic, .gs-ic, .att-ic, .hap-ic, .due-ic, .quote-ic {
   background: transparent !important; color: var(--muted) !important; box-shadow: none !important; }
 .t-ic { width: 22px; height: 22px; }
 .bl-ic, .cost-ic, .rec-ic, .cal-ev-ic, .att-ic { width: 28px !important; height: 28px !important; }

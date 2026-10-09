@@ -27,7 +27,7 @@ async def main():
     ok('Без покупка: предлага „Въведи покупката“', await pg.locator('text=Въведи покупката').count()==1)
     net0 = await pg.evaluate("async()=>{const c=await import('/js/calc.js');"+S+"const d=s.myData(); const t=new Date().toISOString().slice(0,10); return c.periodStats(d, t.slice(0,8)+'01', t).net}")
     await pg.click('text=Въведи покупката'); await pg.wait_for_timeout(300)
-    await pg.fill('.sheet input[type=number] >> nth=0','18000'); await pg.fill('.sheet input[type=date]','2026-03-01'); await pg.click('.sheet >> text=Запази'); await pg.wait_for_timeout(400)
+    await pg.fill('.sheet input[type=number] >> nth=0','18000'); await pg.evaluate("(()=>{const i=document.querySelector('.sheet input[type=date]');i.value='2026-03-01';i.dispatchEvent(new Event('change',{bubbles:true}))})()"); await pg.click('.sheet >> text=Запази'); await pg.wait_for_timeout(400)
     t = (await pg.inner_text('.car-inv')).replace('\u202f',' ').replace('\xa0',' ')
     ok('Показва избити, остават, работни дни и часове', all(x in t for x in ['Избити до момента','18 000','Остават','Работни дни','Работни часове']), t[:120])
     await pg.click('.chip:has-text("Добави")'); await pg.wait_for_timeout(300)

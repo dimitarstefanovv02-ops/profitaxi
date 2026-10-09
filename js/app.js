@@ -3,6 +3,7 @@
 import { h, icon, clear, cx, fmtTimer } from './util.js';
 import * as store from './store.js';
 import { applyTheme, toast } from './ui.js';
+import './picker.js';
 import { checkNotifications } from './notify.js';
 import { loginView, registerView, forgotView } from './views/auth.js';
 import { onboardingView } from './views/onboarding.js';

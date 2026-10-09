@@ -2,6 +2,30 @@
 
 import { h, icon, cx, money, fmtNum, clear } from './util.js';
 
+// ---------- Разгъване: екранът сам слиза до отвореното ----------
+// Когато нещо се разгъне (падащо поле, „Покажи повече“, панел), показваме съдържанието му,
+// без да скриваме заглавието му отгоре. Долното меню и лентата „Запази“ се вземат предвид.
+export function reveal(el, { pad = 14 } = {}) {
+  if (!el) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const r = el.getBoundingClientRect();
+    const bars = [...document.querySelectorAll('.nav, .save-bar, .arr-bar')].filter((b) => b.offsetParent && getComputedStyle(b).position === 'fixed');
+    const bottom = Math.min(innerHeight, ...bars.map((b) => b.getBoundingClientRect().top)) - pad;
+    if (r.bottom <= bottom) return;
+    const dy = Math.min(r.bottom - bottom, Math.max(0, r.top - 72));
+    if (dy > 4) window.scrollBy({ top: dy, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }));
+}
+// Всеки <details>, отворен с пръст, слиза сам до съдържанието си
+let summaryTap = 0;
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', (e) => { if (e.target.closest?.('summary')) summaryTap = Date.now(); }, true);
+  document.addEventListener('toggle', (e) => {
+    const d = e.target;
+    if (d.tagName === 'DETAILS' && d.open && Date.now() - summaryTap < 800) reveal(d);
+  }, true);
+}
+
 // ---------- Тема ----------
 // Теми: auto (като телефона), light, dark, sun (светла с висок контраст за деня),
 // schedule (тъмна вечер от 19 до 7 ч, светла през деня)
@@ -141,8 +165,8 @@ export function confirmSheet({ title, text, okLabel = 'Да', danger, onOk }) {
 }
 
 // ---------- Сегментиран избор ----------
-export function segmented(options, value, onChange, { small, wrap, page } = {}) {
-  return h('div', { class: cx('seg', small && 'seg-sm', wrap && 'seg-wrap', page && 'on-page'), role: 'tablist' },
+export function segmented(options, value, onChange, { small, wrap, page, outline = wrap } = {}) {
+  return h('div', { class: cx('seg', small && 'seg-sm', wrap && 'seg-wrap', page && 'on-page', outline && 'seg-outline'), role: 'tablist' },
     Object.entries(options).map(([k, label]) =>
       h('button', { class: cx('seg-btn', k === value && 'on'), role: 'tab', 'aria-selected': String(k === value), onclick: () => onChange(k) }, label)));
 }

@@ -41,7 +41,7 @@
 :root[data-theme="dark"] .card { box-shadow: none !important; }
 
 /* Главните карти: жълт контур (като таксиметрова табела) */
-.meter, .month-sum, .hero { border: 1.5px solid var(--y-line) !important; box-shadow: 0 0 0 4px rgba(255, 194, 26, .10) !important; }
+.meter, .month-sum, .hero { border: 1.5px solid var(--y-line) !important; box-shadow: var(--shadow) !important; }
 /* Шахматна лента горе на „Чисто този месец“ и шапките */
 .meter, .hero { position: relative; overflow: hidden; padding-top: 24px !important; }
 .meter::before, .hero::before { display: block !important; content: '' !important; position: absolute; left: 0 !important; right: 0 !important; top: 0 !important; height: 8px !important; border-radius: 0 !important;
@@ -116,9 +116,9 @@ body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--
 .rem-days { background: var(--accent-soft); }
 .np-field.active { border-color: var(--accent); }
 .option.on, .chip-btn.on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
-.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255, 194, 26, .25); }
+.input:focus { border-color: var(--accent); box-shadow: none; }
 .avatar, .cover-avatar { background: var(--accent); color: var(--accent-ink); }
-.cover-avatar { box-shadow: 0 0 0 3px var(--accent) !important; }
+.cover-avatar { box-shadow: none !important; border-color: var(--accent) !important; border-width: 3px !important; }
 .live, .drive { border: 1.5px solid color-mix(in srgb, var(--pos) 45%, transparent) !important; }
 .live-dot { animation: pulse 2s infinite; }
 .msg { border-left: 4px solid var(--violet) !important; }
@@ -140,3 +140,5 @@ body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--
 .attention { border-color: var(--y-line) !important; }
 .goal-bar i { background: linear-gradient(90deg, var(--violet), #A78BFA); }
 body.admin { --pc: var(--violet); }
+
+.f-ic { background: color-mix(in srgb, var(--tc, var(--pc)) 13%, var(--surface)) !important; color: var(--tc, var(--pc)) !important; }

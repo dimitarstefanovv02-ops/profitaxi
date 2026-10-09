@@ -30,7 +30,6 @@ export function reservationsView({ data }) {
   const past = (data.reservations || []).filter((r) => r.done || r.date < todayStr()).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)).slice(0, 20);
   const sum = up.reduce((a, r) => a + (Number(r.price) || 0), 0);
   return h('div', { class: 'screen', 'data-page': 'reservations' },
-    h('a', { class: 'back', href: '#/home' }, icon('left', 20), 'Назад'),
     hero(
       h('div', { class: 'hero-top' },
         h('div', null, h('h1', null, 'Резервации'), h('div', { class: 'hero-sub' }, 'Лични курсове, уговорени с клиент')),

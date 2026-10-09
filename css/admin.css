@@ -578,3 +578,20 @@ body.admin .btn.arr-toggle.on { background: var(--violet, #7C3AED); color: #fff;
 .hp-all { display: block; margin-top: 8px; font-weight: 700; }
 .push-hint { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); border: 1.5px dashed var(--accent); }
 .push-hint small { display: block; color: var(--muted); }
+
+/* Филтрите на телефон: търсачката на цял ред, падащите менюта по две на ред (не високи кутии) */
+@media (max-width: 999px) {
+  .adm-filters { flex-direction: row; flex-wrap: wrap; align-items: stretch; }
+  .adm-filters > .input, .adm-filters > input, .adm-filters > .input:first-child { flex: 1 1 100%; height: auto; min-height: 48px; }
+  .adm-filters > select.input { flex: 1 1 calc(50% - 8px); min-width: 0; }
+}
+/* „Днес се случи“: етикетите се пренасят, не се режат */
+.hap { min-width: 0; }
+.hap > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.code-row .grow > b, .code-row .grow > small { display: block; }
+/* „Днес се случи“ на тесен екран: число отгоре, етикетът на цял ред отдолу (без рязане на думи) */
+.hap { flex-wrap: wrap; row-gap: 4px; }
+.hap > span:last-child { flex-basis: 100%; overflow-wrap: normal; }
+.live-badge { align-items: flex-start; }
+.live-badge > i { flex: none; margin-top: .45em; }
+.live-badge.bad { border-radius: 14px; }

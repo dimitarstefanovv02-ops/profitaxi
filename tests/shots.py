@@ -24,7 +24,7 @@ async def main():
                 if mode == 'records':
                     await pg.evaluate("window.scrollTo(0, document.querySelector('.rec').closest('.card').offsetTop - 16)")
                 if mode == 'numpad':
-                    await pg.click('.tile >> nth=0'); await pg.keyboard.type('148'); await pg.wait_for_timeout(400)
+                    await pg.click('[data-sec=inc] .f-row >> nth=0'); await pg.keyboard.type('148'); await pg.wait_for_timeout(400)
                 await pg.wait_for_timeout(300)
                 await pg.screenshot(path=f'img/screen-{name}-{theme}.jpg', type='jpeg', quality=80)
                 if mode == 'numpad': await pg.keyboard.press('Escape')

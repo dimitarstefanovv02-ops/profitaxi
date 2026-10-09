@@ -4,7 +4,7 @@
 import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx, round2, uid, fmtDate } from '../util.js';
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
-import { roadProgress, openNumpad, stat, tone, toast, cardTitle, more } from '../ui.js';
+import { roadProgress, openNumpad, stat, tone, toast, cardTitle, more, reveal } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
 import { INCOME_TYPES, FUELS, FUEL_TYPES } from '../constants.js';
@@ -50,7 +50,7 @@ export function homeView({ go, user, data, rerender, route }) {
   const togglePanel = (k, scroll) => {
     openPanel = openPanel === k ? null : k;
     if (rerender) rerender(); else go('/home');
-    if (openPanel && scroll) setTimeout(() => document.getElementById('home-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    if (openPanel) setTimeout(() => (scroll ? document.getElementById('home-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) : reveal(document.getElementById('home-panel'))), 60);
   };
   const panelBtn = (k, ic, title, sub) => h('button', { class: cx('home-link', openPanel === k && 'on'), 'aria-expanded': String(openPanel === k), onclick: () => togglePanel(k) },
     h('span', { class: 'hl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), h('small', null, sub)), h('span', { class: 'hl-chev' }, icon('down', 18)));

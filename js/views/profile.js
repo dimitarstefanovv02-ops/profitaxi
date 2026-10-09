@@ -38,10 +38,10 @@ export function profileView({ go, user, data, route }) {
       ['notify', h('div', null, h('h2', { class: 'section-title' }, 'Известия'),
       h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), notifyRow(d), emailBlock(user, draw)))],
       ['look', h('div', null, h('h2', { class: 'section-title' }, 'Изглед'), h('section', { class: 'card' }, cardTitle('sun', 'Изглед'),
-        segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, wrap: true, small: true }),
+        segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, wrap: true, outline: true }),
         h('p', { class: 'muted small', style: { margin: '8px 2px 14px' } }, '„За слънце“ – по-силен контраст за деня в колата. „Тъмна вечер“ – тъмна от 19 до 7 ч.'),
         h('div', { class: 'field-label', style: { marginBottom: '8px' } }, 'Размер на текста'),
-        segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true })))],
+        segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true, outline: true })))],
 
       ['help', h('div', null, h('h2', { class: 'section-title' }, 'Сигурност'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
