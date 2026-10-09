@@ -12,7 +12,8 @@
   --accent: #0B57D0; --accent-press: #0842A0; --accent-ink: #FFFFFF; --accent-soft: #D3E3FD; --accent-text: #0B57D0;
   --g-cont: #F0F4F9; --g-cont-hi: #E9EEF6; --g-sec: #D3E3FD; --g-on-sec: #041E49; --g-outline: #747775; --g-outline-v: #C4C7C5;
   --pos: #146C2E; --pos-soft: #C4EED0; --neg: #B3261E; --neg-soft: #F9DEDC;
-  --pc: #0B57D0; --c-violet: #0B57D0; --c-green: #146C2E; --c-blue: #0B57D0; --c-amber: #B06000; --c-orange: #B06000; --c-red: #B3261E; --c-teal: #00687A; --c-sky: #0B57D0; --c-slate: #444746;
+  --pc: #0B57D0; --c-violet: #8430CE; --c-green: #188038; --c-blue: #1A73E8; --c-amber: #E37400; --c-orange: #E8710A; --c-red: #D93025; --c-teal: #007B83; --c-sky: #129EAF; --c-pink: #D01884; --c-slate: #5F6368;
+  --g-hero: #0B57D0; --g-hero-ink: #FFFFFF; --g-go: #188038; --g-go-ink: #FFFFFF; --g-warn: #FEEFC3; --g-on-warn: #4A3200; --g-yellow: #FBBC04;
   --violet: #0B57D0; --v-soft: #D3E3FD; --v-line: #E1E3E1; --v-strong: #C4C7C5; --v-glow: transparent;
   --r-xl: 28px; --r-lg: 24px; --r-md: 16px; --r-sm: 12px;
 }
@@ -22,7 +23,8 @@
   --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA;
   --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
   --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410;
-  --pc: #A8C7FA; --c-violet: #A8C7FA; --c-blue: #A8C7FA; --c-green: #6DD58C; --c-amber: #FFB683; --c-orange: #FFB683; --c-red: #F2B8B5; --c-teal: #5FD5ED; --c-sky: #A8C7FA; --c-slate: #C4C7C5;
+  --pc: #A8C7FA; --c-violet: #D7AEFB; --c-blue: #8AB4F8; --c-green: #81C995; --c-amber: #FDD663; --c-orange: #FCAD70; --c-red: #F28B82; --c-teal: #4ECDE6; --c-sky: #78D9EC; --c-pink: #FF8BCB; --c-slate: #BDC1C6;
+  --g-hero: #0842A0; --g-hero-ink: #FFFFFF; --g-go: #6DD58C; --g-go-ink: #0A3818; --g-warn: #4A3200; --g-on-warn: #FFE08A; --g-yellow: #FDD663;
   --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;
 }
 @media (prefers-color-scheme: dark) {
@@ -32,12 +34,14 @@
     --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA;
     --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
     --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410;
-    --pc: #A8C7FA; --c-violet: #A8C7FA; --c-blue: #A8C7FA; --c-green: #6DD58C; --c-amber: #FFB683; --c-orange: #FFB683; --c-red: #F2B8B5; --c-teal: #5FD5ED; --c-sky: #A8C7FA; --c-slate: #C4C7C5;
+    --pc: #A8C7FA; --c-violet: #D7AEFB; --c-blue: #8AB4F8; --c-green: #81C995; --c-amber: #FDD663; --c-orange: #FCAD70; --c-red: #F28B82; --c-teal: #4ECDE6; --c-sky: #78D9EC; --c-pink: #FF8BCB; --c-slate: #BDC1C6;
+  --g-hero: #0842A0; --g-hero-ink: #FFFFFF; --g-go: #6DD58C; --g-go-ink: #0A3818; --g-warn: #4A3200; --g-on-warn: #FFE08A; --g-yellow: #FDD663;
     --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;
   }
 }
 /* One Taxi остава в червено */
-:root[data-brand="one"] { --accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #B3261E; --g-sec: #FDE8E9; --g-on-sec: #410002; }
+:root[data-brand="one"] { --accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #B3261E; --g-sec: #FDE8E9; --g-on-sec: #410002; --g-hero: #C8141B; }
+:root[data-brand="one"][data-theme="dark"] { --g-hero: #8C1D18; }
 
 /* ---------- Типография: по-леки тегла, като в Google ---------- */
 body { letter-spacing: 0; }
@@ -176,3 +180,66 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 .g-search .avatar { flex: none; overflow: hidden; padding: 0; display: grid; place-items: center; }
 .g-search .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .search-bar .search-in, .search-bar .search-in:focus { border: 0 !important; background: transparent !important; }
+
+/* ======================================================================
+   КОНТРАСТ: цветни иконки по категория, синя главна карта, зелен бутон за смяната,
+   зелено за приходи и червено за разходи – за да не е всичко синьо-сиво.
+   ====================================================================== */
+[data-page] { --pc: var(--c-blue); }
+[data-page="money"], [data-page="shifts"] { --pc: var(--c-green); }
+[data-page="stats"] { --pc: var(--c-violet); }
+[data-page="costs"] { --pc: var(--c-orange); }
+/* Иконки: цветен кръг в тон на категорията */
+.t-ic, .bl-ic, .ql-ic, .cost-ic, .mini-ic, .kpi-ic, .list-btn .l-ic, .info-row .l-ic, .msg-ic, .hl-ic, .gs-ic, .rec-ic, .cal-ev-ic, .att-ic, .due-ic, .f-ic {
+  background: color-mix(in srgb, var(--tc, var(--pc)) 15%, transparent) !important; color: var(--tc, var(--pc)) !important; }
+.t-ic { width: 32px; height: 32px; display: inline-grid; place-items: center; margin-right: 4px; }
+.bl-ic { width: 42px !important; height: 42px !important; }
+.big-links > [data-k="stats"] .bl-ic, .big-links > [data-k="ideas"] .bl-ic { --pc: var(--c-violet); }
+.big-links > [data-k="shifts"] .bl-ic, .big-links > [data-k="profile"] .bl-ic { --pc: var(--c-blue); }
+.big-links > [data-k="costs"] .bl-ic, .big-links > [data-k="vehicle"] .bl-ic { --pc: var(--c-orange); }
+.big-links > [data-k="excel"] .bl-ic, .big-links > [data-k="guide"] .bl-ic { --pc: var(--c-green); }
+.big-links > [data-k="carset"] .bl-ic, .big-links > [data-k="write"] .bl-ic { --pc: var(--c-teal); }
+.big-links > [data-k="tour"] .bl-ic, .big-links > [data-k="arrange"] .bl-ic { --pc: var(--c-amber); }
+.home-link:nth-child(1) .hl-ic { --pc: var(--c-blue); }
+.home-link:nth-child(2) .hl-ic { --pc: var(--c-violet); }
+.list-btn.danger .l-ic { --tc: var(--c-red); }
+.kpi-ic, .mini-ic { --pc: var(--kc, var(--c-blue)); }
+[data-sec="data"] .t-ic { --pc: var(--c-teal); }
+[data-sec="inc"] .t-ic { --pc: var(--c-green); }
+[data-sec="exp"] .t-ic { --pc: var(--c-orange); }
+.fuel-line .ic { color: var(--c-orange); }
+
+/* Главната карта „Чисто този месец“: плътно синьо с бели числа и жълта лента */
+.meter { background: var(--g-hero) !important; color: var(--g-hero-ink) !important; }
+.meter .meter-label, .meter .meter-goal, .meter .meter-value, .meter .goal-edit, .meter .meter-forecast, .meter .meter-forecast b, .meter .meter-more summary, .meter .meter-note, .meter b { color: var(--g-hero-ink) !important; }
+.meter .meter-label, .meter .meter-goal > span, .meter .meter-forecast span, .meter .meter-note { opacity: .88; }
+.meter .goal-edit { text-decoration-color: rgba(255, 255, 255, .6) !important; }
+.meter .meter-value.neg, .meter .meter-forecast b.neg { color: #FFB4AB !important; }
+.meter .meter-pct { background: #FFFFFF !important; color: var(--g-hero) !important; font-weight: 700; }
+.meter .road { background: rgba(255, 255, 255, .25) !important; }
+.meter .road-fill { background: var(--g-yellow) !important; }
+.meter .meter-today, .meter .meter-cell { background: rgba(255, 255, 255, .14) !important; color: var(--g-hero-ink) !important; }
+.meter .meter-cell span { color: var(--g-hero-ink) !important; opacity: .8; }
+.meter .ic, .meter svg { color: inherit; }
+
+/* Плаващ бутон „Започни смяна“ – зелен */
+.shift-cta { background: var(--g-go) !important; color: var(--g-go-ink) !important; }
+
+/* Напомнянето за вчерашната смяна – жълто */
+.yday { background: var(--g-warn) !important; color: var(--g-on-warn) !important; }
+.yday .grow small { color: var(--g-on-warn) !important; }
+
+/* Приходи в зелено, разходи в червено */
+.month-sum .ms-row:nth-child(1) b { color: var(--pos) !important; }
+.month-sum .ms-row:nth-child(2) b { color: var(--neg) !important; }
+.ms-total b.neg { color: var(--neg) !important; }
+[data-sec="inc"] .card-title .num:not(:empty) { color: var(--pos); }
+[data-sec="exp"] .card-title .num:not(:empty) { color: var(--neg); }
+.chip.good { background: var(--pos-soft) !important; border-color: transparent !important; }
+.chip.bad { background: var(--neg-soft) !important; border-color: transparent !important; }
+.bar.pos, .week-bar.pos { fill: var(--c-green) !important; background: var(--c-green) !important; }
+.mc-bar span, .mc-bar span.best { background: var(--c-green) !important; }
+.drive-sum .pos, .drive .pos { color: var(--pos) !important; }
+
+/* Тъмно: малко по-светли карти, за да се отделят от фона */
+:root[data-theme="dark"] .meter .road-fill { background: var(--g-yellow) !important; }

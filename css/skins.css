@@ -312,12 +312,13 @@
 :root[data-skin="mid"] .goal-bar i {background: linear-gradient(90deg, var(--violet), #A78BFA);}
 :root[data-skin="mid"] body.admin {--pc: var(--violet);}
 :root[data-skin="mid"] .f-ic {background: color-mix(in srgb, var(--tc, var(--pc)) 13%, var(--surface)) !important; color: var(--tc, var(--pc)) !important;}
-:root[data-skin="google"], :root[data-skin="google"] [data-page] {--bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F0F4F9; --surface-3: #DDE3EA; --line: #E1E3E1; --text: #1F1F1F; --muted: #444746; --faint: #747775; --accent: #0B57D0; --accent-press: #0842A0; --accent-ink: #FFFFFF; --accent-soft: #D3E3FD; --accent-text: #0B57D0; --g-cont: #F0F4F9; --g-cont-hi: #E9EEF6; --g-sec: #D3E3FD; --g-on-sec: #041E49; --g-outline: #747775; --g-outline-v: #C4C7C5; --pos: #146C2E; --pos-soft: #C4EED0; --neg: #B3261E; --neg-soft: #F9DEDC; --pc: #0B57D0; --c-violet: #0B57D0; --c-green: #146C2E; --c-blue: #0B57D0; --c-amber: #B06000; --c-orange: #B06000; --c-red: #B3261E; --c-teal: #00687A; --c-sky: #0B57D0; --c-slate: #444746; --violet: #0B57D0; --v-soft: #D3E3FD; --v-line: #E1E3E1; --v-strong: #C4C7C5; --v-glow: transparent; --r-xl: 28px; --r-lg: 24px; --r-md: 16px; --r-sm: 12px;}
-:root[data-skin="google"][data-theme="dark"], :root[data-skin="google"][data-theme="dark"] [data-page] {--bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746; --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F; --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA; --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746; --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410; --pc: #A8C7FA; --c-violet: #A8C7FA; --c-blue: #A8C7FA; --c-green: #6DD58C; --c-amber: #FFB683; --c-orange: #FFB683; --c-red: #F2B8B5; --c-teal: #5FD5ED; --c-sky: #A8C7FA; --c-slate: #C4C7C5; --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;}
+:root[data-skin="google"], :root[data-skin="google"] [data-page] {--bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F0F4F9; --surface-3: #DDE3EA; --line: #E1E3E1; --text: #1F1F1F; --muted: #444746; --faint: #747775; --accent: #0B57D0; --accent-press: #0842A0; --accent-ink: #FFFFFF; --accent-soft: #D3E3FD; --accent-text: #0B57D0; --g-cont: #F0F4F9; --g-cont-hi: #E9EEF6; --g-sec: #D3E3FD; --g-on-sec: #041E49; --g-outline: #747775; --g-outline-v: #C4C7C5; --pos: #146C2E; --pos-soft: #C4EED0; --neg: #B3261E; --neg-soft: #F9DEDC; --pc: #0B57D0; --c-violet: #8430CE; --c-green: #188038; --c-blue: #1A73E8; --c-amber: #E37400; --c-orange: #E8710A; --c-red: #D93025; --c-teal: #007B83; --c-sky: #129EAF; --c-pink: #D01884; --c-slate: #5F6368; --g-hero: #0B57D0; --g-hero-ink: #FFFFFF; --g-go: #188038; --g-go-ink: #FFFFFF; --g-warn: #FEEFC3; --g-on-warn: #4A3200; --g-yellow: #FBBC04; --violet: #0B57D0; --v-soft: #D3E3FD; --v-line: #E1E3E1; --v-strong: #C4C7C5; --v-glow: transparent; --r-xl: 28px; --r-lg: 24px; --r-md: 16px; --r-sm: 12px;}
+:root[data-skin="google"][data-theme="dark"], :root[data-skin="google"][data-theme="dark"] [data-page] {--bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746; --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F; --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA; --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746; --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410; --pc: #A8C7FA; --c-violet: #D7AEFB; --c-blue: #8AB4F8; --c-green: #81C995; --c-amber: #FDD663; --c-orange: #FCAD70; --c-red: #F28B82; --c-teal: #4ECDE6; --c-sky: #78D9EC; --c-pink: #FF8BCB; --c-slate: #BDC1C6; --g-hero: #0842A0; --g-hero-ink: #FFFFFF; --g-go: #6DD58C; --g-go-ink: #0A3818; --g-warn: #4A3200; --g-on-warn: #FFE08A; --g-yellow: #FDD663; --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;}
 @media (prefers-color-scheme: dark) {
-:root[data-skin="google"]:not([data-theme="light"]):not([data-theme="sun"]), :root[data-skin="google"]:not([data-theme="light"]):not([data-theme="sun"]) [data-page] {--bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746; --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F; --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA; --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746; --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410; --pc: #A8C7FA; --c-violet: #A8C7FA; --c-blue: #A8C7FA; --c-green: #6DD58C; --c-amber: #FFB683; --c-orange: #FFB683; --c-red: #F2B8B5; --c-teal: #5FD5ED; --c-sky: #A8C7FA; --c-slate: #C4C7C5; --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;}
+:root[data-skin="google"]:not([data-theme="light"]):not([data-theme="sun"]), :root[data-skin="google"]:not([data-theme="light"]):not([data-theme="sun"]) [data-page] {--bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746; --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F; --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA; --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746; --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410; --pc: #A8C7FA; --c-violet: #D7AEFB; --c-blue: #8AB4F8; --c-green: #81C995; --c-amber: #FDD663; --c-orange: #FCAD70; --c-red: #F28B82; --c-teal: #4ECDE6; --c-sky: #78D9EC; --c-pink: #FF8BCB; --c-slate: #BDC1C6; --g-hero: #0842A0; --g-hero-ink: #FFFFFF; --g-go: #6DD58C; --g-go-ink: #0A3818; --g-warn: #4A3200; --g-on-warn: #FFE08A; --g-yellow: #FDD663; --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;}
 }
-:root[data-skin="google"][data-brand="one"] {--accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #B3261E; --g-sec: #FDE8E9; --g-on-sec: #410002;}
+:root[data-skin="google"][data-brand="one"] {--accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #B3261E; --g-sec: #FDE8E9; --g-on-sec: #410002; --g-hero: #C8141B;}
+:root[data-skin="google"][data-brand="one"][data-theme="dark"] {--g-hero: #8C1D18;}
 :root[data-skin="google"] body {letter-spacing: 0;}
 :root[data-skin="google"] h1, :root[data-skin="google"] .page-title h1, :root[data-skin="google"] .hero h1, :root[data-skin="google"] .adm-head h1 {font-weight: 400 !important; letter-spacing: 0;}
 :root[data-skin="google"] .page-title h1 {font-size: 1.75rem;}
@@ -426,3 +427,49 @@
 :root[data-skin="google"] .g-search .avatar {flex: none; overflow: hidden; padding: 0; display: grid; place-items: center;}
 :root[data-skin="google"] .g-search .avatar img {width: 100%; height: 100%; object-fit: cover; display: block;}
 :root[data-skin="google"] .search-bar .search-in, :root[data-skin="google"] .search-bar .search-in:focus {border: 0 !important; background: transparent !important;}
+:root[data-skin="google"] [data-page] {--pc: var(--c-blue);}
+:root[data-skin="google"] [data-page="money"], :root[data-skin="google"] [data-page="shifts"] {--pc: var(--c-green);}
+:root[data-skin="google"] [data-page="stats"] {--pc: var(--c-violet);}
+:root[data-skin="google"] [data-page="costs"] {--pc: var(--c-orange);}
+:root[data-skin="google"] .t-ic, :root[data-skin="google"] .bl-ic, :root[data-skin="google"] .ql-ic, :root[data-skin="google"] .cost-ic, :root[data-skin="google"] .mini-ic, :root[data-skin="google"] .kpi-ic, :root[data-skin="google"] .list-btn .l-ic, :root[data-skin="google"] .info-row .l-ic, :root[data-skin="google"] .msg-ic, :root[data-skin="google"] .hl-ic, :root[data-skin="google"] .gs-ic, :root[data-skin="google"] .rec-ic, :root[data-skin="google"] .cal-ev-ic, :root[data-skin="google"] .att-ic, :root[data-skin="google"] .due-ic, :root[data-skin="google"] .f-ic {background: color-mix(in srgb, var(--tc, var(--pc)) 15%, transparent) !important; color: var(--tc, var(--pc)) !important;}
+:root[data-skin="google"] .t-ic {width: 32px; height: 32px; display: inline-grid; place-items: center; margin-right: 4px;}
+:root[data-skin="google"] .bl-ic {width: 42px !important; height: 42px !important;}
+:root[data-skin="google"] .big-links > [data-k="stats"] .bl-ic, :root[data-skin="google"] .big-links > [data-k="ideas"] .bl-ic {--pc: var(--c-violet);}
+:root[data-skin="google"] .big-links > [data-k="shifts"] .bl-ic, :root[data-skin="google"] .big-links > [data-k="profile"] .bl-ic {--pc: var(--c-blue);}
+:root[data-skin="google"] .big-links > [data-k="costs"] .bl-ic, :root[data-skin="google"] .big-links > [data-k="vehicle"] .bl-ic {--pc: var(--c-orange);}
+:root[data-skin="google"] .big-links > [data-k="excel"] .bl-ic, :root[data-skin="google"] .big-links > [data-k="guide"] .bl-ic {--pc: var(--c-green);}
+:root[data-skin="google"] .big-links > [data-k="carset"] .bl-ic, :root[data-skin="google"] .big-links > [data-k="write"] .bl-ic {--pc: var(--c-teal);}
+:root[data-skin="google"] .big-links > [data-k="tour"] .bl-ic, :root[data-skin="google"] .big-links > [data-k="arrange"] .bl-ic {--pc: var(--c-amber);}
+:root[data-skin="google"] .home-link:nth-child(1) .hl-ic {--pc: var(--c-blue);}
+:root[data-skin="google"] .home-link:nth-child(2) .hl-ic {--pc: var(--c-violet);}
+:root[data-skin="google"] .list-btn.danger .l-ic {--tc: var(--c-red);}
+:root[data-skin="google"] .kpi-ic, :root[data-skin="google"] .mini-ic {--pc: var(--kc, var(--c-blue));}
+:root[data-skin="google"] [data-sec="data"] .t-ic {--pc: var(--c-teal);}
+:root[data-skin="google"] [data-sec="inc"] .t-ic {--pc: var(--c-green);}
+:root[data-skin="google"] [data-sec="exp"] .t-ic {--pc: var(--c-orange);}
+:root[data-skin="google"] .fuel-line .ic {color: var(--c-orange);}
+:root[data-skin="google"] .meter {background: var(--g-hero) !important; color: var(--g-hero-ink) !important;}
+:root[data-skin="google"] .meter .meter-label, :root[data-skin="google"] .meter .meter-goal, :root[data-skin="google"] .meter .meter-value, :root[data-skin="google"] .meter .goal-edit, :root[data-skin="google"] .meter .meter-forecast, :root[data-skin="google"] .meter .meter-forecast b, :root[data-skin="google"] .meter .meter-more summary, :root[data-skin="google"] .meter .meter-note, :root[data-skin="google"] .meter b {color: var(--g-hero-ink) !important;}
+:root[data-skin="google"] .meter .meter-label, :root[data-skin="google"] .meter .meter-goal > span, :root[data-skin="google"] .meter .meter-forecast span, :root[data-skin="google"] .meter .meter-note {opacity: .88;}
+:root[data-skin="google"] .meter .goal-edit {text-decoration-color: rgba(255, 255, 255, .6) !important;}
+:root[data-skin="google"] .meter .meter-value.neg, :root[data-skin="google"] .meter .meter-forecast b.neg {color: #FFB4AB !important;}
+:root[data-skin="google"] .meter .meter-pct {background: #FFFFFF !important; color: var(--g-hero) !important; font-weight: 700;}
+:root[data-skin="google"] .meter .road {background: rgba(255, 255, 255, .25) !important;}
+:root[data-skin="google"] .meter .road-fill {background: var(--g-yellow) !important;}
+:root[data-skin="google"] .meter .meter-today, :root[data-skin="google"] .meter .meter-cell {background: rgba(255, 255, 255, .14) !important; color: var(--g-hero-ink) !important;}
+:root[data-skin="google"] .meter .meter-cell span {color: var(--g-hero-ink) !important; opacity: .8;}
+:root[data-skin="google"] .meter .ic, :root[data-skin="google"] .meter svg {color: inherit;}
+:root[data-skin="google"] .shift-cta {background: var(--g-go) !important; color: var(--g-go-ink) !important;}
+:root[data-skin="google"] .yday {background: var(--g-warn) !important; color: var(--g-on-warn) !important;}
+:root[data-skin="google"] .yday .grow small {color: var(--g-on-warn) !important;}
+:root[data-skin="google"] .month-sum .ms-row:nth-child(1) b {color: var(--pos) !important;}
+:root[data-skin="google"] .month-sum .ms-row:nth-child(2) b {color: var(--neg) !important;}
+:root[data-skin="google"] .ms-total b.neg {color: var(--neg) !important;}
+:root[data-skin="google"] [data-sec="inc"] .card-title .num:not(:empty) {color: var(--pos);}
+:root[data-skin="google"] [data-sec="exp"] .card-title .num:not(:empty) {color: var(--neg);}
+:root[data-skin="google"] .chip.good {background: var(--pos-soft) !important; border-color: transparent !important;}
+:root[data-skin="google"] .chip.bad {background: var(--neg-soft) !important; border-color: transparent !important;}
+:root[data-skin="google"] .bar.pos, :root[data-skin="google"] .week-bar.pos {fill: var(--c-green) !important; background: var(--c-green) !important;}
+:root[data-skin="google"] .mc-bar span, :root[data-skin="google"] .mc-bar span.best {background: var(--c-green) !important;}
+:root[data-skin="google"] .drive-sum .pos, :root[data-skin="google"] .drive .pos {color: var(--pos) !important;}
+:root[data-skin="google"][data-theme="dark"] .meter .road-fill {background: var(--g-yellow) !important;}
