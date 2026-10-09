@@ -29,9 +29,10 @@ if (typeof document !== 'undefined') {
 // ---------- Тема ----------
 // Теми: auto (като телефона), light, dark, sun (светла с висок контраст за деня),
 // schedule (тъмна вечер от 19 до 7 ч, светла през деня)
-export const THEMES = { auto: 'Като телефона', light: 'Светла', dark: 'Тъмна', sun: 'За слънце', schedule: 'Тъмна вечер' };
-const nightNow = () => { const hr = new Date().getHours(); return hr >= 19 || hr < 7; };
-const effective = (p) => (p === 'schedule' ? (nightNow() ? 'dark' : 'light') : p);
+export const THEMES = { auto: 'Като телефона', light: 'Светла', dark: 'Тъмна' };
+// Старите „За слънце“ и „Тъмна вечер“ вече ги няма: стават светла и като телефона
+const OLD = { sun: 'light', schedule: 'auto' };
+const effective = (p) => OLD[p] || p;
 export function applyTheme(pref) {
   const p = pref || localStorage.getItem('profitaxi.theme') || 'auto';
   const e = effective(p);
@@ -42,7 +43,7 @@ export function applyTheme(pref) {
   applyTextSize();
 }
 export function setTheme(p) { localStorage.setItem('profitaxi.theme', p); applyTheme(p); }
-export const getTheme = () => localStorage.getItem('profitaxi.theme') || 'auto';
+export const getTheme = () => { const t = localStorage.getItem('profitaxi.theme') || 'auto'; return OLD[t] || t; };
 export const isDark = () => { const e = effective(getTheme()); return e === 'dark' || (e === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); };
 // по график: проверяваме на всеки 5 минути дали е време за смяна на темата
 setInterval(() => { if (getTheme() === 'schedule') applyTheme(); }, 5 * 60000);

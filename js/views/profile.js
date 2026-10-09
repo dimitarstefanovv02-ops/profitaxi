@@ -40,8 +40,8 @@ export function profileView({ go, user, data, route }) {
       ['notify', h('div', null, h('h2', { class: 'section-title' }, 'Известия'),
       h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), pushRows(draw), notifyRow(d), emailBlock(user, draw)))],
       ['look', h('div', null, h('h2', { class: 'section-title' }, 'Изглед'), h('section', { class: 'card' }, cardTitle('sun', 'Изглед'),
-        segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, wrap: true, outline: true }),
-        h('p', { class: 'muted small', style: { margin: '8px 2px 14px' } }, '„За слънце“ – по-силен контраст за деня в колата. „Тъмна вечер“ – тъмна от 19 до 7 ч.'),
+        segmented(THEMES, getTheme(), (t) => { setTheme(t); draw(); }, { page: true, outline: true }),
+        h('div', { style: { height: '14px' } }),
         h('div', { class: 'field-label', style: { marginBottom: '8px' } }, 'Размер на текста'),
         segmented(TEXT_SIZES, getTextSize(), (k) => { setTextSize(k); draw(); }, { page: true, outline: true })))],
 
