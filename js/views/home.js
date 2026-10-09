@@ -5,10 +5,11 @@ import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, M
 import * as store from '../store.js';
 import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
-import { roadProgress, openNumpad, stat, tone, toast, cardTitle, more, reveal } from '../ui.js';
+import { roadProgress, openNumpad, openSheet, sheetHead, stat, tone, toast, cardTitle, more, reveal } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
-import { INCOME_TYPES, FUELS, FUEL_TYPES } from '../constants.js';
+import { INCOME_TYPES, FUELS, FUEL_TYPES, shiftCats } from '../constants.js';
+import { showShiftResult } from './shiftResult.js';
 import { scanReceipt } from '../quick.js';
 import { zone } from '../arrange.js';
 
@@ -279,12 +280,20 @@ function bestToday(ti) {
 function driveMode(s, data, go, g, redraw) {
   const inc = shiftIncome(s), exp = shiftExpenses(s), profit = inc - exp;
   const need = g.goal > 0 && !g.done && g.needToday > 0 ? g.needToday : null;
-  const big = (cls, ic, label, sub, onclick) => h('button', { class: cx('drive-btn', cls), onclick }, h('span', { class: 'db-ic' }, icon(ic, 30)), h('b', null, label), sub && h('small', null, sub));
+  const sumOf = (cat) => s.expenses.filter((e) => e.category === cat).reduce((a2, e) => a2 + (Number(e.amount) || 0), 0);
+  const fuelQty = s.expenses.filter((e) => e.category === 'fuel').reduce((a2, e) => a2 + (Number(e.qty) || 0), 0);
+  // Ред: иконка, име, сума досега и „+ Добави“
+  const row = (ic, color, label, sub, value, onclick) => h('button', { class: 'f-row', type: 'button', onclick },
+    h('span', { class: 'f-ic', style: { '--tc': color } }, icon(ic, 20)),
+    h('span', { class: 'grow' }, h('b', null, label), sub && h('small', null, sub)),
+    value > 0 && h('span', { class: 'f-val' }, money(value, value % 1 ? 2 : 0)),
+    h('span', { class: cx('f-btn', value > 0 && 'has') }, value > 0 ? icon('plus', 16) : h('span', { class: 'row' }, icon('plus', 16), 'Добави')));
+  const cats = shiftCats(data.profile);
   return h('section', { class: 'drive', 'aria-label': 'Текуща смяна' },
     forgotBanner(s, go, redraw),
     h('div', { class: 'drive-top' },
       h('span', { class: 'row gap small muted' }, h('span', { class: 'live-dot' }), `На смяна от ${fmtTime(s.start)}`),
-      h('button', { class: 'chip', onclick: () => go('/shift/' + s.id) }, icon('edit', 14), 'Отчет')),
+      h('button', { class: 'chip', onclick: () => go('/shift/' + s.id) }, icon('edit', 14), 'Поправи')),
     h('div', { class: 'timer drive-timer', 'data-timer': s.start }, fmtTimer(Date.now() - new Date(s.start))),
     h('div', { class: 'drive-sum' },
       h('div', null, h('span', null, 'Приходи'), h('b', null, money(inc))),
@@ -293,14 +302,60 @@ function driveMode(s, data, go, g, redraw) {
     need != null && h('div', { class: 'drive-need' },
       h('div', { class: 'row between' }, h('span', null, 'Днес ти трябват'), h('b', null, `${money(Math.max(0, profit))} от ${money(need)}`)),
       h('div', { class: 'drive-bar' }, h('i', { style: { width: `${Math.min(100, Math.max(0, (profit / need) * 100))}%` } }))),
-    h('div', { class: 'drive-grid' },
-      big('cash', 'coins', 'Кеш', `+ към ${money(s.income.cash || 0)}`, () => quickIncome('cash')),
-      big('card', 'card', 'Карта', `+ към ${money(s.income.card || 0)}`, () => quickIncome('card')),
-      big('fuel', 'fuel', 'Гориво', 'сума и литри', () => quickFuel(data.profile)),
-      big('other', 'plus', 'Друго', 'бакшиш, паркинг…', () => go('/shift/' + s.id))),
-    h('div', { class: 'drive-row' },
-      h('button', { class: 'btn btn-ghost', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка')),
-    h('button', { class: 'btn btn-dark btn-xl drive-end', onclick: () => go('/shift/' + s.id + '?end=1') }, icon('stop', 22), 'Приключи смяната'));
+    // Най-отгоре: един бутон за глас
+    h('button', { class: 'btn btn-primary btn-xl drive-voice', type: 'button', onclick: () => sayLive(s, redraw) }, icon('mic', 24), 'Кажи на глас'),
+    h('p', { class: 'drive-hint' }, '„Кеш 120 евро, автомивка 4, гориво 25“'),
+    // После – всичко едно под друго
+    h('div', { class: 'drive-label' }, 'Приходи'),
+    h('div', { class: 'f-list drive-list' },
+      Object.entries(INCOME_TYPES).map(([k, t]) => row(t.icon, t.color, t.label, null, s.income[k] || 0, () => quickIncome(k)))),
+    h('div', { class: 'drive-label' }, 'Разходи'),
+    h('div', { class: 'f-list drive-list' },
+      cats.slice(0, 3).map((c) => row(c.icon, c.color, c.label, c.key === 'fuel' ? (fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} л` : 'сума и литри') : null, sumOf(c.key),
+        () => (c.key === 'fuel' ? quickFuel(data.profile) : quickExpense(c.key, c.label)))),
+      row('plus', 'var(--c-slate)', 'Друг разход', 'ремонт, гуми, глоба…', 0, () => otherLive(cats.slice(3)))),
+    h('button', { class: 'btn btn-ghost btn-block', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка за гориво'),
+    h('button', { class: 'btn btn-dark btn-xl drive-end', onclick: () => finishLive(s, go) }, icon('stop', 22), 'Приключи смяната'));
+}
+// Глас по време на смяната – добавя направо към нея
+async function sayLive(s, redraw) {
+  const { openVoice } = await import('../voice.js');
+  openVoice({ mode: 'shift', title: 'Кажи на глас', kmStart: s.kmStart, onApply: (p) => {
+    const a = store.getActiveShift(); if (!a) return;
+    Object.entries(p.income).forEach(([k, v]) => { a.income[k] = round2((a.income[k] || 0) + v); });
+    const t = (FUELS[store.getProfile()?.fuel]?.types || ['petrol'])[0];
+    if (p.fuel && (p.fuel.amount || p.fuel.qty)) a.expenses.push({ id: uid(), category: 'fuel', fuelType: t, amount: p.fuel.amount || 0, qty: p.fuel.qty || 0 });
+    if (p.wash) a.expenses.push({ id: uid(), category: 'wash', amount: p.wash, label: '' });
+    if (p.parking) a.expenses.push({ id: uid(), category: 'parking', amount: p.parking, label: '' });
+    if (p.kmEnd) a.kmEnd = p.kmEnd;
+    store.saveShift(a); toast('Добавено'); redraw();
+  } });
+}
+// Разход към текущата смяна (автомивка, паркинг, друго)
+function quickExpense(cat, label) {
+  openNumpad({ title: `${label}: добави`, fields: [{ key: 'v', label: 'Сума', value: '' }],
+    actions: [{ label: 'Добави', primary: true, run: ({ v }) => { if (!v) return; const a = store.getActiveShift(); if (!a) return; a.expenses.push({ id: uid(), category: cat, amount: v, label: '' }); store.saveShift(a); toast(`${label}: +${money(v, v % 1 ? 2 : 0)}`); } }] });
+}
+function otherLive(rest) {
+  openSheet((close) => h('div', null, sheetHead('Друг разход', close, 'Избери вид'),
+    h('div', { class: 'f-list' }, rest.map((c) => h('button', { class: 'f-row', type: 'button', onclick: () => { close(); quickExpense(c.key, c.label); } },
+      h('span', { class: 'f-ic', style: { '--tc': c.color } }, icon(c.icon, 20)), h('span', { class: 'grow' }, h('b', null, c.label)), icon('right', 18))))));
+}
+// Приключване: само крайният километраж – сумите вече са въведени отгоре
+function finishLive(s, go) {
+  const a0 = store.getActiveShift(); if (!a0) return;
+  const noInc = shiftIncome(a0) <= 0;
+  openNumpad({ title: 'Приключваш смяната', sub: noInc ? 'Няма въведени приходи – затвори и добави кеш и карта, или приключи така.' : 'Краен километраж от таблото (по желание)',
+    fields: [{ key: 'km', label: 'Краен км', value: '', unit: 'км', decimals: 0 }],
+    actions: [{ label: 'Приключи', primary: true, run: ({ km }) => {
+      const a = store.getActiveShift(); if (!a) return;
+      if (km && a.kmStart && km < a.kmStart) { toast('Крайният км е по-малък от началния', 'err'); return false; }
+      if (km) a.kmEnd = Math.round(km);
+      a.end = new Date().toISOString();
+      const saved = store.saveShift(a);
+      go('/home', true);
+      setTimeout(() => showShiftResult(store.myData(), saved.id), 250);
+    } }] });
 }
 // „Забрави ли да приключиш?“ – ако смяната тече над 13 часа
 function forgotBanner(s, go, redraw) {

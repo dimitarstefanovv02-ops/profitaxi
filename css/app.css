@@ -1279,3 +1279,15 @@ html:root .card .cost-row:last-child, html:root .card .shift-row:last-child, htm
 .home-link .hl-chev { right: 6px; }
 @media (max-width: 380px) { .home-link { padding-right: 22px; gap: 6px; } .home-link b { font-size: .9rem; } .home-link .hl-chev { right: 3px; } }
 html:root .search-bar .search-mic { border: 0 !important; background: var(--accent) !important; color: var(--accent-ink) !important; }
+.drive-list .f-row { min-height: 66px; }
+.drive-list .f-ic { width: 44px; height: 44px; }
+.drive-list .grow b { font-size: 1.12rem; }
+/* Смяната на живо: глас най-горе, после всичко едно под друго */
+.drive-voice { width: 100%; gap: 10px; }
+.drive-hint { text-align: center; color: var(--muted); font-size: .92rem; margin: -6px 0 2px; }
+.drive-label { font-size: .82rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 4px 2px -6px; }
+.drive .drive-list { border: 1px solid var(--line); border-radius: 16px; padding: 0 12px; background: var(--surface); }
+.drive { grid-template-columns: minmax(0, 1fr); }
+.drive > * { min-width: 0; }
+.drive-timer { font-size: clamp(2.2rem, 12vw, 3rem); }
+.drive-sum b { font-size: clamp(1.05rem, 5vw, 1.35rem); white-space: nowrap; }
