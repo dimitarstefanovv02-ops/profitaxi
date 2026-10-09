@@ -7,10 +7,10 @@
    ====================================================================== */
 
 :root, [data-page] {
-  --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F0F4F9; --surface-3: #DDE3EA; --line: #E1E3E1;
+  --bg: #EAF0FA; --surface: #FFFFFF; --surface-2: #F0F4F9; --surface-3: #DDE3EA; --line: #E1E3E1;
   --text: #1F1F1F; --muted: #444746; --faint: #747775;
   --accent: #0B57D0; --accent-press: #0842A0; --accent-ink: #FFFFFF; --accent-soft: #D3E3FD; --accent-text: #0B57D0;
-  --g-cont: #F0F4F9; --g-cont-hi: #E9EEF6; --g-sec: #D3E3FD; --g-on-sec: #041E49; --g-outline: #747775; --g-outline-v: #C4C7C5;
+  --g-cont: #FFFFFF; --g-cont-hi: #F1F5FC; --g-in: #F1F5FC; --g-sec: #D3E3FD; --g-on-sec: #041E49; --g-outline: #747775; --g-outline-v: #C4C7C5;
   --pos: #146C2E; --pos-soft: #C4EED0; --neg: #B3261E; --neg-soft: #F9DEDC;
   --pc: #0B57D0; --c-violet: #8430CE; --c-green: #188038; --c-blue: #1A73E8; --c-amber: #E37400; --c-orange: #E8710A; --c-red: #D93025; --c-teal: #007B83; --c-sky: #129EAF; --c-pink: #D01884; --c-slate: #5F6368;
   --g-hero: #0B57D0; --g-hero-ink: #FFFFFF; --g-go: #188038; --g-go-ink: #FFFFFF; --g-warn: #FEEFC3; --g-on-warn: #4A3200; --g-yellow: #FBBC04;
@@ -21,7 +21,7 @@
   --bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746;
   --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F;
   --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA;
-  --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
+  --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-in: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
   --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410;
   --pc: #A8C7FA; --c-violet: #D7AEFB; --c-blue: #8AB4F8; --c-green: #81C995; --c-amber: #FDD663; --c-orange: #FCAD70; --c-red: #F28B82; --c-teal: #4ECDE6; --c-sky: #78D9EC; --c-pink: #FF8BCB; --c-slate: #BDC1C6;
   --g-hero: #0842A0; --g-hero-ink: #FFFFFF; --g-go: #6DD58C; --g-go-ink: #0A3818; --g-warn: #4A3200; --g-on-warn: #FFE08A; --g-yellow: #FDD663;
@@ -32,7 +32,7 @@
     --bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746;
     --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F;
     --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA;
-    --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
+    --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-in: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
     --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410;
     --pc: #A8C7FA; --c-violet: #D7AEFB; --c-blue: #8AB4F8; --c-green: #81C995; --c-amber: #FDD663; --c-orange: #FCAD70; --c-red: #F28B82; --c-teal: #4ECDE6; --c-sky: #78D9EC; --c-pink: #FF8BCB; --c-slate: #BDC1C6;
   --g-hero: #0842A0; --g-hero-ink: #FFFFFF; --g-go: #6DD58C; --g-go-ink: #0A3818; --g-warn: #4A3200; --g-on-warn: #FFE08A; --g-yellow: #FDD663;
@@ -63,7 +63,7 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 .hero, .meter { padding: 20px !important; }
 .meter::before, .hero::before, .meter::after, .hero::after { display: none !important; }
 .card .shift-row, .card .cost-row, .card .res-row { border-color: var(--g-outline-v) !important; }
-.exp-item, .time-in, .np-field, .stat, .result-cell, .result-goal, .ci-grid > div, .fuel-line, .drive-need, .info-box, .next-empty, .meter-cell, .hap, .step-row { background: var(--surface) !important; }
+.exp-item, .time-in, .np-field, .stat, .result-cell, .result-goal, .ci-grid > div, .fuel-line, .drive-need, .info-box, .next-empty, .meter-cell, .hap, .step-row { background: var(--g-in) !important; }
 .yday { background: var(--g-sec) !important; color: var(--g-on-sec); }
 .yday .grow small { color: var(--g-on-sec); opacity: .8; }
 .first-tip { background: var(--g-sec) !important; color: var(--g-on-sec); }
@@ -118,7 +118,7 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 .meter .road, .road { height: 8px !important; border-radius: 999px !important; background: var(--g-sec) !important; }
 .road-fill { background: var(--accent) !important; }
 .road-lane, .road-car, .road-flag { display: none !important; }
-.meter-today { background: var(--surface) !important; border: 0 !important; border-radius: 16px; }
+.meter-today { background: var(--g-in) !important; border: 0 !important; border-radius: 16px; }
 .avatar, .cover-avatar { background: var(--accent) !important; color: var(--accent-ink) !important; border-radius: 50% !important; }
 /* Плаващ бутон „Започни смяна“ (като „Напиши“ в Gmail) */
 .shift-cta { position: fixed !important; z-index: 30; right: max(16px, calc(50% - 264px)); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
@@ -136,17 +136,17 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 
 /* Смяната */
 .drive-voice { background: var(--accent) !important; color: var(--accent-ink) !important; }
-.drive .drive-list { background: var(--surface) !important; border: 0 !important; border-radius: 20px !important; }
+.drive .drive-list { background: var(--g-in) !important; border: 0 !important; border-radius: 20px !important; }
 .drive-end { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
 .drive-label { text-transform: none !important; letter-spacing: 0 !important; font-size: .9rem !important; font-weight: 500 !important; color: var(--text) !important; }
 .voice-btn { border-color: var(--g-outline) !important; color: var(--accent-text) !important; }
 .save-bar { background: var(--g-cont) !important; border-top: 0 !important; }
-.f-card .f-list { background: var(--surface); border-radius: 20px; padding: 0 12px; }
+.f-card .f-list { background: var(--g-in); border-radius: 20px; padding: 0 12px; }
 .f-row { border-color: var(--g-outline-v) !important; }
 
 /* Листове и клавиатура */
 .sheet { border-radius: 28px 28px 0 0 !important; background: var(--g-cont) !important; }
-.np-key { border-radius: 999px !important; background: var(--surface) !important; font-weight: 400 !important; }
+.np-key { border-radius: 999px !important; background: var(--g-in) !important; font-weight: 400 !important; }
 .np-field { border-radius: 4px !important; border: 1px solid var(--g-outline) !important; }
 .np-field.active { border: 2px solid var(--accent) !important; }
 .toast { border-radius: 4px !important; background: #303030 !important; color: #F2F2F2 !important; }
@@ -161,7 +161,7 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 .mc-bar span.best { opacity: 1; }
 .mc-best { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
 .mc-pct.up { color: var(--pos) !important; }
-.hero-chip { background: var(--surface) !important; border: 0 !important; color: var(--muted) !important; border-radius: 8px !important; }
+.hero-chip { background: var(--g-in) !important; border: 0 !important; color: var(--muted) !important; border-radius: 8px !important; }
 .hero-btn { background: transparent !important; border: 0 !important; color: var(--muted) !important; border-radius: 50% !important; }
 
 /* ---------- Админ: бяла горна лента, меню с овално осветяване (като Google Admin / Drive) ---------- */
@@ -243,3 +243,20 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 
 /* Тъмно: малко по-светли карти, за да се отделят от фона */
 :root[data-theme="dark"] .meter .road-fill { background: var(--g-yellow) !important; }
+
+/* ---------- Повече цвят: оцветен фон, бели карти, цветни плочки ---------- */
+body, .screen, .adm-main, .adm-side { background: var(--bg) !important; }
+.nav, .save-bar { background: var(--g-cont) !important; box-shadow: 0 -1px 0 var(--g-outline-v); }
+.card, .big-link, .home-link, .more > summary, .tile, .month-sum, .cover { box-shadow: 0 1px 2px rgba(16, 40, 90, .06) !important; }
+.g-search, .search-bar, .search-link { background: var(--g-cont) !important; box-shadow: 0 1px 2px rgba(16, 40, 90, .08); }
+/* Плочките На час / На км / Смени / Километри – всяка в свой цвят */
+.grid2 > .stat:nth-child(1) { --sc: var(--c-blue); }
+.grid2 > .stat:nth-child(2) { --sc: var(--c-teal); }
+.grid2 > .stat:nth-child(3) { --sc: var(--c-violet); }
+.grid2 > .stat:nth-child(4) { --sc: var(--c-orange); }
+.stat.stat-card, .grid2 > .stat { background: color-mix(in srgb, var(--sc, var(--c-blue)) 13%, var(--g-cont)) !important; border-radius: var(--r-lg) !important; padding: 16px !important; }
+.stat.stat-card .stat-label, .stat.stat-card .stat-label .ic, .grid2 > .stat .stat-label svg { color: var(--sc, var(--c-blue)) !important; }
+/* Съветите – топъл жълт тон */
+.card.tip { background: color-mix(in srgb, var(--c-amber) 12%, var(--g-cont)) !important; }
+.card.tip .tip-ic { background: color-mix(in srgb, var(--c-amber) 22%, transparent) !important; color: var(--c-amber) !important; border-radius: 50%; }
+.card.tip .muted { color: var(--text) !important; opacity: .75; }
