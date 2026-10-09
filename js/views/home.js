@@ -72,6 +72,7 @@ export function homeView({ go, user, data, rerender, route }) {
   const redrawHome = rerender || (() => go('/home'));
 
   return h('div', { class: 'screen', 'data-page': 'home' },
+    h('a', { class: 'g-search', href: '#/search' }, icon('search', 22), h('span', null, 'Търси в ProfiTaxi'), icon('mic', 22), data.profile.photo ? h('span', { class: 'avatar has-photo' }, h('img', { src: data.profile.photo, alt: '' })) : h('span', { class: 'avatar' }, (user.name || '?').split(' ').map((x) => x[0]).join('').slice(0, 2))),
     h('div', { class: 'hello' },
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),

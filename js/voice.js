@@ -63,7 +63,7 @@ export function openVoice({ mode = 'shift', title, hint, kmStart = 0, onApply, o
     const parsed = () => parseSpeech(text, { kmStart });
     function draw() {
       const p = mode === 'shift' && text ? parsed() : null; const items = p ? parsedItems(p) : [];
-      box.replaceChildren(
+      box.replaceChildren(...[
         h('p', { class: 'muted', style: { margin: '0 0 6px', textAlign: 'center' } }, hint || (mode === 'shift' ? 'Например: „Кеш 120, карта 80, гориво 40 евро, 28 литра, автомивка 6“' : 'Например: „Колко изкарах тази седмица?“')),
         h('button', { class: cx('voice-mic', state === 'rec' && 'on', state === 'busy' && 'scan'), type: 'button', 'aria-label': state === 'rec' ? 'Спри записа' : 'Започни да говориш', disabled: state === 'busy',
           onclick: () => (state === 'rec' ? stop() : start()) }, icon(state === 'rec' ? 'check' : 'mic', 40)),
@@ -82,7 +82,7 @@ export function openVoice({ mode = 'shift', title, hint, kmStart = 0, onApply, o
             : h('p', { class: 'err' }, 'Не разпознах суми. Кажи например „кеш 120“ или поправи текста отгоре.'),
           h('div', { class: 'np-actions' },
             h('button', { class: 'btn btn-ghost', onclick: () => { state = 'idle'; text = ''; draw(); } }, 'Пак'),
-            h('button', { class: 'btn btn-primary', disabled: !items.length, onclick: () => { close(); onApply && onApply(parsed(), text); } }, icon('check', 18), 'Добави в смяната'))));
+            h('button', { class: 'btn btn-primary', disabled: !items.length, onclick: () => { close(); onApply && onApply(parsed(), text); } }, icon('check', 18), 'Добави в смяната')))].filter(Boolean));
     }
     draw();
     setTimeout(() => { if (state === 'idle') start(); }, 250);

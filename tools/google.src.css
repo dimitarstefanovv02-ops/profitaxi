@@ -1,0 +1,178 @@
+/* ======================================================================
+   ВАРИАНТ 4 (skin "google") – по образеца на приложенията на Google (Material Design 3):
+   бял фон, запълнени сиви-сини карти без рамки, синьо за главните действия,
+   бутони „хапчета“, лента за търсене горе, плаващ бутон за смяната,
+   долно меню с овално осветяване на активния бутон, монохромни иконки.
+   Стъпва на вариант 2 (clean.src.css) и сменя само това, което е различно.
+   ====================================================================== */
+
+:root, [data-page] {
+  --bg: #FFFFFF; --surface: #FFFFFF; --surface-2: #F0F4F9; --surface-3: #DDE3EA; --line: #E1E3E1;
+  --text: #1F1F1F; --muted: #444746; --faint: #747775;
+  --accent: #0B57D0; --accent-press: #0842A0; --accent-ink: #FFFFFF; --accent-soft: #D3E3FD; --accent-text: #0B57D0;
+  --g-cont: #F0F4F9; --g-cont-hi: #E9EEF6; --g-sec: #D3E3FD; --g-on-sec: #041E49; --g-outline: #747775; --g-outline-v: #C4C7C5;
+  --pos: #146C2E; --pos-soft: #C4EED0; --neg: #B3261E; --neg-soft: #F9DEDC;
+  --pc: #0B57D0; --c-violet: #0B57D0; --c-green: #146C2E; --c-blue: #0B57D0; --c-amber: #B06000; --c-orange: #B06000; --c-red: #B3261E; --c-teal: #00687A; --c-sky: #0B57D0; --c-slate: #444746;
+  --violet: #0B57D0; --v-soft: #D3E3FD; --v-line: #E1E3E1; --v-strong: #C4C7C5; --v-glow: transparent;
+  --r-xl: 28px; --r-lg: 24px; --r-md: 16px; --r-sm: 12px;
+}
+:root[data-theme="dark"], :root[data-theme="dark"] [data-page] {
+  --bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746;
+  --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F;
+  --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA;
+  --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
+  --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410;
+  --pc: #A8C7FA; --c-violet: #A8C7FA; --c-blue: #A8C7FA; --c-green: #6DD58C; --c-amber: #FFB683; --c-orange: #FFB683; --c-red: #F2B8B5; --c-teal: #5FD5ED; --c-sky: #A8C7FA; --c-slate: #C4C7C5;
+  --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="sun"]), :root:not([data-theme="light"]):not([data-theme="sun"]) [data-page] {
+    --bg: #131314; --surface: #131314; --surface-2: #1E1F20; --surface-3: #333537; --line: #444746;
+    --text: #E3E3E3; --muted: #C4C7C5; --faint: #8E918F;
+    --accent: #A8C7FA; --accent-press: #7FCFFF; --accent-ink: #062E6F; --accent-soft: #0842A0; --accent-text: #A8C7FA;
+    --g-cont: #1E1F20; --g-cont-hi: #282A2C; --g-sec: #004A77; --g-on-sec: #C2E7FF; --g-outline: #8E918F; --g-outline-v: #444746;
+    --pos: #6DD58C; --pos-soft: #0F5223; --neg: #F2B8B5; --neg-soft: #601410;
+    --pc: #A8C7FA; --c-violet: #A8C7FA; --c-blue: #A8C7FA; --c-green: #6DD58C; --c-amber: #FFB683; --c-orange: #FFB683; --c-red: #F2B8B5; --c-teal: #5FD5ED; --c-sky: #A8C7FA; --c-slate: #C4C7C5;
+    --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;
+  }
+}
+/* One Taxi остава в червено */
+:root[data-brand="one"] { --accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #B3261E; --g-sec: #FDE8E9; --g-on-sec: #410002; }
+
+/* ---------- Типография: по-леки тегла, като в Google ---------- */
+body { letter-spacing: 0; }
+h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter-spacing: 0; }
+.page-title h1 { font-size: 1.75rem; }
+.hello h1 { font-weight: 400; font-size: 1.4rem; }
+.card-title h2, .card-title h3, .f-row .grow b, .big-link b, .setting-title, .list-btn { font-weight: 500 !important; }
+.meter-value, .hero-num, .ms-total b, .result-net, .kpi-value, .big-net, .num, .stat-value, .f-val, .tile-val, .np-val { font-weight: 500 !important; letter-spacing: -.01em; }
+.meter-value, .hero-num { font-size: clamp(2.4rem, 12vw, 3.2rem); }
+.section-title { text-transform: none !important; letter-spacing: 0 !important; font-size: .95rem !important; font-weight: 500 !important; color: var(--text) !important; margin: 24px 4px 8px !important; }
+.section-title::before { display: none !important; }
+.muted, .hero-sub, .meter-label, .stat-label, .f-row small, .big-link .grow > span { color: var(--muted); }
+
+/* ---------- Повърхности: запълнени карти без рамки ---------- */
+.card, .stat-card, .tile, .big-link, .home-link, .cover, .ql, .reg-group, .first-day, .msg, .install-bar, .more > summary, .invite-card, .kpi, .mini-kpis, .scope-bar, .adm-picker, .week-sum, .month-sum, .hero, .meter, .drive, .live, .yday, .search-link, .first-tip {
+  background: var(--g-cont) !important; border: 0 !important; box-shadow: none !important; }
+.card, .hero, .meter, .month-sum, .drive, .cover { border-radius: var(--r-xl) !important; }
+.big-link, .home-link, .more > summary, .yday, .first-tip, .tile, .stat-card { border-radius: var(--r-lg) !important; }
+.hero, .meter { padding: 20px !important; }
+.meter::before, .hero::before, .meter::after, .hero::after { display: none !important; }
+.card .shift-row, .card .cost-row, .card .res-row { border-color: var(--g-outline-v) !important; }
+.exp-item, .time-in, .np-field, .stat, .result-cell, .result-goal, .ci-grid > div, .fuel-line, .drive-need, .info-box, .next-empty, .meter-cell, .hap, .step-row { background: var(--surface) !important; }
+.yday { background: var(--g-sec) !important; color: var(--g-on-sec); }
+.yday .grow small { color: var(--g-on-sec); opacity: .8; }
+.first-tip { background: var(--g-sec) !important; color: var(--g-on-sec); }
+.first-tip .ft-ic { color: var(--g-on-sec); }
+
+/* Иконките: монохромни, без цветни квадратчета (като в Gmail и Drive) */
+.t-ic, .bl-ic, .ql-ic, .cost-ic, .mini-ic, .kpi-ic, .list-btn .l-ic, .info-row .l-ic, .tip-ic, .msg-ic, .hl-ic, .empty-ic, .rec-ic, .cal-ev-ic, .gs-ic, .att-ic, .hap-ic, .due-ic, .f-ic {
+  background: transparent !important; color: var(--muted) !important; border-radius: 50% !important; }
+.f-ic { width: 40px !important; height: 40px !important; }
+
+/* ---------- Бутони: хапчета ---------- */
+.btn { border-radius: 999px !important; font-weight: 500 !important; letter-spacing: .01em; }
+.btn-primary, .btn-page { background: var(--accent) !important; color: var(--accent-ink) !important; }
+.btn-ghost, .btn-outline { background: transparent !important; border: 1px solid var(--g-outline) !important; color: var(--accent-text) !important; }
+.btn-dark { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
+.icon-btn { border-radius: 50% !important; background: transparent !important; border: 0 !important; color: var(--muted); }
+.chip, .chip-btn { border-radius: 8px !important; background: transparent !important; border: 1px solid var(--g-outline-v) !important; color: var(--muted) !important; }
+.chip.good { color: var(--pos) !important; } .chip.bad { color: var(--neg) !important; }
+.f-btn { border-radius: 999px !important; border: 0 !important; background: var(--g-sec) !important; color: var(--g-on-sec) !important; font-weight: 500 !important; }
+.f-btn.has { background: transparent !important; border: 1px solid var(--g-outline-v) !important; color: var(--muted) !important; }
+.goal-edit { color: var(--accent-text); text-decoration-color: var(--accent-text); }
+
+/* Сегменти: очертан ред с осветен избор и отметка */
+.seg { background: transparent !important; border: 1px solid var(--g-outline) !important; border-radius: 999px !important; padding: 0 !important; gap: 0 !important; overflow: hidden; }
+.seg-btn { border-radius: 0 !important; color: var(--text) !important; font-weight: 500; border-left: 1px solid var(--g-outline) !important; min-height: 40px; }
+.seg-btn:first-child { border-left: 0 !important; }
+.seg-btn.on, .seg.on-page .seg-btn.on, .hero .seg-btn.on, body.admin .seg-btn.on, body.admin .seg.on-page .seg-btn.on { background: var(--g-sec) !important; color: var(--g-on-sec) !important; box-shadow: none !important; }
+.seg-btn.on::before { content: '✓ '; }
+.seg.seg-outline { border: 0 !important; gap: 8px !important; }
+.seg.seg-outline .seg-btn { border: 1px solid var(--g-outline-v) !important; border-radius: 8px !important; }
+.seg.seg-outline .seg-btn.on { background: var(--g-sec) !important; border-color: transparent !important; }
+
+/* Полета за писане: очертани, синя рамка при фокус */
+.input, select.input, .pk-field.input { border: 1px solid var(--g-outline) !important; border-radius: 4px !important; background: transparent !important; }
+.input:focus { border: 2px solid var(--accent) !important; box-shadow: none !important; }
+.search-bar { border-radius: 999px !important; background: var(--g-cont-hi) !important; border: 0 !important; padding: 2px 4px 2px 16px !important; }
+.search-bar .search-mic { background: transparent !important; color: var(--muted) !important; border-radius: 50% !important; }
+.search-link { border-radius: 999px !important; background: var(--g-cont-hi) !important; }
+
+/* ---------- Долно меню (Material 3) ---------- */
+.nav { background: var(--g-cont) !important; border-top: 0 !important; }
+.nav a { color: var(--muted) !important; font-weight: 500 !important; font-size: .78rem !important; }
+.nav a.on { color: var(--text) !important; font-weight: 700 !important; }
+.nav-ic, .nav.nav-3 .nav-ic { width: 64px !important; height: 32px !important; border-radius: 999px !important; }
+.nav a.on .nav-ic { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
+.nav a.on .nav-ic::before { display: none !important; }
+
+/* ---------- Днес ---------- */
+.meter-label, .meter-goal { color: var(--muted) !important; }
+.meter-value { color: var(--text) !important; }
+.meter-pct { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
+.meter .road, .road { height: 8px !important; border-radius: 999px !important; background: var(--g-sec) !important; }
+.road-fill { background: var(--accent) !important; }
+.road-lane, .road-car, .road-flag { display: none !important; }
+.meter-today { background: var(--surface) !important; border: 0 !important; border-radius: 16px; }
+.avatar, .cover-avatar { background: var(--accent) !important; color: var(--accent-ink) !important; border-radius: 50% !important; }
+/* Плаващ бутон „Започни смяна“ (като „Напиши“ в Gmail) */
+.shift-cta { position: fixed !important; z-index: 30; right: max(16px, calc(50% - 264px)); bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 18px);
+  width: auto !important; min-height: 56px !important; padding: 0 22px !important; border-radius: 16px !important;
+  background: var(--g-sec) !important; color: var(--g-on-sec) !important; font-size: 1rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3), 0 4px 8px 3px rgba(0, 0, 0, .15) !important; }
+.home-shift { padding-bottom: 4px; }
+/* Лента за търсене горе (като в Gmail): показва се само в този изглед */
+.g-search { display: none; }
+.g-search { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 6px 0 16px; border-radius: 999px; background: var(--g-cont-hi); color: var(--muted); text-decoration: none; margin: 0 0 16px; }
+.g-search span { flex: 1; font-size: 1rem; }
+.g-search .avatar { width: 34px !important; height: 34px !important; font-size: .8rem; }
+.hello .row.gap { display: none !important; }
+.hello h1 { font-size: 1.6rem !important; }
+
+/* Смяната */
+.drive-voice { background: var(--accent) !important; color: var(--accent-ink) !important; }
+.drive .drive-list { background: var(--surface) !important; border: 0 !important; border-radius: 20px !important; }
+.drive-end { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
+.drive-label { text-transform: none !important; letter-spacing: 0 !important; font-size: .9rem !important; font-weight: 500 !important; color: var(--text) !important; }
+.voice-btn { border-color: var(--g-outline) !important; color: var(--accent-text) !important; }
+.save-bar { background: var(--g-cont) !important; border-top: 0 !important; }
+.f-card .f-list { background: var(--surface); border-radius: 20px; padding: 0 12px; }
+.f-row { border-color: var(--g-outline-v) !important; }
+
+/* Листове и клавиатура */
+.sheet { border-radius: 28px 28px 0 0 !important; background: var(--g-cont) !important; }
+.np-key { border-radius: 999px !important; background: var(--surface) !important; font-weight: 400 !important; }
+.np-field { border-radius: 4px !important; border: 1px solid var(--g-outline) !important; }
+.np-field.active { border: 2px solid var(--accent) !important; }
+.toast { border-radius: 4px !important; background: #303030 !important; color: #F2F2F2 !important; }
+.pk { background: var(--g-cont) !important; }
+.pk .pk-tbox.on, .pk .pk-day.on, .pk .pk-mon.on, .pk-knob, .pk-hand, .pk-center { background: var(--accent) !important; color: var(--accent-ink) !important; }
+.pk-num.on { color: var(--accent-ink) !important; }
+
+/* Пари, статистика */
+.ms-total b, .ms-total b:not(.neg) { color: var(--text) !important; }
+.bar.pos, .week-bar.pos { fill: var(--accent) !important; background: var(--accent) !important; }
+.mc-bar span, .mc-bar span.best { background: var(--accent) !important; opacity: .35; }
+.mc-bar span.best { opacity: 1; }
+.mc-best { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
+.mc-pct.up { color: var(--pos) !important; }
+.hero-chip { background: var(--surface) !important; border: 0 !important; color: var(--muted) !important; border-radius: 8px !important; }
+.hero-btn { background: transparent !important; border: 0 !important; color: var(--muted) !important; border-radius: 50% !important; }
+
+/* ---------- Админ: бяла горна лента, меню с овално осветяване (като Google Admin / Drive) ---------- */
+.adm-side { background: var(--bg) !important; border: 0 !important; }
+.adm-nav a { border-radius: 999px !important; color: var(--muted) !important; font-weight: 500 !important; }
+.adm-nav a.on { background: var(--g-sec) !important; color: var(--g-on-sec) !important; font-weight: 700 !important; }
+.adm-tabs { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--g-outline-v) !important; border-radius: 0 !important; padding: 0 !important; gap: 0 !important; }
+.adm-tab { border-radius: 0 !important; border-bottom: 3px solid transparent; padding: 12px 16px !important; }
+.adm-tab.on { background: transparent !important; color: var(--accent-text) !important; border-bottom-color: var(--accent); box-shadow: none !important; }
+.adm-tab.on .count { background: var(--g-sec) !important; color: var(--g-on-sec) !important; }
+.adm-main { background: var(--bg); }
+.gsearch .input { border-radius: 999px !important; background: var(--g-cont-hi) !important; border: 0 !important; }
+.icon-btn.top-btn { background: transparent !important; }
+[data-page="home"].screen { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 96px) !important; }
+.g-search span:not(.avatar) { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.g-search .avatar { flex: none; overflow: hidden; padding: 0; display: grid; place-items: center; }
+.g-search .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.search-bar .search-in, .search-bar .search-in:focus { border: 0 !important; background: transparent !important; }

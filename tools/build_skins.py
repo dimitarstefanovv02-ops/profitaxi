@@ -29,8 +29,8 @@ def walk(txt, PS):
         i = k
     return ''.join(res)
 
-C, M = ':root[data-skin="clean"]', ':root[data-skin="mid"]'
+C, M, G = ':root[data-skin="clean"]', ':root[data-skin="mid"]', ':root[data-skin="google"]'
 out = ('/* СГЛОБЕНО от tools/clean.src.css и tools/mid.src.css с tools/build_clean.py – не редактирай ръчно */\n'
-       + walk(read('clean.src.css'), [C, M]) + walk(read('mid.src.css'), [M]))
+       + walk(read('clean.src.css'), [C, M, G]) + walk(read('mid.src.css'), [M]) + walk(read('google.src.css'), [G]))
 open(os.path.join(D, '..', 'css', 'skins.css'), 'w').write(out)
 print(out.count('{'), 'правила')

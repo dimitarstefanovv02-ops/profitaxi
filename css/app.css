@@ -1291,3 +1291,6 @@ html:root .search-bar .search-mic { border: 0 !important; background: var(--acce
 .drive > * { min-width: 0; }
 .drive-timer { font-size: clamp(2.2rem, 12vw, 3rem); }
 .drive-sum b { font-size: clamp(1.05rem, 5vw, 1.35rem); white-space: nowrap; }
+
+/* Лентата за търсене в стил Google се показва само във вариант 4 */
+.g-search { display: none; }

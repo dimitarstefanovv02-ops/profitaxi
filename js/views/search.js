@@ -125,9 +125,9 @@ export function searchView({ data, go }) {
     const mine = personal(q, data);
     const found = searchKB(q, mine ? 1 : 3);
     const list = [mine && card(mine, 'mine'), ...found.map((e) => card(e))].filter(Boolean);
-    res.replaceChildren(...list,
+    res.replaceChildren(...[...list,
       !list.length && h('p', { class: 'muted search-none' }, 'Нямам готов отговор за това.'),
-      q.length >= 6 && h('button', { class: 'btn btn-outline btn-block ask-ai', type: 'button', onclick: () => (store.live() ? askAI(q) : toast('AI отговорите работят само на живия сайт', 'err')) }, icon('sparkle', 18), list.length ? 'Не е това? Питай AI' : 'Питай AI'));
+      q.length >= 6 && h('button', { class: 'btn btn-outline btn-block ask-ai', type: 'button', onclick: () => (store.live() ? askAI(q) : toast('AI отговорите работят само на живия сайт', 'err')) }, icon('sparkle', 18), list.length ? 'Не е това? Питай AI' : 'Питай AI')].filter(Boolean));
   }
   root.append(
     h('button', { class: 'back sub-back', type: 'button', onclick: () => (history.length > 1 ? history.back() : go('/home')) }, icon('left', 20), 'Назад'),
