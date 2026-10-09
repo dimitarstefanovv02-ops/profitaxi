@@ -1,4 +1,4 @@
-// Отчет за смяна: три полета едно под друго – Приходи, Разходи, Данни.
+// Отчет за смяна: три полета едно под друго – Данни, Приходи, Разходи.
 // Всеки ред се попълва с „+ Въведи“ през цифровата клавиатура.
 
 import { h, fill, icon, cx, money, uid, toLocalInput, fromLocalInput, fmtDateLong, isoToDateStr, round2, fmtDuration } from '../util.js';
@@ -49,6 +49,7 @@ export function shiftEditorView(ctx) {
     const fuelExp = draft.expenses.filter((e) => e.category === 'fuel');
     const fuelQty = fuelExp.reduce((a, e) => a + (Number(e.qty) || 0), 0);
     const fuelUnit = FUEL_TYPES[fuelExp[0]?.fuelType || fuelTypes[0]]?.unit || 'л';
+    const fuelKm = shiftKm(draft);
 
     fill(root, 
       h('div', { class: 'top' },
@@ -57,7 +58,22 @@ export function shiftEditorView(ctx) {
       h('h1', null, isNew ? 'Нова смяна' : wasActive ? (draft.end ? 'Приключваш смяната' : 'Текуща смяна') : 'Смяна'),
       h('p', { class: 'muted', style: { margin: '4px 0 16px' } }, fmtDateLong(day)),
 
-      // Три полета едно под друго: Приходи, Разходи, Данни. Всеки ред – „+ Въведи“ или сумата.
+      // Три полета едно под друго: Данни, Приходи, Разходи. Всеки ред – „+ Въведи“ или сумата.
+      h('section', { class: 'card f-card', 'data-sec': 'data' },
+        cardTitle('gauge', 'Данни', h('b', { class: 'num' }, [shiftKm(draft) ? `${shiftKm(draft)} км` : '', shiftHours(draft) ? fmtDuration(shiftHours(draft)) : ''].filter(Boolean).join(' · '))),
+        h('div', { class: 'f-list' },
+          fRow({ ic: 'gauge', color: 'var(--c-teal)', label: 'Начален км', value: draft.kmStart ? `${draft.kmStart.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmStart') }),
+          fRow({ ic: 'gauge', color: 'var(--c-teal)', label: 'Краен км', value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad }),
+          kmBad && h('p', { class: 'err' }, 'Крайният километраж е по-малък от началния'),
+          timeRow('Тръгване', draft.start, (v) => { draft.start = v; draw(); }),
+          draft.end ? timeRow('Прибиране', draft.end, (v) => { draft.end = v; draw(); }, timeBad)
+            : fRow({ ic: 'clock', color: 'var(--c-blue)', label: 'Прибиране', sub: 'Смяната още тече', value: '', onTap: () => { draft.end = new Date().toISOString(); draw(); }, btnLabel: 'Приключи сега' }),
+          timeBad && h('p', { class: 'err' }, 'Прибирането трябва да е след тръгването'),
+          h('label', { class: 'f-row f-note' },
+            h('span', { class: 'f-ic', style: { '--tc': 'var(--c-slate)' } }, icon('edit', 18)),
+            h('span', { class: 'grow' }, h('b', null, 'Бележка'),
+              h('input', { class: 'f-input', placeholder: 'По желание', value: draft.note || '', oninput: (e) => { draft.note = e.target.value; } }))))),
+
       h('section', { class: 'card f-card', 'data-sec': 'inc' },
         cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(inc, inc % 1 ? 2 : 0))),
         h('div', { class: 'f-list' }, Object.entries(INCOME_TYPES).map(([k, t]) =>
@@ -68,7 +84,8 @@ export function shiftEditorView(ctx) {
         h('div', { class: 'f-list' },
           cats.slice(0, 3).map((c) => {
             const sum = draft.expenses.filter((e) => e.category === c.key).reduce((a, e) => a + (Number(e.amount) || 0), 0);
-            return fRow({ ic: c.icon, color: c.color, label: c.label, value: sum ? money(sum, sum % 1 ? 2 : 0) : '', onTap: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })), add: true });
+            const fuelSub = c.key === 'fuel' ? (fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} ${fuelUnit}${fuelKm ? ` · ${String(round2(fuelQty / fuelKm * 100)).replace('.', ',')} ${fuelUnit}/100 км` : ''}` : 'Сума и литри') : null;
+            return fRow({ ic: c.icon, color: c.color, label: c.label, sub: fuelSub, value: sum ? money(sum, sum % 1 ? 2 : 0) : '', onTap: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })), add: true });
           }),
           fRow({ ic: 'plus', color: 'var(--c-slate)', label: 'Друг разход', sub: 'Обслужване, ремонт, гуми, глоба…', value: '', onTap: otherExpense, add: true })),
         draft.expenses.length > 0 && h('div', { class: 'exp-list' }, draft.expenses.map((e) =>
@@ -83,22 +100,6 @@ export function shiftEditorView(ctx) {
           h('button', { class: 'btn btn-ghost btn-sm', onclick: () => scanReceipt((r) => editFuel(r.amount ? { amount: r.amount, qty: r.qty, fuelType: r.type && fuelTypes.includes(r.type) ? r.type : undefined } : {})) }, icon('camera', 16), 'Снимай бележка'),
           h('button', { class: 'btn btn-ghost btn-sm', onclick: copyLast }, icon('copy', 16), 'Като предишната')),
         fixedShare > 0 && h('p', { class: 'auto-note' }, icon('wallet', 15), `Наемът, ефирът и другите постоянни разходи се смятат сами (${money(fixedShare, 2)} за деня).`)),
-
-      h('section', { class: 'card f-card', 'data-sec': 'data' },
-        cardTitle('gauge', 'Данни', h('b', { class: 'num' }, [shiftKm(draft) ? `${shiftKm(draft)} км` : '', shiftHours(draft) ? fmtDuration(shiftHours(draft)) : ''].filter(Boolean).join(' · '))),
-        h('div', { class: 'f-list' },
-          fRow({ ic: 'gauge', color: 'var(--c-teal)', label: 'Начален км', value: draft.kmStart ? `${draft.kmStart.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmStart') }),
-          fRow({ ic: 'gauge', color: 'var(--c-teal)', label: 'Краен км', value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad }),
-          kmBad && h('p', { class: 'err' }, 'Крайният километраж е по-малък от началния'),
-          timeRow('Тръгване', draft.start, (v) => { draft.start = v; draw(); }),
-          draft.end ? timeRow('Прибиране', draft.end, (v) => { draft.end = v; draw(); }, timeBad)
-            : fRow({ ic: 'clock', color: 'var(--c-blue)', label: 'Прибиране', sub: 'Смяната още тече', value: '', onTap: () => { draft.end = new Date().toISOString(); draw(); }, btnLabel: 'Приключи сега' }),
-          timeBad && h('p', { class: 'err' }, 'Прибирането трябва да е след тръгването'),
-          fRow({ ic: 'fuel', color: 'var(--c-orange)', label: fuelUnit === 'л' ? 'Литри гориво' : `Гориво (${fuelUnit})`, sub: fuelQty ? null : 'За разход на 100 км', value: fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} ${fuelUnit}` : '', onTap: editLiters }),
-          h('label', { class: 'f-row f-note' },
-            h('span', { class: 'f-ic', style: { '--tc': 'var(--c-slate)' } }, icon('edit', 18)),
-            h('span', { class: 'grow' }, h('b', null, 'Бележка'),
-              h('input', { class: 'f-input', placeholder: 'По желание', value: draft.note || '', oninput: (e) => { draft.note = e.target.value; } }))))),
 
       // Лента за запис
       h('div', { class: 'save-bar' },
@@ -120,11 +121,6 @@ export function shiftEditorView(ctx) {
       h('span', { class: 'f-ic', style: { '--tc': 'var(--c-blue)' } }, icon('clock', 18)),
       h('span', { class: 'grow' }, h('b', null, label)),
       h('input', { class: 'f-time', type: 'datetime-local', value: toLocalInput(iso), onchange: (e) => { if (e.target.value) onSet(fromLocalInput(e.target.value)); } }));
-  }
-  // Литрите гориво: към последното зареждане; ако няма – ново зареждане
-  function editLiters() {
-    const last = draft.expenses.filter((e) => e.category === 'fuel').slice(-1)[0];
-    if (last) editFuel(last); else editFuel();
   }
 
   // Останалите видове разходи + управление на категориите
@@ -173,9 +169,9 @@ export function shiftEditorView(ctx) {
       return chipsEl;
     };
     openNumpad({
-      title: 'Гориво', sub: 'Количеството е по желание, но дава разход на 100 км',
+      title: 'Гориво', sub: 'Литрите са по желание, но дават разход на 100 км',
       top: chips,
-      fields: [{ key: 'amount', label: 'Сума', value: e.amount || '' }, { key: 'qty', label: 'Количество', value: e.qty || '', unit: unit() }],
+      fields: [{ key: 'amount', label: 'Сума', value: e.amount || '' }, { key: 'qty', label: unit() === 'л' ? 'Литри' : 'Количество', value: e.qty || '', unit: unit() }],
       actions: [{ label: isNewE ? 'Добави' : 'Запиши', primary: true, run: ({ amount, qty }) => {
         if (!amount) return;
         if (isNewE) draft.expenses.push({ id: uid(), category: 'fuel', fuelType: type, amount, qty });
