@@ -40,6 +40,32 @@ async function notifyAdmins(type, data, onlyId) {
   } catch (e) { console.error('push', e); return 0; }
 }
 
+// Съобщения от админа и отговори на въпроси → известие на телефона на шофьора
+const forUserSrv = (t, u) => !t || ((!t.city || t.city === u.city) && (!t.company || t.company === u.company) && (!t.userIds || t.userIds.includes(u.id)) && (!t.tag || (u.tags || []).includes(t.tag)));
+async function notifyDrivers(items) {
+  if (!pushReady()) return 0;
+  try {
+    const subs = Object.entries(pairs(await one(['HGETALL', 'pt:push']))).filter(([, r]) => r?.role === 'driver' && r.sub && wantsMsg(r));
+    if (!subs.length) return 0;
+    const ids = [...new Set(subs.map(([, r]) => r.id))];
+    const vals = await one(['HMGET', 'pt:db', ...ids.map((i) => 'users:' + i)]);
+    const users = {}; ids.forEach((i, n) => { const u = parse(vals[n]); if (u && (!u.status || u.status === 'active')) users[i] = u; });
+    const clip = (x, n) => { x = String(x || '').trim(); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
+    const jobs = []; const dead = [];
+    for (const it of items) for (const [k, r] of subs) {
+      const u = users[r.id]; if (!u) continue;
+      const base = u.company === ONE_CO ? '/app/onetaxi' : '/app';
+      let data = null;
+      if (it.msg && forUserSrv(it.msg.target, u)) data = { title: clip(it.msg.title || 'Съобщение', 60), body: clip(it.msg.text, 160), url: base + '#/home', tag: 'msg-' + it.msg.id };
+      if (it.reply && it.reply.userId === u.id) data = { title: 'Отговор на въпроса ти', body: clip(it.text, 160), url: base + '#/help', tag: 'tk-' + it.reply.id };
+      if (data) jobs.push(sendPush(r.sub, { ...data, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); }).catch(() => {}));
+    }
+    await Promise.race([Promise.allSettled(jobs), sleep(5000)]);
+    if (dead.length) await one(['HDEL', 'pt:push', ...new Set(dead)]);
+    return jobs.length;
+  } catch (e) { console.error('push drv', e); return 0; }
+}
+
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
 const MEMORY = !URL_ && (process.env.PT_MEMORY === '1' || process.env.NODE_ENV === 'test');
@@ -137,7 +163,7 @@ async function applyPush(s, set = {}, del = []) {
   if (fields.length > 3000) return { error: 'Твърде много промени наведнъж' };
   const cur = {}; const vals = await one(['HMGET', 'pt:db', ...fields]); fields.forEach((f, i) => { cur[f] = parse(vals[i]); });
   const isAdmin = s.role === 'admin', id = s.id;
-  const newTickets = [];
+  const newTickets = [], toDrivers = [];
   const hset = [], hdel = [], extra = [], rejected = [];
   for (const [f, raw] of Object.entries(set)) {
     const c = fieldColl(f), k = fieldKey(f), old = cur[f];
@@ -150,6 +176,10 @@ async function applyPush(s, set = {}, del = []) {
       }
       if (c === 'tickets' && old) v = { ...v, thread: unionThread(old.thread, v.thread) };
       if (c === 'messages' && old) v = { ...v, readBy: [...new Set([...(old.readBy || []), ...(v.readBy || [])])] };
+      // ново съобщение (без насрочване за по-късно) → известие на шофьорите, за които е
+      if (c === 'messages' && !old && !(v.sendAt && v.sendAt > new Date().toISOString())) toDrivers.push({ msg: v });
+      // нов отговор на въпрос на шофьор → известие само на него
+      if (c === 'tickets' && v.userId) { const was = (old?.thread || []).filter((x) => x.by === 'admin').length; const now = (v.thread || []).filter((x) => x.by === 'admin'); if (now.length > was) toDrivers.push({ reply: v, text: now[now.length - 1].text }); }
       hset.push(f, JSON.stringify(v)); continue;
     }
     // шофьор
@@ -190,6 +220,7 @@ async function applyPush(s, set = {}, del = []) {
   cmds.push(...extra);
   if (cmds.length) cmds.push(['INCR', 'pt:rev']);
   const res = await redis(cmds);
+  if (toDrivers.length) await notifyDrivers(toDrivers.slice(0, 5));
   for (const t of newTickets.slice(0, 3)) { const m = t.thread[t.thread.length - 1]; await notifyAdmins('ticket', { title: `Въпрос от ${t.name || 'шофьор'}`, body: String(m?.text || '').slice(0, 140), url: '/admin#/messages?t=inbox', tag: 'tk-' + t.id }); }
   return { ok: true, rejected, rev: cmds.length ? res[res.length - 1] : undefined };
 }
@@ -393,12 +424,12 @@ const ops = {
   },
 
   // ---------- известия за шофьора: напомняне за смяната и седмичен отчет ----------
-  async drvPushSub({ sub, types }, s) {
+  async drvPushSub({ sub, types, v }, s) {
     if (s.role !== 'driver') return { error: 'Само за шофьори' };
     if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return { error: 'Невалиден абонамент' };
     if (!/^https:\/\//.test(sub.endpoint) && !MEMORY) return { error: 'Невалиден адрес' };
     const t = (Array.isArray(types) ? types : DRV_TYPES).filter((x) => DRV_TYPES.includes(x));
-    await one(['HSET', 'pt:push', 'd:' + subKey(sub.endpoint), JSON.stringify({ id: s.id, role: 'driver', sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, types: t, at: new Date().toISOString() })]);
+    await one(['HSET', 'pt:push', 'd:' + subKey(sub.endpoint), JSON.stringify({ id: s.id, role: 'driver', sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, types: t, v: v === 2 ? 2 : undefined, at: new Date().toISOString() })]);
     return { ok: true, ready: pushReady() };
   },
   async drvPushUnsub({ endpoint }, s) { if (endpoint) await one(['HDEL', 'pt:push', 'd:' + subKey(endpoint)]); return { ok: true }; },
@@ -504,7 +535,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
 
 // ---------- помощни за известията на шофьора, гласа, AI и Face ID ----------
-const DRV_TYPES = ['remind', 'weekly'];
+const DRV_TYPES = ['remind', 'weekly', 'msg'];
+// Съобщенията от админа: старите абонаменти (без v:2) ги получават по подразбиране
+const wantsMsg = (r) => (r.v === 2 ? (r.types || []).includes('msg') : true);
 const ONE_CO = 'ONE Такси – 032 22 22';
 const WD = ['нд', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 const MON = ['яну', 'фев', 'мар', 'апр', 'май', 'юни', 'юли', 'авг', 'сеп', 'окт', 'ное', 'дек'];

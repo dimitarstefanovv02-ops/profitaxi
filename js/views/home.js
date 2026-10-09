@@ -470,6 +470,6 @@ function remindOffer(redraw) {
     h('span', { class: 'yday-ic' }, icon('bell', 20)),
     h('div', { class: 'grow' }, h('b', null, 'Да ти напомням ли за смяната?'), h('small', null, 'В 10:00 и 20:00, само ако за вчера няма записана смяна')),
     h('div', { class: 'yday-btns' },
-      h('button', { class: 'btn btn-primary btn-sm', onclick: async () => { const r = await setPushTypes(['remind', 'weekly']); if (r.error) toast(r.error, 'err'); else toast('Напомнянията са включени'); hide(); } }, 'Да'),
+      h('button', { class: 'btn btn-primary btn-sm', onclick: async () => { const r = await setPushTypes(['remind', 'weekly', 'msg']); if (r.error) toast(r.error, 'err'); else toast('Напомнянията са включени'); hide(); } }, 'Да'),
       h('button', { class: 'btn btn-ghost btn-sm', onclick: hide }, 'Не')));
 }
