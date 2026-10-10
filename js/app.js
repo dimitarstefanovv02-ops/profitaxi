@@ -25,7 +25,6 @@ import { vehicleView } from './views/vehicle.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
 import { tipFor } from './tips.js';
-import { BRAND, isBrandUser, collabBar, oneIntro } from './brand.js';
 import { installBar, installBarVisible } from './quick.js';
 
 applyTheme();
@@ -72,8 +71,6 @@ function render() {
     return mount(app, view({ go }), route, false);
   }
   if (PUBLIC[route.name]) return go('/home', true);
-  // /app/onetaxi е само за шофьорите на One Taxi
-  if (!isBrandUser(user)) return mount(app, notBrandView(), route, false);
 
   const access = store.accessState(user);
   if (access !== 'ok') return mount(app, lockView(user, access), route, false);
@@ -108,15 +105,13 @@ function mount(app, el, route, withNav) {
   const y = window.scrollY;
   // Подстраниците имат връщане към „своя“ бутон от менюто
   const parent = PARENT[route.name];
-  if (parent && el.classList?.contains('screen')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent }, icon('left', 20), PARENT_LABEL[parent]));
+  if (parent && el.classList?.contains('screen')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent, 'aria-label': 'Назад: ' + PARENT_LABEL[parent] }, icon(document.documentElement.dataset.skin === 'chisto' ? 'arrowLeft' : 'left', 20), h('span', { class: 'back-txt' }, PARENT_LABEL[parent])));
   // Първото отваряне на екран: кратка подсказка (не по време на разходката)
   if (el.classList?.contains('screen') && store.currentUser() && !tourOpen() && !store.previewMode?.()) {
     const t = tipFor(route.name);
     if (t) { const after = el.querySelector(':scope > .sub-back, :scope > .top'); if (after) after.after(t); else el.prepend(t); }
   }
   clear(app).appendChild(el);
-  // One изданието: лентата One × ProfiTaxi горе на всяка вътрешна страница
-  if (BRAND && store.currentUser()) app.prepend(collabBar());
   // „Изтегли“ – иконката на началния екран (само за влезли шофьори, докато не е инсталирано)
   if (store.currentUser() && !store.previewMode() && installBarVisible()) app.prepend(installBar(() => render()));
   // Без интернет: всичко продължава да работи и се пази на телефона
@@ -134,15 +129,6 @@ function nav(active) {
   return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
     h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
       h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
-}
-
-function notBrandView() {
-  return h('div', { class: 'lock' },
-    h('img', { src: '/icons/one-red.svg', alt: 'One Taxi', width: 72, height: 72 }),
-    h('h1', null, 'Само за шофьорите на One Taxi'),
-    h('p', { class: 'muted' }, 'Този акаунт не е към One Taxi Пловдив. Влез от обикновеното приложение ProfiTaxi.'),
-    h('a', { class: 'btn btn-primary btn-lg', href: '/app#/home' }, 'Отвори ProfiTaxi'),
-    h('button', { class: 'btn btn-ghost btn-lg', onclick: () => { store.logout(); go('/login'); } }, 'Изход'));
 }
 
 let churnPick = '';
@@ -193,7 +179,6 @@ store.onChange(() => { if (busy()) pending = true; else render(); });
 document.addEventListener('focusout', () => setTimeout(() => { if (pending && !busy()) { pending = false; render(); } }, 0));
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
 
-oneIntro();
 // „Подреди екраните“ (Профил): влачене на картите и бутоните – пази се на телефона
 initArrange({ onDone: () => { toast('Подредбата е запазена'); render(); }, onReset: () => { resetZones(zonesOnPage()); toast('Тази страница е както беше'); render(); } });
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

@@ -14,7 +14,6 @@ import { cityCompanyPicker } from './cityPicker.js';
 import { openCategories, pickImage } from './categories.js';
 import { upcomingReservations } from './reservations.js';
 import { exportCsv } from './stats.js';
-import { BRAND } from '../brand.js';
 import { emailQueue, EMAIL_DEFAULTS, EMAIL_PAY_OPTIONS, EMAIL_RES_OPTIONS } from '../calc.js';
 
 export function profileView({ go, user, data, route }) {
@@ -144,23 +143,22 @@ export function profileCover(user, d) {
     try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); }
     catch { toast('Снимката е твърде голяма', 'err'); }
   };
-  return h('section', { class: 'cover' },
-    h('div', { class: 'cover-img', style: d.carPhoto ? { backgroundImage: `url("${d.carPhoto}")` } : null },
-      h('button', { class: 'cover-btn', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), d.carPhoto ? 'Смени' : 'Снимка на колата'),
-      car.code && h('span', { class: 'cover-code' }, h('small', null, 'Код'), car.code)),
-    h('div', { class: 'cover-body' },
+  // Тъмна карта: снимка/инициали, име, град и фирма; код, номер и модел; абонамент
+  return h('section', { class: 'cover cover2' },
+    h('div', { class: 'cv-top' },
       h('button', { class: 'cover-avatar', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
-        d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials),
-        h('i', null, icon('camera', 14))),
+        d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
       h('div', { class: 'cover-info' },
         h('h1', null, user.name),
-        h('div', { class: 'cover-car' }, car.model || 'Добави модел на колата', car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate))),
-      h('a', { class: 'icon-btn', 'aria-label': 'Лични данни', href: '#/profile' }, icon('edit', 20))),
+        h('div', { class: 'cv-sub' }, [user.city, user.company].filter(Boolean).join(' · ') || 'Добави град и фирма')),
+      h('a', { class: 'cv-edit', href: '#/profile' }, 'Смени')),
+    h('div', { class: 'cv-badges' },
+      car.code && h('span', { class: 'cover-code' }, h('small', null, 'Код'), car.code),
+      car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate)),
+    h('div', { class: 'cover-car' }, icon('car', 18), car.model || 'Добави модел на колата'),
     h('div', { class: 'cover-chips' },
-      h('span', { class: 'chip' }, icon('pin', 14), user.city || 'без град'),
-      h('span', { class: 'chip' }, icon('car', 14), user.company || 'без фирма'),
-      store.freeMode() ? h('span', { class: 'chip good' }, icon('check', 14), 'Безплатно – тестов период')
-        : h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, icon('clock', 14), `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
+      store.freeMode() ? h('span', { class: 'chip good' }, 'Безплатно – тестов период')
+        : h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)
@@ -251,12 +249,12 @@ function editAccount(user) {
   openSheet((close) => {
     const name = h('input', { class: 'input', value: user.name });
     const phone = h('input', { class: 'input', type: 'tel', value: user.phone || '' });
-    const cc = BRAND ? null : cityCompanyPicker({ city: user.city, company: user.company });
+    const cc = cityCompanyPicker({ city: user.city, company: user.company });
     const err = h('p', { class: 'err' });
     return h('div', { class: 'form' },
       sheetHead('Лични данни', close),
       field('Име', name, null, true), field('Телефон', phone),
-      cc ? cc.el : h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Фирмата не се сменя в това издание'))),
+      cc.el,
       err,
       h('button', { class: 'btn btn-page btn-lg', onclick: () => {
         const v = cc ? cc.value() : { city: user.city, company: user.company };

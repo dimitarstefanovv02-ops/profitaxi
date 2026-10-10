@@ -168,7 +168,7 @@ function loginView() {
     } }, field('Имейл', email), field('Парола', pw), err,
       h('button', { class: 'btn btn-xl', type: 'submit', style: { background: 'var(--accent)', color: 'var(--accent-ink)' } }, 'Вход')),
     !store.live() && h('div', { class: 'demo-box' }, h('b', null, 'Демо: '), 'admin@profitaxi.bg / admin123 ', demo('Попълни', 'admin@profitaxi.bg', 'admin123'),
-      h('div', { class: 'small muted', style: { marginTop: '8px' } }, 'Други роли: ', demo('Поддръжка', 'support@profitaxi.bg', 'support123'), ' ', demo('Партньор One', 'one@partner.bg', 'one123'))));
+      h('div', { class: 'small muted', style: { marginTop: '8px' } }, 'Други роли: ', demo('Поддръжка', 'support@profitaxi.bg', 'support123'))));
 }
 
 // ---------- Общи помощни ----------
@@ -1171,7 +1171,7 @@ function faqTab(tk) {
 const repState = { company: '', month: todayStr().slice(0, 7) };
 function partners() {
   const all = allDrivers(); const comps = companiesOf(all); const codes = store.admin.codes();
-  if (!comps.includes(repState.company)) repState.company = comps.includes('ONE Такси – 032 22 22') ? 'ONE Такси – 032 22 22' : comps[0] || '';
+  if (!comps.includes(repState.company)) repState.company = comps[0] || '';
   const { bar, cur } = tabs('/partners', [['firms', 'Фирми', comps.length], ['codes', 'Кодове за достъп', codes.length], ['report', 'Месечен отчет']]);
   const body = { firms: () => firmsTab(all, comps, codes), codes: () => codesTab(all, comps, codes), report: () => flow('partners.report', [['rep', wide(companyReport(all, comps))]]) };
   return h('div', null, pageHead('Партньори', role() === 'partner' ? store.adminUser().company : 'Таксиметровите фирми, кодовете им и месечните отчети'), bar, body[cur]());
@@ -1218,7 +1218,7 @@ function sendReport(all, c) {
 function codesTab(all, comps, codes) {
   const f = { code: h('input', { class: 'input', placeholder: 'напр. YELLOW2026', style: { textTransform: 'uppercase' } }), company: role() === 'partner' ? store.adminUser().company : comps[0] || '', limit: h('input', { class: 'input', type: 'number', min: 0, value: 100 }), expires: h('input', { class: 'input', type: 'date', value: addDays(todayStr(), 180) }) };
   return flow('partners.codes', [
-    ['list', card('key', 'Кодове за достъп', note('С код от фирмата шофьорите се регистрират в изданието на партньора (напр. One Taxi). Можеш да спреш код по всяко време.'),
+    ['list', card('key', 'Кодове за достъп', note('С код от фирмата шофьорите се регистрират в изданието на партньора . Можеш да спреш код по всяко време.'),
       codes.length ? codes.map((c) => h('div', { class: 'code-row' },
         h('div', { class: 'grow' }, h('b', { class: 'code' }, c.code), h('small', null, `${c.company} · ползван ${c.uses}${c.limit ? ` от ${c.limit}` : ''} · ${c.expires ? `до ${fmtDate(c.expires, { year: true })}` : 'без срок'}`)),
         role() !== 'partner' && h('button', { class: cx('btn btn-sm btn-ghost', c.active ? 'act-ok' : 'act-warn'), onclick: () => store.admin.toggleCode(c.code) }, c.active ? 'Активен' : 'Спрян'),

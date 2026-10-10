@@ -11,7 +11,7 @@ async def main():
     await pg.goto('http://localhost:8765/app#/home'); await pg.reload(); await pg.wait_for_timeout(1200)
     seen=[]; holes=0; total=None
     while await pg.locator('.tour-card').count() and len(seen) < 30:
-      st=await pg.inner_text('.tour-step'); total=st.split(' от ')[1]
+      st=await pg.inner_text('.tour-step'); print('STEP', repr(st)); total=st.split(' от ')[1] if ' от ' in st else total
       seen.append(await pg.evaluate("location.hash.split('?')[0]"))
       if await pg.evaluate("getComputedStyle(document.querySelector('.tour-hole')).display")=='block': holes+=1
       await pg.click('.tour-card .btn-primary'); await pg.wait_for_timeout(350)

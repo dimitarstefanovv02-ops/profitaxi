@@ -47,7 +47,6 @@
 .meter::before, .hero::before { display: block !important; content: '' !important; position: absolute; left: 0 !important; right: 0 !important; top: 0 !important; height: 8px !important; border-radius: 0 !important;
   background: conic-gradient(#FFC21A 25%, #111 0 50%, #FFC21A 0 75%, #111 0) 0 0 / 16px 16px !important; opacity: 1 !important; }
 .hero::after, .meter::after { display: none !important; }
-:root[data-brand="one"] .meter::before, :root[data-brand="one"] .hero::before { background: var(--accent) !important; height: 5px !important; }
 
 /* Колата по пътя се връща */
 .meter .road, .road { height: 26px !important; border-radius: 10px; background: var(--surface-2); margin-top: 14px; }

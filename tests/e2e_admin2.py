@@ -94,11 +94,6 @@ async def main():
         ok('Поддръжка не вижда „Пари“', 'Пари' not in nav and 'Съобщения' in nav, nav)
         await a2.evaluate("location.hash='#/money'"); await a2.wait_for_timeout(300)
         ok('Поддръжка няма достъп до /money', '#/overview' in a2.url)
-        await a2.click('text=Изход'); await a2.wait_for_timeout(300)
-        await a2.fill('input[type=email]','one@partner.bg'); await a2.fill('input[type=password]','one123'); await a2.click('button[type=submit]'); await a2.wait_for_timeout(700)
-        await a2.evaluate("location.hash='#/drivers'"); await a2.wait_for_timeout(500)
-        rows = await a2.locator('.tbl tbody tr').all_inner_texts()
-        ok('Партньор One вижда само своите шофьори', rows and all('ONE' in r for r in rows), len(rows))
         # 2FA
         await a.evaluate("location.hash='#/settings?t=security'"); await a.wait_for_timeout(400)
         await a.click('[aria-label="Двуфакторно влизане"]'); await a.wait_for_timeout(300)

@@ -169,7 +169,11 @@ export function goalProgress(data) {
   const daysInclToday = remainingDays + (workedToday ? 0 : 1);
   const workDaysLeft = Math.max(1, Math.round(daysInclToday * workRatio));
   const needToday = remaining / workDaysLeft;
-  const forecast = st.net + (st.workedDays ? ((st.income - st.varExp) / Math.max(st.workedDays, 1)) * remainingDays * workRatio - fixedLeft : avgDaily * remainingDays);
+  // Прогноза: чисто досега + печалба на работен ден (от същата база като скоростта на час –
+  // този месец или последните 60 дни) × очакваните работни дни (днес включително, ако още не е карал)
+  // − постоянните до края. Преди: в началото на месеца без смени даваше само минуса от наема.
+  const profitPerDay = base.workedDays ? (base.income - base.varExp) / base.workedDays : 0;
+  const forecast = st.net + profitPerDay * daysInclToday * workRatio - fixedLeft;
   return {
     goal, net, netToDate: st.net, monthFixed, pct: goal ? Math.max(0, net) / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
     needToday, workDaysLeft, workedToday, needHoursToday: ratePerHour > 0 ? needToday / ratePerHour : null,

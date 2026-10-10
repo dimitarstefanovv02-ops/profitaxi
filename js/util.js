@@ -51,14 +51,16 @@ export const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 // Групи от по три цифри и при четирицифрени числа: 1 575, а не 1575 (bg-BG по подразбиране не ги групира)
 const grp = (s) => { const [i, f] = s.split(','); return i.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0') + (f != null ? ',' + f : ''); };
 export const fmtNum = (n) => (n < 0 && Math.round(n) ? '−' : '') + grp(nf0.format(Math.abs(Math.round(n || 0))));
-export const fmtNum1 = (n) => (n < 0 ? '−' : '') + grp(nf1.format(Math.abs(n || 0)));
+// минус само ако след закръгляне до 0,1 числото не е нула (−0,04 → „0,0“, не „−0,0“)
+export const fmtNum1 = (n) => (n < 0 && Math.round(Math.abs(n) * 10) ? '−' : '') + grp(nf1.format(Math.abs(n || 0)));
 // Пари. Суми над 100 000 € се съкращават („350,8 хил. €“, „1,2 млн. €“);
 // пълната сума дава moneyFull().
 export function money(n, dec = 0) {
   const v = Number(n) || 0;
   const a = Math.abs(v);
   const sign = v < 0 && Math.round(a * (dec ? 100 : 1)) !== 0 ? '−' : '';
-  if (a >= 1e6) return `${sign}${nf1.format(a / 1e6)} млн. €`;
+  // от 999 950 нагоре „хил.“ би се закръглило до „1000,0 хил. €“ – показваме „1,0 млн. €“
+  if (a >= 999950) return `${sign}${nf1.format(a / 1e6)} млн. €`;
   if (a >= 1e5) return `${sign}${nf1.format(a / 1e3)} хил. €`;
   const s = grp(dec ? nf2.format(a) : nf0.format(Math.round(a)));
   return `${sign}${s} €`;
@@ -139,6 +141,12 @@ const D = {
   right: [null, 'M9 18l6-6-6-6'],
   down: [null, 'M6 9l6 6 6-6'],
   up: [null, 'M6 15l6-6 6 6'],
+  flag: [null, 'M5 21V4M5 4.5h11l-2 4 2 4H5'],
+  arrowLeft: [null, 'M19 12H5M11 6l-6 6 6 6'],
+  info: [null, 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 7.6h.01'],
+  arrowUp: [null, 'M12 19V5M6 11l6-6 6 6'],
+  arrowDown: [null, 'M12 5v14M6 13l6 6 6-6'],
+  trend: [null, 'M3 17l6-6 4 4 8-8M15 7h6v6'],
   grid: [null, 'M8 5.5h.01M8 12h.01M8 18.5h.01M16 5.5h.01M16 12h.01M16 18.5h.01M7 5.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0M7 12a1 1 0 1 0 2 0 1 1 0 0 0-2 0M7 18.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0M15 5.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0M15 12a1 1 0 1 0 2 0 1 1 0 0 0-2 0M15 18.5a1 1 0 1 0 2 0 1 1 0 0 0-2 0'],
   eyeoff: [null, 'M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3 3.8M6.6 6.6C3.8 8.4 2 12 2 12s3.5 7 10 7c1.9 0 3.5-.6 4.9-1.4M9.9 9.9a3 3 0 0 0 4.2 4.2'],
   inbox: ['M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5V19a1.5 1.5 0 0 1-1.5 1.5h-14A1.5 1.5 0 0 1 3.5 19z', 'M3.5 13.5 6 5.5a1.5 1.5 0 0 1 1.4-1h9.2a1.5 1.5 0 0 1 1.4 1l2.5 8M3.5 13.5V19a1.5 1.5 0 0 0 1.5 1.5h14a1.5 1.5 0 0 0 1.5-1.5v-5.5M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5'],

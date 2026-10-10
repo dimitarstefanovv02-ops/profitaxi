@@ -1,100 +1,88 @@
 # Маркетингов сайт: всички страници се зареждат без грешки, няма хоризонтално превъртане,
-# темата се сменя (и снимките с нея), анимациите показват съдържанието, витрината и цената работят.
-import sys
+# снимките и вътрешните връзки работят, менюто и витрината работят, няма One Taxi и няма измислени отзиви.
+# Пусни сървъра (python3 tests/serve.py 8765) и после: python3 tests/site.py [папка-за-снимки]
+import os, re, sys, urllib.request
 from playwright.sync_api import sync_playwright
-BASE = 'http://localhost:8765'
-PAGES = ['/', '/about', '/features', '/how', '/pricing', '/faq']
+BASE = os.environ.get('SITE_BASE', 'http://localhost:8765')
+PAGES = ['/', '/features', '/how', '/pricing', '/faq', '/about', '/privacy', '/terms']
 ok = fail = 0
 def check(cond, msg):
     global ok, fail
     if cond: ok += 1
     else: fail += 1; print('FAIL', msg)
 shots = sys.argv[1] if len(sys.argv) > 1 else None
+# Google Fonts може да е недостъпен в тестовата среда – спираме го, за да не бави
+block_fonts = lambda r: r.abort() if 'fonts.g' in r.request.url else r.continue_()
+EMOJI = re.compile('[\U0001F300-\U0001FAFF☀-➿]')
+links = set()
 with sync_playwright() as p:
     b = p.chromium.launch()
     for w, hgt in [(390, 844), (820, 1180), (1280, 900)]:
-        for theme in ['light', 'dark']:  # системната тема на телефона не трябва да влияе: сайтът е винаги тъмен
-            ctx = b.new_context(viewport={'width': w, 'height': hgt}, color_scheme=theme)
-            ctx.add_init_script("try { sessionStorage.setItem('profitaxi.intro', '1') } catch (e) {}")
-            pg = ctx.new_page(); errs = []
-            pg.on('pageerror', lambda e: errs.append(str(e)))
-            pg.on('console', lambda m: m.type == 'error' and 'Failed to load resource' not in m.text and errs.append(m.text))
-            for u in PAGES:
-                pg.goto(BASE + u); pg.wait_for_load_state('networkidle')
-                # превърти до долу, за да се появят всички елементи
-                pg.evaluate("async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } }")
-                pg.wait_for_timeout(900)
-                check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == theme, f'{u} {w} theme follows system')
-                sw = pg.evaluate("document.documentElement.scrollWidth")
-                check(sw <= w, f'{u} {w} {theme} horizontal scroll {sw}')
-                wide = pg.evaluate("[...document.querySelectorAll('main h1, main h2, main h3, main p, .s-btn, .sc-tabs')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.textContent.trim().slice(0, 30))")
-                check(not wide, f'{u} {w} {theme} clipped: {wide[:4]}')
-                hidden = pg.evaluate("[...document.querySelectorAll('.rv')].filter(e => !e.classList.contains('in') && getComputedStyle(e).opacity === '0').length")
-                check(hidden == 0, f'{u} {w} {theme} {hidden} elements not revealed')
-                check(pg.locator('.s-head').count() == 1 and pg.locator('.s-foot').count() == 1, f'{u} header/footer')
-                broken = pg.evaluate("[...document.images].filter(i => i.complete && i.naturalWidth === 0).map(i => i.src)")
-                check(not broken, f'{u} broken images {broken}')
-                ics = pg.evaluate("[...document.querySelectorAll('[data-ic]')].filter(e => !e.querySelector('svg')).length")
-                check(ics == 0, f'{u} icons missing')
-                srcs = pg.evaluate("[...document.querySelectorAll('img[data-dark]')].map(i => i.getAttribute('src'))")
-                check(all(f'-{theme}' in s for s in srcs), f'{u} {theme} screenshots')
-                grads = pg.evaluate("[...document.querySelectorAll('.site *')].filter(e => getComputedStyle(e).backgroundImage.includes('gradient') && !e.matches('.checker2, .checker2 *, .intro-bar i, select, .fx-road, .fx-road *, .fx-aurora, .fx-aurora *, #intro, #intro *')).map(e => e.className).slice(0, 5)")
-                check(not grads, f'{u} {theme} no gradient backgrounds: {grads}')
-                if shots and w in (390, 1280):
-                    pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(200)
-                    pg.screenshot(path=f'{shots}/site{u.replace("/", "_") or "_"}-{w}-{theme}.png', full_page=True)
-            check(not errs, f'{w} {theme} js errors {errs}')
-            ctx.close()
-    # Въвеждащият ефект: показва се веднъж, после изчезва
-    ictx = b.new_context(viewport={'width': 390, 'height': 844}); ip = ictx.new_page()
-    ip.goto(BASE + '/'); ip.wait_for_timeout(300)
-    check(ip.locator('#intro').is_visible(), 'intro visible on first open')
-    ip.wait_for_timeout(6200)
-    check(ip.locator('#intro').count() == 0 and not ip.evaluate("document.documentElement.classList.contains('intro')"), 'intro removed after animation')
-    ip.wait_for_timeout(300); check(ip.evaluate("document.querySelector('.hero2 h1').classList.contains('in')"), 'hero revealed after intro')
-    ip.goto(BASE + '/about'); ip.wait_for_timeout(200)
-    check(ip.locator('#intro').count() == 0, 'intro not repeated in the same visit')
-    ictx.close()
-    # Взаимодействия
-    ctx = b.new_context(viewport={'width': 390, 'height': 844}, color_scheme='light'); ctx.add_init_script("try { sessionStorage.setItem('profitaxi.intro', '1') } catch (e) {}"); pg = ctx.new_page()
+        ctx = b.new_context(viewport={'width': w, 'height': hgt}); ctx.route('**/*', block_fonts)
+        pg = ctx.new_page(); errs = []
+        pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.on('console', lambda m: m.type == 'error' and 'Failed to load resource' not in m.text and errs.append(m.text))
+        for u in PAGES:
+            pg.goto(BASE + u); pg.wait_for_load_state('networkidle')
+            # превърти до долу, за да се заредят снимките с loading=lazy
+            pg.evaluate("async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { scrollTo(0, y); await new Promise(r => setTimeout(r, 40)); } scrollTo(0, 0); }")
+            pg.wait_for_load_state('networkidle')
+            sw = pg.evaluate("document.documentElement.scrollWidth")
+            check(sw <= w, f'{u} {w} horizontal scroll {sw}')
+            wide = pg.evaluate("[...document.querySelectorAll('main h1, main h2, main h3, main p, main li, .btn')].filter(e => { const r = e.getBoundingClientRect(); return r.width && (r.right > innerWidth + 1 || r.left < -1); }).map(e => e.textContent.trim().slice(0, 30))")
+            check(not wide, f'{u} {w} clipped: {wide[:4]}')
+            check(pg.locator('header.hd').count() == 1 and pg.locator('footer.ft').count() == 1, f'{u} header/footer')
+            check(pg.locator('main h1').count() == 1, f'{u} one h1')
+            broken = pg.evaluate("[...document.images].filter(i => i.getClientRects().length && i.complete && i.naturalWidth === 0).map(i => i.src)")
+            check(not broken, f'{u} {w} broken images {broken}')
+            grads = pg.evaluate("[...document.querySelectorAll('body *')].filter(e => getComputedStyle(e).backgroundImage.includes('gradient')).map(e => e.className).slice(0, 5)")
+            check(not grads, f'{u} no gradient backgrounds: {grads}')
+            if w == 390:
+                html = pg.content(); text = pg.locator('body').inner_text()
+                check(not re.search(r'one ?taxi|one такси|onetaxi', html, re.I), f'{u}: no One Taxi')
+                check(not EMOJI.search(text), f'{u}: no emoji')
+                check('9,99' not in text and 'AmateurTaxi' not in text.replace('\n', ''), f'{u}: no old price or joke')
+                links.update(pg.evaluate("[...document.querySelectorAll('a[href^=\"/\"]')].map(a => a.getAttribute('href').split('#')[0])"))
+            if shots and w in (390, 1280):
+                pg.screenshot(path=f'{shots}/site{u.replace("/", "_") if u != "/" else "_index"}-{w}.png', full_page=True)
+        check(not errs, f'{w} js errors {errs}')
+        ctx.close()
+
+    # Всички вътрешни връзки отговарят с 200
+    for href in sorted(links):
+        try: code = urllib.request.urlopen(BASE + href).status
+        except Exception as e: code = getattr(e, 'code', str(e))
+        check(code == 200, f'link {href} → {code}')
+
+    ctx = b.new_context(viewport={'width': 390, 'height': 844}); ctx.route('**/*', block_fonts); pg = ctx.new_page()
     pg.goto(BASE + '/'); pg.wait_for_load_state('networkidle')
-    check(pg.locator('#theme-btn').count() == 1, 'theme toggle visible')
-    pg.click('#theme-btn')
-    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'toggle → dark')
-    pg.reload(); pg.wait_for_load_state('networkidle')
-    check(pg.evaluate("document.documentElement.getAttribute('data-theme')") == 'dark', 'theme remembered')
-    check(pg.evaluate("localStorage.getItem('profitaxi.theme')") is None, 'site does not touch app theme')
-    pg.click('#theme-btn')
-    # второстепенното е скрито, но се отваря
-    check(pg.locator('main > section:not([hidden])').count() <= 7, 'home is short (%d sections)' % pg.locator('main > section:not([hidden])').count())
-    check(pg.locator('.step3 .step-shot img').count() >= 3, 'home: 3 steps with screenshots')
+    # Начало: ясно заглавие, основен бутон за регистрация и вход
+    check(pg.locator('.hero h1').count() == 1, 'hero headline')
+    check(pg.locator('.hero a[href="/app#/register"]').first.inner_text().strip() == 'Регистрирай се безплатно', 'hero primary CTA')
+    check(pg.locator('.hero a[href="/app#/login"]').count() == 1, 'hero login')
+    check(pg.locator('.hero img[src*="screen-home-light"]').count() == 1, 'hero screenshot')
+    check(pg.locator('.steps li').count() == 3, 'home: 3 steps')
+    check(pg.locator('.grid li').count() >= 8, 'home: feature grid')
     check(pg.locator('.faq details').count() == 5, 'home: 5 questions')
-    check(pg.locator('.marquee').count() == 1 and 'Русе' in pg.locator('.cities p').inner_text(), 'home: every city + moving cities')
-    check(pg.locator('.price-switch').count() == 0 and pg.locator('.p-amount b').first.inner_text() == '0,00 €', 'home: 0,00 € (тестов период)')
-    check(pg.locator('.roi .roi-row').count() >= 4, 'home: price math shown open')
-    check(pg.locator('.tease, .punch').count() == 0, 'no jokes on home')
+    check(pg.locator('.price-num b').first.inner_text() == '0,00 €', 'home: 0,00 € (тестов период)')
+    check(pg.locator('#reviews, .rev, .reviews').count() == 0, 'no reviews section')
+    for u in ['/about', '/features', '/how', '/pricing', '/faq', '/privacy', '/terms']:
+        check(pg.locator(f'a[href="{u}"]').count() >= 1, f'home links to {u}')
+    # Витрина
+    pg.click('[data-shot="reservations"]'); pg.wait_for_timeout(300)
+    check('reservations' in pg.locator('.show-vis img').get_attribute('src'), 'showcase tab')
+    check('резервации' in pg.locator('.show-cap').inner_text().lower(), 'showcase caption')
+    check(pg.locator('[data-shot="reservations"]').get_attribute('aria-selected') == 'true', 'showcase aria-selected')
+    # Мобилно меню
     pg.click('#menu-btn'); check(pg.locator('#drawer').is_visible(), 'drawer opens')
-    pg.click('#menu-btn')
-    # връзки към под-страниците от началото
-    for u in ['/about', '/features', '/how', '/pricing', '/faq']:
-        check(pg.locator(f'main a[href="{u}"]').count() >= 1, f'home links to {u}')
-    # витрината вече е във „Функции“, броячите – в „Как работи“, градовете – в „За нас“
-    pg.goto(BASE + '/features'); pg.wait_for_load_state('networkidle')
-    check(pg.locator('.tap-hint svg').count() == 1, 'tap hint with icon')
-    pg.locator('[data-showcase]').scroll_into_view_if_needed()
-    pg.click('[data-shot="reservations"]')
-    check('reservations' in pg.locator('.sc-phone img').get_attribute('src'), 'showcase tab')
-    check('Резервации' in pg.locator('.sc-caption').inner_text() or 'резервации' in pg.locator('.sc-caption').inner_text(), 'showcase caption')
-    pg.goto(BASE + '/about'); check(pg.locator('.marquee').count() == 0, 'no cities on /about')
-    for u in PAGES:
-        pg.goto(BASE + u); t = pg.locator('main').inner_text()
-        check('AmateurTaxi' not in t.replace('\n', '') and 'покан' not in t.lower() and '9,99' not in t, f'{u}: no joke, invites or old price')
-    pg.goto(BASE + '/how'); pg.wait_for_load_state('networkidle')
-    # броячите стигат крайната стойност
-    pg.locator('.metrics').first.scroll_into_view_if_needed(); pg.wait_for_timeout(1500)
-    check(pg.locator('.metric b').first.inner_text().replace(' ', ' ') == '2 011 €', 'count-up ' + pg.locator('.metric b').first.inner_text())
+    pg.keyboard.press('Escape'); check(pg.locator('#drawer').is_hidden(), 'drawer closes on Escape')
+    # Подстраници
     pg.goto(BASE + '/faq'); check(pg.locator('.faq details').count() >= 25, 'faq count')
-    check(pg.locator('.s-nav a[aria-current]').count() == 1, 'current nav')
+    check(pg.locator('.hd-nav a[aria-current]').count() == 1, 'current nav')
+    pg.goto(BASE + '/pricing'); check(pg.locator('.price-num b').inner_text() == '0,00 €', 'pricing: 0,00 €')
+    pg.goto(BASE + '/privacy'); check('ОРЗД' in pg.locator('main').inner_text(), 'privacy text kept')
+    pg.goto(BASE + '/terms'); check('Общи условия' in pg.locator('h1').inner_text(), 'terms page')
+    # Стари линкове към приложението
     pg.goto(BASE + '/#/login'); pg.wait_for_url('**/app#/login'); check(True, 'old hash redirect')
     b.close()
 print(f'site: {ok} ok, {fail} fail'); sys.exit(1 if fail else 0)

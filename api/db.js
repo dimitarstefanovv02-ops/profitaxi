@@ -54,7 +54,7 @@ async function notifyDrivers(items) {
     const jobs = []; const dead = [];
     for (const it of items) for (const [k, r] of subs) {
       const u = users[r.id]; if (!u) continue;
-      const base = u.company === ONE_CO ? '/app/onetaxi' : '/app';
+      const base = '/app';
       let data = null;
       if (it.msg && forUserSrv(it.msg.target, u)) data = { title: clip(it.msg.title || 'Съобщение', 60), body: clip(it.msg.text, 160), url: base + '#/home', tag: 'msg-' + it.msg.id };
       if (it.reply && it.reply.userId === u.id) data = { title: 'Отговор на въпроса ти', body: clip(it.text, 160), url: base + '#/help', tag: 'tk-' + it.reply.id };
@@ -243,7 +243,6 @@ const ops = {
     if (!rec || rec.role !== 'driver' || !checkPw(rec, password)) { await sleep(400); return { error: 'Грешен имейл или парола' }; }
     const all = await allFields(); const u = all[`users:${id}`];
     if (!u) return { error: 'Грешен имейл или парола' };
-    if (company && u.company !== company) return { error: 'Този вход е само за шофьорите на One Taxi. Влез от profitaxi.vercel.app/app.' };
     const token = await issueToken(id, 'driver');
     const rev = await one(['GET', 'pt:rev']);
     return { token, user: u, fields: driverView(all, id), rev: Number(rev || 0) };
@@ -269,7 +268,7 @@ const ops = {
     const set = {};
     if (accessCode != null) {
       const code = String(accessCode).trim().toUpperCase(); const c = all[`codes:${code}`];
-      if (!c || !c.active || (c.expires && c.expires < today) || (c.limit && c.uses >= c.limit) || (u.company && c.company && c.company !== u.company)) return { error: 'Невалиден код от One Taxi. Вземи го от диспечерите.' };
+      if (!c || !c.active || (c.expires && c.expires < today) || (c.limit && c.uses >= c.limit) || (u.company && c.company && c.company !== u.company)) return { error: 'Невалиден код за достъп.' };
       u.accessCode = code; u.source = 'code'; set[`codes:${code}`] = { ...c, uses: (c.uses || 0) + 1 };
     }
     if (promo && String(promo).trim()) {
@@ -516,8 +515,7 @@ const ops = {
       const rec = parse(await one(['HGET', 'pt:auth', id]));
       const all = await allFields(); const u = all[`users:${id}`];
       if (!rec || rec.role !== 'driver' || !u) throw new Error('Акаунтът не съществува');
-      if (company && u.company !== company) return { error: 'Този вход е само за шофьорите на One Taxi. Влез от profitaxi.vercel.app/app.' };
-      const token = await issueToken(id, 'driver');
+        const token = await issueToken(id, 'driver');
       const rev = await one(['GET', 'pt:rev']);
       return { token, user: u, fields: driverView(all, id), rev: Number(rev || 0) };
     } catch (e) { await sleep(300); return { error: e.message || 'Неуспешен вход' }; }
@@ -538,7 +536,6 @@ function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.ge
 const DRV_TYPES = ['remind', 'weekly', 'msg'];
 // Съобщенията от админа: старите абонаменти (без v:2) ги получават по подразбиране
 const wantsMsg = (r) => (r.v === 2 ? (r.types || []).includes('msg') : true);
-const ONE_CO = 'ONE Такси – 032 22 22';
 const WD = ['нд', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
 const MON = ['яну', 'фев', 'мар', 'апр', 'май', 'юни', 'юли', 'авг', 'сеп', 'окт', 'ное', 'дек'];
 const fmtDay = (d) => { const x = new Date(d + 'T12:00:00'); return `${WD[x.getDay()]}, ${x.getDate()} ${MON[x.getMonth()]}`; };
@@ -565,7 +562,7 @@ async function runCron(slot, { force = false } = {}) {
   let sent = 0; const dead = []; const jobs = [];
   for (const [id, list] of byUser) {
     const u = all[`users:${id}`]; if (!u || (u.status && u.status !== 'active')) continue;
-    const d = userData(all, id); const base = u.company === ONE_CO ? '/app/onetaxi' : '/app';
+    const d = userData(all, id); const base = '/app';
     const msgs = [];
     const created = new Date(u.createdAt || 0); const createdDay = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
     const hasY = d.shifts.some((x) => shiftDate(x) === yest);

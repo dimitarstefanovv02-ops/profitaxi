@@ -39,7 +39,7 @@ export function applyTheme(pref) {
   const root = document.documentElement;
   if (e === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', e);
   const dark = e === 'dark' || (e === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#161B22' : e === 'sun' ? '#FFFFFF' : '#EEF1F5');
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#141313' : '#FDF8F8');
   applyTextSize();
 }
 export function setTheme(p) { localStorage.setItem('profitaxi.theme', p); applyTheme(p); }
@@ -205,14 +205,14 @@ export function barChart(points, { height = 160, valueKey = 'net', highlight, cl
         h('title', null, `${p.label}: ${fmt(v)}`));
     }));
   // Натискане върху колона показва сумата ѝ (на телефон няма „задържане с мишката“)
-  const tip = h('div', { class: 'chart-tip', 'aria-live': 'polite' }, h('span', { class: 'muted' }, 'Натисни колона, за да видиш сумата'));
+  const tip = h('div', { class: 'chart-tip', 'aria-live': 'polite' }, h('span', { class: 'muted' }, 'Натисни колона, за да видиш сумата' + (min < 0 ? ` · най-ниско ${fmt(min)}` : '')));
   const hit = h('div', { class: 'bars-hit', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } }, points.map((p, i) => h('button', { type: 'button', 'aria-label': `${p.label}: ${fmt(p[valueKey])}`, onclick: (e) => {
     svg.querySelectorAll('rect.bar').forEach((r, j) => r.classList.toggle('sel', j === i));
     hit.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === e.currentTarget));
     tip.replaceChildren(h('b', null, p.tip || p.label), h('span', { class: p[valueKey] < 0 ? 'neg' : '' }, fmt(p[valueKey])));
   } })));
   return h('div', { class: 'chart' },
-    h('div', { class: 'chart-scale' }, h('span', null, fmt(max)), min < 0 && h('span', null, fmt(min))),
+    h('div', { class: 'chart-scale' }, h('span', null, `най-много ${fmt(max)}`)),
     h('div', { class: 'bars-wrap' }, svg, hit),
     tip,
     h('div', { class: 'bars-labels', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } },
@@ -243,7 +243,15 @@ export const field = (label, input, hint, req) => h('label', { class: 'field' },
 // Заглавие на карта с цветна икона
 export const cardTitle = (ic, title, right) => h('div', { class: 'card-title' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 17)), title), right);
 // Цветна шапка на страница
-export const hero = (...kids) => h('section', { class: 'hero' }, ...kids);
+// Горната част на подстраница: заглавието (.hero-top) е лента над картата, бутоните за избор (.hero-ctl)
+// са под нея, а в тъмната карта остават само числата. Ако няма числа – няма и карта.
+export const hero = (...kids) => {
+  const flat = kids.flat(Infinity).filter((k) => k != null && k !== false && k !== '');
+  const top = flat.find((k) => k.classList?.contains('hero-top'));
+  const ctl = flat.filter((k) => k.classList?.contains('hero-ctl'));
+  const rest = flat.filter((k) => k !== top && !ctl.includes(k));
+  return h('div', { class: 'hero-wrap' }, top && h('div', { class: 'hero-head' }, top), ...ctl, rest.length ? h('section', { class: 'hero' }, ...rest) : null);
+};
 export const numCompact = (n) => fmtNum(n);
 
 // ---------- Числата се смаляват сами, за да се съберат ----------
@@ -266,9 +274,11 @@ window.addEventListener('resize', queueFit);
 document.fonts?.ready?.then(queueFit);
 
 // Разгъваем блок „Покажи подробности“ – допълнителните числа стоят скрити, докато не се отворят
+// label може да е [затворено, отворено] – тогава надписът се сменя при отваряне
 export function more(label, ...children) {
+  const [closed, open] = Array.isArray(label) ? label : [label, null];
   return h('details', { class: 'more' },
-    h('summary', null, h('span', null, label), icon('down', 18)),
+    h('summary', null, h('span', { class: open ? 'more-closed' : null }, closed), open && h('span', { class: 'more-open' }, open), icon('down', 18)),
     h('div', { class: 'more-body' }, ...children));
 }
 
@@ -276,7 +286,7 @@ export function more(label, ...children) {
 export function celebrate(n = 40) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const box = document.createElement('div'); box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
-  const colors = ['#FFC21A', '#8B5CF6', '#A78BFA', '#FFFFFF', '#FFE066'];
+  const colors = ['#231F20', '#2F6B39', '#BFF0BE', '#CEC6C7', '#FFFFFF'];
   for (let i = 0; i < n; i++) {
     const p = document.createElement('i');
     p.style.left = `${Math.random() * 100}%`;

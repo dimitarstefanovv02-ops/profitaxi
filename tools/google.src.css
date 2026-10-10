@@ -39,9 +39,6 @@
     --violet: #A8C7FA; --v-soft: #0842A0; --v-line: #444746; --v-strong: #444746;
   }
 }
-/* One Taxi остава в червено */
-:root[data-brand="one"] { --accent: #ED1D24; --accent-press: #C8141B; --accent-ink: #FFFFFF; --accent-soft: #FDE8E9; --accent-text: #B3261E; --g-sec: #FDE8E9; --g-on-sec: #410002; --g-hero: #C8141B; }
-:root[data-brand="one"][data-theme="dark"] { --g-hero: #8C1D18; }
 
 /* ---------- Типография: по-леки тегла, като в Google ---------- */
 body { letter-spacing: 0; }
@@ -241,8 +238,6 @@ h1, .page-title h1, .hero h1, .adm-head h1 { font-weight: 400 !important; letter
 .mc-bar span, .mc-bar span.best { background: var(--c-green) !important; }
 .drive-sum .pos, .drive .pos { color: var(--pos) !important; }
 
-/* Тъмно: малко по-светли карти, за да се отделят от фона */
-:root[data-theme="dark"] .meter .road-fill { background: var(--g-yellow) !important; }
 
 /* ---------- Повече цвят: оцветен фон, бели карти, цветни плочки ---------- */
 body, .screen, .adm-main, .adm-side { background: var(--bg) !important; }

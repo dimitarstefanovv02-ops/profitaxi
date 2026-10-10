@@ -109,7 +109,6 @@ export function login(email, password, { company } = {}) {
   if (LIVE) return liveAuth('login', { email, password, company }, 'app', SESSION_KEY);
   const u = db.users.find((x) => norm(x.email) === norm(email) && x.role === 'driver');
   if (!u || u.password !== password) return { error: 'Грешен имейл или парола' };
-  if (company && u.company !== company) return { error: 'Този вход е само за шофьорите на One Taxi. Влез от profitaxi.vercel.app/app.' };
   localStorage.setItem(SESSION_KEY, u.id);
   u.lastLoginAt = new Date().toISOString();
   commit();
@@ -167,7 +166,7 @@ export function verifySmsCode(phone, code) {
 }
 const phoneVerified = (phone) => !PHONE_CODE || !!db.sms[digits(phone)]?.ok;
 export const phoneCodeOn = () => PHONE_CODE;
-// Кодове за достъп на партньори (напр. One Taxi)
+// Кодове за достъп на партньори (таксиметрови фирми)
 export function checkAccessCode(code, company) {
   load(); const c = db.codes.find((x) => x.code === String(code || '').trim().toUpperCase());
   if (!c || !c.active) return { error: 'Невалиден код' };
@@ -923,7 +922,6 @@ function seed() {
   const today = todayStr();
   db.users.push({ id: 'admin', role: 'admin', adminRole: 'owner', name: 'Администратор', email: 'admin@profitaxi.bg', password: 'admin123', phone: '0888 000 111', status: 'active', createdAt: new Date().toISOString() });
   db.users.push({ id: 'admin-support', role: 'admin', adminRole: 'support', name: 'Поддръжка', email: 'support@profitaxi.bg', password: 'support123', status: 'active', createdAt: new Date().toISOString() });
-  db.users.push({ id: 'admin-one', role: 'admin', adminRole: 'partner', company: 'ONE Такси – 032 22 22', name: 'One Taxi', email: 'one@partner.bg', password: 'one123', status: 'active', createdAt: new Date().toISOString() });
 
   // Основните демо профили – фиксирани, за да могат да се пробват
   const fixed = [
@@ -937,10 +935,6 @@ function seed() {
     { name: 'Стоян Ангелов', email: 'stoyan@demo.bg', city: 'Варна', company: 'Триумф Такси / Транстриумф', seed: 41, days: 40, plan: 'trial', valid: -3,
       profile: { carType: 'own', fuel: 'lpg', dispatch: { mode: 'daily', amount: 10 }, monthlyGoal: 1200 },
       style: { workProb: 0.45, night: 0.5, rate: 0.9, kmMin: 120, kmMax: 220 } },
-    // Демо шофьор за изданието One Taxi (/onetaxi)
-    { name: 'Петър Стоянов', email: 'one@demo.bg', city: 'Пловдив', company: 'ONE Такси – 032 22 22', seed: 61, days: 120, plan: 'paid', valid: 30,
-      profile: { carType: 'own', fuel: 'petrol_lpg', dispatch: { mode: 'weekly', amount: 35 }, monthlyGoal: 1800, car: { code: '117', plate: 'РВ 1170 КА', model: 'Toyota Auris' } },
-      style: { workProb: 0.8, night: 0.35, rate: 0.95, kmMin: 170, kmMax: 280 } },
     { name: 'Николай Иванов', email: 'nikolay@demo.bg', city: 'София', company: 'OK Supertrans', seed: 53, days: 75, plan: 'paid', valid: 120, blocked: true,
       profile: { carType: 'own', fuel: 'electric', dispatch: { mode: 'none', amount: 0 }, monthlyGoal: 2000 },
       style: { workProb: 0.75, night: 0.3, rate: 1.0, kmMin: 160, kmMax: 280 } },
@@ -988,16 +982,12 @@ function seed() {
   return db;
 }
 
-// Демо: съобщения, код One, бележки, използване, анкета, предложения, функции и един дубликат
+// Демо: съобщения, бележки, използване, анкета, предложения, функции и един дубликат
 function seedExtra(today) {
   ensureExt();
   const drivers = db.users.filter((u) => u.role === 'driver'); const r = rng(99);
   const ago = (d) => new Date(Date.now() - d * 86400000).toISOString();
   db.messages.push({ id: uid(), title: 'Добре дошли в ProfiTaxi', text: 'Записвайте всяка смяна – в края на месеца ще видите точно колко ви остава.', target: null, at: ago(20), readBy: drivers.slice(0, 18).map((u) => u.id) });
-  db.messages.push({ id: uid(), title: 'One Taxi: нов тарифен план', text: 'От 1 ноември ефирът става 35 € на седмица. Обновете го в „Колата и ефирът“.', target: { company: 'ONE Такси – 032 22 22' }, at: ago(2), readBy: [] });
-  const oneUsers = drivers.filter((u) => u.company === 'ONE Такси – 032 22 22');
-  db.codes.push({ code: 'ONE2026', company: 'ONE Такси – 032 22 22', city: 'Пловдив', limit: 200, expires: addDays(today, 180), uses: oneUsers.length, active: true, note: 'Пилот One Taxi', at: ago(30) });
-  oneUsers.forEach((u) => { u.accessCode = 'ONE2026'; });
   const ivan = drivers.find((u) => u.email === 'ivan@demo.bg');
   db.notes[ivan.id] = [{ text: 'Иска фактура на фирма за абонамента.', at: ago(3), by: 'admin@profitaxi.bg' }];
   const pages = { home: .95, shift: .9, money: .7, stats: .45, costs: .5, me: .4, calendar: .25, reservations: .2, profile: .3, car: .25, shifts: .35 };
@@ -1028,7 +1018,6 @@ function seedMore(today, drivers, r, ago) {
   });
   const tag = (n, t) => drivers[n] && drivers[n].tags.push(t);
   tag(0, 'VIP'); tag(0, 'тестер'); tag(3, 'тестер'); tag(6, 'VIP'); tag(11, 'проблемен'); tag(14, 'тестер'); tag(20, 'VIP');
-  drivers.filter((u) => u.company === 'ONE Такси – 032 22 22').forEach((u) => u.tags.push('от One'));
   // Плащания: всеки месец от началото на платения период; няколко неуспешни
   let inv = 0; const failedIdx = new Set([2, 9, 16]);
   drivers.forEach((u, i) => {

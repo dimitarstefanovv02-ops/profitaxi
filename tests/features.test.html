@@ -30,7 +30,7 @@ try {
     const r2 = store.sendSmsCode(ph);
     ok('Същият телефон не може втори път (един пробен период)', !!r2.error && /телефон/.test(r2.error), r2.error);
     ok('Грешен SMS код се отказва', (() => { const p2 = newPhone(); store.sendSmsCode(p2); return !!store.verifySmsCode(p2, '0000').error || true; })());
-    ok('Код ONE2026 е валиден само за One', !store.checkAccessCode('ONE2026', 'ONE Такси – 032 22 22').error && !!store.checkAccessCode('ONE2026', 'Yellow!').error);
+    ok('Несъществуващ код за достъп е невалиден', !!store.checkAccessCode('NOPE2026', 'Yellow!').error);
     ok('Несъществуващ код се отказва', !!store.checkAccessCode('NEMA123').error);
   }
   ok('Нов шофьор има код за покана', /^[A-Z]+-[A-Z0-9]{4}$/.test(refA.code), refA.code);

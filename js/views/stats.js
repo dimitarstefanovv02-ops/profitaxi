@@ -50,16 +50,14 @@ export function statsView({ data }) {
     root.replaceChildren(...[
       hero(
         h('div', { class: 'hero-top' },
-          h('div', null, h('h1', null, 'Статистика'), h('div', { class: 'hero-sub' }, 'Чиста печалба за периода')),
+          h('div', null, h('h1', null, 'Статистика')),
           h('div', { class: 'row gap no-print' },
             h('button', { class: 'hero-btn', 'aria-label': 'Свали в Excel', title: 'Excel', onclick: () => exportCsv(data, r) }, icon('download', 20)),
             h('button', { class: 'hero-btn', 'aria-label': 'Печат или PDF', title: 'PDF', onclick: () => window.print() }, icon('print', 20)))),
+        h('div', { class: 'hero-ctl' }, periodPicker(state, draw)),
+        h('div', { class: 'hero-label' }, `Чиста печалба за периода · ${r.label}`),
         h('div', { class: 'hero-num' }, money(st.net)),
-        h('div', { class: 'hero-chips' },
-          h('span', { class: 'hero-chip' }, icon('coins', 14), `приход ${money(st.income)}`),
-          h('span', { class: 'hero-chip' }, icon('wallet', 14), `разходи ${money(st.totalExp)}`),
-          h('span', { class: 'hero-chip' }, icon('calendar', 14), `${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}`)),
-        h('div', { style: { marginTop: '16px' } }, periodPicker(state, draw))),
+        h('div', { class: 'hero-line' }, `приход ${money(st.income)} · разходи ${money(st.totalExp)} · ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}`)),
       h('div', { class: 'print-only' }, h('h2', null, `ProfiTaxi – ${data.user.name}`), h('p', null, r.label)),
       (state.unit === 'month' || state.unit === 'year') && monthsCompare(data, state, draw),
       statsBody(data, r.from, r.to, state.unit, { st }),
@@ -166,7 +164,7 @@ function monthsCompare(data, st, redraw) {
     h('p', { class: 'muted small', style: { marginBottom: '10px' } }, 'Чисто след всички разходи. Процентът е спрямо предишния месец; текущият месец – спрямо същите дни на миналия.'),
     rows.map((r) => {
       const d = parseDate(r.from);
-      return h('button', { class: cx('mc-row', r.ym === sel && 'sel'), onclick: () => { st.unit = 'month'; st.anchor = r.from; redraw(); } },
+      return h('button', { class: cx('mc-row', r.ym === sel && 'sel', r === best && best.st.net > 0 && 'best'), onclick: () => { st.unit = 'month'; st.anchor = r.from; redraw(); } },
         h('div', { class: 'mc-top' },
           h('span', { class: 'mc-name' }, `${MONTHS[d.getMonth()]} ${d.getFullYear()}`, r.partial && h('small', null, ' до днес'), r === best && best.st.net > 0 && h('span', { class: 'mc-best' }, icon('trophy', 12), 'най-печеливш')),
           h('b', { class: cx('num', tone(r.st.net)) }, money(r.st.net)),
@@ -233,7 +231,7 @@ function recordsCard(rec, admin) {
 
 // Excel: CSV с ; и запетая за десетични (както го отваря Excel на български)
 export function exportCsv(data, r) {
-  const n = (v) => String(Math.round(v * 100) / 100).replace('.', ',');
+  const n = (v) => String(Math.round((Number(v) || 0) * 100) / 100).replace('.', ','); // липсваща сума = 0, не „NaN“
   const rows = [['Дата', 'Начало', 'Край', 'Часове', 'Км', 'Кеш', 'Карта', 'Приложения', 'Бакшиш', 'Приход', 'Разходи', 'Печалба от смяната', 'Бележка']];
   const list = data.shifts.filter((s) => s.end && shiftDate(s) >= r.from && shiftDate(s) <= r.to).sort((a, b) => a.start.localeCompare(b.start));
   for (const s of list) {

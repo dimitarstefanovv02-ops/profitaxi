@@ -36,8 +36,8 @@ export function reservationsView({ data }) {
         h('button', { class: 'hero-btn', 'aria-label': 'Нова резервация', onclick: () => editReservation({}) }, icon('plus', 22))),
       h('div', { class: 'hero-num' }, String(up.length)),
       h('div', { class: 'hero-sub' }, up.length === 1 ? 'предстояща резервация' : 'предстоящи резервации'),
-      sum > 0 && h('div', { class: 'hero-chips' }, h('span', { class: 'hero-chip' }, icon('coins', 14), `договорени ${money(sum)}`))),
-    up.length > 0 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '12px' }, onclick: () => addToCalendar(up) }, icon('calendar', 18), 'Всички в календара на телефона'),
+      sum > 0 && h('div', { class: 'hero-line' }, `договорени ${money(sum)}`),
+      up.length > 0 && h('div', { class: 'hero-chips' }, h('button', { class: 'hero-chip', type: 'button', onclick: () => addToCalendar(up) }, icon('check', 14), 'Всички в календара на телефона'))),
     up.length
       ? h('section', { class: 'card', style: { padding: '6px 14px' } }, up.map((r) => reservationRow(r)))
       : empty('calendar', 'Няма предстоящи резервации', 'Записвай курсове до летището, гарата или друг град, за да не изпуснеш нито един.',

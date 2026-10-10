@@ -130,7 +130,7 @@ export function searchView({ data, go }) {
       q.length >= 6 && h('button', { class: 'btn btn-outline btn-block ask-ai', type: 'button', onclick: () => (store.live() ? askAI(q) : toast('AI отговорите работят само на живия сайт', 'err')) }, icon('sparkle', 18), list.length ? 'Не е това? Питай AI' : 'Питай AI')].filter(Boolean));
   }
   root.append(
-    h('button', { class: 'back sub-back', type: 'button', onclick: () => (history.length > 1 ? history.back() : go('/home')) }, icon('left', 20), 'Назад'),
+    h('button', { class: 'back sub-back', type: 'button', onclick: () => (history.length > 1 ? history.back() : go('/home')) }, icon(document.documentElement.dataset.skin === 'chisto' ? 'arrowLeft' : 'left', 20), h('span', { class: 'back-txt' }, 'Назад')),
     h('div', { class: 'page-title' }, h('h1', null, 'Търси')),
     h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Как се прави нещо или колко си изкарал – питай с думи или с глас.'),
     h('div', { class: 'search-bar' }, h('span', { class: 'search-ic' }, icon('search', 20)), input, mic),

@@ -12,13 +12,15 @@ async def main():
             pg = await ctx.new_page()
             await pg.clock.install(time=datetime.datetime(2026, 10, 24, 18, 30))
             await pg.goto('http://localhost:8765/app'); await pg.evaluate('localStorage.clear()'); await pg.goto('http://localhost:8765/app')
-            await pg.evaluate("localStorage.setItem('profitaxi.dueShown', '2026-10-24')")
+            await pg.evaluate("localStorage.setItem('profitaxi.dueShown', '2026-10-24'); localStorage.setItem('profitaxi.remindOffer', '1'); localStorage.setItem('profitaxi.installed', '1'); localStorage.setItem('profitaxi.tips', JSON.stringify(['/home','/money','/stats','/shift','/me','/profile','/costs','/shifts','/vehicle','/calendar','/reservations','/help','/search','/car']))")
             await pg.fill('input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
             await pg.goto('http://localhost:8765/app#/costs'); await pg.wait_for_timeout(600)
             if await pg.locator('.notify-box .btn').count(): await pg.click('.notify-box .btn'); await pg.wait_for_timeout(500)
             await pg.evaluate("localStorage.setItem('profitaxi.notified', JSON.stringify([]))")
             for name, route, mode in SHOTS:
                 await pg.goto('http://localhost:8765/app' + route); await pg.wait_for_timeout(900)
+                if mode in ('time', 'records'):
+                    await pg.evaluate("document.querySelectorAll('details').forEach(d => d.open = true)"); await pg.wait_for_timeout(300)
                 if mode == 'time':
                     await pg.evaluate("window.scrollTo(0, document.querySelector('.wd-bars').closest('.card').offsetTop - 16)")
                 if mode == 'records':

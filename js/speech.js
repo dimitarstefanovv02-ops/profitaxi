@@ -14,7 +14,18 @@ export function wordsToDigits(text) {
   for (const t of toks) {
     if (/^\s+$/.test(t)) { if (cur != null || total) pendingSpace = t; else out.push(t); continue; }
     const w = t.toLowerCase().replace(/[.,!?;:]+$/, ''); const tail = t.slice(w.length);
-    if (w in UNITS) { cur = (cur || 0) + UNITS[w]; pendingSpace = ''; if (tail) { flush(); out.push(tail); } continue; }
+    if (w in UNITS) {
+      const v = UNITS[w];
+      // Стотинки: „дванайсет и петдесет“ = 12,50 (не 62). Десетици след единици/„-надесет“ (или след
+      // десетици) не са част от числото – „двадесет и пет“ = 25, „сто и двадесет“ = 120 си остават.
+      const place = cur == null ? 1000 : cur % 10 ? 1 : cur % 100 ? 10 : 100;
+      if (cur != null && v >= 10 && v < 100 && v >= place) {
+        out.push(String(Math.round((total + cur + v / 100) * 100) / 100)); cur = null; total = 0; pendingSpace = '';
+        if (tail) out.push(tail);
+        continue;
+      }
+      cur = (cur || 0) + v; pendingSpace = ''; if (tail) { flush(); out.push(tail); } continue;
+    }
     if (w === 'хиляда') { total += 1000; pendingSpace = ''; continue; }
     if (w === 'хиляди') { total += (cur || 1) * 1000; cur = null; pendingSpace = ''; continue; }
     if (w === 'и' && (cur != null || total)) { pendingSpace = ''; continue; }
@@ -51,7 +62,15 @@ export function parseSpeech(text, { kmStart = 0 } = {}) {
   nums.forEach((n) => { if (QTY.test(toks[n.i + 1] || '')) { n.used = true; out.fuel = out.fuel || { amount: 0, qty: 0 }; out.fuel.qty = n.v; } });
   // Всяко число отива при най-близката дума (кеш, карта…): първо най-близките двойки.
   // „кеш 120“ (числото след думата) е малко по-сигурно от „120 кеш“.
-  const kws = []; toks.forEach((t, i) => { const cat = CATS.find(([, re]) => re.test(t))?.[0]; if (cat) kws.push({ i, cat, used: false }); });
+  const kws = []; toks.forEach((t, i) => {
+    const cat = CATS.find(([, re]) => re.test(t))?.[0];
+    if (!cat) return;
+    // „начален километраж 250 210“: „километраж“ е част от „начален“/„краен“, не отделна дума –
+    // иначе числото отиваше към „км“ и при известен начален км ставаше краен.
+    const prev = kws[kws.length - 1];
+    if (cat === 'km' && prev && prev.i === i - 1 && (prev.cat === 'kmStart' || prev.cat === 'kmEnd')) return;
+    kws.push({ i, cat, used: false });
+  });
   const pairs = [];
   for (const n of nums) for (const k of kws) {
     if (n.used) continue;

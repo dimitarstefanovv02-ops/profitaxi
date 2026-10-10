@@ -1,138 +1,153 @@
-<main>
-<section class="page-hero">
-  <div class="s-wrap">
-    <div class="crumbs rv"><a href="/">Начало</a> / Функции</div>
-    <h1 class="rv" style="--d:80ms">Всичко, което шофьорът <span class="y-text y">наистина</span> ползва.</h1>
-    <p class="lead rv" style="--d:160ms">Смени, разходи, падежи, резервации, цели и статистика. В едно приложение, с големи бутони и големи числа.</p>
+<main id="main">
+<section class="blk-ink page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="/">Начало</a> / Функции</div>
+    <h1>Всичко, което шофьорът наистина ползва.</h1>
+    <p class="lead">Смени, разходи, падежи, резервации, цели и статистика. В едно приложение, с големи бутони и големи числа.</p>
+    <div class="cta"><a class="btn btn-light btn-lg" href="/app#/register">Регистрирай се безплатно</a></div>
   </div>
 </section>
 
-<section class="sec ink" style="overflow:hidden">
-  <div class="s-wrap">
-    <div class="showcase" data-showcase>
-      <div>
-        <div class="sec-head rv" style="margin-bottom:26px">
-          <span class="eyebrow">Виж приложението</span>
-          <h2>Направено за телефон. За една ръка.</h2>
-        </div>
-        <p class="tap-hint rv"><span data-ic="pointer" data-size="20"></span>Цъкни бутончетата, за да видиш различните екрани</p>
-        <div class="sc-tabs rv" role="tablist">
-          <button type="button" role="tab" data-shot="home" data-caption="Колко си изкарал чисто този месец, колко остава до целта и предстоящите резервации и плащания.">Начало</button>
-          <button type="button" role="tab" data-shot="shifts" data-caption="Всяка смяна с оборот, разходи, часове, километри и чиста печалба.">Смени</button>
-          <button type="button" role="tab" data-shot="stats" data-caption="Месеци, седмици и години. Оборот срещу чисто, на час и на километър.">Статистика</button>
-          <button type="button" role="tab" data-shot="costs" data-caption="Постоянните разходи с падежите им. Отбелязваш „Платено“ с едно докосване.">Разходи</button>
-          <button type="button" role="tab" data-shot="profile" data-caption="Твоята снимка, колата ти като корица, код, регистрационен номер и модел.">Профил</button>
-          <button type="button" role="tab" data-shot="reservations" data-caption="Лични резервации с час, адреси, клиент и договорена цена. Обаждане и маршрут с едно докосване.">Резервации</button>
-        </div>
-        <p class="sc-caption" aria-live="polite"></p>
-        <div class="sec-foot"><a class="s-btn s-btn-line" href="/features">Разгледай функциите</a></div>
-      </div>
-      <div class="sc-phone rv zoom"><div class="phone2">{{IMG:home|Екран от приложението}}</div></div>
+<section class="blk" id="smeni">
+  <div class="wrap feat">
+    <div class="feat-txt">
+      <span class="label">Смени</span>
+      <h2>Смяната се записва за секунди.</h2>
+      <p class="lead">„Започни смяна“, километражът и тръгваш. Накрая въвеждаш сумите на голяма цифрова клавиатура – или ги казваш на глас.</p>
+      <ul class="bul">
+        <li>Кеш, карта, приложения (Bolt, Uber) и бакшиш</li>
+        <li>Гориво със сума и литри, автомивка, паркинг, друг разход</li>
+        <li>„Кажи на глас“: „кеш 120, карта 80, гориво 40 евро 28 литра“ – и полетата се попълват</li>
+        <li>„Снимай бележка“ чете касовата бележка от бензиностанцията</li>
+        <li>„Като предишната“ копира разходите от миналата смяна</li>
+      </ul>
+    </div>
+    <div class="feat-vis"><div class="phone">{{IMG:numpad|Въвеждане на сума с голяма цифрова клавиатура}}</div></div>
+  </div>
+</section>
+
+<section class="blk blk-grey" id="dnes">
+  <div class="wrap feat rev">
+    <div class="feat-txt">
+      <span class="label">Днес</span>
+      <h2>Колко ти остава. С един поглед.</h2>
+      <p class="lead">Голямото число е чистото за месеца: приходите минус всички разходи, а постоянните плащания се смятат ден по ден.</p>
+      <ul class="bul">
+        <li>Цел за месеца и колко остава до нея</li>
+        <li>Колко ти трябва от днешната смяна, за да си в темпо</li>
+        <li>Колко часа, смени и дни още трябват при твоята печалба на час</li>
+        <li>Очаквано за целия месец</li>
+        <li>Днешните резервации и предстоящите плащания</li>
+      </ul>
+    </div>
+    <div class="feat-vis"><div class="phone">{{IMG:home|Началният екран с чистата печалба за месеца и целта}}</div></div>
+  </div>
+</section>
+
+<section class="blk" id="razhodi">
+  <div class="wrap feat">
+    <div class="feat-txt">
+      <span class="label">Постоянни разходи</span>
+      <h2>Твоите разходи. Твоите падежи.</h2>
+      <p class="lead">Наем, ефир, лизинг, застраховка, каско, ГО, винетка, преглед, данъци, телефон. Всеки има период и падеж и се разпределя по дни, за да е честна печалбата за всеки ден.</p>
+      <p class="lead">Горивото, автомивката, паркингът и ремонтите се пишат в смяната или в „Колата ми“ – там, където са платени. Добавяш свои категории и скриваш тези, които не ползваш.</p>
+    </div>
+    <div class="feat-vis"><div class="phone">{{IMG:costs|Постоянните разходи с падежите им}}</div></div>
+  </div>
+</section>
+
+<section class="blk blk-grey" id="napomnyania">
+  <div class="wrap feat rev">
+    <div class="feat-txt">
+      <span class="label">Напомняния</span>
+      <h2>Нито едно забравено плащане.</h2>
+      <p class="lead">Напомняне 3, 2 и 1 ден преди падеж и в самия ден. „Платено“ е едно докосване и следващият падеж се мести сам.</p>
+      <ul class="bul">
+        <li>В 10:00 и 20:00, ако за вчера няма въведена смяна</li>
+        <li>Седмичен отчет всеки понеделник</li>
+        <li>Резервациите за днес и утре</li>
+        <li>Пропуснатото виждаш при следващото отваряне, дори без известия</li>
+      </ul>
+    </div>
+    <ol class="remind" aria-label="Пример за напомняне">
+      <li><b>След 3 дни</b><span>ГО – 120 € · падеж 27 октомври</span></li>
+      <li><b>След 2 дни</b><span>Напомняме пак.</span></li>
+      <li><b>Утре</b><span>Последно напомняне преди падежа.</span></li>
+      <li><b>Днес</b><span>„Платено“ и следващият падеж се мести сам.</span></li>
+    </ol>
+  </div>
+</section>
+
+<section class="blk blk-ink" id="statistika">
+  <div class="wrap feat">
+    <div class="feat-txt">
+      <span class="label">Статистика</span>
+      <h2>Кога се печели най-много.</h2>
+      <p class="lead">Ден, седмица, месец, година или свой период. Оборот срещу чисто, на час и на километър, разход на гориво на 100 км.</p>
+      <ul class="bul">
+        <li>Сравнение по месеци – с колко % месецът е по-добър или по-слаб</li>
+        <li>Най-добрите часове и дни от седмицата</li>
+        <li>Рекорди: най-добрата смяна, седмица и месец</li>
+        <li>Всички смени в Excel за счетоводителя, отчет в PDF</li>
+      </ul>
+    </div>
+    <div class="feat-vis"><div class="phone">{{IMG:stats|Статистика по дни за месеца}}</div></div>
+  </div>
+</section>
+
+<section class="blk" id="chasove">
+  <div class="wrap feat rev">
+    <div class="feat-txt">
+      <span class="label">Часове</span>
+      <h2>Нощната смяна струва ли си?</h2>
+      <p class="lead">ProfiTaxi показва печалбата на час по часове от денонощието и по дни от седмицата. Виждаш кога колата изкарва най-много и кога караш почти на нула.</p>
+    </div>
+    <div class="feat-vis"><div class="phone">{{IMG:time|Печалба на час по часове и дни}}</div></div>
+  </div>
+</section>
+
+<section class="blk blk-grey" id="rezervacii">
+  <div class="wrap feat">
+    <div class="feat-txt">
+      <span class="label">Резервации и календар</span>
+      <h2>Личните ти курсове на едно място.</h2>
+      <p class="lead">Дата, час, откъде, докъде и клиент. По желание телефон, договорена цена и бележка. Предстоящите са на началния екран.</p>
+      <ul class="bul">
+        <li>„Обади се“ и „Маршрут“ с едно докосване</li>
+        <li>Календар по месец, седмица и ден: смени, плащания и резервации</li>
+      </ul>
+    </div>
+    <div class="feat-vis"><div class="phone">{{IMG:reservations|Лични резервации с час, адрес и клиент}}</div></div>
+  </div>
+</section>
+
+<section class="blk" id="kolata">
+  <div class="wrap">
+    <span class="label">Колата</span>
+    <h2 class="sec-title">Своя, на лизинг или под наем.</h2>
+    <div class="own">
+      <div><h3>Собствена кола</h3><p>Застраховка, каско, ГО, винетка, преглед, обслужване, гуми, данъци – с падежи и напомняния. Лизингът е месечен разход.</p></div>
+      <div><h3>Под наем</h3><p>Наемът на ден, седмица или месец се смята сам. Каско, винетка и преглед са скрити – плаща ги собственикът.</p></div>
+      <div><h3>Колата ми</h3><p>Колко от покупната цена си избил и след колко работни дни и часове колата се изплаща. Ремонти по дати и километри.</p></div>
     </div>
   </div>
 </section>
 
-
-<section class="sec" style="padding-top:30px">
-  <div class="s-wrap">
-    <div class="feat">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#12A15E">Начало</span>
-        <h2>Колко ти остава. С един поглед.</h2>
-        <p>Чистата печалба за деня и месеца, напредъкът към целта и колко часа още трябват. Под нея: днешните резервации и предстоящите плащания.</p>
-      </div>
-      <div class="rv from-r"><div class="phone2 sm">{{IMG:home|Начален екран}}</div></div>
-    </div>
-
-    <div class="feat rev">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#F5A524">Смени</span>
-        <h2>Смяната се записва за 10 секунди.</h2>
-        <p>Старт и стоп с едно докосване. Сумите въвеждаш на голяма цифрова клавиатура: кеш, карта, приложения, бакшиш. Горивото, автомивката и паркингът са бутони. Разходите от предишната смяна се копират с едно докосване.</p>
-      </div>
-      <div class="rv"><div class="phone2 sm">{{IMG:numpad|Въвеждане на сума}}</div></div>
-    </div>
-
-    <div class="feat">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#E03A4E">Разходи</span>
-        <h2>Твоите категории. Твоите падежи.</h2>
-        <p>Горивото, автомивката, паркингът и ремонтите се пишат в смяната или в „Колата ми“ – там, където са платени. Постоянните са отделно: ефир, наем, лизинг, застраховка, каско, ГО, винетка, данъци, телефон. Добавяш свои категории и скриваш тези, които не ползваш.</p>
-        <p style="margin-top:12px">Всеки постоянен разход има период (ден, седмица, месец, тримесечие, година) и падеж. ProfiTaxi го разпределя по дни, за да е честна чистата печалба за всеки ден.</p>
-      </div>
-      <div class="rv from-r"><div class="phone2 sm">{{IMG:costs|Постоянни разходи}}</div></div>
-    </div>
-
-    <div class="feat rev">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#8B5CF6">Напомняния</span>
-        <h2>Нито едно забравено плащане.</h2>
-        <p>Напомняне 3, 2 и 1 ден преди падеж и в самия ден. Ако си разрешил известия, идват на телефона. Ако не, или приложението е било затворено, при следващото отваряне виждаш всичко пропуснато и предстоящо. „Платено“ е едно докосване.</p>
-      </div>
-      <div class="rv">
-        <div class="timeline stagger">
-          <div class="tl"><b>След 3 дни</b><span>ГО – 120 € · падеж 27 октомври</span></div>
-          <div class="tl"><b>След 2 дни</b><span>Напомняме пак.</span></div>
-          <div class="tl"><b>Утре</b><span>Последно напомняне преди падежа.</span></div>
-          <div class="tl"><b>Днес</b><span>„Платено“ и следващият падеж се мести сам.</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="feat">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#3B82F6">Резервации</span>
-        <h2>Лични резервации на едно място.</h2>
-        <p>Дата, час, от адрес, до адрес и име на клиента. По желание телефон, договорена цена и бележка. Предстоящите са на началния екран. Обаждане и маршрут с едно докосване, „Изпълнена“ – когато приключиш.</p>
-      </div>
-      <div class="rv from-r"><div class="phone2 sm">{{IMG:reservations|Резервации}}</div></div>
-    </div>
-
-    <div class="feat rev">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#06B6D4">Статистика</span>
-        <h2>Кога се печели най-много.</h2>
-        <p>Ден, седмица, месец, година или свой период. Сравнение по месеци – с колко % всеки месец е по-печеливш или по-слаб от предишния. Оборот срещу чисто, печалба на час и на километър, разход на гориво на 100 км. Рекорди и кои дни и часове от седмицата носят най-много. Отчет в Excel или PDF.</p>
-      </div>
-      <div class="rv"><div class="phone2 sm">{{IMG:stats|Статистика}}</div></div>
-    </div>
-
-    <div class="feat">
-      <div class="feat-text rv">
-        <span class="tag2" style="--c:#F5A524">Профил</span>
-        <h2>Твоят профил. Твоята кола.</h2>
-        <p>Профилна снимка, име, код на колата, регистрационен номер и модел. Снимката на колата стои като корица. Тук избираш и собственост: своя или под наем.</p>
-      </div>
-      <div class="rv from-r"><div class="phone2 sm">{{IMG:profile|Профил}}</div></div>
-    </div>
-
-    </div>
+<section class="blk blk-grey" id="oshte">
+  <div class="wrap">
+    <h2 class="sec-title">И още.</h2>
+    <ul class="grid">
+      <li>{{IC:offline}}<h3>Работи без интернет</h3><p>Всичко се пази на телефона и се качва само, щом има връзка.</p></li>
+      <li>{{IC:home}}<h3>Иконка на началния екран</h3><p>Без App Store и Google Play. Отваря се като обикновено приложение.</p></li>
+      <li>{{IC:face}}<h3>Вход с Face ID</h3><p>Или с пръстов отпечатък – без парола всеки път.</p></li>
+      <li>{{IC:contrast}}<h3>Светла и тъмна тема</h3><p>Или автоматично – като телефона.</p></li>
+      <li>{{IC:fuel}}<h3>Всяко гориво</h3><p>Бензин, дизел, газ, метан, хибрид или ток.</p></li>
+      <li>{{IC:receipt}}<h3>Ефир по твоя начин</h3><p>На ден, седмица или месец. Дневният – само в работните дни.</p></li>
+      <li>{{IC:users}}<h3>Обща кола</h3><p>Задаваш какъв процент от разходите на колата са твои.</p></li>
+      <li>{{IC:plus}}<h3>Свои категории</h3><p>Добавяш „Гараж“ или „Магистрала“, скриваш ненужното.</p></li>
+    </ul>
   </div>
 </section>
 
-<section class="sec alt">
-  <div class="s-wrap">
-    <div class="sec-head c rv"><span class="eyebrow">Собственост</span><h2>Своя или под наем.</h2><p>Изборът определя кои разходи виждаш.</p></div>
-    <div class="f-grid stagger">
-      <div class="f-card"><span class="f-ic" data-ic="car" style="--c:#12A15E"></span><h3>Собствена кола</h3><ul><li>Гориво</li><li>Застраховка</li><li>Каско</li><li>ГО</li><li>Винетка</li><li>Преглед</li><li>Обслужване</li><li>Ремонти</li><li>Гуми</li><li>Данъци</li></ul></div>
-      <div class="f-card"><span class="f-ic" data-ic="key" style="--c:#F5A524"></span><h3>Под наем</h3><ul><li>Наем на ден/седмица/месец</li><li>Гориво</li><li>Ефир</li><li>Автомивка</li><li>Паркинг</li></ul><p style="margin-top:12px">Каско, винетка и преглед ги плаща собственикът.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="doc" style="--c:#8B5CF6"></span><h3>Колата ми</h3><ul><li>Ремонти по дати и километри</li><li>Приходи и разходи по колата</li><li>Колко от колата си избил</li><li>След колко дни и часове се изплаща</li><li>Лизингът – като месечен разход</li></ul></div>
-    </div>
-  </div>
-</section>
-
-<section class="sec">
-  <div class="s-wrap">
-    <div class="sec-head c rv"><span class="eyebrow">И още</span><h2>Малките неща, които пестят време</h2></div>
-    <div class="f-grid stagger">
-      <div class="f-card"><span class="f-ic" data-ic="phone" style="--c:#F5A524"></span><h3>Ефир по твоя начин</h3><p>На ден, седмица или месец. Дневната такса се смята само в работните дни.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="users" style="--c:#06B6D4"></span><h3>Колата е споделена?</h3><p>Задаваш какъв процент от разходите на колата са твои.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="fuel" style="--c:#E03A4E"></span><h3>Всяко гориво</h3><p>Бензин, дизел, бензин + газ, само газ, бензин + метан, хибрид или ток.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="trophy" style="--c:#F5A524"></span><h3>Рекорди</h3><p>Най-добрата смяна, седмица и месец, най-висока печалба на час, най-дълга серия.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="moon" style="--c:#8B5CF6"></span><h3>Светла и тъмна тема</h3><p>Тъмната пази очите през нощта. Може и автоматично – като телефона.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="download" style="--c:#12A15E"></span><h3>Excel и PDF</h3><p>Всички смени за счетоводителя с едно докосване.</p></div>
-    </div>
-  </div>
-</section>
 {{FINAL}}
 </main>

@@ -69,25 +69,26 @@ export function shiftEditorView(ctx) {
 
     fill(root, 
       h('div', { class: 'top' },
-        h('button', { class: 'back', onclick: () => leave() }, icon('left', 20), 'Назад'),
+        h('button', { class: 'back', onclick: () => leave(), 'aria-label': 'Назад' }, icon(document.documentElement.dataset.skin === 'chisto' ? 'arrowLeft' : 'left', 20), h('span', { class: 'back-txt' }, 'Назад')),
+        h('div', { class: 'top-title' },
+          h('h1', null, isNew ? 'Нова смяна' : wasActive ? (draft.end ? 'Приключваш смяната' : 'Текуща смяна') : 'Смяна'),
+          h('p', { class: 'muted' }, fmtDateLong(day))),
         !isNew && h('button', { class: 'icon-btn', 'aria-label': 'Изтрий смяната', onclick: del }, icon('trash', 20))),
-      h('h1', null, isNew ? 'Нова смяна' : wasActive ? (draft.end ? 'Приключваш смяната' : 'Текуща смяна') : 'Смяна'),
-      h('p', { class: 'muted', style: { margin: '4px 0 16px' } }, fmtDateLong(day)),
       h('button', { class: 'btn btn-ghost btn-block voice-btn', type: 'button', onclick: sayShift }, icon('mic', 20), 'Кажи смяната на глас'),
 
       // Три полета едно под друго: Данни, Приходи, Разходи. Всеки ред – „+ Въведи“ или сумата.
       h('section', { class: 'card f-card', 'data-sec': 'data' },
         cardTitle('gauge', 'Данни', h('b', { class: 'num' }, [shiftKm(draft) ? `${shiftKm(draft)} км` : '', shiftHours(draft) ? fmtDuration(shiftHours(draft)) : ''].filter(Boolean).join(' · '))),
         h('div', { class: 'f-list' },
-          fRow({ ic: 'gauge', color: 'var(--c-teal)', label: 'Начален км', value: draft.kmStart ? `${draft.kmStart.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmStart') }),
-          fRow({ ic: 'gauge', color: 'var(--c-teal)', label: 'Краен км', value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad }),
+          fRow({ ic: 'road', color: 'var(--c-teal)', label: 'Начален км', value: draft.kmStart ? `${draft.kmStart.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmStart') }),
+          fRow({ ic: 'flag', color: 'var(--c-teal)', label: 'Краен км', value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad }),
           kmBad && h('p', { class: 'err' }, 'Крайният километраж е по-малък от началния'),
           timeRow('Тръгване', draft.start, (v) => { draft.start = v; draw(); }),
-          draft.end ? timeRow('Прибиране', draft.end, (v) => { draft.end = v; draw(); }, timeBad)
+          draft.end ? timeRow('Прибиране', draft.end, (v) => { draft.end = v; draw(); }, timeBad, 'home')
             : fRow({ ic: 'clock', color: 'var(--c-blue)', label: 'Прибиране', sub: 'Смяната още тече', value: '', onTap: () => { draft.end = new Date().toISOString(); draw(); }, btnLabel: 'Приключи сега' }),
           timeBad && h('p', { class: 'err' }, 'Прибирането трябва да е след тръгването'),
           h('label', { class: 'f-row f-note' },
-            h('span', { class: 'f-ic', style: { '--tc': 'var(--c-slate)' } }, icon('edit', 18)),
+            h('span', { class: 'f-ic', style: { '--tc': 'var(--c-slate)' } }, icon('doc', 18)),
             h('span', { class: 'grow' }, h('b', null, 'Бележка'),
               h('input', { class: 'f-input', placeholder: 'По желание', value: draft.note || '', oninput: (e) => { draft.note = e.target.value; } }))))),
 
@@ -112,11 +113,11 @@ export function shiftEditorView(ctx) {
               h('div', { class: 'name' }, expName(e)),
               e.category === 'fuel' && e.qty > 0 && h('div', { class: 'det' }, `${String(e.qty).replace('.', ',')} ${FUEL_TYPES[e.fuelType]?.unit || 'л'}, ${money(e.amount / e.qty, 2)}/${FUEL_TYPES[e.fuelType]?.unit || 'л'}`)),
             h('span', { class: 'amt' }, money(e.amount, e.amount % 1 ? 2 : 0)),
-            h('button', { class: 'icon-btn plain', 'aria-label': 'Премахни', onclick: () => { draft.expenses = draft.expenses.filter((x) => x !== e); draw(); } }, icon('x', 18))))),
-        h('div', { class: 'f-tools' },
+            h('button', { class: 'icon-btn plain', 'aria-label': 'Премахни', onclick: () => { draft.expenses = draft.expenses.filter((x) => x !== e); draw(); } }, icon('x', 18)))))),
+      h('div', { class: 'f-tools' },
           h('button', { class: 'btn btn-ghost btn-sm', onclick: () => scanReceipt((r) => editFuel(r.amount ? { amount: r.amount, qty: r.qty, fuelType: r.type && fuelTypes.includes(r.type) ? r.type : undefined } : {})) }, icon('camera', 16), 'Снимай бележка'),
           h('button', { class: 'btn btn-ghost btn-sm', onclick: copyLast }, icon('copy', 16), 'Като предишната')),
-        fixedShare > 0 && h('p', { class: 'auto-note' }, icon('wallet', 15), `Наемът, ефирът и другите постоянни разходи се смятат сами (${money(fixedShare, 2)} за деня).`)),
+      fixedShare > 0 && h('p', { class: 'auto-note' }, icon('info', 15), `Наемът, ефирът и другите постоянни разходи се смятат сами (${money(fixedShare, 2)} за деня).`),
 
       // Лента за запис
       h('div', { class: 'save-bar' },
@@ -131,11 +132,11 @@ export function shiftEditorView(ctx) {
       h('span', { class: 'f-ic', style: { '--tc': color } }, icon(ic, 18)),
       h('span', { class: 'grow' }, h('b', null, label), sub && h('small', null, sub)),
       value && h('span', { class: 'f-val' }, value),
-      h('span', { class: cx('f-btn', value && 'has') }, value ? icon(add ? 'plus' : 'edit', 16) : h('span', { class: 'row' }, icon('plus', 16), btnLabel || 'Въведи')));
+      h('span', { class: cx('f-btn', value && 'has') }, value ? icon(add ? 'plus' : 'edit', 16) : h('span', { class: 'row' }, h('span', { class: 'fb-plus' }, icon('plus', 16)), btnLabel || 'Въведи')));
   }
-  function timeRow(label, iso, onSet, bad) {
-    return h('label', { class: cx('f-row', bad && 'bad') },
-      h('span', { class: 'f-ic', style: { '--tc': 'var(--c-blue)' } }, icon('clock', 18)),
+  function timeRow(label, iso, onSet, bad, ic = 'clock') {
+    return h('label', { class: cx('f-row', 'f-timerow', bad && 'bad') },
+      h('span', { class: 'f-ic', style: { '--tc': 'var(--c-blue)' } }, icon(ic, 18)),
       h('span', { class: 'grow' }, h('b', null, label)),
       h('input', { class: 'f-time', type: 'datetime-local', value: toLocalInput(iso), onchange: (e) => { if (e.target.value) onSet(fromLocalInput(e.target.value)); } }));
   }

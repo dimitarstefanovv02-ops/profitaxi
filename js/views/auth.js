@@ -5,10 +5,9 @@ import { CAR_TYPES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field } from '../ui.js';
-import { BRAND, ONE, collabMark } from '../brand.js';
 import { passkeySupported, loginWithPasskey, faceLabel, passkeyOn, shouldOffer, enablePasskey, markOffered } from '../passkey.js';
 
-export const brand = () => BRAND ? collabMark() : h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
+export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
   h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }),
   h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')));
 
@@ -21,7 +20,7 @@ export function loginView({ go }) {
   const submit = async (e) => {
     e.preventDefault();
     const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
-    const r = await store.login(email.value, pw.value, BRAND ? { company: BRAND.company } : {});
+    const r = await store.login(email.value, pw.value, {});
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     go('/home');
@@ -33,19 +32,16 @@ export function loginView({ go }) {
     if (!ok) return;
     pkBox.append(h('button', { class: cx('btn btn-block', passkeyOn() ? 'btn-dark btn-xl' : 'btn-ghost btn-lg'), type: 'button', onclick: async (e) => {
       const btn = e.currentTarget; btn.disabled = true;
-      const r = await loginWithPasskey(BRAND ? { company: BRAND.company } : {});
+      const r = await loginWithPasskey({});
       btn.disabled = false;
       if (r.error) { err.textContent = r.error; return; }
       go('/home');
     } }, icon('faceid', 22), `Вход с ${faceLabel()}`));
   });
-  const fill = () => { email.value = BRAND ? 'one@demo.bg' : 'ivan@demo.bg'; pw.value = 'demo123'; };
+  const fill = () => { email.value = 'ivan@demo.bg'; pw.value = 'demo123'; };
   return h('div', { class: 'auth' },
     brand(),
-    BRAND ? h('div', { class: 'auth-hero' },
-      h('h1', null, 'Колко ти остава наистина'),
-      h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Само за шофьорите на One Taxi Пловдив.'))
-      : h('div', { class: 'auth-hero' },
+    h('div', { class: 'auth-hero' },
       h('h1', null, 'Колко изкарваш наистина'),
       h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
     h('form', { class: 'form', onsubmit: submit },
@@ -56,7 +52,7 @@ export function loginView({ go }) {
       pkBox,
       h('a', { href: '#/forgot', class: 'muted small', style: { textAlign: 'center' } }, 'Забравена парола')),
     !store.live() && h('div', { class: 'demo-box' },
-      h('b', null, 'Демо версия. '), `Пробвай с готов профил: ${BRAND ? 'one@demo.bg' : 'ivan@demo.bg'} / demo123. `,
+      h('b', null, 'Демо версия. '), `Пробвай с готов профил: ivan@demo.bg / demo123. `,
       h('button', { type: 'button', onclick: fill }, 'Попълни')),
     h('p', { class: 'auth-foot' }, 'Нямаш акаунт? ', h('a', { href: '#/register' }, 'Регистрирай се')));
 }
@@ -87,8 +83,7 @@ export function registerView({ go }) {
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const promoFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('promo') || '';
   const promo = input({ placeholder: 'напр. START2', value: promoFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
-  const cc = BRAND ? null : cityCompanyPicker();
-  const code = input({ placeholder: 'Кодът от One Taxi', autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
+  const cc = cityCompanyPicker();
   let carType = '';
   const carBox = h('div');
   const drawCar = () => fill(carBox, h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
@@ -99,7 +94,7 @@ export function registerView({ go }) {
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = async (e) => {
     e.preventDefault();
-    const v = BRAND ? { city: ONE.city, company: ONE.company } : cc.value();
+    const v = cc.value();
     // проверки в реда на формата
     const checks = [
       [!name.value.trim(), 'Въведи име'],
@@ -110,14 +105,13 @@ export function registerView({ go }) {
       [!carType, 'Избери каква е колата'],
       [!phone.value.trim(), 'Въведи телефон'],
       [store.phoneCodeOn() && !phoneOk, 'Потвърди телефона с кода от SMS'],
-      [BRAND && !store.live() && !!store.checkAccessCode(code.value, ONE.company).error, 'Невалиден код от One Taxi. Вземи го от диспечерите.'],
-      [!BRAND && !store.live() && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
+      [!store.live() && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
     ];
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
     const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
-    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, ...(BRAND ? { accessCode: code.value } : { promo: promo.value }) });
+    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, promo: promo.value });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     go('/guide?first=1');
@@ -134,11 +128,8 @@ export function registerView({ go }) {
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
         (store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true)),
-        !BRAND && field('Промо код', promo, 'По желание – ако имаш код за отстъпка')),
-      BRAND ? group('target', 'One Taxi',
-        h('div', { class: 'one-locked' }, h('img', { src: '/icons/one-red.svg', alt: '' }), h('div', null, h('b', null, 'One Taxi, Пловдив'), h('span', null, 'Акаунтът е само за шофьори на One Taxi'))),
-        field('Код от One Taxi', code, 'Дава ти го диспечерът или офисът на One', true))
-        : group('target', 'Къде караш', cc.el),
+        field('Промо код', promo, 'По желание – ако имаш код за отстъпка')),
+      group('target', 'Къде караш', cc.el),
       group('car', 'Колата е', carBox),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),
       err,

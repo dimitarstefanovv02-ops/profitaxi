@@ -21,7 +21,7 @@ async def main():
           return {stFixed:st.fixedExp, toToday:c.periodStats(d,u.startOfMonth(t),t).fixedExp, net:g.net, stNet:st.net, rem:g.remaining, goal:g.goal, fl:g.fixedLeft, need:g.needToday}})()""")
         ok('Постоянните разходи се смятат само до днес (не за целия месец)', abs(calc['stFixed']-calc['toToday'])<0.01, f"{calc['stFixed']:.0f} = {calc['toToday']:.0f}")
         ok('Цел: от смените трябват = цел − чисто + постоянни до края', abs(calc['rem'] - max(0, calc['goal']-calc['net']+calc['fl']))<0.01, round(calc['rem']))
-        ok('„Днес ти трябват“ се показва', 'Днес ти трябват' in await pg.inner_text('.meter') or 'Утре ти трябват' in await pg.inner_text('.meter'))
+        ok('„Днес ти трябват“ се показва', 'Днес ти трябват' in await pg.inner_text('.meter-stack') or 'Утре ти трябват' in await pg.inner_text('.meter-stack'))
         ok('„Очаквано за целия месец“ се вижда без да се отваря нищо', await pg.is_visible('.meter-forecast'))
         # „Изтегли“
         ok('Горе има „Изтегли приложението“', await pg.is_visible('.install-bar'))

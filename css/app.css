@@ -999,7 +999,6 @@ body:not(.admin) .home-link small { white-space: normal; }
 /* Колко трябва днес, очаквано, седмицата */
 .meter-today { display: flex; gap: 8px; align-items: center; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 18%, transparent); color: #F3F5F8; font-size: .98rem; }
 .meter-today b { color: var(--accent); }
-:root[data-brand="one"] .meter-today b { color: #FF7A80; }
 .meter-forecast { display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px; font-size: .92rem; color: rgba(255, 255, 255, .72); }
 .meter-forecast b { color: #fff; font-size: 1.05rem; }
 .meter-forecast b.neg { color: #FF8A98; }
@@ -1294,3 +1293,39 @@ html:root .search-bar .search-mic { border: 0 !important; background: var(--acce
 
 /* Лентата за търсене в стил Google се показва само във вариант 4 */
 .g-search { display: none; }
+
+/* „Покажи / Скрий …“ – двата надписа на сгъваемия блок */
+details.more .more-open { display: none; }
+details.more[open] .more-open { display: inline; }
+details.more[open] .more-closed { display: none; }
+/* Втората карта на „Днес“ (колко трябва) и плащането като отделна карта – основа за всички изгледи */
+.meter-stack, .next-stack { display: flex; flex-direction: column; gap: 12px; }
+.meter-plan .meter-more { display: none; }
+.meter-plan.open .meter-more { display: block; }
+.due-card { display: flex; gap: 12px; align-items: flex-start; }
+.due-card .grow { display: flex; flex-direction: column; min-width: 0; }
+.wk-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; }
+.wk-num { display: block; font-size: 1.8rem; font-weight: 800; }
+.drive-voice { display: flex; align-items: center; gap: 12px; width: 100%; }
+.top-title { flex: 1; min-width: 0; }
+.top-title h1 { margin: 0; }
+.top-title p { margin: 2px 0 0; }
+.month-pick { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 16px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text); font: inherit; font-weight: 600; cursor: pointer; }
+.ms-cells { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ms-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.block-head { display: flex; justify-content: space-between; align-items: center; margin: 20px 8px 8px; }
+.block-head h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.hero-wrap { display: flex; flex-direction: column; gap: 12px; }
+.hero-head .hero-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.hero-head h1 { margin: 0; font-size: 1.45rem; }
+.hero-head .hero-btn { color: var(--text); background: transparent; }
+.hero-label { font-size: .875rem; font-weight: 500; }
+.hero-line { font-size: .875rem; margin-top: 4px; }
+.cover2 .cv-top { display: flex; align-items: center; gap: 14px; }
+.cover2 .cover-info { flex: 1; min-width: 0; }
+.cover2 .cover-info h1 { margin: 0; font-size: 1.35rem; }
+.cover2 .cv-sub { font-size: .875rem; opacity: .85; }
+.cover2 .cv-edit { flex: none; }
+.cover2 .cv-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.cover2 .cover-car { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+.cover2 .cover-chips { margin-top: 12px; }

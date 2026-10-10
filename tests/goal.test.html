@@ -1,0 +1,196 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ProfiTaxi – тестове: месечна цел, остават, часове, смени, прогноза</title>
+<pre id="out">Running…</pre>
+<script src="_harness.js"></script>
+<script type="module">
+import { goalProgress } from '/js/calc.js';
+import { addDays } from '/js/util.js';
+
+// Основни данни: 10 смени в септември 2026 – на 1, 3, 5 … 19-ти, всяка 08:00–18:00 (10 ч),
+// кеш 150, гориво 30 → печалба 120 на смяна. Постоянни: седмичен 70 € = 10 €/ден.
+const odd = () => Array.from({ length: 10 }, (_, i) => { const d = String(1 + 2 * i).padStart(2, '0'); return sh(`2026-09-${d}T08:00`, `2026-09-${d}T18:00`, { cash: 150 }, [{ category: 'fuel', amount: 30 }]); });
+const rent = () => cost(70, 'week', '2026-01-01', { category: 'rent' });
+
+await group('Цел 2000 €, днес 20.09 вечерта, днес не е карал', () => {
+  setNow('2026-09-20T21:00');
+  const g = goalProgress(mk(odd(), [rent()], { monthlyGoal: 2000 }));
+  // чисто досега: приход 1500 − гориво 300 − постоянни 20 дни × 10 = 1000
+  near('Чисто досега = 1500 − 300 − 200 = 1000', g.net, 1000);
+  near('Процент = 1000 / 2000 = 50%', g.pct, 0.5);
+  eq('Остават 10 дни (21–30)', g.remainingDays, 10);
+  near('Постоянни до края на месеца = 10 × 10 = 100', g.fixedLeft, 100);
+  near('Постоянни за целия месец = 200 + 100 = 300', g.monthFixed, 300);
+  // остават: 2000 − 1000 + 100 = 1100
+  near('Остават от смените = 2000 − 1000 + 100 = 1100', g.remaining, 1100);
+  near('Печалба на час = (1500 − 300) / 100 = 12', g.ratePerHour, 12);
+  near('Средна смяна = 10 ч', g.avgShiftHours, 10);
+  near('Нужни часове = 1100 / 12 = 91,67', g.hoursNeeded, 1100 / 12);
+  eq('Нужни смени = ⌈91,67 / 10⌉ = 10', g.shiftsNeeded, 10);
+  // работи всеки втори ден: 10 / 20 = 0,5; очаквани смени до края: round(10 × 0,5) = 5
+  eq('Очаквани смени до края = 5', g.shiftsLeft, 5);
+  near('На смяна = 1100 / 5 = 220', g.needPerShift, 220);
+  ok('Днес още не е карал', !g.workedToday);
+  // днес включително: 11 дни × 0,5 = 5,5 → 6 работни дни → 1100 / 6 = 183,33
+  eq('Работни дни (с днес) = round(11 × 0,5) = 6', g.workDaysLeft, 6);
+  near('Днес трябват = 1100 / 6 = 183,33', g.needToday, 1100 / 6);
+  near('Днес трябват часове = 183,33 / 12 = 15,28', g.needHoursToday, 1100 / 6 / 12);
+  // прогноза: 1000 + 120 €/работен ден × 11 дни (с днес) × 0,5 − 100 = 1560
+  near('Прогноза за месеца = 1000 + 120 × 11 × 0,5 − 100 = 1560', g.forecast, 1560);
+  ok('Постижимо (91,67 ч ≤ 10 дни × 12 ч)', g.feasible);
+  ok('Не е изпълнена', !g.done);
+  noNaN('Без NaN/Infinity', g);
+});
+
+await group('Същото, но днес вече е карал (смяната е приключила)', () => {
+  setNow('2026-09-20T21:00');
+  const L = [...odd(), sh('2026-09-20T08:00', '2026-09-20T18:00', { cash: 150 }, [{ category: 'fuel', amount: 30 }])];
+  const g = goalProgress(mk(L, [rent()], { monthlyGoal: 2000 }));
+  near('Чисто = 1650 − 330 − 200 = 1120', g.net, 1120);
+  near('Остават = 2000 − 1120 + 100 = 980', g.remaining, 980);
+  ok('Днес е карал', !!g.workedToday);
+  // 11 / 20 = 0,55; днес не се брои: 10 × 0,55 = 5,5 → 6
+  eq('Работни дни (без днес) = 6', g.workDaysLeft, 6);
+  near('„Утре трябват“ = 980 / 6 = 163,33', g.needToday, 980 / 6);
+  near('Прогноза = 1120 + 120 × 10 × 0,55 − 100 = 1680', g.forecast, 1680);
+  near('Нужни часове = 980 / 12 = 81,67', g.hoursNeeded, 980 / 12);
+  // смяна, която още тече, не е „карал днес“
+  const g2 = goalProgress(mk([...odd(), sh('2026-09-20T18:00', null, { cash: 50 })], [rent()], { monthlyGoal: 2000 }));
+  ok('Активна смяна днес → още „днес трябват“', !g2.workedToday);
+  near('Активната смяна не влиза в чистото', g2.net, 1000);
+});
+
+await group('Ефир на работен ден: до края се смята само за очакваните работни дни', () => {
+  setNow('2026-09-20T21:00');
+  const g = goalProgress(mk(odd(), [rent(), cost(10, 'day', '2026-01-01', { perWorkDay: true, category: 'dispatch' })], { monthlyGoal: 2000 }));
+  // досега: наем 200 + ефир 10 работни дни × 10 = 100 → чисто 1200 − 300 = 900
+  near('Чисто = 1200 − 200 − 100 = 900', g.net, 900);
+  // до края: 10 дни × (наем 10 + ефир 10 × 0,5) = 150
+  near('Постоянни до края = 10 × (10 + 10 × 0,5) = 150', g.fixedLeft, 150);
+  near('Остават = 2000 − 900 + 150 = 1250', g.remaining, 1250);
+});
+
+await group('Целта е постигната / почти / няма цел', () => {
+  setNow('2026-09-20T21:00');
+  const g = goalProgress(mk(odd(), [rent()], { monthlyGoal: 800 }));
+  // 800 − 1000 + 100 = −100 → 0
+  eq('Цел 800: остават 0', g.remaining, 0);
+  ok('Цел 800: изпълнена', g.done);
+  near('Цел 800: процент 125%', g.pct, 1.25);
+  eq('Цел 800: днес трябват 0', g.needToday, 0);
+  eq('Цел 800: 0 часа, 0 смени', [g.hoursNeeded, g.shiftsNeeded], [0, 0]);
+  // цел 950: чистото (1000) е над целта, но до края има още 100 € постоянни → трябват 50
+  const g2 = goalProgress(mk(odd(), [rent()], { monthlyGoal: 950 }));
+  near('Цел 950: остават 950 − 1000 + 100 = 50 (заради наема до края)', g2.remaining, 50);
+  ok('Цел 950: още не е изпълнена', !g2.done);
+  // без цел
+  const g0 = goalProgress(mk(odd(), [rent()], { monthlyGoal: 0 }));
+  eq('Без цел: процент 0, не е „изпълнена“', [g0.pct, g0.done], [0, false]);
+  noNaN('Без цел: без NaN', g0);
+  const gu = goalProgress(mk(odd(), [rent()], { monthlyGoal: undefined }));
+  eq('Цел undefined → 0', gu.goal, 0);
+  noNaN('Цел undefined: без NaN', gu);
+});
+
+await group('Нов шофьор без нито една смяна', () => {
+  setNow('2026-09-20T21:00');
+  const g = goalProgress(mk([], [rent()], { monthlyGoal: 2000 }));
+  eq('Няма печалба на час (0)', g.ratePerHour, 0);
+  eq('Часове/смени/часове днес = null („няма данни“)', [g.hoursNeeded, g.shiftsNeeded, g.needHoursToday], [null, null, null]);
+  ok('Не е „постижимо“ (няма данни)', !g.feasible);
+  near('Чисто = −200 (само наем)', g.net, -200);
+  near('Остават = 2000 + 200 + 100 = 2300', g.remaining, 2300);
+  // без история работи 40%: 11 × 0,4 = 4,4 → 4
+  eq('Работни дни = 4', g.workDaysLeft, 4);
+  near('Днес трябват = 2300 / 4 = 575', g.needToday, 575);
+  near('Прогноза = −200 − 100 = −300 (наемът за целия месец)', g.forecast, -300);
+  near('Средна смяна по подразбиране = 9 ч', g.avgShiftHours, 9);
+  noNaN('Без NaN/Infinity', g);
+  const ge = goalProgress(mk([], [], { monthlyGoal: 2000 }));
+  eq('Без нищо: чисто 0, остават 2000', [ge.net, ge.remaining], [0, 2000]);
+  noNaN('Без нищо: без NaN', ge);
+});
+
+await group('Началото на месеца – скоростта идва от последните 60 дни', () => {
+  // днес 02.10 сутринта; този месец няма смени; историята е от септември
+  setNow('2026-10-02T09:00');
+  const g = goalProgress(mk(odd(), [rent()], { monthlyGoal: 2000 }));
+  near('Чисто досега = −20 (2 дни наем)', g.net, -20);
+  near('Скорост от 60 дни = 1200 / 100 = 12', g.ratePerHour, 12);
+  near('Постоянни до края = 29 × 10 = 290', g.fixedLeft, 290);
+  near('Остават = 2000 + 20 + 290 = 2310', g.remaining, 2310);
+  near('Нужни часове = 2310 / 12 = 192,5', g.hoursNeeded, 192.5);
+  eq('Нужни смени = ⌈19,25⌉ = 20', g.shiftsNeeded, 20);
+  // 10 работни дни за 60 дни → 0,1667 → минимум 0,4; 30 дни (с днес) × 0,4 = 12
+  eq('Работни дни = 12', g.workDaysLeft, 12);
+  near('Днес трябват = 2310 / 12 = 192,5', g.needToday, 192.5);
+  // прогноза: −20 + 120 × 30 × 0,4 − 290 = 1130 (не −310, сякаш никога не работи)
+  near('Прогноза по историята = −20 + 120 × 30 × 0,4 − 290 = 1130', g.forecast, 1130);
+});
+
+await group('Първият ден от месеца', () => {
+  setNow('2026-10-01T07:00');
+  const g = goalProgress(mk(odd(), [rent()], { monthlyGoal: 2000 }));
+  eq('Остават 30 дни', g.remainingDays, 30);
+  near('Чисто = −10', g.net, -10);
+  near('Постоянни до края = 300', g.fixedLeft, 300);
+  near('Остават = 2000 + 10 + 300 = 2310', g.remaining, 2310);
+  eq('Работни дни = round(31 × 0,4) = 12', g.workDaysLeft, 12);
+  near('Процент = 0 (чистото е отрицателно)', g.pct, 0);
+  near('Прогноза = −10 + 120 × 31 × 0,4 − 300 = 1178', g.forecast, 1178);
+});
+
+await group('Последният ден от месеца', () => {
+  setNow('2026-09-30T20:00');
+  const g = goalProgress(mk(odd(), [rent()], { monthlyGoal: 2000 }));
+  eq('Остават 0 дни', g.remainingDays, 0);
+  near('Постоянни до края = 0', g.fixedLeft, 0);
+  near('Чисто = 1200 − 300 = 900', g.net, 900);
+  near('Остават = 1100', g.remaining, 1100);
+  // 10 / 30 = 0,33 → 0,4; днес още не е карал → 1 ден
+  eq('Работни дни = 1 (днес)', g.workDaysLeft, 1);
+  near('Днес трябват всички 1100', g.needToday, 1100);
+  eq('Очаквани смени = 1 (не 0 – без делене на нула)', g.shiftsLeft, 1);
+  near('Прогноза = 900 + 120 × 1 × 0,4 = 948', g.forecast, 948);
+  noNaN('Без NaN/Infinity', g);
+  // карал е и днес
+  const g2 = goalProgress(mk([...odd(), sh('2026-09-30T08:00', '2026-09-30T18:00', { cash: 150 }, [{ category: 'fuel', amount: 30 }])], [rent()], { monthlyGoal: 2000 }));
+  near('Карал и днес: прогноза = чистото = 1020', g2.forecast, 1020);
+  eq('Карал и днес: 1 работен ден (без делене на нула)', g2.workDaysLeft, 1);
+});
+
+await group('Февруари и високосна година', () => {
+  setNow('2028-02-28T21:00');
+  const L = [sh('2028-02-01T08:00', '2028-02-01T20:00', { cash: 240 })]; // 12 ч, 20/ч
+  const g = goalProgress(mk(L, [cost(290, 'month', '2028-01-01')], { monthlyGoal: 500 }));
+  eq('28.02.2028: остава 1 ден (29-ти)', g.remainingDays, 1);
+  near('Постоянни дотук: 28 × 290/29 = 280', g.stats.fixedExp, 280);
+  near('Постоянни до края: 1 × 10 = 10', g.fixedLeft, 10);
+  near('Чисто = 240 − 280 = −40', g.net, -40);
+  near('Остават = 500 + 40 + 10 = 550', g.remaining, 550);
+  near('Скорост = 20 €/ч', g.ratePerHour, 20);
+  near('Нужни часове = 27,5', g.hoursNeeded, 27.5);
+  setNow('2026-02-28T21:00');
+  eq('28.02.2026: остават 0 дни', goalProgress(mk([], [], { monthlyGoal: 500 })).remainingDays, 0);
+});
+
+await group('Загуба на час – не показва отрицателни часове', () => {
+  setNow('2026-09-20T21:00');
+  const L = Array.from({ length: 3 }, (_, i) => sh(`2026-09-1${i}T08:00`, `2026-09-1${i}T16:00`, { cash: 50 }, [{ category: 'fuel', amount: 80 }]));
+  const g = goalProgress(mk(L, [], { monthlyGoal: 1000 }));
+  ok('Печалба на час < 0', g.ratePerHour < 0);
+  eq('Часове и смени = null', [g.hoursNeeded, g.shiftsNeeded, g.needHoursToday], [null, null, null]);
+  noNaN('Без NaN/Infinity', g);
+});
+
+await group('Точно 12 часа този месец – вече се ползва само месецът', () => {
+  setNow('2026-09-20T21:00');
+  // история от август 10 €/ч, този месец 12 ч по 20 €/ч
+  const L = [sh('2026-08-10T08:00', '2026-08-10T18:00', { cash: 100 }), sh('2026-09-05T06:00', '2026-09-05T18:00', { cash: 240 })];
+  near('12 ч този месец → 240 / 12 = 20', goalProgress(mk(L, [], { monthlyGoal: 1000 })).ratePerHour, 20);
+  const L2 = [sh('2026-08-10T08:00', '2026-08-10T18:00', { cash: 100 }), sh('2026-09-05T06:00', '2026-09-05T17:00', { cash: 220 })];
+  near('11 ч този месец → последните 60 дни: 320 / 21 = 15,24', goalProgress(mk(L2, [], { monthlyGoal: 1000 })).ratePerHour, 320 / 21);
+});
+
+finish();
+</script>

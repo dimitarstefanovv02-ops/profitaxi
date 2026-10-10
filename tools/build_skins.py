@@ -1,4 +1,5 @@
-# Сглобява css/skins.css: вариант 2 (clean.src.css → clean и mid) + вариант 3 (mid.src.css → само mid).
+# Сглобява css/skins.css: clean.src.css → clean, mid, google, chisto; mid.src.css → mid; google.src.css → google, chisto;
+# chisto.src.css → само chisto (вариант 5, основният).
 # Вариант 1 (fancy) = без нищо от тук. Изборът е в js/skin.js.
 import re, os
 D = os.path.dirname(os.path.abspath(__file__))
@@ -29,8 +30,8 @@ def walk(txt, PS):
         i = k
     return ''.join(res)
 
-C, M, G = ':root[data-skin="clean"]', ':root[data-skin="mid"]', ':root[data-skin="google"]'
+C, M, G, H = ':root[data-skin="clean"]', ':root[data-skin="mid"]', ':root[data-skin="google"]', ':root[data-skin="chisto"]'
 out = ('/* СГЛОБЕНО от tools/clean.src.css и tools/mid.src.css с tools/build_clean.py – не редактирай ръчно */\n'
-       + walk(read('clean.src.css'), [C, M, G]) + walk(read('mid.src.css'), [M]) + walk(read('google.src.css'), [G]))
+       + walk(read('clean.src.css'), [C, M, G, H]) + walk(read('mid.src.css'), [M]) + walk(read('google.src.css'), [G, H]) + walk(read('chisto.src.css'), [H]))
 open(os.path.join(D, '..', 'css', 'skins.css'), 'w').write(out)
 print(out.count('{'), 'правила')

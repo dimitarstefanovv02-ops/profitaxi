@@ -43,9 +43,13 @@ export function carStats(data, profile = data.profile) {
     out.pct = Math.min(100, Math.max(0, (st.net / inv.price) * 100));
     out.done = st.net >= inv.price;
     if (!out.done && out.enoughData) {
-      out.daysLeft = Math.ceil(out.left / perWorkDay);
-      out.hoursLeft = perHour > 0 ? Math.ceil(out.left / perHour) : null;
-      out.payoffDate = addDays(today, Math.ceil(out.daysLeft / Math.max(workDaysPerWeek, 1) * 7));
+      // закръгляне нагоре без грешки от плаващата запетая (305,99999… или 306,0000001 → 306)
+      const up = (x) => Math.ceil(x - 1e-9);
+      out.daysLeft = up(out.left / perWorkDay);
+      out.hoursLeft = perHour > 0 ? up(out.left / perHour) : null;
+      // работни дни → календарни по реалното темпо (enoughData гарантира поне 3 работни дни, т.е. > 0 дни седмично).
+      // Преди: Math.max(дни седмично, 1) – при 0,3 дни седмично датата излизаше 3 пъти по-рано.
+      out.payoffDate = addDays(today, up((out.daysLeft * 7) / workDaysPerWeek));
     }
   }
   return out;

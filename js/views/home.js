@@ -72,7 +72,7 @@ export function homeView({ go, user, data, rerender, route }) {
   const redrawHome = rerender || (() => go('/home'));
 
   return h('div', { class: 'screen', 'data-page': 'home' },
-    h('a', { class: 'g-search', href: '#/search' }, icon('search', 22), h('span', null, 'Търси в ProfiTaxi'), icon('mic', 22), data.profile.photo ? h('span', { class: 'avatar has-photo' }, h('img', { src: data.profile.photo, alt: '' })) : h('span', { class: 'avatar' }, (user.name || '?').split(' ').map((x) => x[0]).join('').slice(0, 2))),
+    h('a', { class: 'g-search', href: '#/search' }, icon('search', 22), h('span', null, 'Питай или търси'), icon('mic', 22), data.profile.photo ? h('span', { class: 'avatar has-photo' }, h('img', { src: data.profile.photo, alt: '' })) : h('span', { class: 'avatar' }, (user.name || '?').split(' ').map((x) => x[0]).join('').slice(0, 2))),
     h('div', { class: 'hello' },
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
@@ -117,7 +117,7 @@ export function homeView({ go, user, data, rerender, route }) {
     ['next', nextUp(data, go)],
 
     // Всичко останало – на едно натискане
-    ['more', more('Покажи повече: седмицата, часовете, последните смени',
+    ['more', more(['Покажи седмицата, часовете и последните смени', 'Скрий седмицата, часовете и последните смени'],
       zone('drv.home.more', { class: 'dz' }, [
         ['week', weekCard(data)],
         ti.hasData && ['best', bestToday(ti)],
@@ -126,7 +126,7 @@ export function homeView({ go, user, data, rerender, route }) {
           stat('На км', money2(g.stats.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' }),
           stat('Смени', String(g.stats.shifts), { icon: 'calendar', cls: 'stat-card', sub: `${fmtDuration(g.stats.hours)} общо` }),
           stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' }))],
-        rec.current >= 2 && ['streak', h('div', { class: 'card tip' },
+        rec.current >= 2 && ['streak', h('div', { class: 'card tip streak' },
           h('div', { class: 'tip-ic' }, icon('flame', 22)),
           h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`)))],
       ]))],
@@ -140,7 +140,7 @@ function nextUp(data, go) {
     .sort((a, b) => (a.daysLeft ?? -1) - (b.daysLeft ?? -1));
   const r = res[0], p = pays[0];
   const late = p && ((p.daysLeft ?? 0) < 0 || (p.kmLeft ?? 1) <= 0);
-  return h('section', { class: 'card next', 'aria-label': 'Следващо' },
+  return h('div', { class: 'next-stack' }, h('section', { class: 'card next', 'aria-label': 'Следващо' },
     cardTitle('calendar', 'Следващо', h('button', { class: 'link', onclick: () => homeView.openCalendar?.() }, 'Календар', icon('down', 16))),
     r ? h('div', { class: 'next-item' },
       h('div', { class: 'next-when' }, h('b', null, r.time), h('span', null, whenLabel(r))),
@@ -151,9 +151,10 @@ function nextUp(data, go) {
           r.phone && h('a', { class: 'btn btn-ghost btn-sm', href: 'tel:' + r.phone.replace(/\s/g, '') }, icon('call', 16), 'Обади се'),
           h('a', { class: 'btn btn-ghost btn-sm', href: mapsUrl(r), target: '_blank', rel: 'noopener' }, icon('route', 16), 'Маршрут'),
           h('button', { class: 'btn btn-ghost btn-sm', onclick: () => editReservation(r) }, 'Отвори'))))
-      : h('button', { class: 'next-empty', onclick: () => editReservation({}) }, icon('plus', 18), 'Няма предстоящи курсове. Запиши резервация'),
-    p && h('div', { class: cx('next-item', 'pay', late && 'late') },
-      h('div', { class: 'next-when' }, icon(late ? 'alert' : 'bell', 20)),
+      : h('button', { class: 'next-empty', onclick: () => editReservation({}) }, icon('plus', 18), 'Няма предстоящи курсове. Запиши резервация')),
+    // Най-спешното плащане – отделна карта, за да се вижда
+    p && h('section', { class: cx('card', 'due-card', late && 'late'), 'aria-label': 'Плащане' },
+      h('span', { class: 'due-ic' }, icon(late ? 'alert' : 'shield', 20)),
       h('div', { class: 'grow', style: { minWidth: 0 } },
         h('b', { class: 'next-title' }, p.title),
         h('span', { class: 'next-sub' }, reminderText(p)),
@@ -218,27 +219,31 @@ function editGoal() {
 function meter(g, month) {
   const hours = g.hoursNeeded;
   const st = g.stats;
-  return h('section', { class: 'meter', 'aria-label': 'Печалба за месеца' },
+  const showPlan = g.goal > 0 && !g.done;
+  return h('div', { class: 'meter-stack' }, h('section', { class: 'meter', 'aria-label': 'Печалба за месеца' },
     h('div', { class: 'meter-label' }, h('span', null, 'Чисто този месец'), g.goal > 0 && h('span', { class: 'meter-pct' }, `${Math.max(0, Math.round(g.pct * 100))}%`)),
     h('div', { class: cx('meter-value', g.net < 0 && 'neg') }, money(g.net)),
     g.goal > 0
       ? h('div', { class: 'meter-goal' }, g.done ? h('button', { class: 'goal-edit', onclick: editGoal }, `Целта от ${money(g.goal)} е постигната. Браво!`) : h('button', { class: 'goal-edit', onclick: editGoal, 'aria-label': 'Смени целта' }, `Цел ${money(g.goal)}`, icon('edit', 13)), h('span', null, ' · от смените трябват още ', h('b', null, money(g.remaining))))
       : h('button', { class: 'meter-goal goal-edit', onclick: editGoal }, icon('target', 15), 'Задай цел за месеца'),
-    g.goal > 0 && roadProgress(g.pct),
-    // Колко трябва днес – едно число
-    g.goal > 0 && !g.done && hours != null && h('div', { class: 'meter-today' }, icon('target', 18),
-      h('span', null, g.workedToday ? 'Утре ти трябват ' : 'Днес ти трябват ', h('b', null, money(g.needToday)),
-        g.needHoursToday != null ? ` от смяната (~${fmtNum(Math.max(1, Math.round(g.needHoursToday)))} ч)` : ' от смяната')),
-    g.goal > 0 && !g.done && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко ти трябва на ден ще сметнем след първата ти смяна.')),
-    h('div', { class: 'meter-forecast' }, h('span', null, 'Очаквано за целия месец'), h('b', { class: g.forecast < 0 ? 'neg' : '' }, money(g.forecast))),
-    g.goal > 0 && !g.done && hours != null && h('details', { class: 'meter-more' },
-      h('summary', null, 'Подробности', icon('down', 16)),
+    g.goal > 0 && roadProgress(g.pct)),
+    // Втора карта: колко трябва днес, очаквано за месеца и подробностите
+    h('section', { class: 'card meter-plan', 'aria-label': 'Колко ти трябва' },
+      // последният ден от месеца, след смяната: „утре“ е вече следващият месец – не показваме
+      showPlan && hours != null && !(g.workedToday && g.remainingDays === 0) && h('div', { class: 'meter-today' }, h('span', { class: 'mt-ic' }, icon('flag', 22)),
+        h('div', null, h('small', null, g.workedToday ? 'Утре ти трябват' : 'Днес ти трябват'),
+          h('div', { class: 'mt-val' }, h('b', null, money(g.needToday)), h('span', null, g.needHoursToday != null ? ` от смяната (~${fmtNum(Math.max(1, Math.round(g.needHoursToday)))} ч)` : ' от смяната')))),
+      showPlan && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко ти трябва на ден ще сметнем след първата ти смяна.')),
+      showPlan && h('div', { class: 'mp-line' }),
+      h('div', { class: 'meter-forecast' }, h('div', null, h('small', null, 'Очаквано за целия месец'), h('b', { class: g.forecast < 0 ? 'neg' : '' }, money(g.forecast))),
+        showPlan && hours != null && h('button', { class: 'link mp-toggle', type: 'button', 'aria-expanded': 'false', onclick: (e) => { const card = e.currentTarget.closest('.meter-plan'); const on = card.classList.toggle('open'); e.currentTarget.setAttribute('aria-expanded', String(on)); e.currentTarget.textContent = on ? 'Скрий' : 'Подробности'; } }, 'Подробности')),
+      showPlan && hours != null && h('div', { class: 'meter-more' },
       h('div', { class: 'meter-grid' },
         h('div', { class: 'meter-cell' }, h('span', null, 'Часове'), h('b', null, `~${Math.ceil(hours)}`)),
         h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
         h('div', { class: 'meter-cell' }, h('span', null, 'На час'), h('b', null, money2(g.ratePerHour)))),
       h('div', { class: 'meter-note' }, icon('alert', 14),
-        h('span', null, `Наемът, ефирът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}. Затова от смените трябват повече от разликата до целта.`))));
+        h('span', null, `Наемът, ефирът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}. Затова от смените трябват повече от разликата до целта.`)))));
 }
 
 function weekCard(data) {
@@ -249,14 +254,16 @@ function weekCard(data) {
   const lastW = periodStats(data, lastFrom, addDays(lastFrom, weekdayIdx(today)));
   const max = Math.max(1, ...pts.map((p) => Math.abs(p.net)));
   const diff = lastW.net ? (thisW.net - lastW.net) / Math.abs(lastW.net) : null;
-  return h('div', { class: 'card', style: { marginTop: '14px' } },
-    cardTitle('calendar', 'Тази седмица', h('b', { class: cx('num', tone(thisW.net)) }, money(thisW.net))),
-    h('div', { class: 'week' }, pts.map((p, i) => h('div', { class: cx('week-day', p.key === today && 'today'), title: `${WD_SHORT[i]}: ${money(p.net)}` },
-      h('div', { class: cx('week-bar', p.future ? '' : p.worked ? (p.net >= 0 ? 'pos' : 'neg') : '', p.key === today && 'today'), style: { height: p.future ? '6px' : `${Math.max(6, (Math.abs(p.net) / max) * 80)}px` } }),
-      h('span', null, WD_SHORT[i])))),
+  return h('div', { class: 'card week-card' },
+    h('div', { class: 'wk-head' },
+      h('div', null, h('small', null, 'Тази седмица'), h('b', { class: cx('wk-num', thisW.net < 0 && 'neg') }, money(thisW.net))),
+      diff != null && h('span', { class: cx('trend', diff >= 0 ? 'up' : 'down') }, icon(diff >= 0 ? 'arrowUp' : 'arrowDown', 14), `${Math.abs(Math.round(diff * 100))}% от миналата`)),
+    h('div', { class: 'week', role: 'img', 'aria-label': 'Чисто по дни: ' + pts.map((p, i) => `${WD_SHORT[i]} ${money(p.net)}`).join(', ') }, pts.map((p, i) => h('div', { class: cx('week-day', p.key === today && 'today'), title: `${WD_SHORT[i]}: ${money(p.net)}` },
+      h('span', { class: cx('wk-val', p.net < 0 && 'neg') }, p.future ? '' : String(Math.round(p.net)).replace('-', '−')),
+      h('div', { class: cx('week-bar', p.future ? '' : p.worked ? (p.net >= 0 ? 'pos' : 'neg') : '', p.key === today && 'today'), style: { height: p.future || !p.worked ? '6px' : `${Math.max(8, (Math.abs(p.net) / max) * 80)}px` } }),
+      h('span', { class: 'wk-day' }, WD_SHORT[i])))),
     h('div', { class: 'week-foot' },
-      h('span', { class: 'muted' }, `${thisW.shifts} ${thisW.shifts === 1 ? 'смяна' : 'смени'}, ${fmtDuration(thisW.hours)}`),
-      diff != null && h('span', { class: cx('trend', diff >= 0 ? 'up' : 'down') }, `${diff >= 0 ? '▲' : '▼'} ${Math.abs(Math.round(diff * 100))}% от миналата`)));
+      h('span', { class: 'muted' }, `${thisW.shifts} ${thisW.shifts === 1 ? 'смяна' : 'смени'}, ${fmtDuration(thisW.hours)}`)));
 }
 
 function bestToday(ti) {
@@ -271,8 +278,8 @@ function bestToday(ti) {
     : dayRate
       ? `${WD_LONG[wd][0].toUpperCase() + WD_LONG[wd].slice(1)} ти носи средно ${money(dayRate)} на час. ${pos ? `Това е ${pos}. най-добър ден от седмицата.` : ''}`
       : 'Още събираме данни за този ден от седмицата.';
-  return h('a', { class: 'card tip', href: '#/stats', style: { marginTop: '14px', textDecoration: 'none' } },
-    h('div', { class: 'tip-ic' }, icon('clock', 22)),
+  return h('a', { class: 'card tip best', href: '#/stats', style: { textDecoration: 'none' } },
+    h('div', { class: 'tip-ic' }, icon('trend', 22)),
     h('div', { class: 'grow' }, h('b', null, 'Днес е добре да караш'), h('span', { class: 'muted small' }, text)),
     icon('right', 18));
 }
@@ -292,32 +299,38 @@ function driveMode(s, data, go, g, redraw) {
   const cats = shiftCats(data.profile);
   return h('section', { class: 'drive', 'aria-label': 'Текуща смяна' },
     forgotBanner(s, go, redraw),
-    h('div', { class: 'drive-top' },
-      h('span', { class: 'row gap small muted' }, h('span', { class: 'live-dot' }), `На смяна от ${fmtTime(s.start)}`),
-      h('button', { class: 'chip', onclick: () => go('/shift/' + s.id) }, icon('edit', 14), 'Поправи')),
-    h('div', { class: 'timer drive-timer', 'data-timer': s.start }, fmtTimer(Date.now() - new Date(s.start))),
-    h('div', { class: 'drive-sum' },
-      h('div', null, h('span', null, 'Приходи'), h('b', null, money(inc))),
-      h('div', null, h('span', null, 'Разходи'), h('b', null, money(exp))),
-      h('div', null, h('span', null, 'Печалба'), h('b', { class: profit < 0 ? 'neg' : 'pos' }, money(profit)))),
-    need != null && h('div', { class: 'drive-need' },
-      h('div', { class: 'row between' }, h('span', null, 'Днес ти трябват'), h('b', null, `${money(Math.max(0, profit))} от ${money(need)}`)),
-      h('div', { class: 'drive-bar' }, h('i', { style: { width: `${Math.min(100, Math.max(0, (profit / need) * 100))}%` } }))),
-    // Най-отгоре: един бутон за глас
-    h('button', { class: 'btn btn-primary btn-xl drive-voice', type: 'button', onclick: () => sayLive(s, redraw) }, icon('mic', 24), 'Кажи на глас'),
-    h('p', { class: 'drive-hint' }, '„Кеш 120 евро, автомивка 4, гориво 25“'),
+    // Тъмната карта: часовникът, сумите и колко трябва днес
+    h('div', { class: 'drive-hero' },
+      h('div', { class: 'drive-top' },
+        h('span', { class: 'drive-on' }, h('span', { class: 'live-dot' }), `На смяна от ${fmtTime(s.start)}`),
+        h('button', { class: 'chip drive-fix', onclick: () => go('/shift/' + s.id) }, icon('edit', 14), 'Поправи')),
+      h('div', { class: 'timer drive-timer', 'data-timer': s.start }, fmtTimer(Date.now() - new Date(s.start))),
+      h('div', { class: 'drive-sum' },
+        h('div', null, h('span', null, 'Приходи'), h('b', null, money(inc))),
+        h('div', null, h('span', null, 'Разходи'), h('b', null, money(exp))),
+        h('div', null, h('span', null, 'Печалба'), h('b', { class: profit < 0 ? 'neg' : 'pos' }, money(profit)))),
+      need != null && h('div', { class: 'drive-need' },
+        h('div', { class: 'row between' }, h('span', null, 'Днес ти трябват ', h('b', null, `${money(Math.max(0, profit))} от ${money(need)}`))),
+        h('div', { class: 'drive-bar' }, h('i', { style: { width: `${Math.min(100, Math.max(0, (profit / need) * 100))}%` } })))),
+    // Един бутон за глас
+    h('button', { class: 'drive-voice', type: 'button', onclick: () => sayLive(s, redraw) },
+      h('span', { class: 'dv-ic' }, icon('mic', 24)),
+      h('span', { class: 'grow' }, h('b', null, 'Кажи на глас'), h('small', { class: 'drive-hint' }, '„Кеш 120 евро, автомивка 4, гориво 25“'))),
     // После – всичко едно под друго
-    h('div', { class: 'drive-label' }, 'Приходи'),
-    h('div', { class: 'f-list drive-list' },
-      Object.entries(INCOME_TYPES).map(([k, t]) => row(t.icon, t.color, t.label, null, s.income[k] || 0, () => quickIncome(k)))),
-    h('div', { class: 'drive-label' }, 'Разходи'),
-    h('div', { class: 'f-list drive-list' },
-      cats.slice(0, 3).map((c) => row(c.icon, c.color, c.label, c.key === 'fuel' ? (fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} л` : 'сума и литри') : null, sumOf(c.key),
-        () => (c.key === 'fuel' ? quickFuel(data.profile) : quickExpense(c.key, c.label)))),
-      row('plus', 'var(--c-slate)', 'Друг разход', 'ремонт, гуми, глоба…', 0, () => otherLive(cats.slice(3)))),
-    h('button', { class: 'btn btn-ghost btn-block', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка за гориво'),
+    h('div', { class: 'drive-card' },
+      h('div', { class: 'drive-label' }, 'Приходи'),
+      h('div', { class: 'f-list drive-list inc' },
+        Object.entries(INCOME_TYPES).map(([k, t]) => row(t.icon, t.color, t.label, null, s.income[k] || 0, () => quickIncome(k))))),
+    h('div', { class: 'drive-card' },
+      h('div', { class: 'drive-label' }, 'Разходи'),
+      h('div', { class: 'f-list drive-list exp' },
+        cats.slice(0, 3).map((c) => row(c.icon, c.color, c.label, c.key === 'fuel' ? (fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} л` : 'сума и литри') : null, sumOf(c.key),
+          () => (c.key === 'fuel' ? quickFuel(data.profile) : quickExpense(c.key, c.label)))),
+        row('plus', 'var(--c-slate)', 'Друг разход', 'ремонт, гуми, глоба…', 0, () => otherLive(cats.slice(3)))),
+      h('button', { class: 'btn btn-tonal btn-block drive-scan', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка за гориво')),
     h('button', { class: 'btn btn-dark btn-xl drive-end', onclick: () => finishLive(s, go) }, icon('stop', 22), 'Приключи смяната'));
 }
+
 // Глас по време на смяната – добавя направо към нея
 async function sayLive(s, redraw) {
   const { openVoice } = await import('../voice.js');

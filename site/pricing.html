@@ -1,52 +1,62 @@
-<main>
-<section class="page-hero">
-  <div class="s-wrap">
-    <div class="crumbs rv"><a href="/">Начало</a> / Цена</div>
-    <h1 class="rv" style="--d:80ms">Една цена.<br>Всичко <span class="y-text y">включено</span>.</h1>
-    <p class="lead rv" style="--d:160ms">По време на теста: 0,00 €. Без карта, без срок.</p>
+<main id="main">
+<section class="blk-ink page-hero">
+  <div class="wrap">
+    <div class="crumbs"><a href="/">Начало</a> / Цена</div>
+    <h1>Една цена. Всичко включено.</h1>
+    <p class="lead">По време на теста: 0,00 €. Без карта, без срок.</p>
   </div>
 </section>
 
-<section class="sec" style="padding-top:20px">
-  <div class="s-wrap">
-    <div class="price-wrap">
-      {{PRICE}}
-      <div class="roi rv from-r">
-        <h3>Сметката е проста</h3>
-        <div class="roi-row"><span>Абонамент на месец</span><b>0,00 €</b></div>
-        <div class="roi-row"><span>На ден</span><b>0,00 €</b></div>
-        <div class="roi-row"><span>Средна чиста печалба на час*</span><b>9,24 €</b></div>
-        <div class="roi-row"><span>Тестов период</span><b>без срок</b></div>
-        <div class="roi-row"><span>Пропусната вноска, глоба или такса</span><b>50–200 €</b></div>
-        <p class="s-muted" style="margin-top:12px;font-size:.95rem">* Примерен шофьор с около 2 000 € чисто на месец.</p>
-      </div>
+<section class="blk blk-grey">
+  <div class="wrap">
+    {{PRICE}}
+  </div>
+</section>
+
+<section class="blk">
+  <div class="wrap split">
+    <div class="split-txt">
+      <span class="label">Сметката</span>
+      <h2>Колко струва една пропусната вноска?</h2>
+      <p class="lead">Забравена застраховка, винетка или преглед струва повече от всяко приложение. ProfiTaxi ти напомня преди падежа – а по време на теста не плащаш нищо.</p>
+    </div>
+    <div class="bill" aria-label="Сметката">
+      <div class="bill-head"><b>Сметката</b><span>на месец</span></div>
+      <dl>
+        <div><dt>Абонамент по време на теста</dt><dd>0,00 €</dd></div>
+        <div><dt>На ден</dt><dd>0,00 €</dd></div>
+        <div><dt>Тестов период</dt><dd>без срок</dd></div>
+        <div><dt>Пропусната вноска, глоба или такса</dt><dd>50–200 €</dd></div>
+      </dl>
     </div>
   </div>
 </section>
 
-<section class="sec alt">
-  <div class="s-wrap">
-    <div class="sec-head c rv"><span class="eyebrow">Включено</span><h2>Без скрити нива и добавки</h2></div>
-    <div class="f-grid stagger">
-      <div class="f-card"><span class="f-ic" data-ic="play" style="--c:#F5A524"></span><h3>Неограничени смени</h3><p>Без лимит на смени, разходи и резервации.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="bell" style="--c:#8B5CF6"></span><h3>Напомняния</h3><p>За всички постоянни разходи и резервации.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="chart" style="--c:#06B6D4"></span><h3>Пълна статистика</h3><p>До години назад, с отчети в Excel и PDF.</p></div>
-      <div class="f-card"><span class="f-ic" data-ic="shield" style="--c:#12A15E"></span><h3>Без обвързване</h3><p>Спираш по всяко време. Данните остават, ако се върнеш.</p></div>
-    </div>
+<section class="blk blk-grey">
+  <div class="wrap">
+    <h2 class="sec-title">Без скрити нива и добавки.</h2>
+    <ul class="grid">
+      <li>{{IC:receipt}}<h3>Неограничени смени</h3><p>Без лимит на смени, разходи и резервации.</p></li>
+      <li>{{IC:bell}}<h3>Напомняния</h3><p>За всички постоянни разходи и резервации.</p></li>
+      <li>{{IC:chart}}<h3>Пълна статистика</h3><p>До години назад, с отчети в Excel и PDF.</p></li>
+      <li>{{IC:lock}}<h3>Без обвързване</h3><p>Спираш по всяко време. Данните остават, ако се върнеш.</p></li>
+    </ul>
   </div>
 </section>
 
-<section class="sec">
-  <div class="s-wrap" style="max-width:860px">
-    <div class="sec-head c rv"><span class="eyebrow">Въпроси за плащането</span><h2>Абонамент</h2></div>
-    <div class="faq stagger">
+<section class="blk">
+  <div class="wrap faq-wrap">
+    <div class="faq-side">
+      <h2>Плащане</h2>
+      <a class="arrow-link" href="/faq">Всички въпроси {{IC:arrow}}</a>
+    </div>
+    <div class="faq">
       <details><summary>Трябва ли карта?</summary><p>Не. По време на теста ползваш всичко без карта и без пари.</p></details>
       <details><summary>До кога е безплатно?</summary><p>Докато трае тестът. Ако въведем абонамент, ще те предупредим предварително, а данните ти остават.</p></details>
       <details><summary>Мога ли да спра да го ползвам?</summary><p>Да, по всяко време. Няма абонамент и няма какво да прекратяваш.</p></details>
-      
     </div>
-    <div class="sec-foot c"><a class="s-btn s-btn-line" href="/faq">Всички въпроси</a></div>
   </div>
 </section>
+
 {{FINAL}}
 </main>

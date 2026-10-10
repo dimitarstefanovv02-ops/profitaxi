@@ -1,145 +1,136 @@
-<main>
+<main id="main">
 
-<!-- ============ HERO ============ -->
-<section class="hero2">
-  <div class="s-wrap">
-    <div>
-      <span class="kick rv"><i></i>За таксиметрови шофьори в България</span>
-      <h1 class="rv" style="--d:80ms">Знаеш колко изкарваш.<span class="line2">Но знаеш ли колко <mark>ти остава</mark>?</span></h1>
-      <p class="lead rv" style="--d:160ms">ProfiTaxi вади от оборота горивото, ефира, наема, автомивката и всички такси и ти показва истинската чиста печалба. От всяка смяна, всеки ден, всеки месец.</p>
-      <div class="cta-row rv" style="--d:240ms">
-        <a class="s-btn s-btn-y s-btn-lg" href="/app#/register">Пробвай безплатно</a>
-        <a class="s-btn s-btn-line s-btn-lg" href="/how">Виж как работи</a>
+<!-- Начало: заглавие, едно изречение, един основен бутон -->
+<section class="blk-ink hero">
+  <div class="wrap hero-in">
+    <div class="hero-txt">
+      <p class="kicker">За таксиметрови шофьори в България</p>
+      <h1>Знай колко ти остава след всяка смяна.</h1>
+      <p class="lead">Записваш смяната за секунди. ProfiTaxi вади горивото, ефира, наема и всички такси и ти показва истинската чиста печалба.</p>
+      <div class="cta">
+        <a class="btn btn-light btn-lg" href="/app#/register">Регистрирай се безплатно</a>
+        <a class="btn btn-line-light btn-lg" href="/app#/login">Вход</a>
       </div>
-      <div class="trust rv" style="--d:320ms"><span>Без карта</span><span>Регистрация за 1 минута</span><span>Отчет за смяна за 10 секунди</span></div>
+      <p class="hero-note">0,00 € по време на теста · Без карта · Без обвързване</p>
     </div>
-    <div class="hero-vis rv zoom" style="--d:200ms">
-      <div class="phone2 float">{{IMG:home|Начален екран на ProfiTaxi с чистата печалба за месеца|eager}}</div>
-      <div class="bill">
-        <div class="bill-title">Септември <em>реален пример</em></div>
-        <div class="bill-row"><span>Оборот</span><b>3 145 €</b></div>
-        <div class="bill-row m"><span>Гориво</span><b>−460 €</b></div>
-        <div class="bill-row m"><span>Ефир</span><b>−171 €</b></div>
-        <div class="bill-row m"><span>Автомивка</span><b>−86 €</b></div>
-        <div class="bill-row m"><span>Данъци</span><b>−260 €</b></div>
-        <div class="bill-row m"><span>Други</span><b>−157 €</b></div>
-        <div class="bill-total"><span>Остават</span><b>2 011 €</b></div>
-      </div>
-      <div class="float-chip"><i>€</i><div><b>9,24 €/ч</b><span>чисто на час</span></div></div>
+    <div class="hero-vis">
+      <div class="phone">{{IMG:home|Началният екран на ProfiTaxi: чистата печалба за месеца и колко остава до целта|eager}}</div>
     </div>
   </div>
 </section>
 
-<!-- ============ 2. КАК РАБОТИ: 3 стъпки ============ -->
-<section class="sec alt">
-  <div class="s-wrap">
-    <div class="sec-head c rv">
-      <span class="eyebrow">Как работи</span>
-      <h2>Три стъпки. Без счетоводство.</h2>
+<!-- Защо: оборотът не е заплата -->
+<section class="blk">
+  <div class="wrap split">
+    <div class="split-txt">
+      <h2>Оборотът не е заплата.</h2>
+      <p class="lead">Гориво, ефир, наем или лизинг, автомивка, винетка, застраховка, данъци. ProfiTaxi вади всичко от оборота и ти казва колко реално остава – за деня, за месеца, на час и на километър.</p>
+      <p class="lead">Годишните такси се разпределят ден по ден, така че един ден не изглежда на загуба само защото си платил винетката.</p>
+      <a class="arrow-link" href="/how">Как се смята чистата печалба {{IC:arrow}}</a>
     </div>
-    <div class="steps3 stagger">
-      <div class="step3"><div class="step3-txt"><span class="n">1</span><h3>Кажи какви са ти разходите</h3><p>Ефир, наем или лизинг, застраховки. Веднъж, за 2 минути.</p></div><div class="step-shot top">{{IMG:costs|Постоянните разходи с падежи}}</div></div>
-      <div class="step3"><div class="step3-txt"><span class="n">2</span><h3>Запиши смяната</h3><p>Кеш, карта и гориво с големи бутони. 10 секунди.</p></div><div class="step-shot bottom">{{IMG:numpad|Въвеждане на сума с големи бутони}}</div></div>
-      <div class="step3"><div class="step3-txt"><span class="n">3</span><h3>Виж колко ти остава</h3><p>Чисто за деня и месеца и колко часа още до целта ти.</p></div><div class="step-shot top">{{IMG:home|Началният екран с чистата печалба}}</div></div>
-    </div>
-    <div class="link-row c rv">
-      <a class="s-btn s-btn-line" href="/features">Всички функции</a>
-      <a class="s-btn s-btn-line" href="/how">Как се смята</a>
-      <a class="s-btn s-btn-line" href="/about">За ProfiTaxi</a>
+    <div class="bill" aria-label="Примерен месец">
+      <div class="bill-head"><b>Септември</b><span>примерен месец</span></div>
+      <dl>
+        <div><dt>Оборот</dt><dd>3 145 €</dd></div>
+        <div class="m"><dt>Гориво</dt><dd>−460 €</dd></div>
+        <div class="m"><dt>Ефир</dt><dd>−171 €</dd></div>
+        <div class="m"><dt>Автомивка</dt><dd>−86 €</dd></div>
+        <div class="m"><dt>Данъци</dt><dd>−260 €</dd></div>
+        <div class="m"><dt>Обслужване, ГО, винетка и др.</dt><dd>−157 €</dd></div>
+      </dl>
+      <div class="bill-total"><span>Остават ти</span><b>2 011 €</b></div>
+      <div class="bill-foot"><span><b>9,24 €</b> чисто на час</span><span><b>0,44 €</b> чисто на км</span></div>
     </div>
   </div>
 </section>
 
-<!-- ============ ДЕМО: една смяна за 30 секунди ============ -->
-<section class="sec demo" id="demo">
-  <div class="s-wrap">
-    <div class="sec-head c rv"><span class="eyebrow">Виж го в действие</span><h2>Една смяна за 30 секунди</h2></div>
-    <div class="demo-wrap">
-    <div class="demo-txt rv">
-      <ol class="demo-steps">
-        <li data-i="0"><b>Отваряш приложението</b><span>Веднага виждаш колко ти остава този месец и колко трябва днес.</span></li>
-        <li data-i="1"><b>„Започни смяна“</b><span>Километражът от таблото и тръгваш.</span></li>
-        <li data-i="2"><b>Докато караш</b><span>Големи бутони: кеш, карта, гориво. Или снимай бележката от горивото.</span></li>
-        <li data-i="3"><b>„Приключи смяната“</b><span>Проверяваш сумите и записваш.</span></li>
-        <li data-i="4"><b>Печалбата от смяната</b><span>След горивото и дела от наема и ефира.</span></li>
-        <li data-i="5"><b>Месецът на един поглед</b><span>Всичко по дни, сравнение с предишните месеци в % и Excel за счетоводителя.</span></li>
+<!-- Как работи: 3 стъпки -->
+<section class="blk blk-grey">
+  <div class="wrap steps-wrap">
+    <div class="steps-txt">
+      <h2>Три стъпки. Без таблици.</h2>
+      <ol class="steps">
+        <li><span class="n">1</span><div><h3>Настрой веднъж</h3><p>Колата, ефирът, наемът или лизингът, застраховките. Около 3 минути, само първия път.</p></div></li>
+        <li><span class="n">2</span><div><h3>Запиши смяната</h3><p>Кеш, карта, приложения, бакшиш и гориво с големи бутони. Или кажи на глас: „кеш 120, карта 80, гориво 40“.</p></div></li>
+        <li><span class="n">3</span><div><h3>Виж колко остава</h3><p>Чисто за деня и месеца, на час и на километър, и колко часа още до целта ти.</p></div></li>
       </ol>
-      <button class="s-btn s-btn-line demo-replay" type="button">Пусни отначало</button>
+      <a class="btn btn-dark" href="/app#/register">Регистрирай се безплатно</a>
     </div>
-    <div class="demo-vis rv zoom">
-      <div class="phone2 demo-screen">
-        <img src="/img/demo/demo-1.webp" alt="Началният екран: чисто за месеца и колко трябва днес" width="390" height="844" class="on" loading="lazy">
-        <img src="/img/demo/demo-2.webp" alt="Започване на смяна с километража" width="390" height="844" loading="lazy">
-        <img src="/img/demo/demo-3.webp" alt="Режим „шофирам“ с големи бутони" width="390" height="844" loading="lazy">
-        <img src="/img/demo/demo-4.webp" alt="Приключване на смяната" width="390" height="844" loading="lazy">
-        <img src="/img/demo/demo-5.webp" alt="Печалбата от смяната" width="390" height="844" loading="lazy">
-        <img src="/img/demo/demo-6.webp" alt="Месецът в „Пари“" width="390" height="844" loading="lazy">
+    <div class="steps-vis">
+      <div class="phone">{{IMG:numpad|Въвеждане на сума с голяма цифрова клавиатура}}</div>
+    </div>
+  </div>
+</section>
+
+<!-- Какво виждаш: снимки от приложението -->
+<section class="blk blk-ink">
+  <div class="wrap show" data-show>
+    <div class="show-txt">
+      <h2>Всичко важно е на един екран.</h2>
+      <div class="show-tabs" role="tablist" aria-label="Екрани от приложението">
+        <button type="button" role="tab" aria-selected="true" data-shot="home" data-cap="Колко си изкарал чисто този месец, колко остава до целта и колко ти трябва днес.">Днес</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="shifts" data-cap="Всяка смяна с оборот, разходи, часове, километри и чиста печалба.">Смени</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="stats" data-cap="Ден, седмица, месец, година. Сравнение по месеци в %, на час и на километър.">Статистика</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="costs" data-cap="Постоянните разходи с падежите им. „Платено“ с едно докосване.">Разходи</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="reservations" data-cap="Лични резервации с час, адреси, клиент и цена. Обаждане и маршрут с едно докосване.">Резервации</button>
       </div>
-      <div class="demo-bar" aria-hidden="true"><i></i></div>
+      <p class="show-cap" aria-live="polite">Колко си изкарал чисто този месец, колко остава до целта и колко ти трябва днес.</p>
     </div>
+    <div class="show-vis">
+      <div class="phone">{{IMG:home|Екран „Днес“ от приложението}}</div>
     </div>
   </div>
 </section>
 
-<!-- ============ 3. ЦЕНА + ПОКАНИ ============ -->
-<section class="sec">
-  <div class="s-wrap">
-    <div class="sec-head c rv">
-      <span class="eyebrow">Цена</span>
-      <h2>Безплатно, докато тестваме.</h2>
-      <p>Сега ProfiTaxi е в тестов период – ползваш всичко без пари и без срок.</p>
+<!-- Функции: стегната мрежа -->
+<section class="blk">
+  <div class="wrap">
+    <div class="head-row">
+      <h2>Всичко за парите.<br>Нищо излишно.</h2>
+      <a class="arrow-link" href="/features">Всички функции {{IC:arrow}}</a>
     </div>
-    <div class="price-wrap solo">
-      {{PRICE}}
-      <div class="roi rv">
-        <h3>Сметката е проста</h3>
-        <div class="roi-row"><span>Абонамент на месец</span><b>0,00 €</b></div>
-        <div class="roi-row"><span>Един среден курс</span><b>≈ 5 €</b></div>
-        <div class="roi-row"><span>На ден</span><b>0,00 €</b></div>
-        <div class="roi-row"><span>Пропусната такса или глоба</span><b>50–200 €</b></div>
-        <div class="roi-row"><span>Час, в който караш на загуба</span><b>?</b></div>
-        <p class="s-muted" style="margin-top:12px;line-height:1.55">По време на теста не плащаш нищо. Ако някога въведем абонамент, ще те предупредим предварително.</p>
-      </div>
+    <ul class="grid">
+      <li>{{IC:mic}}<h3>Смяна с глас</h3><p>Казваш сумите, полетата се попълват сами.</p></li>
+      <li>{{IC:clock}}<h3>Чисто на час и на км</h3><p>Знаеш дали смяната си е струвала.</p></li>
+      <li>{{IC:target}}<h3>Цел за месеца</h3><p>Колко остава и колко часа и смени още трябват.</p></li>
+      <li>{{IC:calendar}}<h3>Падежи</h3><p>Застраховка, винетка, преглед, данъци, телефон.</p></li>
+      <li>{{IC:bell}}<h3>Напомняния</h3><p>За плащанията и ако вчерашната смяна липсва.</p></li>
+      <li>{{IC:chart}}<h3>Статистика</h3><p>Най-добрите часове и дни, рекорди, месеци в %.</p></li>
+      <li>{{IC:pin}}<h3>Резервации</h3><p>Лични курсове с клиент, час, адрес и цена.</p></li>
+      <li>{{IC:car}}<h3>Колата ми</h3><p>Колко от колата си избил и колко дни остават.</p></li>
+      <li>{{IC:file}}<h3>Excel</h3><p>Всички смени за счетоводителя с едно докосване.</p></li>
+      <li>{{IC:offline}}<h3>Без интернет</h3><p>Записва на телефона и качва, щом има връзка.</p></li>
+      <li>{{IC:face}}<h3>Вход с Face ID</h3><p>Без парола всеки път.</p></li>
+      <li>{{IC:contrast}}<h3>Светла и тъмна тема</h3><p>Тъмната пази очите в нощната смяна.</p></li>
+    </ul>
+  </div>
+</section>
+
+<!-- Цена -->
+<section class="blk blk-grey">
+  <div class="wrap">
+    <h2 class="sec-title">Цена</h2>
+    {{PRICE}}
+    <a class="arrow-link" href="/pricing">Цена и абонамент {{IC:arrow}}</a>
+  </div>
+</section>
+
+<!-- Въпроси -->
+<section class="blk">
+  <div class="wrap faq-wrap">
+    <div class="faq-side">
+      <h2>Въпроси</h2>
+      <a class="arrow-link" href="/faq">Всички въпроси {{IC:arrow}}</a>
     </div>
-    <div class="sec-foot c"><a class="s-btn s-btn-line" href="/pricing">Цена и абонамент</a></div>
-  </div>
-</section>
-
-<!-- ============ ВЪПРОСИ ============ -->
-<section class="sec alt">
-  <div class="s-wrap" style="max-width:860px">
-    <div class="sec-head c rv"><span class="eyebrow">Въпроси</span><h2>Често питат</h2></div>
-    <div class="faq stagger">
-      <details><summary>Трябва ли да въвеждам карта, за да пробвам?</summary><p>Не. Регистрираш се с имейл и ползваш всичко безплатно, докато тестваме.</p></details>
-      <details><summary>Фирмата ми или другите шофьори виждат ли колко изкарвам?</summary><p>Не. Данните ти не се виждат от таксиметровата ти фирма или от други шофьори. Достъп има само екипът на ProfiTaxi за поддръжка и обобщена статистика, както е описано в <a href="/privacy">политиката за поверителност</a>.</p></details>
-      <details><summary>Карам кола под наем. Подходящо ли е за мен?</summary><p>Да. Избираш „Под наем“, въвеждаш наема на ден, седмица или месец и той се смята автоматично. Застраховки, винетка и преглед не се показват, защото са грижа на собственика.</p></details>
-      <details><summary>Работи ли на iPhone и Android?</summary><p>Да. Отваряш го в браузъра на телефона и го добавяш към началния екран. После се отваря като обикновено приложение.</p></details>
-      <details><summary>Колко струва?</summary><p>Сега – 0,00 €. ProfiTaxi е в тестов период и е безплатно, без срок.</p></details>
+    <div class="faq">
+      <details><summary>Трябва ли карта, за да пробвам?</summary><p>Не. Регистрираш се с имейл и ползваш всичко безплатно, докато тестваме.</p></details>
+      <details><summary>Фирмата ми или колегите виждат ли колко изкарвам?</summary><p>Не. Данните ти не се виждат от таксиметровата ти фирма или от други шофьори. Достъп има само екипът на ProfiTaxi за поддръжка и обобщена статистика, както е описано в <a href="/privacy">политиката за поверителност</a>.</p></details>
+      <details><summary>Карам кола под наем. Подходящо ли е за мен?</summary><p>Да. Избираш „Под наем“, въвеждаш наема на ден, седмица или месец и той се смята сам. Застраховки, винетка и преглед не се показват, защото са грижа на собственика.</p></details>
+      <details><summary>Работи ли на iPhone и Android?</summary><p>Да. Отваряш го в браузъра на телефона и го добавяш към началния екран. После се отваря като обикновено приложение и работи и без интернет.</p></details>
+      <details><summary>Колко струва?</summary><p>Сега – 0,00 €. ProfiTaxi е в тестов период и е безплатно, без срок и без карта.</p></details>
     </div>
-    <div class="sec-foot c"><a class="s-btn s-btn-line" href="/faq">Всички въпроси</a></div>
   </div>
 </section>
 
-<!-- ============ ВСЕКИ ГРАД ============ -->
-<!-- ============ ОТЗИВИ (показват се само ако в /data/reviews.json има истински) ============ -->
-<section class="sec alt reviews" id="reviews" hidden>
-  <div class="s-wrap">
-    <div class="sec-head c"><span class="eyebrow">Шофьорите казват</span><h2>От хора, които го ползват всеки ден.</h2></div>
-    <div class="rev-grid"></div>
-  </div>
-</section>
-
-<section class="sec cities">
-  <div class="s-wrap">
-    <h2 class="rv">Всеки град.</h2>
-    <p class="rv" style="--d:100ms">София, Пловдив, Варна, Бургас, Русе и навсякъде другаде в България.</p>
-  </div>
-  <div class="marquee" aria-hidden="true"><div class="marquee-in">
-    <span>София</span><span>Пловдив</span><span>Варна</span><span>Бургас</span><span>Русе</span><span>Стара Загора</span><span>Плевен</span><span>Благоевград</span><span>Велико Търново</span><span>Шумен</span><span>Хасково</span><span>Добрич</span><span>Пазарджик</span><span>Сливен</span><span>Габрово</span>
-    <span>София</span><span>Пловдив</span><span>Варна</span><span>Бургас</span><span>Русе</span><span>Стара Загора</span><span>Плевен</span><span>Благоевград</span><span>Велико Търново</span><span>Шумен</span><span>Хасково</span><span>Добрич</span><span>Пазарджик</span><span>Сливен</span><span>Габрово</span>
-  </div></div>
-</section>
-
-<!-- ============ КРАЙ ============ -->
 {{FINAL}}
 </main>

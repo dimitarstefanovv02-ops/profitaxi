@@ -34,7 +34,6 @@
 }
 :root[data-theme="sun"] { --bg: #FFFFFF; --line: #A1A1AA; --text: #000000; --muted: #27272A; --faint: #3F3F46; }
 /* Шрифтът е системният на устройството навсякъде – и в One Taxi */
-:root[data-brand="one"] { --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; --display: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif; }
 body, button, input, select, textarea { font-family: var(--font); }
 
 /* ---------- Основа ---------- */

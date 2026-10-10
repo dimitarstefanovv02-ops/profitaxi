@@ -49,7 +49,7 @@ export function calendarView({ go, data }) {
           h('div', { class: 'row gap' },
             h('a', { class: 'hero-btn', href: '#/reservations', 'aria-label': 'Всички резервации', title: 'Всички резервации' }, icon('list', 20)),
             h('button', { class: 'hero-btn', 'aria-label': 'Нова резервация', onclick: () => editReservation({ date: state.selected || today }) }, icon('plus', 22)))),
-        h('div', { style: { marginTop: '14px' } }, segmented({ month: 'Месец', week: 'Седмица', day: 'Ден', list: 'Списък' }, state.view, (v) => { state.view = v; if (v === 'day') state.anchor = state.selected || today; draw(); }))),
+        h('div', { class: 'hero-ctl' }, segmented({ month: 'Месец', week: 'Седмица', day: 'Ден', list: 'Списък' }, state.view, (v) => { state.view = v; if (v === 'day') state.anchor = state.selected || today; draw(); }))),
       state.view !== 'list' && h('div', { class: 'cal-nav' },
         h('button', { class: 'icon-btn', 'aria-label': 'Назад', onclick: () => step(-1) }, icon('left')),
         h('b', null, title),
