@@ -3,7 +3,7 @@
 
 import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, MONTHS, WD_SHORT, parseDate, fmtTime, fmtDuration, startOfWeek, fmtNum, weekdayIdx, round2, uid, fmtDate, isoToDateStr } from '../util.js';
 import * as store from '../store.js';
-import { goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
+import { isNightShift, goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
 import { roadProgress, openNumpad, openSheet, sheetHead, stat, tone, toast, cardTitle, more, reveal } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
@@ -241,7 +241,7 @@ function meter(g, month) {
       h('div', { class: 'meter-grid' },
         h('div', { class: 'meter-cell' }, h('span', null, 'Часове'), h('b', null, `~${Math.ceil(hours)}`)),
         h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
-        h('div', { class: 'meter-cell' }, h('span', null, 'На час'), h('b', null, money2(g.ratePerHour)))),
+        h('div', { class: 'meter-cell' }, h('span', null, 'От смените на час'), h('b', null, money2(g.ratePerHour)))),
       h('div', { class: 'meter-note' }, icon('alert', 14),
         h('span', null, `Наемът, ефирът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}. Затова от смените трябват повече от разликата до целта.`)))));
 }
@@ -310,7 +310,7 @@ function driveMode(s, data, go, g, redraw) {
         h('div', null, h('span', null, 'Разходи'), h('b', null, money(exp))),
         h('div', null, h('span', null, 'Печалба'), h('b', { class: profit < 0 ? 'neg' : 'pos' }, money(profit)))),
       need != null && h('div', { class: 'drive-need' },
-        h('div', { class: 'row between' }, h('span', null, 'Днес ти трябват ', h('b', null, `${money(Math.max(0, profit))} от ${money(need)}`))),
+        h('div', { class: 'row between' }, h('span', null, 'Изкара днес ', h('b', null, `${money(Math.max(0, profit))} от нужните ${money(need)}`))),
         h('div', { class: 'drive-bar' }, h('i', { style: { width: `${Math.min(100, Math.max(0, (profit / need) * 100))}%` } })))),
     // Един бутон за глас
     h('button', { class: 'drive-voice', type: 'button', onclick: () => sayLive(s, redraw) },
@@ -448,7 +448,7 @@ export function reminderText(r) {
 export function shiftRow(data, s) {
   const d = parseDate(shiftDate(s));
   const net = shiftNetAfterFixed(data, s);
-  const night = new Date(s.start).getHours() >= 16 || new Date(s.start).getHours() < 4;
+  const night = isNightShift(s);
   return h('a', { class: 'shift-row', href: '#/shift/' + s.id },
     h('div', { class: cx('day-badge', night && 'night') }, h('b', null, d.getDate()), h('span', null, ['нд', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'][d.getDay()])),
     h('div', { style: { minWidth: 0 } },

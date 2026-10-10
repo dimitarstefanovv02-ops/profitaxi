@@ -109,7 +109,7 @@ function topbar() {
       h('span', { class: 'gs-ic' }, icon(x.ic, 16)), h('span', { class: 'grow' }, h('b', null, x.title), h('small', null, x.sub)), h('em', null, x.kind)))
       : h('p', { class: 'muted small gs-none' }, 'Нищо не е намерено')));
   };
-  const input = h('input', { class: 'input', id: 'adm-search', type: 'search', placeholder: 'Търси шофьор, телефон, номер, фирма, код…', value: top.q, autocomplete: 'off',
+  const input = h('input', { class: 'input', id: 'adm-search', type: 'search', placeholder: 'Търси шофьор…', title: 'Име, телефон, номер на кола, фирма или код', value: top.q, autocomplete: 'off',
     oninput: (e) => { top.q = e.target.value; drawRes(); }, onkeydown: (e) => { if (e.key === 'Escape') { top.q = ''; e.target.value = ''; drawRes(); e.target.blur(); } if (e.key === 'Enter') res.querySelector('a')?.click(); } });
   drawRes();
   const n = newAlerts();

@@ -915,3 +915,41 @@
 :root[data-skin="chisto"] .wd-fill, :root[data-skin="chisto"] .hours span {background: var(--ch-outline-v) !important;}
 :root[data-skin="chisto"] .wd-row.best .wd-fill, :root[data-skin="chisto"] .hours span.best {background: var(--ch-pri) !important;}
 :root[data-skin="chisto"] .hours span.none {background: var(--ch-highest) !important;}
+:root[data-skin="chisto"] .shift-cta {z-index: auto !important;}
+:root[data-skin="chisto"] .btn-ok, :root[data-skin="chisto"] .btn.btn-ok {background: var(--ch-sec-c) !important; color: var(--ch-on-sec-c) !important; border: 0 !important;}
+:root[data-skin="chisto"] .count.alert, :root[data-skin="chisto"] .adm-tab .count.alert, :root[data-skin="chisto"] .adm-nav .count.alert {background: var(--ch-err-c) !important; color: var(--ch-on-err-c) !important;}
+:root[data-skin="chisto"] .seg.seg-outline {border: 1px solid var(--ch-outline) !important; border-radius: 999px !important; gap: 0 !important; overflow: hidden; display: flex !important;}
+:root[data-skin="chisto"] .seg.seg-outline .seg-btn {border: 0 !important; border-left: 1px solid var(--ch-outline) !important; border-radius: 0 !important; flex: 1 1 0 !important; min-width: 0; white-space: nowrap; font-size: .8125rem !important; padding: 0 4px !important; min-height: 40px;}
+:root[data-skin="chisto"] .seg.seg-outline .seg-btn:first-child {border-left: 0 !important;}
+:root[data-skin="chisto"] .seg.seg-outline .seg-btn.on {background: var(--ch-sec-c) !important;}
+:root[data-skin="chisto"] .seg .seg-btn.on::before {content: '✓\00a0';}
+:root[data-skin="chisto"] .seg.seg-sm .seg-btn {font-size: .8125rem !important; padding: 0 2px !important; white-space: nowrap; min-width: 0;}
+:root[data-skin="chisto"] .f-tools {grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;}
+:root[data-skin="chisto"] .f-tools .btn {min-width: 0; white-space: normal !important; line-height: 1.2;}
+:root[data-skin="chisto"] .due-card {gap: 12px !important;}
+:root[data-skin="chisto"] .due-card .btn {padding: 0 12px !important; font-size: .8125rem !important;}
+:root[data-skin="chisto"] .due-card .btn .ic {width: 16px; height: 16px;}
+:root[data-skin="chisto"] .due-card .next-sub {font-size: .875rem;}
+:root[data-skin="chisto"] [data-sec="data"] .f-row:has(.f-val), :root[data-skin="chisto"] .f-row.f-timerow {min-height: 0 !important; padding-top: 10px !important; padding-bottom: 10px !important;}
+:root[data-skin="chisto"] .f-row.f-timerow > .pk-field {gap: 0 !important; text-indent: 0 !important;}
+:root[data-skin="chisto"] .f-row.f-timerow > .pk-field .pk-fi {display: none !important;}
+:root[data-skin="chisto"] .f-row.f-timerow > .pk-field .pk-fv {margin: 0 !important; padding: 0 !important;}
+:root[data-skin="chisto"] .f-row .f-ic .ic {width: 22px !important; height: 22px !important;}
+:root[data-skin="chisto"] [data-page="profile"] .section-title + .card > .card-title:first-child {display: none !important;}
+:root[data-skin="chisto"] [data-page="profile"] .setting {padding: 14px 0 !important;}
+:root[data-skin="chisto"] [data-page="profile"] .setting + p {margin: 0 0 12px !important; padding: 0 4px;}
+:root[data-skin="chisto"] .shift-meta {font-size: .75rem !important;}
+:root[data-skin="chisto"] .chart {display: flex !important; flex-direction: column;}
+:root[data-skin="chisto"] .chart .bars-labels {order: 3; margin-top: 6px;}
+:root[data-skin="chisto"] .chart .chart-tip {order: 4; margin-top: 10px;}
+:root[data-skin="chisto"] .mcmp .mc-top {display: grid !important; grid-template-columns: minmax(0, 1fr) auto 78px; align-items: center; gap: 8px;}
+:root[data-skin="chisto"] .mcmp .mc-top .mc-pct {justify-self: end; white-space: nowrap;}
+:root[data-skin="chisto"] .mcmp .mc-name {min-width: 0;}
+:root[data-skin="chisto"] .hero-chip {white-space: nowrap; justify-content: flex-start; font-size: .75rem !important;}
+:root[data-skin="chisto"] .option-grid:has(> :nth-child(2):last-child) {grid-template-columns: 1fr 1fr !important;}
+:root[data-skin="chisto"] .search-link, :root[data-skin="chisto"] .search-link span {font-weight: 400 !important; color: var(--ch-on-v) !important;}
+:root[data-skin="chisto"] .leaflet-container, :root[data-skin="chisto"] .map, :root[data-skin="chisto"] .hmap {background: var(--ch-high) !important;}
+:root[data-skin="chisto"] .hero .hero-chip {max-width: 100%; white-space: normal !important; height: auto !important; min-height: 32px; padding: 6px 12px !important; line-height: 1.3; text-align: left;}
+:root[data-skin="chisto"] .shift-meta {white-space: normal !important; overflow: visible !important;}
+:root[data-skin="chisto"] [data-sec="data"] .f-row .grow, :root[data-skin="chisto"] .f-row.f-timerow .grow {min-height: 0 !important; line-height: 1.2 !important; padding: 0 !important; margin: 0 !important;}
+:root[data-skin="chisto"] [data-sec="data"] .f-row .grow b, :root[data-skin="chisto"] .f-row.f-timerow .grow b {line-height: 1.2 !important; display: block;}

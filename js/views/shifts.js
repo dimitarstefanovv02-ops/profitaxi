@@ -1,12 +1,12 @@
 // Списък със смени, групирани по месеци, с филтър дневни/нощни
 
 import { h, icon, cx, money, MONTHS, parseDate, endOfMonth, minStr, todayStr, startOfMonth, fmtDuration, fmtNum } from '../util.js';
-import { periodStats, shiftDate } from '../calc.js';
+import { periodStats, shiftDate, isNightShift } from '../calc.js';
 import { empty, tone, hero, segmented } from '../ui.js';
 import { shiftRow } from './home.js';
 
 const state = { filter: 'all' };
-const isNight = (s) => { const hr = new Date(s.start).getHours(); return hr >= 16 || hr < 4; };
+const isNight = isNightShift;
 
 export function shiftsView({ go, data }) {
   const root = h('div', { class: 'screen', 'data-page': 'shifts' });

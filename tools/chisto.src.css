@@ -586,3 +586,51 @@ details.more > summary .ic { color: var(--ch-on-v); }
 .wd-fill, .hours span { background: var(--ch-outline-v) !important; }
 .wd-row.best .wd-fill, .hours span.best { background: var(--ch-pri) !important; }
 .hours span.none { background: var(--ch-highest) !important; }
+
+/* ===== Поправки след проверката ===== */
+.shift-cta { z-index: auto !important; }
+.btn-ok, .btn.btn-ok { background: var(--ch-sec-c) !important; color: var(--ch-on-sec-c) !important; border: 0 !important; }
+.count.alert, .adm-tab .count.alert, .adm-nav .count.alert { background: var(--ch-err-c) !important; color: var(--ch-on-err-c) !important; }
+/* Изглед: един очертан ред, без отделни кутии */
+.seg.seg-outline { border: 1px solid var(--ch-outline) !important; border-radius: 999px !important; gap: 0 !important; overflow: hidden; display: flex !important; }
+.seg.seg-outline .seg-btn { border: 0 !important; border-left: 1px solid var(--ch-outline) !important; border-radius: 0 !important; flex: 1 1 0 !important; min-width: 0; white-space: nowrap; font-size: .8125rem !important; padding: 0 4px !important; min-height: 40px; }
+.seg.seg-outline .seg-btn:first-child { border-left: 0 !important; }
+.seg.seg-outline .seg-btn.on { background: var(--ch-sec-c) !important; }
+.seg .seg-btn.on::before { content: '✓\00a0'; }
+.seg.seg-sm .seg-btn { font-size: .8125rem !important; padding: 0 2px !important; white-space: nowrap; min-width: 0; }
+/* Нова смяна: бутоните отдолу не излизат от екрана */
+.f-tools { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important; }
+.f-tools .btn { min-width: 0; white-space: normal !important; line-height: 1.2; }
+/* Плащането на „Днес“: повече място за текста */
+.due-card { gap: 12px !important; }
+.due-card .btn { padding: 0 12px !important; font-size: .8125rem !important; }
+.due-card .btn .ic { width: 16px; height: 16px; }
+.due-card .next-sub { font-size: .875rem; }
+/* Данни: етикетът и стойността – плътно един под друг, иконките по-големи */
+[data-sec="data"] .f-row:has(.f-val), .f-row.f-timerow { min-height: 0 !important; padding-top: 10px !important; padding-bottom: 10px !important; }
+.f-row.f-timerow > .pk-field { gap: 0 !important; text-indent: 0 !important; }
+.f-row.f-timerow > .pk-field .pk-fi { display: none !important; }
+.f-row.f-timerow > .pk-field .pk-fv { margin: 0 !important; padding: 0 !important; }
+.f-row .f-ic .ic { width: 22px !important; height: 22px !important; }
+/* Лични данни: без двойни заглавия и по-просторни известия */
+[data-page="profile"] .section-title + .card > .card-title:first-child { display: none !important; }
+[data-page="profile"] .setting { padding: 14px 0 !important; }
+[data-page="profile"] .setting + p { margin: 0 0 12px !important; padding: 0 4px; }
+/* Редът на смяната: всичко на един ред */
+.shift-meta { font-size: .75rem !important; }
+/* Графиките: надписите на дните – веднага под стълбовете */
+.chart { display: flex !important; flex-direction: column; }
+.chart .bars-labels { order: 3; margin-top: 6px; }
+.chart .chart-tip { order: 4; margin-top: 10px; }
+/* Сравнение по месеци: сумите – в колона вдясно */
+.mcmp .mc-top { display: grid !important; grid-template-columns: minmax(0, 1fr) auto 78px; align-items: center; gap: 8px; }
+.mcmp .mc-top .mc-pct { justify-self: end; white-space: nowrap; }
+.mcmp .mc-name { min-width: 0; }
+.hero-chip { white-space: nowrap; justify-content: flex-start; font-size: .75rem !important; }
+.option-grid:has(> :nth-child(2):last-child) { grid-template-columns: 1fr 1fr !important; }
+.search-link, .search-link span { font-weight: 400 !important; color: var(--ch-on-v) !important; }
+.leaflet-container, .map, .hmap { background: var(--ch-high) !important; }
+.hero .hero-chip { max-width: 100%; white-space: normal !important; height: auto !important; min-height: 32px; padding: 6px 12px !important; line-height: 1.3; text-align: left; }
+.shift-meta { white-space: normal !important; overflow: visible !important; }
+[data-sec="data"] .f-row .grow, .f-row.f-timerow .grow { min-height: 0 !important; line-height: 1.2 !important; padding: 0 !important; margin: 0 !important; }
+[data-sec="data"] .f-row .grow b, .f-row.f-timerow .grow b { line-height: 1.2 !important; display: block; }

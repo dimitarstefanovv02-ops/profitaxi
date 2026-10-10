@@ -4,7 +4,7 @@ import { h, fill, icon, cx, money, money2, todayStr, fmtDate, parseNum, parseDat
 import * as store from '../store.js';
 import { COST_CATS, PERIODS, costCat, fixedCats } from '../constants.js';
 import { openCategories } from './categories.js';
-import { monthlyFixed, costMonthly, upcomingReminders, currentKm, activeCosts } from '../calc.js';
+import { monthlyFixed, costMonthly, upcomingReminders, currentKm, activeCosts, fixedForDay } from '../calc.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, empty, cardTitle, hero } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { reminderText } from './home.js';
@@ -26,7 +26,7 @@ export function costsView({ go, data }) {
       h('div', { class: 'hero-num' }, money(perMonth)),
       h('div', { class: 'hero-sub' }, 'на месец, разпределени по дни'),
       h('div', { class: 'hero-chips' },
-        h('span', { class: 'hero-chip' }, icon('calendar', 14), `${money2(perMonth / 30.44)} на ден`),
+        h('span', { class: 'hero-chip' }, icon('calendar', 14), `${money2(fixedForDay(data.costs, data.profile, todayStr(), true, false))} на ден`),
         next && h('span', { class: 'hero-chip' }, icon('bell', 14), `следващо: ${next.title}, ${next.daysLeft === 0 ? 'днес' : next.daysLeft === 1 ? 'утре' : `след ${next.daysLeft} дни`}`),
         data.profile.sharePct < 100 && h('span', { class: 'hero-chip' }, icon('users', 14), `твоят дял ${data.profile.sharePct}%`))),
 

@@ -364,3 +364,15 @@ export function emailQueue(data, { now = new Date(), horizonDays = 14, sent = da
   }
   return out.sort((a, b) => a.sendAt.localeCompare(b.sendAt));
 }
+
+// Нощна смяна: поне половината от времето е между 20:00 и 6:00 (или тръгване след 16:00 / преди 4:00).
+// Така 15:15 – 01:30 е нощна, а 07:00 – 17:00 – дневна.
+export function isNightShift(s) {
+  const a = new Date(s.start), b = s.end ? new Date(s.end) : new Date();
+  const hr = a.getHours();
+  if (hr >= 16 || hr < 4) return true;
+  const total = b - a; if (!(total > 0)) return false;
+  let night = 0;
+  for (let t = a.getTime(); t < b.getTime(); t += 15 * 60000) { const h = new Date(t).getHours(); if (h >= 20 || h < 6) night += Math.min(15 * 60000, b.getTime() - t); }
+  return night >= total / 2;
+}
