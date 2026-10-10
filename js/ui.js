@@ -282,7 +282,7 @@ export function more(label, ...children) {
     h('div', { class: 'more-body' }, ...children));
 }
 
-// Конфети за награда (жълто, лилаво, бяло). Само ако човекът не е избрал „намалено движение“.
+// Конфети за награда (черно, зелено, сиво). Само ако човекът не е избрал „намалено движение“.
 export function celebrate(n = 40) {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const box = document.createElement('div'); box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
