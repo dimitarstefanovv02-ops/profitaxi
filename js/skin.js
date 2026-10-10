@@ -12,9 +12,11 @@
   var s = SKIN;
   try {
     var q = (location.search.match(/[?&]v=(\d)/) || [])[1];
-    if (q === '0') localStorage.removeItem('profitaxi.skin');
-    else if (MAP[q]) localStorage.setItem('profitaxi.skin', MAP[q]);
-    s = localStorage.getItem('profitaxi.skin') || SKIN;
+    // Старият запомнен избор (profitaxi.skin) вече не важи – новият дизайн е за всички.
+    localStorage.removeItem('profitaxi.skin');
+    if (q === '0') localStorage.removeItem('profitaxi.skin5');
+    else if (MAP[q]) localStorage.setItem('profitaxi.skin5', MAP[q]);
+    s = localStorage.getItem('profitaxi.skin5') || SKIN;
   } catch (e) { /* */ }
   document.documentElement.setAttribute('data-skin', s);
 })();
