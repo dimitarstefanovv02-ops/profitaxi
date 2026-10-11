@@ -57,7 +57,8 @@ function applyTextSize() { document.documentElement.style.fontSize = SIZE_PCT[ge
 export function themeToggle(onChange) {
   const btn = h('button', { class: 'icon-btn theme-toggle', type: 'button' });
   const paint = () => { const d = isDark(); btn.replaceChildren(icon(d ? 'sun' : 'moon', 20)); btn.setAttribute('aria-label', d ? 'Светла тема' : 'Тъмна тема'); btn.title = d ? 'Светла тема' : 'Тъмна тема'; };
-  btn.addEventListener('click', () => { setTheme(isDark() ? (getTheme() === 'sun' ? 'sun' : 'light') : 'dark'); paint(); onChange?.(); });
+  btn.addEventListener('click', () => { setTheme(isDark() ? 'light' : 'dark'); paint(); onChange?.(); });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', paint);
   paint();
   return btn;
 }

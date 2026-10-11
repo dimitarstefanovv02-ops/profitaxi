@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{{TITLE}}</title>
   <meta name="description" content="{{DESC}}">
-  <meta name="theme-color" content="#141313">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#231F20">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="{{TITLE}}">
   <meta property="og:description" content="{{DESC}}">
   <meta property="og:image" content="/icons/icon-512.png">
@@ -22,6 +22,11 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
+      // Тема преди изрисуване: изборът на посетителя, иначе темата на телефона
+      var t; try { t = localStorage.getItem('profitaxi.siteTheme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+      document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'dark' ? '#0D0C0C' : '#231F20');
     })();
   </script>
   <script defer src="/js/landing.js"></script>

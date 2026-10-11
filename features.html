@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Функции – ProfiTaxi</title>
   <meta name="description" content="Смени с глас, чиста печалба на час и на км, цел за месеца, постоянни разходи с падежи и напомняния, резервации, статистика, Колата ми, Excel.">
-  <meta name="theme-color" content="#141313">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#231F20">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="Функции – ProfiTaxi">
   <meta property="og:description" content="Смени с глас, чиста печалба на час и на км, цел за месеца, постоянни разходи с падежи и напомняния, резервации, статистика, Колата ми, Excel.">
   <meta property="og:image" content="/icons/icon-512.png">
@@ -22,6 +22,11 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
+      // Тема преди изрисуване: изборът на посетителя, иначе темата на телефона
+      var t; try { t = localStorage.getItem('profitaxi.siteTheme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+      document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'dark' ? '#0D0C0C' : '#231F20');
     })();
   </script>
   <script defer src="/js/landing.js"></script>
@@ -39,6 +44,7 @@
       <a href="/about">За нас</a>
     </nav>
     <div class="hd-act">
+      <button class="theme-btn" id="theme-btn" type="button" aria-label="Тъмна тема" title="Светла / тъмна тема"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 1 1 9.8 4a6.4 6.4 0 0 0 10.2 10.2z"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg></button>
       <a class="hd-login" href="/app#/login">Вход</a>
       <a class="btn btn-light btn-sm hd-reg" href="/app#/register">Регистрация</a>
       <button class="hd-menu" id="menu-btn" type="button" aria-label="Меню" aria-expanded="false" aria-controls="drawer"><i></i><i></i></button>
@@ -82,7 +88,7 @@
         <li>„Като предишната“ копира разходите от миналата смяна</li>
       </ul>
     </div>
-    <div class="feat-vis"><div class="phone"><img src="/img/screen-numpad-light.jpg" alt="Въвеждане на сума с голяма цифрова клавиатура" width="390" height="844" loading="lazy"></div></div>
+    <div class="feat-vis"><div class="phone"><img src="/img/screen-numpad-light.jpg" data-light="/img/screen-numpad-light.jpg" data-dark="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума с голяма цифрова клавиатура" width="390" height="844" loading="lazy"></div></div>
   </div>
 </section>
 
@@ -100,7 +106,7 @@
         <li>Днешните резервации и предстоящите плащания</li>
       </ul>
     </div>
-    <div class="feat-vis"><div class="phone"><img src="/img/screen-home-light.jpg" alt="Началният екран с чистата печалба за месеца и целта" width="390" height="844" loading="lazy"></div></div>
+    <div class="feat-vis"><div class="phone"><img src="/img/screen-home-light.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Началният екран с чистата печалба за месеца и целта" width="390" height="844" loading="lazy"></div></div>
   </div>
 </section>
 
@@ -112,7 +118,7 @@
       <p class="lead">Наем, ефир, лизинг, застраховка, каско, ГО, винетка, преглед, данъци, телефон. Всеки има период и падеж и се разпределя по дни, за да е честна печалбата за всеки ден.</p>
       <p class="lead">Горивото, автомивката, паркингът и ремонтите се пишат в смяната или в „Колата ми“ – там, където са платени. Добавяш свои категории и скриваш тези, които не ползваш.</p>
     </div>
-    <div class="feat-vis"><div class="phone"><img src="/img/screen-costs-light.jpg" alt="Постоянните разходи с падежите им" width="390" height="844" loading="lazy"></div></div>
+    <div class="feat-vis"><div class="phone"><img src="/img/screen-costs-light.jpg" data-light="/img/screen-costs-light.jpg" data-dark="/img/screen-costs-dark.jpg" alt="Постоянните разходи с падежите им" width="390" height="844" loading="lazy"></div></div>
   </div>
 </section>
 
@@ -151,7 +157,7 @@
         <li>Всички смени в Excel за счетоводителя, отчет в PDF</li>
       </ul>
     </div>
-    <div class="feat-vis"><div class="phone"><img src="/img/screen-stats-light.jpg" alt="Статистика по дни за месеца" width="390" height="844" loading="lazy"></div></div>
+    <div class="feat-vis"><div class="phone"><img src="/img/screen-stats-light.jpg" data-light="/img/screen-stats-light.jpg" data-dark="/img/screen-stats-dark.jpg" alt="Статистика по дни за месеца" width="390" height="844" loading="lazy"></div></div>
   </div>
 </section>
 
@@ -162,7 +168,7 @@
       <h2>Нощната смяна струва ли си?</h2>
       <p class="lead">ProfiTaxi показва печалбата на час по часове от денонощието и по дни от седмицата. Виждаш кога колата изкарва най-много и кога караш почти на нула.</p>
     </div>
-    <div class="feat-vis"><div class="phone"><img src="/img/screen-time-light.jpg" alt="Печалба на час по часове и дни" width="390" height="844" loading="lazy"></div></div>
+    <div class="feat-vis"><div class="phone"><img src="/img/screen-time-light.jpg" data-light="/img/screen-time-light.jpg" data-dark="/img/screen-time-dark.jpg" alt="Печалба на час по часове и дни" width="390" height="844" loading="lazy"></div></div>
   </div>
 </section>
 
@@ -177,7 +183,7 @@
         <li>Календар по месец, седмица и ден: смени, плащания и резервации</li>
       </ul>
     </div>
-    <div class="feat-vis"><div class="phone"><img src="/img/screen-reservations-light.jpg" alt="Лични резервации с час, адрес и клиент" width="390" height="844" loading="lazy"></div></div>
+    <div class="feat-vis"><div class="phone"><img src="/img/screen-reservations-light.jpg" data-light="/img/screen-reservations-light.jpg" data-dark="/img/screen-reservations-dark.jpg" alt="Лични резервации с час, адрес и клиент" width="390" height="844" loading="lazy"></div></div>
   </div>
 </section>
 

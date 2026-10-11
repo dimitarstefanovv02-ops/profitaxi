@@ -5,7 +5,7 @@
   {{PRICE}} {{FINAL}}          – общи блокове (site/_price.html, site/_final.html)
   {{IMG:име|alt}}              – снимка от приложението: /img/screen-<име>-light.jpg
   {{IMG:име|alt|eager}}        – същото, без lazy loading (за горната част на страницата)
-  {{IMG:име|alt|dark}}         – тъмната версия /img/screen-<име>-dark.jpg
+  Снимката се сменя според темата на сайта (data-light / data-dark, виж js/landing.js).
   {{IC:име}}                   – линейна иконка (виж ICONS по-долу)
 Шапката и долната част (site/_nav.html, site/_foot.html) се вграждат във всяка страница;
 текущата страница в менюто получава aria-current="page"."""
@@ -54,8 +54,8 @@ def ic(m):
 def img(m):
   shot, alt, *rest = m.group(1).split('|')
   lazy = '' if 'eager' in rest else ' loading="lazy"'
-  theme = 'dark' if 'dark' in rest else 'light'
-  return f'<img src="/img/screen-{shot}-{theme}.jpg" alt="{alt}" width="390" height="844"{lazy}>'
+  return (f'<img src="/img/screen-{shot}-light.jpg" data-light="/img/screen-{shot}-light.jpg" '
+          f'data-dark="/img/screen-{shot}-dark.jpg" alt="{alt}" width="390" height="844"{lazy}>')
 
 for name, (title, desc) in PAGES.items():
   url = '/' if name == 'index' else f'/{name}'

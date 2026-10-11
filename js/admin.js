@@ -87,7 +87,7 @@ function sidebar(active) {
   const n = store.admin.drivers().length;
   const badge = { '/drivers': [n, ''], '/control': [newAlerts().length, 'alert'], '/messages': [unreadTickets(), 'alert'] };
   return h('aside', { class: 'adm-side' },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')), h('span', { class: 'adm-badge' }, role() === 'owner' ? 'Админ' : store.ADMIN_ROLES[role()])),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')), h('span', { class: 'adm-badge' }, role() === 'owner' ? 'Админ' : store.ADMIN_ROLES[role()])),
     zone('nav', { class: 'adm-nav', 'data-tap': '' }, navFor().map(([p, ic, label]) => [p.slice(1),
       h('a', { href: '#' + p, class: cx(active === p && 'on') }, icon(ic, 19), h('span', null, label),
         badge[p] && badge[p][0] > 0 && h('span', { class: cx('count', badge[p][1]) }, String(badge[p][0])))]), 'nav'),
@@ -119,6 +119,7 @@ function topbar() {
     role() !== 'partner' && h('a', { class: 'btn btn-ghost btn-block btn-sm', href: '#/control', onclick: () => { top.bell = false; } }, 'Всички известия'));
   return h('div', { class: 'adm-top' },
     h('div', { class: 'gsearch' }, icon('search', 18), input, res),
+    h('button', { class: 'icon-btn top-btn top-theme', 'aria-label': isDark() ? 'Светла тема' : 'Тъмна тема', title: 'Светла / тъмна тема', onclick: (e) => { setTheme(isDark() ? 'light' : 'dark'); render(); } }, icon(isDark() ? 'sun' : 'moon', 20)),
     h('div', { class: 'bell-wrap' },
       h('button', { class: cx('icon-btn top-btn', n.length && 'has'), id: 'adm-bell', 'aria-label': `Известия: ${n.length} нови`, onclick: () => { top.bell = !top.bell; pop.classList.toggle('open', top.bell); } }, icon('bell', 20), n.length > 0 && h('span', { class: 'dot' }, String(n.length))),
       pop),
@@ -146,7 +147,7 @@ let login2fa = null;
 function loginView() {
   const err = h('p', { class: 'err' });
   const shell = (...kids) => h('div', { class: 'auth', style: { maxWidth: '420px', margin: '0 auto' } },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi'))), ...kids);
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi'))), ...kids);
   if (login2fa) {
     const code = h('input', { class: 'input', inputmode: 'numeric', autocomplete: 'one-time-code', placeholder: '6 цифри', maxlength: 6 });
     return shell(
@@ -456,11 +457,46 @@ function overview() {
       ]))],
       ['attention', attentionCard(all, risk)],
       role() !== 'partner' && ['alerts', alertsLine()],
+      ['onshift', onShiftCard(all)],
+      ['feed', activityFeed(all)],
       // преместени в Пари и Статистика; тук са скрити, но може да се покажат от „Подреди“
       owner && ['goal', goalCard(paidNow), { hide: true }],
       ['weekly', weeklyCard(all), { hide: true }],
       ['map', wide(liveMap(all)), { hide: true }],
     ]));
+}
+// Кой е на смяна в момента: име, от колко часа и колко е въвел досега
+const hhmm = (iso) => { const d = new Date(iso); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const agoText = (iso) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000)); return m < 1 ? 'току-що' : m < 60 ? `преди ${m} мин` : m < 1440 ? `преди ${Math.round(m / 60)} ч` : `преди ${Math.round(m / 1440)} дни`; };
+function onShiftCard(all) {
+  const now = all.flatMap((d) => d.shifts.filter((s) => !s.end && (Date.now() - new Date(s.start)) < 20 * 3600000).map((s) => ({ d, s }))).sort((a, b) => a.s.start.localeCompare(b.s.start));
+  return h('section', { class: 'card onshift' },
+    cardTitle('car', 'На смяна сега', h('span', { class: cx('count', now.length && 'live') }, String(now.length))),
+    now.length ? h('div', { class: 'os-list' }, now.slice(0, 8).map(({ d, s }) => h('a', { class: 'os-row', href: '#/driver/' + d.user.id },
+      h('span', { class: 'live-dot' }),
+      h('span', { class: 'grow' }, h('b', null, d.user.name), h('small', null, [d.user.city, d.user.company].filter(Boolean).join(' · '))),
+      h('span', { class: 'os-time' }, h('b', null, fmtDuration((Date.now() - new Date(s.start)) / 3600000)), h('small', null, `от ${hhmm(s.start)} · ${money(shiftIncome(s))}`)))),
+      now.length > 8 && h('p', { class: 'muted small' }, `и още ${now.length - 8}`))
+      : h('p', { class: 'muted small' }, 'В момента никой не е пуснал смяна.'));
+}
+// Последни действия: регистрации, записани смени, въпроси и плащания – най-новите първи
+function activityFeed(all) {
+  const ev = [];
+  all.forEach((d) => {
+    const u = d.user;
+    if (u.createdAt) ev.push({ at: u.createdAt, ic: 'plus', text: h('span', null, h('b', null, u.name), ' се регистрира', u.city ? ` · ${u.city}` : ''), href: '#/driver/' + u.id });
+    d.shifts.filter((s) => s.end).slice(0, 3).forEach((s) => ev.push({ at: s.end, ic: 'check', text: h('span', null, h('b', null, u.name), ` записа смяна · чисто ${money(shiftIncome(s) - shiftExpenses(s))}`), href: '#/driver/' + u.id }));
+  });
+  if (role() !== 'partner') {
+    const ids = new Set(all.map((d) => d.user.id));
+    store.admin.tickets().filter((t) => ids.has(t.userId)).forEach((t) => { const m = t.thread[t.thread.length - 1]; if (m) ev.push({ at: m.at, ic: 'inbox', text: h('span', null, h('b', null, t.name || 'Шофьор'), m.by === 'admin' ? ' получи отговор' : ' писа: ', m.by === 'admin' ? '' : `„${String(m.text).slice(0, 60)}${m.text.length > 60 ? '…' : ''}“`), href: '#/messages?t=inbox' }); });
+  }
+  const list = ev.filter((e) => e.at && e.at <= new Date().toISOString()).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 12);
+  return h('section', { class: 'card feed' },
+    cardTitle('clock', 'Последни действия'),
+    list.length ? h('div', { class: 'feed-list' }, list.map((e) => h('a', { class: 'feed-row', href: e.href },
+      h('span', { class: 'feed-ic' }, icon(e.ic, 16)), h('span', { class: 'grow' }, e.text), h('small', { class: 'feed-ago' }, agoText(e.at)))))
+      : h('p', { class: 'muted small' }, 'Още няма действия.'));
 }
 // „Днес се случи“: какво е ново от сутринта. Всеки вид има свой цвят – същият е и на картата.
 const HAP = {
@@ -1923,3 +1959,13 @@ setTimeout(autoBackup, 1500);
 // Картата и числата на „Днес“ се обновяват сами на всеки 20 секунди
 const refreshLive = () => { if (store.adminUser() && parse().name === '/overview' && !arranging() && !top.bell && !top.q && !document.querySelector('.sheet-wrap, .tour') && document.visibilityState === 'visible') render(); };
 setInterval(refreshLive, 20000);
+
+// Бързи клавиши: „/“ или Ctrl+K – търсене; „?“ – списък с клавишите
+document.addEventListener('keydown', (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '') || document.activeElement?.isContentEditable;
+  if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) { const i = document.getElementById('adm-search'); if (i) { e.preventDefault(); i.focus(); i.select(); } }
+  else if (e.key === '?' && !typing && store.adminUser?.()) {
+    openSheet((close) => h('div', null, sheetHead('Бързи клавиши', close),
+      h('div', { class: 'keys' }, [['/', 'Търсене на шофьор'], ['Ctrl + K', 'Търсене (и на Mac: ⌘ + K)'], ['Esc', 'Изчисти търсенето'], ['Enter', 'Отвори първия резултат'], ['?', 'Този списък']].map(([k, t]) => h('div', { class: 'key-row' }, h('kbd', null, k), h('span', null, t))))));
+  }
+});

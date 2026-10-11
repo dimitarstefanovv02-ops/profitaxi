@@ -2,7 +2,7 @@
 
 import { h, icon, clear, cx, fmtTimer } from './util.js';
 import * as store from './store.js';
-import { applyTheme, toast } from './ui.js';
+import { applyTheme, toast, themeToggle } from './ui.js';
 import './picker.js';
 import { checkNotifications } from './notify.js';
 import { loginView, registerView, forgotView } from './views/auth.js';
@@ -128,7 +128,9 @@ function nav(active) {
   let cur = active; while (PARENT[cur]) cur = PARENT[cur];
   return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
     h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
-      h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
+      h('span', { class: 'nav-ic' }, icon(ic, 22)), label)),
+    // светла/тъмна тема – в менюто, на всеки екран с меню
+    (() => { const t = themeToggle(() => { if (!busy()) render(); }); t.classList.add('nav-theme'); return t; })());
 }
 
 let churnPick = '';
@@ -187,3 +189,10 @@ if ('serviceWorker' in navigator && location.protocol === 'https:') {
 render();
 
 addEventListener('hashchange', () => closeTour());
+
+// Бутонът за светла/тъмна тема на екраните без меню (вход, въвеждане на смяна) – горе вдясно
+{
+  const t = themeToggle(() => { if (!busy()) render(); });
+  t.classList.add('theme-fab');
+  document.body.appendChild(t);
+}

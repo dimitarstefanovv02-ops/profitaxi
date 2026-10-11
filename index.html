@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>ProfiTaxi – колко ти остава след смяната</title>
   <meta name="description" content="Приложение за таксиметрови шофьори: записваш смяната за секунди и виждаш реалната чиста печалба след гориво, ефир, наем и всички такси. 0,00 € по време на теста.">
-  <meta name="theme-color" content="#141313">
-  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#231F20">
+  <meta name="color-scheme" content="light dark">
   <meta property="og:title" content="ProfiTaxi – колко ти остава след смяната">
   <meta property="og:description" content="Приложение за таксиметрови шофьори: записваш смяната за секунди и виждаш реалната чиста печалба след гориво, ефир, наем и всички такси. 0,00 € по време на теста.">
   <meta property="og:image" content="/icons/icon-512.png">
@@ -22,6 +22,11 @@
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
       if (location.hash.indexOf('#/') === 0) return location.replace('/app' + location.hash);
       if (location.pathname === '/' && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)) return location.replace('/app#/home');
+      // Тема преди изрисуване: изборът на посетителя, иначе темата на телефона
+      var t; try { t = localStorage.getItem('profitaxi.siteTheme'); } catch (e) {}
+      if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', t);
+      document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'dark' ? '#0D0C0C' : '#231F20');
     })();
   </script>
   <script defer src="/js/landing.js"></script>
@@ -39,6 +44,7 @@
       <a href="/about">За нас</a>
     </nav>
     <div class="hd-act">
+      <button class="theme-btn" id="theme-btn" type="button" aria-label="Тъмна тема" title="Светла / тъмна тема"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.2A8.2 8.2 0 1 1 9.8 4a6.4 6.4 0 0 0 10.2 10.2z"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.5 1.5M17.2 17.2l1.5 1.5M5.3 18.7l1.5-1.5M17.2 6.8l1.5-1.5"/></svg></button>
       <a class="hd-login" href="/app#/login">Вход</a>
       <a class="btn btn-light btn-sm hd-reg" href="/app#/register">Регистрация</a>
       <button class="hd-menu" id="menu-btn" type="button" aria-label="Меню" aria-expanded="false" aria-controls="drawer"><i></i><i></i></button>
@@ -66,15 +72,15 @@
     <div class="hero-txt">
       <p class="kicker">За таксиметрови шофьори в България</p>
       <h1>Знай колко ти остава след всяка смяна.</h1>
-      <p class="lead">Записваш смяната за секунди. ProfiTaxi вади горивото, ефира, наема и всички такси и ти показва истинската чиста печалба.</p>
+      <p class="lead">Записваш смяната за секунди и виждаш чистата печалба след гориво, ефир, наем и всички такси.</p>
       <div class="cta">
         <a class="btn btn-light btn-lg" href="/app#/register">Регистрирай се безплатно</a>
         <a class="btn btn-line-light btn-lg" href="/app#/login">Вход</a>
       </div>
-      <p class="hero-note">0,00 € по време на теста · Без карта · Без обвързване</p>
+      <p class="hero-note">0,00 € по време на теста · Без карта</p>
     </div>
     <div class="hero-vis">
-      <div class="phone"><img src="/img/screen-home-light.jpg" alt="Началният екран на ProfiTaxi: чистата печалба за месеца и колко остава до целта" width="390" height="844"></div>
+      <div class="phone"><img src="/img/screen-home-light.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Началният екран на ProfiTaxi: чистата печалба за месеца и колко остава до целта" width="390" height="844"></div>
     </div>
   </div>
 </section>
@@ -117,7 +123,7 @@
       <a class="btn btn-dark" href="/app#/register">Регистрирай се безплатно</a>
     </div>
     <div class="steps-vis">
-      <div class="phone"><img src="/img/screen-numpad-light.jpg" alt="Въвеждане на сума с голяма цифрова клавиатура" width="390" height="844" loading="lazy"></div>
+      <div class="phone"><img src="/img/screen-numpad-light.jpg" data-light="/img/screen-numpad-light.jpg" data-dark="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума с голяма цифрова клавиатура" width="390" height="844" loading="lazy"></div>
     </div>
   </div>
 </section>
@@ -137,7 +143,7 @@
       <p class="show-cap" aria-live="polite">Колко си изкарал чисто този месец, колко остава до целта и колко ти трябва днес.</p>
     </div>
     <div class="show-vis">
-      <div class="phone"><img src="/img/screen-home-light.jpg" alt="Екран „Днес“ от приложението" width="390" height="844" loading="lazy"></div>
+      <div class="phone"><img src="/img/screen-home-light.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Екран „Днес“ от приложението" width="390" height="844" loading="lazy"></div>
     </div>
   </div>
 </section>
