@@ -846,7 +846,7 @@
 :root[data-skin="chisto"] .fab {background: var(--ch-pri) !important; color: var(--ch-on-pri) !important; border-radius: 16px !important; min-height: 56px; box-shadow: 0 4px 8px 3px rgba(0,0,0,.15), 0 1px 3px rgba(0,0,0,.3) !important;}
 :root[data-skin="chisto"] .cover2 {padding: 20px !important; overflow: visible !important;}
 :root[data-skin="chisto"] .cover2 .cover-avatar {position: static !important; width: 68px !important; height: 68px !important; border-radius: 18px !important; overflow: hidden; border: 0 !important; background: var(--ch-on-pri-c) !important; color: var(--ch-pri-c) !important; font-size: 1.5rem !important; font-weight: 800 !important; margin: 0 !important; overflow: hidden; display: grid; place-items: center; flex: none;}
-:root[data-skin="chisto"] .cover2 .cover-avatar img {width: 100%; height: 100%; object-fit: cover;}
+:root[data-skin="chisto"] .cover2 .cover-avatar img {width: 100%; height: 100%; object-fit: cover; border-radius: 0 !important; display: block;}
 :root[data-skin="chisto"] .cover2 .cover-info h1 {font-size: 1.375rem !important; font-weight: 600 !important; color: var(--ch-on-pri-c) !important;}
 :root[data-skin="chisto"] .cover2 .cv-sub {color: var(--ch-on-pri-c); opacity: .85;}
 :root[data-skin="chisto"] .cover2 .cv-edit {height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid var(--ch-on-pri-c); color: var(--ch-on-pri-c) !important; display: inline-flex; align-items: center; font-size: .875rem; font-weight: 600; text-decoration: none;}
