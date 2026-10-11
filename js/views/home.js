@@ -118,18 +118,10 @@ export function homeView({ go, user, data, rerender, route }) {
     ['next', nextUp(data, go)],
 
     // Всичко останало – на едно натискане
-    ['more', more(['Покажи седмицата, часовете и последните смени', 'Скрий седмицата, часовете и последните смени'],
+    ['more', more(['Покажи седмицата и кога е добре да караш', 'Скрий седмицата'],
       zone('drv.home.more', { class: 'dz' }, [
         ['week', weekCard(data)],
         ti.hasData && ['best', bestToday(ti)],
-        ['stats', h('div', { class: 'grid2' },
-          stat('На час', money2(g.stats.netPerHour), { icon: 'clock', cls: 'stat-card', sub: 'чисто' }),
-          stat('На км', money2(g.stats.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' }),
-          stat('Смени', String(g.stats.shifts), { icon: 'calendar', cls: 'stat-card', sub: `${fmtDuration(g.stats.hours)} общо` }),
-          stat('Километри', fmtNum(g.stats.km), { icon: 'gauge', cls: 'stat-card', sub: g.stats.shifts ? `~${fmtNum(g.stats.km / g.stats.shifts)} на смяна` : '' }))],
-        rec.current >= 2 && ['streak', h('div', { class: 'card tip streak' },
-          h('div', { class: 'tip-ic' }, icon('flame', 22)),
-          h('div', { class: 'grow' }, h('b', null, `${rec.current} поредни дни на смяна`), h('span', { class: 'muted small' }, rec.current >= rec.longestRun ? 'Това е новият ти рекорд!' : `Рекордът ти е ${rec.longestRun}. Още ${rec.longestRun - rec.current + 1} за нов.`)))],
       ]))],
     ])]));
 }
