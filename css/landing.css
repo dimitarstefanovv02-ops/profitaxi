@@ -466,11 +466,13 @@ body.menu-open { overflow: hidden; }
   .hero-txt { display: contents; }
   .hero .kicker { grid-column: 1 / -1; margin-bottom: 14px; }
   .hero h1 { grid-column: 1; grid-row: 2; font-size: 34px; line-height: 1.04; margin: 6px 0 18px; }
-  .hero-vis { grid-column: 2; grid-row: 2 / span 2; height: 300px; justify-content: flex-start; margin-right: -24px; overflow: hidden; border-radius: 26px 0 0 0; }
-  .hero-vis .phone { width: 200px; max-width: none; flex: none; }
+  /* цялото телефонче, по-малко */
+  .hero-vis { grid-column: 2; grid-row: 2 / span 2; height: auto; justify-content: flex-end; overflow: visible; margin-top: 6px; }
+  .hero-vis .phone { width: 132px; max-width: none; flex: none; padding: 4px; border-radius: 22px; }
+  .hero-vis .phone img { border-radius: 18px; }
   .hero .lead, .hero .cta, .hero-note { grid-column: 1 / -1; }
   .hero .lead { grid-row: 3; grid-column: 1; font-size: 15px; margin-bottom: 18px; }
   .hero .cta { grid-row: 4; margin-top: 4px; }
   .hero-note { grid-row: 5; }
 }
-@media (max-width: 359px) { .hero h1 { font-size: 30px; } .hero-in { grid-template-columns: minmax(0, 1fr) 112px; } }
+@media (max-width: 359px) { .hero h1 { font-size: 30px; } .hero-in { grid-template-columns: minmax(0, 1fr) 112px; } .hero-vis .phone { width: 112px; } }
