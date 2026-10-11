@@ -542,3 +542,33 @@ body.menu-open { overflow: hidden; }
 .steps .n { color: var(--hint); }
 .blk-ink .steps .n { color: var(--hint-ink); }
 .arrow-link { text-decoration-color: var(--hint); border-color: var(--hint); }
+
+/* Компютър и таблет: цялото телефонче (без отрязване), заглавието на два реда */
+@media (min-width: 600px) {
+  .hero { padding-bottom: 72px; }
+  .hero-in { align-items: center; }
+  .hero-vis { height: auto !important; overflow: visible !important; align-self: center !important; }
+  .hero-vis .phone { width: 300px; max-width: 100%; }
+  .hero h1 { font-size: clamp(40px, 5.2vw, 56px); line-height: 1.04; }
+}
+@media (min-width: 1024px) {
+  .hero h1 { font-size: clamp(48px, 4.3vw, 60px); }
+  .hero h1, .hero h1 .h1-2 { white-space: nowrap; }
+  .hero-vis .phone { width: 320px; }
+}
+/* Лентата горе: бутоните никога на два реда; на по-тесен екран – по-сбити, а под 1100px – менюто с трите черти */
+.hd-nav a { white-space: nowrap; }
+@media (min-width: 900px) and (max-width: 1099px) {
+  .hd-nav { display: none !important; }
+  .hd-menu { display: grid !important; }
+  .drawer:not([hidden]) { display: block !important; }
+}
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .hd-nav a { padding: 9px 10px; font-size: 14px; }
+}
+/* Таблет (600–899px): заглавието и телефончето едно до друго */
+@media (min-width: 600px) and (max-width: 899px) {
+  .hero-in { grid-template-columns: minmax(0, 1fr) 230px; gap: 32px; align-items: center; }
+  .hero-vis .phone { width: 230px; }
+  .hero h1 { font-size: clamp(36px, 5.6vw, 46px); }
+}
