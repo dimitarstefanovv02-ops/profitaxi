@@ -142,25 +142,20 @@ export function profileCover(user, d) {
     try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); }
     catch { toast('Снимката е твърде голяма', 'err'); }
   };
-  // Тъмна карта: снимка/инициали, име, град и фирма; код, номер и модел; абонамент
-  return h('section', { class: cx('cover cover2', d.carPhoto && 'has-car') },
-    h('div', { class: 'cv-top' },
-      h('button', { class: 'cover-avatar', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
+  // Тънка лента горе (име, град и фирма), снимката на колата в средата с профилната снимка в ъгъла,
+  // тънка лента долу (код, номер, модел)
+  const facts = [car.code && `Код ${car.code}`, car.plate, car.model].filter(Boolean);
+  return h('section', { class: 'cover cover3' },
+    h('div', { class: 'c3-bar c3-top' },
+      h('div', { class: 'c3-who' }, h('b', null, user.name), h('small', null, [user.city, user.company].filter(Boolean).join(' · ') || 'Добави град и фирма')),
+      h('a', { class: 'c3-edit', href: '#/profile' }, 'Смени')),
+    h('div', { class: cx('c3-photo', !d.carPhoto && 'empty') },
+      d.carPhoto ? h('img', { class: 'c3-car', src: d.carPhoto, alt: 'Колата' })
+        : h('button', { class: 'c3-addcar', type: 'button', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), 'Добави снимка на колата'),
+      h('button', { class: 'c3-avatar', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
         d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
-      h('div', { class: 'cover-info' },
-        h('h1', null, user.name),
-        h('div', { class: 'cv-sub' }, [user.city, user.company].filter(Boolean).join(' · ') || 'Добави град и фирма')),
-      h('a', { class: 'cv-edit', href: '#/profile' }, 'Смени')),
-    // Снимката на колата – отделна лента между името (горе) и данните (долу), нищо не я закрива
-    d.carPhoto && h('button', { class: 'cv-photo', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, h('img', { src: d.carPhoto, alt: 'Колата' })),
-    h('div', { class: 'cv-badges' },
-      car.code && h('span', { class: 'cover-code' }, h('small', null, 'Код'), car.code),
-      car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate)),
-    h('div', { class: 'cover-car' }, icon('car', 18), car.model || 'Добави модел на колата'),
-    h('button', { class: 'cv-carbtn', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', title: 'Снимка на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 20)),
-    h('div', { class: 'cover-chips' },
-      store.freeMode() ? h('span', { class: 'chip good' }, 'Безплатно – тестов период')
-        : h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));
+      d.carPhoto && h('button', { class: 'c3-cam', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18))),
+    h('a', { class: 'c3-bar c3-bot', href: '#/car' }, icon('car', 16), h('span', null, facts.length ? facts.join(' · ') : 'Добави код, номер и модел на колата')));
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)

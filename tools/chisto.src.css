@@ -721,3 +721,19 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 /* Профил: името и данните се виждат целите – на два реда, ако не се събират */
 .cover2 .cover-info { min-width: 0; }
 .cover2 .cover-info h1, .cover2 .cv-sub { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere; line-height: 1.2 !important; }
+/* ---------- Профил: компактна карта ---------- */
+.cover.cover3 { padding: 0 !important; overflow: hidden !important; background: var(--ch-pri-c) !important; color: var(--ch-on-pri-c) !important; }
+.cover3 .c3-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px 10px 16px; min-height: 52px; color: var(--ch-on-pri-c) !important; text-decoration: none; }
+.cover3 .c3-who { display: flex; flex-direction: column; min-width: 0; flex: 1; line-height: 1.2; }
+.cover3 .c3-who b { font-size: 1rem; font-weight: 700; color: #fff !important; }
+.cover3 .c3-who small { font-size: .78rem; opacity: .75; color: #fff !important; }
+.cover3 .c3-edit { flex: none; height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid rgba(255,255,255,.5); color: #fff !important; display: inline-flex; align-items: center; font-size: .8125rem; font-weight: 600; text-decoration: none; }
+.cover3 .c3-photo { position: relative; aspect-ratio: 16 / 10; background: #111; }
+.cover3 .c3-photo.empty { aspect-ratio: auto; height: 120px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--ch-on-pri-c) 8%, transparent); }
+.cover3 .c3-car { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover3 .c3-avatar { position: absolute; left: 12px; top: 12px; width: 56px; height: 56px; padding: 0; border-radius: 14px; overflow: hidden; border: 2px solid #fff; background: var(--ch-on-pri-c); color: var(--ch-pri-c); font-weight: 700; font-size: 1.2rem; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.cover3 .c3-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 0 !important; }
+.cover3 .c3-cam { position: absolute; right: 10px; bottom: 10px; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.55); color: #fff; border: 1px solid rgba(255,255,255,.5); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.cover3 .c3-addcar { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 20px; border: 1px dashed rgba(255,255,255,.5); background: transparent; color: #fff; font-weight: 600; font-size: .875rem; }
+.cover3 .c3-bot { font-size: .875rem; min-height: 44px; padding-top: 8px; padding-bottom: 8px; }
+.cover3 .c3-bot span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
