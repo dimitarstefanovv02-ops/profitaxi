@@ -954,7 +954,7 @@
 :root[data-skin="chisto"] [data-sec="data"] .f-row .grow, :root[data-skin="chisto"] .f-row.f-timerow .grow {min-height: 0 !important; line-height: 1.2 !important; padding: 0 !important; margin: 0 !important;}
 :root[data-skin="chisto"] [data-sec="data"] .f-row .grow b, :root[data-skin="chisto"] .f-row.f-timerow .grow b {line-height: 1.2 !important; display: block;}
 :root[data-skin="chisto"] .theme-fab {background: var(--ch-high) !important; color: var(--ch-on) !important; box-shadow: none !important;}
-:root[data-skin="chisto"] .nav-theme {background: var(--ch-highest) !important; color: var(--ch-on) !important; border: 0;}
+:root[data-skin="chisto"] .nav-theme, :root[data-skin="chisto"] .g-search-row .theme-toggle {background: var(--ch-high) !important; color: var(--ch-on) !important; border: 0;}
 :root[data-skin="chisto"] .nav.nav-3 {grid-template-columns: repeat(3, minmax(0, 1fr)) 56px !important; padding-right: 8px;}
 :root[data-skin="chisto"] .meter-value, :root[data-skin="chisto"] .hero-num, :root[data-skin="chisto"] .ms-total b, :root[data-skin="chisto"] .wk-num, :root[data-skin="chisto"] .stat-value, :root[data-skin="chisto"] .drive-timer, :root[data-skin="chisto"] .result-net, :root[data-skin="chisto"] .np-val {font-weight: 800 !important; letter-spacing: -.02em !important; font-variant-numeric: proportional-nums !important;}
 :root[data-skin="chisto"] body, :root[data-skin="chisto"] .screen, :root[data-skin="chisto"] .adm-main {font-variant-numeric: proportional-nums !important; font-feature-settings: 'pnum' 1;}
@@ -1005,3 +1005,4 @@
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap .seg-btn.on {border-color: transparent !important;}
 :root[data-skin="chisto"] .meter > .meter-hours {order: 5; font-size: .8125rem; color: var(--ch-on-pri-c); opacity: .75; margin-top: 4px;}
 :root[data-skin="chisto"] .meter .meter-goal b {white-space: nowrap;}
+:root[data-skin="chisto"] .screen > .sub-back + .first-tip {margin-top: 52px !important;}

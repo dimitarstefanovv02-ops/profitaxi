@@ -1332,6 +1332,10 @@ details.more[open] .more-closed { display: none; }
 .theme-fab { position: fixed; z-index: 25; top: calc(env(safe-area-inset-top) + 12px); right: max(12px, calc(50% - 268px)); width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,.18); }
 body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .theme-fab { display: none !important; }
 .screen.no-nav > .top, .auth > .brand, .auth > .back { padding-right: 52px; }
-.nav.nav-3 { grid-template-columns: repeat(3, 1fr) 52px; }
+.nav.nav-3 { grid-template-columns: repeat(3, 1fr); }
 .nav-theme { align-self: center; justify-self: center; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
 .meter-hours { font-size: .82rem; opacity: .8; margin-top: 4px; }
+/* търсачката и бутонът за тема на един ред – горе */
+.g-search-row { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; }
+.g-search-row .g-search { flex: 1; min-width: 0; margin: 0 !important; }
+.g-search-row .theme-toggle { flex: none; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; }

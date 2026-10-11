@@ -637,7 +637,7 @@ details.more > summary .ic { color: var(--ch-on-v); }
 
 /* Бутонът за тема: в менюто (4-то място) или горе вдясно на екраните без меню */
 .theme-fab { background: var(--ch-high) !important; color: var(--ch-on) !important; box-shadow: none !important; }
-.nav-theme { background: var(--ch-highest) !important; color: var(--ch-on) !important; border: 0; }
+.nav-theme, .g-search-row .theme-toggle { background: var(--ch-high) !important; color: var(--ch-on) !important; border: 0; }
 .nav.nav-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) 56px !important; padding-right: 8px; }
 /* Числата – плътни, с еднаква ширина */
 .meter-value, .hero-num, .ms-total b, .wk-num, .stat-value, .drive-timer, .result-net, .np-val { font-weight: 800 !important; letter-spacing: -.02em !important; font-variant-numeric: proportional-nums !important; }
@@ -695,3 +695,4 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .seg.seg-outline.seg-wrap .seg-btn.on { border-color: transparent !important; }
 .meter > .meter-hours { order: 5; font-size: .8125rem; color: var(--ch-on-pri-c); opacity: .75; margin-top: 4px; }
 .meter .meter-goal b { white-space: nowrap; }
+.screen > .sub-back + .first-tip { margin-top: 52px !important; }

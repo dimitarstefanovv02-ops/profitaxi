@@ -128,9 +128,7 @@ function nav(active) {
   let cur = active; while (PARENT[cur]) cur = PARENT[cur];
   return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
     h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
-      h('span', { class: 'nav-ic' }, icon(ic, 22)), label)),
-    // светла/тъмна тема – в менюто, на всеки екран с меню
-    (() => { const t = themeToggle(() => { if (!busy()) render(); }); t.classList.add('nav-theme'); return t; })());
+      h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
 }
 
 let churnPick = '';
