@@ -330,7 +330,7 @@ details.more > summary .ic { color: var(--ch-on-v); }
 .hero-num { font-weight: 800 !important; font-size: clamp(2.6rem, 14vw, 3.4rem) !important; letter-spacing: -1px !important; }
 .hero-chip { background: color-mix(in srgb, var(--ch-on-pri-c) 12%, transparent) !important; color: var(--ch-on-pri-c) !important; border: 0 !important; border-radius: 16px !important; }
 .hero-btn { color: var(--ch-on-pri-c) !important; background: transparent !important; }
-.ms-total b { font-size: clamp(2.6rem, 14vw, 3.4rem) !important; font-weight: 800 !important; }
+.ms-total b { font-size: clamp(2.4rem, 11.5vw, 2.9rem) !important; font-weight: 700 !important; }
 .ms-total b.neg { color: #FFB4AB !important; }
 .month-sum .ms-row b { font-size: 1.25rem; font-weight: 800; }
 .month-sum .ms-row:nth-child(1) b, .month-sum .ms-row:nth-child(2) b { color: var(--ch-on-pri-c) !important; }
@@ -401,11 +401,11 @@ details.more > summary .ic { color: var(--ch-on-v); }
 .ms-stack { display: flex; flex-direction: column; gap: 12px; }
 .month-sum { display: flex; flex-direction: column; gap: 0; }
 .month-sum .ms-total { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; border: 0 !important; padding: 0 !important; margin: 0 0 16px !important; }
-.month-sum .ms-total span { font-size: .875rem; font-weight: 500; }
+.month-sum .ms-total span { font-size: 1rem; font-weight: 500; }
 .month-sum .ms-cells { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .month-sum .ms-row { display: flex !important; flex-direction: column; align-items: flex-start !important; gap: 2px; border-radius: 16px; padding: 12px 14px !important; background: color-mix(in srgb, var(--ch-on-pri-c) 9%, transparent); border: 0 !important; margin: 0 !important; }
-.month-sum .ms-row span { font-size: .75rem; }
-.month-sum p { margin: 16px 0 0 !important; font-size: .8125rem !important; line-height: 1.4; }
+.month-sum .ms-row span { font-size: .875rem; }
+.month-sum p { margin: 16px 0 0 !important; font-size: .9375rem !important; line-height: 1.45; }
 .ms-chips { margin-top: 0 !important; }
 .ms-chips .fuel-line { display: inline-flex !important; align-items: center; gap: 8px; height: 32px; padding: 0 12px !important; border-radius: 8px !important; background: var(--ch-highest) !important; font-size: .875rem; margin: 0 !important; border: 0 !important; }
 .ms-chips .fuel-line b { font-weight: 400; }
@@ -475,7 +475,7 @@ details.more > summary .ic { color: var(--ch-on-v); }
 
 /* ---------- Профил: тъмната карта ---------- */
 .cover2 { padding: 20px !important; overflow: visible !important; }
-.cover2 .cover-avatar { position: static !important; width: 64px !important; height: 64px !important; border-radius: 50% !important; border: 0 !important; background: var(--ch-on-pri-c) !important; color: var(--ch-pri-c) !important; font-size: 1.5rem !important; font-weight: 800 !important; margin: 0 !important; overflow: hidden; display: grid; place-items: center; flex: none; }
+.cover2 .cover-avatar { position: static !important; width: 68px !important; height: 68px !important; border-radius: 18px !important; overflow: hidden; border: 0 !important; background: var(--ch-on-pri-c) !important; color: var(--ch-pri-c) !important; font-size: 1.5rem !important; font-weight: 800 !important; margin: 0 !important; overflow: hidden; display: grid; place-items: center; flex: none; }
 .cover2 .cover-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .cover2 .cover-info h1 { font-size: 1.375rem !important; font-weight: 600 !important; color: var(--ch-on-pri-c) !important; }
 .cover2 .cv-sub { color: var(--ch-on-pri-c); opacity: .85; }
@@ -696,3 +696,15 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .meter > .meter-hours { order: 5; font-size: .9375rem; color: var(--ch-on-pri-c); opacity: .8; margin-top: 6px; line-height: 1.4; }
 .meter .meter-goal b { white-space: nowrap; }
 .screen > .sub-back + .first-tip { margin-top: 52px !important; }
+
+/* Профил: снимката на колата е фон на тъмната карта; текстът – удебелен бял със сянка */
+.cover2.has-car { min-height: 250px; display: flex !important; flex-direction: column; justify-content: space-between; background: #111 var(--car) center / cover no-repeat !important; position: relative; overflow: hidden !important; }
+.cover2.has-car::before { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.25) 60%, rgba(0,0,0,.7) 100%); pointer-events: none; }
+.cover2.has-car > * { position: relative; z-index: 1; }
+.cover2.has-car .cover-info h1, .cover2.has-car .cv-sub, .cover2.has-car .cover-car { color: #fff !important; opacity: 1 !important; font-weight: 700 !important; text-shadow: 0 1px 3px rgba(0,0,0,.85), 0 0 12px rgba(0,0,0,.5); }
+.cover2.has-car .cv-edit { background: rgba(0,0,0,.55); border-color: rgba(255,255,255,.6); color: #fff !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.cover2.has-car .cover-code { background: rgba(0,0,0,.6) !important; color: #fff !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.cover2.has-car .cover-car { display: inline-flex; align-self: flex-start; background: rgba(0,0,0,.55); padding: 6px 12px; border-radius: 12px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.cover2 .cv-carbtn { position: absolute; right: 16px; bottom: 16px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.55); color: #fff !important; border: 1px solid rgba(255,255,255,.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.cover2:not(.has-car) .cv-carbtn { background: color-mix(in srgb, var(--ch-on-pri-c) 12%, transparent); border: 0; }
+.cover2 { position: relative; }

@@ -1364,3 +1364,10 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .yday-line { display: flex; align-items: center; gap: 12px; padding: 14px 16px !important; text-decoration: none; color: inherit; font-size: .95rem; }
 .yday-line .yl-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); flex: none; }
 .yday-line .grow { min-width: 0; line-height: 1.35; }
+/* Изрязване на снимка */
+.crop-wrap { display: flex; justify-content: center; margin: 4px 0 14px; }
+.crop-frame { position: relative; overflow: hidden; border-radius: 18px; background: #111; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+.crop-frame::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 2px rgba(255,255,255,.85); pointer-events: none; }
+.crop-img { position: absolute; left: 0; top: 0; max-width: none !important; transform-origin: 0 0; pointer-events: none; }
+.crop-ctl { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
+.crop-zoom { flex: 1; accent-color: currentColor; }

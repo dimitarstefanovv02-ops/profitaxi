@@ -64,7 +64,7 @@ export function profileView({ go, user, data, route }) {
 const infoRow = (ic, label, value) => h('div', { class: 'info-row' }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, h('small', null, label), h('b', null, value)));
 
 async function setPhoto(key, redraw) {
-  const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400 });
+  const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400, aspect: key === 'carPhoto' ? 16 / 10 : 1, title: key === 'carPhoto' ? 'Изрежи снимката на колата' : 'Изрежи профилната снимка' });
   if (!img) return;
   try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); redraw?.(); }
   catch { toast('Снимката е твърде голяма', 'err'); }
@@ -137,13 +137,13 @@ export function profileCover(user, d) {
   const sub = user.subscription;
   const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
   const setPhoto = async (key) => {
-    const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400 });
+    const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400, aspect: key === 'carPhoto' ? 16 / 10 : 1, title: key === 'carPhoto' ? 'Изрежи снимката на колата' : 'Изрежи профилната снимка' });
     if (!img) return;
     try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); }
     catch { toast('Снимката е твърде голяма', 'err'); }
   };
   // Тъмна карта: снимка/инициали, име, град и фирма; код, номер и модел; абонамент
-  return h('section', { class: 'cover cover2' },
+  return h('section', { class: cx('cover cover2', d.carPhoto && 'has-car'), style: d.carPhoto ? { '--car': `url("${d.carPhoto}")` } : null },
     h('div', { class: 'cv-top' },
       h('button', { class: 'cover-avatar', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
         d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
@@ -155,6 +155,7 @@ export function profileCover(user, d) {
       car.code && h('span', { class: 'cover-code' }, h('small', null, 'Код'), car.code),
       car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate)),
     h('div', { class: 'cover-car' }, icon('car', 18), car.model || 'Добави модел на колата'),
+    h('button', { class: 'cv-carbtn', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', title: 'Снимка на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 20)),
     h('div', { class: 'cover-chips' },
       store.freeMode() ? h('span', { class: 'chip good' }, 'Безплатно – тестов период')
         : h('span', { class: cx('chip', sub.plan === 'trial' ? 'warn' : 'good') }, `${sub.plan === 'trial' ? 'Пробен' : 'Абонамент'} до ${fmtDate(sub.validUntil, { year: true })}${daysLeft <= 7 && daysLeft >= 0 ? ` (${daysLeft} дни)` : ''}`)));

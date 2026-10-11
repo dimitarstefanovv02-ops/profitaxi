@@ -46,7 +46,7 @@ function loadTesseract() {
 }
 // Снимай бележката; onResult({amount, qty, type}) – после шофьорът потвърждава в клавиатурата
 export function scanReceipt(onResult) {
-  const input = h('input', { type: 'file', accept: 'image/*', capture: 'environment', style: { display: 'none' } });
+  const input = h('input', { type: 'file', accept: 'image/jpeg,image/png,image/heic,image/heif,image/webp', capture: 'environment', style: { display: 'none' } });
   document.body.append(input);
   input.onchange = async () => {
     const file = input.files[0]; input.remove(); if (!file) return;
