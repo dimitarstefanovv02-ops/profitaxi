@@ -24,6 +24,7 @@ export function meView({ go, user, data }) {
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
   return h('div', { class: 'screen', 'data-page': 'me' },
     topSearch(() => go('/me')),
+    h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Профил'), h('div', { class: 'date' }, 'Акаунт, колата и помощ'))),
     profileCover(user, data.profile),
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',

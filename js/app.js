@@ -111,6 +111,7 @@ function mount(app, el, route, withNav) {
     const t = tipFor(route.name);
     if (t) { const after = el.querySelector(':scope > .sub-back, :scope > .top'); if (after) after.after(t); else el.prepend(t); }
   }
+  if (!keepScroll && el.classList?.contains('screen')) el.classList.add('tab-in'); // плавно – само при смяна на екрана
   clear(app).appendChild(el);
   // „Изтегли“ – иконката на началния екран (само за влезли шофьори, докато не е инсталирано)
   if (store.currentUser() && !store.previewMode() && installBarVisible()) app.prepend(installBar(() => render()));

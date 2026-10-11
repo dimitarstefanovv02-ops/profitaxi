@@ -73,7 +73,7 @@ export function homeView({ go, user, data, rerender, route }) {
 
   return h('div', { class: 'screen', 'data-page': 'home' },
     topSearch(() => go('/home')),
-    h('div', { class: 'hello' },
+    h('div', { class: 'hello tab-head' },
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
         h('div', { class: 'date' }, fmtDateLong(today))),

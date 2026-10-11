@@ -39,7 +39,7 @@ export function moneyView({ go, data, rerender }) {
 
   return h('div', { class: 'screen', 'data-page': 'money' },
     topSearch(redraw),
-    h('div', { class: 'page-title' }, h('h1', null, 'Пари'),
+    h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Пари'), h('div', { class: 'date' }, 'Месецът на един поглед')),
       h('button', { class: 'month-pick', type: 'button', onclick: () => pickMonth(data, cur, redraw) }, monthName(cur), icon('down', 18))),
 
     zone('drv.money', { class: 'dz' }, [
