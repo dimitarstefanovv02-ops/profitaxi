@@ -121,7 +121,52 @@ export function vehicleView({ go, data, rerender }) {
   return h('div', { class: 'screen', 'data-page': 'vehicle' },
     h('div', { class: 'page-title' }, h('h1', null, 'Колата ми')),
     h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, [car.model, car.plate].filter(Boolean).join(' · ') || 'Ремонтите, разходите и колко ти остава до изплащането'),
-    invCard, sumCard, logCard);
+    invCard, renewCard(p, cs, redraw), sumCard, logCard);
+}
+
+// Заделяне за нова кола (амортизация): (цена на новата − за колко ще продадеш сегашната) ÷ месеци до смяната,
+// разделено на смените в месеца по сегашното ти темпо
+export function renewPlan(p, cs) {
+  const r = p.renewal; if (!r || !(r.price > 0) || !(r.years > 0)) return null;
+  const need = Math.max(0, r.price - (r.resale || 0));
+  const perMonth = need / (r.years * 12);
+  const shiftsPerMonth = cs.workDaysPerWeek > 0 ? cs.workDaysPerWeek * (52.1775 / 12) : 22;
+  const avgHours = cs.st.shifts ? cs.st.hours / cs.st.shifts : 9;
+  const perShift = perMonth / shiftsPerMonth;
+  return { need, perMonth, perShift, perHour: perShift / Math.max(1, avgHours), shiftsPerMonth, ...r };
+}
+function renewCard(p, cs, redraw) {
+  const plan = renewPlan(p, cs);
+  if (!plan) return h('section', { class: 'card' },
+    cardTitle('calendar', 'Заделяй за нова кола'),
+    h('p', { class: 'muted' }, 'Колата се износва с всеки километър. Кажи след колко години искаш нова и колко ще струва – ще ти казвам колко да заделяш от всяка смяна.'),
+    h('button', { class: 'btn btn-primary btn-block', style: { marginTop: '12px' }, onclick: () => renewSheet(p, redraw) }, icon('plus', 18), 'Сметни колко да заделям'));
+  return h('section', { class: 'card car-inv renew' },
+    cardTitle('calendar', 'Заделяй за нова кола', h('button', { class: 'link', onclick: () => renewSheet(p, redraw) }, icon('edit', 15), 'Промени')),
+    h('div', { class: 'ci-top' },
+      h('div', null, h('small', null, 'Отделяй от всяка смяна'), h('b', { class: 'ci-big' }, `~${money(plan.perShift)}`)),
+      h('div', { class: 'ci-right' }, h('small', null, 'На месец'), h('b', null, money(plan.perMonth)))),
+    h('p', { class: 'muted small', style: { marginTop: '10px' } },
+      `За нова кола за ${money(plan.price)}${plan.resale ? `, като продадеш сегашната за ~${money(plan.resale)}` : ''}, след ${plan.years} ${plan.years === 1 ? 'година' : 'години'}. ` +
+      `Това е ~${money(plan.perHour, 2)} на час работа при ~${Math.round(plan.shiftsPerMonth)} смени на месец.`));
+}
+function renewSheet(p, redraw) {
+  const r = p.renewal || {};
+  const price = num(r.price || p.investment?.price || ''), years = num(r.years || 5), resale = num(r.resale || '');
+  const err = h('p', { class: 'err' });
+  openSheet((close) => h('div', { class: 'form' },
+    sheetHead('Нова кола', close, 'Колко да заделяш, за да си купиш нова кола навреме'),
+    field('След колко години', years, 'Напр. 5'),
+    field('Колко ще струва новата', price, 'В евро'),
+    field('За колко ще продадеш сегашната', resale, 'По желание – намалява сумата за заделяне'),
+    err,
+    h('button', { class: 'btn btn-primary btn-lg', onclick: () => {
+      const pr = Number(price.value), y = Number(years.value);
+      if (!(y > 0)) { err.textContent = 'Въведи след колко години'; return; }
+      if (!(pr > 0)) { err.textContent = 'Въведи цената на новата кола'; return; }
+      store.updateProfile({ renewal: { price: Math.round(pr), years: Math.round(y * 10) / 10, resale: Math.round(Number(resale.value) || 0) } }); close(); toast('Запазено'); redraw();
+    } }, icon('check', 18), 'Запази'),
+    p.renewal && h('button', { class: 'btn btn-ghost', onclick: () => { store.updateProfile({ renewal: null }); close(); redraw(); } }, 'Махни')));
 }
 
 const num = (v) => h('input', { class: 'input', type: 'number', inputmode: 'decimal', min: 0, step: 'any', value: v ?? '' });

@@ -200,6 +200,9 @@ const telHref = (p) => 'tel:' + intl(p);
 const viberHref = (p) => 'viber://chat?number=' + encodeURIComponent(intl(p));
 const timeTxt = (iso) => `${fmtDate(isoToDateStr(iso))}, ${new Date(iso).toTimeString().slice(0, 5)}`;
 
+// Снимката на шофьора (или инициалите) – квадрат със заоблени ъгли
+const face = (u, p, size = 36) => h('span', { class: 'adm-face', style: { width: size + 'px', height: size + 'px', fontSize: Math.round(size * 0.38) + 'px' } },
+  p?.photo ? h('img', { src: p.photo, alt: '', loading: 'lazy' }) : (u.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join(''));
 const pageHead = (title, sub, actions) => h('div', { class: 'adm-head' }, h('div', null, h('h1', null, title), sub && h('p', null, sub)), actions);
 // Зона от карти: всяка се мести и скрива. wide = на цялата ширина.
 const flow = (key, items) => zone(key, { class: 'adm-flow' }, items);
@@ -703,7 +706,7 @@ function driverList(all) {
         href: '#/driver/' + d.user.id,
         cells: [
           h('input', { type: 'checkbox', class: 'pick', 'aria-label': `Избери ${d.user.name}`, checked: picked.has(d.user.id), onclick: pick(d.user.id) }),
-          h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, d.user.phone || d.user.email)),
+          h('span', { class: 'who-face' }, face(d.user, d.profile), h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, d.user.phone || d.user.email))),
           h('span', { class: 'who-cell' }, h('b', { style: { fontWeight: 600 } }, d.user.city), h('span', null, d.user.company)),
           h('span', { class: 'tags' }, (d.user.tags || []).map((t) => h('span', { class: 'tag' }, t))),
           healthChip(hl),
@@ -774,7 +777,7 @@ function startTab(all) {
       hbars(STEPS.map(([id, label]) => [label, list.filter((x) => x.s[id]).length]), list.length))],
     ['list', wide(card('users', `Още не са стигнали до 5 смени (${notDone.length})`,
       table(['Шофьор', 'Регистриран', 'Стъпки', 'Заседнал на', ''], notDone.map(({ d }) => ({ href: '#/driver/' + d.user.id, cells: [
-        h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`)),
+        h('span', { class: 'who-face' }, face(d.user, d.profile), h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`))),
         agoTxt(daysAgo(isoToDateStr(d.user.createdAt))), stepDots(d), h('span', { class: cx('chip', isStuck(d) ? 'bad' : 'warn') }, stuckAt(d) || '—'),
         role() !== 'partner' ? h('button', { class: 'btn btn-ghost act-v btn-sm', onclick: () => { Object.assign(msgState, { mode: 'picked', userIds: [d.user.id], title: 'Помощ за началото', text: 'Здравей! Видяхме, че още не си въвел първата смяна. Ако нещо не е ясно, пиши ни от „Профил → Лични данни → Помощ“ – отговаряме бързо.' }); go('/messages?t=new'); } }, icon('bell', 14), 'Пиши') : '',
       ] })), { rightFrom: 9 })))],
@@ -791,7 +794,7 @@ function healthTab(all) {
     ['how', card('heart', 'Как се смята', h('ul', { class: 'adm-list' },
       h('li', null, 'До 30 т. – колко скоро е влизал в приложението'), h('li', null, 'До 40 т. – колко скоро е въвел смяна'), h('li', null, 'До 30 т. – абонаментът (платен, пробен, изтичащ)'), h('li', null, '−15 т. при неуспешно плащане')))],
     ['list', wide(card('alert', 'Първо проблемните', table(['Шофьор', 'Здраве', 'Защо', 'Абонамент'], list.filter((x) => x.hl.cls !== 'good').map(({ d, hl }) => ({ href: '#/driver/' + d.user.id, cells: [
-      h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`)), healthChip(hl), hl.why.join(', ') || '—', h('span', { class: cx('chip', subState(d.user).cls) }, subState(d.user).label)] })), { rightFrom: 9 })))],
+      h('span', { class: 'who-face' }, face(d.user, d.profile), h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`))), healthChip(hl), hl.why.join(', ') || '—', h('span', { class: cx('chip', subState(d.user).cls) }, subState(d.user).label)] })), { rightFrom: 9 })))],
   ]);
 }
 
@@ -815,6 +818,9 @@ function driverDetail(r) {
   const tks = role() === 'partner' ? [] : store.admin.tickets().filter((t) => t.userId === u.id);
   return h('div', null,
     h('a', { class: 'back', href: '#/drivers' }, icon('left', 20), 'Шофьори'),
+    (p.photo || p.carPhoto) && h('div', { class: 'adm-drv-photos' },
+      p.photo && h('a', { href: p.photo, target: '_blank', rel: 'noopener', title: 'Профилна снимка' }, face(u, p, 88)),
+      p.carPhoto && h('a', { class: 'adm-car', href: p.carPhoto, target: '_blank', rel: 'noopener', title: 'Снимка на колата' }, h('img', { src: p.carPhoto, alt: 'Колата' }))),
     pageHead(u.name, `${u.phone || ''}${u.phone ? ' · ' : ''}${u.email}`, h('div', { class: 'row gap wrap' },
       h('span', { class: cx('chip', s.cls) }, s.label), healthChip(hl),
       acts('driver.head', [
@@ -1062,7 +1068,7 @@ function control() {
     odd: () => flow('control.odd', [['list', wide(card('alert', `Странни смени за последните 60 дни (${odd.length})`,
       note('Смени без километри, над 20 часа, с оборот над 2000 €, над 900 км или с голяма загуба. Обикновено са грешка при въвеждане – развалят статистиката. „Проверено“ ги маха от списъка.'),
       odd.length ? table(['Шофьор', 'Дата', 'Какво е странно', 'Оборот', 'Км', 'Часове', ''], odd.map((x) => ({ href: '#/driver/' + x.d.user.id, cells: [
-        h('span', { class: 'who-cell' }, h('b', null, x.d.user.name), h('span', null, x.d.user.city)), fmtDate(shiftDate(x.s), { year: true }),
+        h('span', { class: 'who-face' }, face(x.d.user, x.d.profile), h('span', { class: 'who-cell' }, h('b', null, x.d.user.name), h('span', null, x.d.user.city))), fmtDate(shiftDate(x.s), { year: true }),
         h('span', { class: 'tags' }, x.why.map((w) => h('span', { class: 'chip warn' }, w))), money(shiftIncome(x.s)), fmtNum(shiftKm(x.s)), fmtNum1(shiftHours(x.s)),
         h('button', { class: 'btn btn-ghost act-ok btn-sm', onclick: () => { store.admin.markReviewed([x.s.id]); toast('Отбелязано като проверено'); } }, 'Проверено')] })), { rightFrom: 3 }) : note('Няма странни смени.'),
       odd.length > 1 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '10px' }, onclick: () => { store.admin.markReviewed(odd.map((x) => x.s.id)); toast('Всички са проверени'); } }, 'Всички са проверени')))]]),
@@ -1517,7 +1523,7 @@ function market() {
         ['len', card('calendar', 'Колко дълги са смените', colBars(lens))],
         ['drivers', wide(card('users', 'По шофьори', table(['Шофьор', 'Кола', 'Ефир', 'Наем', 'Смени', 'Приход/ч', 'Чисто/ч', 'Ч/смяна', 'Приход/смяна'],
           ms.filter((x) => x.st.shifts).sort((a, b) => (b.netPerHour || 0) - (a.netPerHour || 0)).map((x) => ({ href: '#/driver/' + x.d.user.id, cells: [
-            h('span', { class: 'who-cell' }, h('b', null, x.d.user.name), h('span', null, `${x.d.user.city}, ${x.d.user.company}`)), CAR_TYPES[x.d.profile.carType]?.label,
+            h('span', { class: 'who-face' }, face(x.d.user, x.d.profile), h('span', { class: 'who-cell' }, h('b', null, x.d.user.name), h('span', null, `${x.d.user.city}, ${x.d.user.company}`))), CAR_TYPES[x.d.profile.carType]?.label,
             x.dispatchMode ? `${money(x.dispatchAmount)}${{ daily: '/ден', weekly: '/седм.', monthly: '/мес' }[x.dispatchMode]}` : '—',
             x.rentWeekly ? `${money(x.rentWeekly)}/седм.` : x.leasingMonthly ? `лизинг ${money(x.leasingMonthly)}` : '—',
             x.st.shifts, money2(x.incomePerHour), h('b', { class: tone(x.netPerHour) }, money2(x.netPerHour)), fmtNum1(x.hoursPerShift), money(x.incomePerShift)] })), { rightFrom: 4 })))],
@@ -1575,7 +1581,7 @@ function chartsTab() {
         ['hour', card('clock', 'Приход на час през денонощието', ti.hasData ? colBars([0, 3, 6, 9, 12, 15, 18, 21].map((hh) => { const xs = ti.byHour.slice(hh, hh + 3).filter((x) => x.rate); return { label: `${hh}ч`, value: xs.length ? xs.reduce((a, x) => a + x.rate, 0) / xs.length : 0 }; }), (v) => `${Math.round(v)}€`) : note('Няма данни'))],
         ['top', wide(card('trophy', 'Класиране за периода', table(['Шофьор', 'Град', 'Смени', 'Приход', 'Чисто', '€/час', '€/км'],
           rows.filter((x) => x.st.shifts).sort((a, b) => b.st.net - a.st.net).slice(0, 10).map(({ d, st }, i) => ({ href: '#/driver/' + d.user.id,
-            cells: [h('span', { class: 'row' }, h('span', { class: 'rank' }, String(i + 1)), h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, d.user.company))), d.user.city, st.shifts, money(st.income), h('b', { class: tone(st.net) }, money(st.net)), money2(st.netPerHour), money2(st.netPerKm)] })), { rightFrom: 2 })))],
+            cells: [h('span', { class: 'row' }, h('span', { class: 'rank' }, String(i + 1)), h('span', { class: 'who-face' }, face(d.user, d.profile), h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, d.user.company)))), d.user.city, st.shifts, money(st.income), h('b', { class: tone(st.net) }, money(st.net)), money2(st.netPerHour), money2(st.netPerKm)] })), { rightFrom: 2 })))],
         ['exp', card('wallet', 'Разходи на всички',
           h('div', { class: 'grid2', style: { marginBottom: '14px' } }, stat('От смените', money(T.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(T.fixed), { icon: 'calendar', color: 'var(--c-blue)' })),
           shareRows(Object.values(exp).sort((a, b) => b.value - a.value).slice(0, 8), T.exp))],
@@ -1696,7 +1702,7 @@ function moneyOverview(all, pays) {
 const remindText = (s) => (s.key === 'trial' ? ['Пробният период свършва', `Пробният ви период свършва след ${s.left} дни. Абонаментът е само ${money(store.admin.settings().price, 2)} на месец – данните ви остават.`] : ['Абонаментът изтича скоро', `Абонаментът ви изтича след ${s.left} дни. Подновете го, за да не спира достъпът до отчетите.`]);
 function expiringTab(all, expiring) {
   const expired = all.map((d) => ({ d, s: subState(d.user) })).filter((x) => x.s.key === 'expired').sort((a, b) => b.s.left - a.s.left);
-  const row = ({ d, s }, btn) => ({ href: '#/driver/' + d.user.id, cells: [h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`)), h('span', { class: cx('chip', s.cls) }, s.label), fmtDate(d.user.subscription.validUntil, { year: true }), s.left === 0 ? 'днес' : s.left > 0 ? `след ${s.left} дни` : `преди ${-s.left} дни`, btn] });
+  const row = ({ d, s }, btn) => ({ href: '#/driver/' + d.user.id, cells: [h('span', { class: 'who-face' }, face(d.user, d.profile), h('span', { class: 'who-cell' }, h('b', null, d.user.name), h('span', null, `${d.user.city}, ${d.user.company}`))), h('span', { class: cx('chip', s.cls) }, s.label), fmtDate(d.user.subscription.validUntil, { year: true }), s.left === 0 ? 'днес' : s.left > 0 ? `след ${s.left} дни` : `преди ${-s.left} дни`, btn] });
   return flow('money.expiring', [
     ['auto', wide(autoRemindCard())],
     ['soon', wide(card('clock', `Изтичат до 7 дни (${expiring.length})`,
