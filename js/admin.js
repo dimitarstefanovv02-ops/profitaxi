@@ -87,7 +87,7 @@ function sidebar(active) {
   const n = store.admin.drivers().length;
   const badge = { '/drivers': [n, ''], '/control': [newAlerts().length, 'alert'], '/messages': [unreadTickets(), 'alert'] };
   return h('aside', { class: 'adm-side' },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Чисто'), h('span', { class: 'adm-badge' }, role() === 'owner' ? 'Админ' : store.ADMIN_ROLES[role()])),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Чисто'), h('span', { class: 'adm-badge' }, role() === 'owner' ? 'Админ' : store.ADMIN_ROLES[role()])),
     zone('nav', { class: 'adm-nav', 'data-tap': '' }, navFor().map(([p, ic, label]) => [p.slice(1),
       h('a', { href: '#' + p, class: cx(active === p && 'on') }, icon(ic, 19), h('span', null, label),
         badge[p] && badge[p][0] > 0 && h('span', { class: cx('count', badge[p][1]) }, String(badge[p][0])))]), 'nav'),
@@ -147,7 +147,7 @@ let login2fa = null;
 function loginView() {
   const err = h('p', { class: 'err' });
   const shell = (...kids) => h('div', { class: 'auth', style: { maxWidth: '420px', margin: '0 auto' } },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Чисто')), ...kids);
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/admin-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Чисто')), ...kids);
   if (login2fa) {
     const code = h('input', { class: 'input', inputmode: 'numeric', autocomplete: 'one-time-code', placeholder: '6 цифри', maxlength: 6 });
     return shell(
