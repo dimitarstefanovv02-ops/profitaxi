@@ -693,3 +693,5 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .seg.seg-outline.seg-wrap { border: 0 !important; border-radius: 0 !important; overflow: visible !important; flex-wrap: wrap !important; gap: 8px !important; display: flex !important; }
 .seg.seg-outline.seg-wrap .seg-btn { flex: 0 0 auto !important; border: 1px solid var(--ch-outline) !important; border-radius: 8px !important; min-height: 36px; padding: 0 12px !important; white-space: nowrap; }
 .seg.seg-outline.seg-wrap .seg-btn.on { border-color: transparent !important; }
+.meter-plan .meter-hours { margin-top: 14px !important; }
+.meter-plan .mt-sub { font-size: .75rem !important; margin-top: 2px; }

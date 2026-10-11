@@ -233,6 +233,11 @@ function meter(g, month) {
       showPlan && hours != null && !(g.workedToday && g.remainingDays === 0) && h('div', { class: 'meter-today' }, h('span', { class: 'mt-ic' }, icon('flag', 22)),
         h('div', null, h('small', null, g.workedToday ? 'Утре ти трябват' : 'Днес ти трябват'),
           h('div', { class: 'mt-val' }, h('b', null, money(g.needToday)), h('span', null, g.needHoursToday != null ? ` от смяната (~${fmtNum(Math.max(1, Math.round(g.needHoursToday)))} ч)` : ' от смяната')))),
+      // Още колко часа работа до целта – по това, което изкарваш на час от смените досега
+      showPlan && hours != null && h('div', { class: 'meter-today meter-hours' }, h('span', { class: 'mt-ic' }, icon('clock', 22)),
+        h('div', null, h('small', null, 'До целта остават'),
+          h('div', { class: 'mt-val' }, h('b', null, `~${fmtNum(Math.ceil(hours))} ч`), h('span', null, ` работа${g.shiftsNeeded != null ? ` · ~${g.shiftsNeeded} ${g.shiftsNeeded === 1 ? 'смяна' : 'смени'}` : ''}`)),
+          h('small', { class: 'mt-sub' }, `при ${money2(g.ratePerHour)} на час от смените досега`))),
       showPlan && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко ти трябва на ден ще сметнем след първата ти смяна.')),
       showPlan && h('div', { class: 'mp-line' }),
       h('div', { class: 'meter-forecast' }, h('div', null, h('small', null, 'Очаквано за целия месец'), h('b', { class: g.forecast < 0 ? 'neg' : '' }, money(g.forecast))),
