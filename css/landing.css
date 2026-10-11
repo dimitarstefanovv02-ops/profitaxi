@@ -476,3 +476,25 @@ body.menu-open { overflow: hidden; }
   .hero-note { grid-row: 5; }
 }
 @media (max-width: 359px) { .hero h1 { font-size: 30px; } .hero-in { grid-template-columns: minmax(0, 1fr) 112px; } .hero-vis .phone { width: 112px; } }
+
+/* На телефона навсякъде: заглавието (и първото изречение) – до малко цяло телефонче,
+   а списъците и останалият текст – под тях на цяла ширина. Без отделен скрол за снимката. */
+@media (max-width: 599px) {
+  .steps-wrap:has(.phone), .show:has(.phone), .feat:has(.feat-vis .phone) { display: grid !important; grid-template-columns: minmax(0, 1fr) 132px; column-gap: 14px; row-gap: 0; align-items: start; }
+  .steps-wrap:has(.phone) .steps-txt, .show:has(.phone) .show-txt, .feat:has(.feat-vis .phone) .feat-txt { display: contents !important; }
+  .steps-txt > *, .show-txt > *, .feat-txt > * { grid-column: 1 / -1; }
+  .steps-txt > h2, .show-txt > h2, .feat-txt > h2, .feat-txt > .label, .feat-txt > h2 + .lead, .show-txt > .show-tabs, .show-txt > .show-cap { grid-column: 1; }
+  .steps-vis:has(.phone), .show-vis:has(.phone), .feat-vis:has(.phone) { grid-column: 2 !important; grid-row: 1 / span 3 !important; height: auto !important; overflow: visible !important; display: flex; justify-content: flex-end; margin: 0 !important; }
+  .steps-vis .phone, .show-vis .phone, .feat-vis .phone { width: 132px !important; max-width: none !important; padding: 4px !important; border-radius: 22px !important; flex: none; }
+  .steps-vis .phone img, .show-vis .phone img, .feat-vis .phone img { border-radius: 18px !important; }
+  .steps-txt > h2, .show-txt > h2, .feat-txt > h2 { font-size: 28px; margin-bottom: 12px !important; }
+  .feat-txt > h2 + .lead { font-size: 15px; }
+  .steps-txt > .steps, .feat-txt > .bul, .feat-txt > .lead ~ .lead { margin-top: 18px !important; }
+  .show-txt > .show-tabs { gap: 6px !important; }
+  .show-txt > .show-tabs button { font-size: 13px !important; padding: 0 10px !important; min-height: 34px !important; }
+  .show-txt > .show-cap { font-size: 14px; margin-top: 12px; }
+}
+@media (max-width: 359px) {
+  .steps-wrap:has(.phone), .show:has(.phone), .feat:has(.feat-vis .phone) { grid-template-columns: minmax(0, 1fr) 112px; }
+  .steps-vis .phone, .show-vis .phone, .feat-vis .phone { width: 112px !important; }
+}
