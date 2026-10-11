@@ -723,3 +723,6 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .screen.tab-in { animation: tabIn .22s ease-out; }
 @keyframes tabIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .screen.tab-in { animation: none; } }
+/* Профил: името и данните се виждат целите – на два реда, ако не се събират */
+.cover2 .cover-info { min-width: 0; }
+.cover2 .cover-info h1, .cover2 .cv-sub { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere; line-height: 1.2 !important; }

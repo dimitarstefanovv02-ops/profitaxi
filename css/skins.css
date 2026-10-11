@@ -1033,3 +1033,5 @@
 @media (prefers-reduced-motion: reduce) {
 :root[data-skin="chisto"] .screen.tab-in {animation: none;}
 }
+:root[data-skin="chisto"] .cover2 .cover-info {min-width: 0;}
+:root[data-skin="chisto"] .cover2 .cover-info h1, :root[data-skin="chisto"] .cover2 .cv-sub {white-space: normal !important; overflow: visible !important; text-overflow: clip !important; overflow-wrap: anywhere; line-height: 1.2 !important;}
