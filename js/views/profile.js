@@ -63,7 +63,7 @@ export function profileView({ go, user, data, route }) {
 
 const infoRow = (ic, label, value) => h('div', { class: 'info-row' }, h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, h('small', null, label), h('b', null, value)));
 
-async function setPhoto(key, redraw) {
+export async function setPhoto(key, redraw) {
   const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400, aspect: key === 'carPhoto' ? 16 / 10 : 1, title: key === 'carPhoto' ? 'Изрежи снимката на колата' : 'Изрежи профилната снимка' });
   if (!img) return;
   try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); redraw?.(); }
@@ -146,14 +146,12 @@ export function profileCover(user, d) {
   // тънка лента долу (код, номер, модел)
   const facts = [car.code && `Код ${car.code}`, car.plate, car.model].filter(Boolean);
   return h('section', { class: 'cover cover3' },
-    h('div', { class: 'c3-bar c3-top' },
+    h('a', { class: 'c3-bar c3-top', href: '#/profile', 'aria-label': 'Лични данни' },
       h('div', { class: 'c3-who' }, h('b', null, user.name), h('small', null, [user.city, user.company].filter(Boolean).join(' · ') || 'Добави град и фирма')),
-      h('a', { class: 'c3-edit', href: '#/profile' }, 'Смени')),
+      h('span', { class: 'c3-edit', 'aria-hidden': 'true' }, icon('edit', 16))),
     h('div', { class: cx('c3-photo', !d.carPhoto && 'empty') },
       d.carPhoto ? h('img', { class: 'c3-car', src: d.carPhoto, alt: 'Колата' })
         : h('button', { class: 'c3-addcar', type: 'button', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), 'Добави снимка на колата'),
-      h('button', { class: 'c3-avatar', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
-        d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
       d.carPhoto && h('button', { class: 'c3-cam', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18))),
     h('a', { class: 'c3-bar c3-bot', href: '#/car' }, icon('car', 16), h('span', null, facts.length ? facts.join(' · ') : 'Добави код, номер и модел на колата')));
 }

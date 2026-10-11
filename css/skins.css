@@ -1045,3 +1045,16 @@
 :root[data-skin="chisto"] .cover3 .c3-addcar {display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 20px; border: 1px dashed rgba(255,255,255,.5); background: transparent; color: #fff; font-weight: 600; font-size: .875rem;}
 :root[data-skin="chisto"] .cover3 .c3-bot {font-size: .875rem; min-height: 44px; padding-top: 8px; padding-bottom: 8px;}
 :root[data-skin="chisto"] .cover3 .c3-bot span {white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;}
+:root[data-skin="chisto"] .cover3 .c3-bar {position: relative; justify-content: center; text-align: center; padding: 12px 48px; min-height: 60px; background: linear-gradient(180deg, color-mix(in srgb, #fff 6%, transparent), transparent);}
+:root[data-skin="chisto"] .cover3 .c3-top {border-bottom: 1px solid rgba(255,255,255,.08);}
+:root[data-skin="chisto"] .cover3 .c3-bot {border-top: 1px solid rgba(255,255,255,.08); background: linear-gradient(0deg, color-mix(in srgb, #fff 6%, transparent), transparent);}
+:root[data-skin="chisto"] .cover3 .c3-who {align-items: center; flex: 0 1 auto;}
+:root[data-skin="chisto"] .cover3 .c3-who b {font-size: 1.15rem !important; letter-spacing: -.01em;}
+:root[data-skin="chisto"] .cover3 .c3-who small {font-size: .875rem !important; opacity: .8; margin-top: 2px;}
+:root[data-skin="chisto"] .cover3 .c3-edit {position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; padding: 0; border-radius: 50%; justify-content: center; border: 1px solid rgba(255,255,255,.35);}
+:root[data-skin="chisto"] .cover3 .c3-bot {font-size: 1rem !important; font-weight: 600; gap: 8px;}
+:root[data-skin="chisto"] .cover3 .c3-bot .ic {flex: none; opacity: .8;}
+:root[data-skin="chisto"] .screen > .tab-head .tab-avatar {flex: none; width: 60px; height: 60px; padding: 0; border-radius: 16px; overflow: hidden; border: 0; background: var(--ch-pri); color: var(--ch-on-pri); font-weight: 700; font-size: 1.25rem; display: grid; place-items: center;}
+:root[data-skin="chisto"] .screen > .tab-head .tab-avatar img {width: 100%; height: 100%; object-fit: cover; display: block;}
+:root[data-skin="chisto"] .cover3 .c3-bot {padding: 12px 16px !important;}
+:root[data-skin="chisto"] .cover3 .c3-bot span {white-space: normal !important; overflow: visible !important; text-overflow: clip !important; line-height: 1.3;}

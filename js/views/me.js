@@ -7,7 +7,7 @@ import { toast, topSearch } from '../ui.js';
 // „Подреди екраните“: режимът важи за всички страници, докато не натиснеш „Готово“
 function startArrange() { setArranging(true); toast('Задръж карта или бутон и го влачи. Мини през страниците от менюто долу.'); }
 import * as store from '../store.js';
-import { profileCover } from './profile.js';
+import { profileCover, setPhoto } from './profile.js';
 import { carStats, carLog } from './vehicle.js';
 import { money } from '../util.js';
 // Подзаглавие за „Колата ми“
@@ -24,7 +24,9 @@ export function meView({ go, user, data }) {
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
   return h('div', { class: 'screen', 'data-page': 'me' },
     topSearch(() => go('/me')),
-    h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Профил'), h('div', { class: 'date' }, 'Акаунт, колата и помощ'))),
+    h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Профил'), h('div', { class: 'date' }, 'Акаунт, колата и помощ')),
+      h('button', { class: 'tab-avatar', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo', () => go('/me')) },
+        data.profile.photo ? h('img', { src: data.profile.photo, alt: '' }) : h('span', null, user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')))),
     profileCover(user, data.profile),
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',
