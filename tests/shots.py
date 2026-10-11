@@ -9,6 +9,8 @@ async def main():
         b = await p.chromium.launch()
         for theme in ('light', 'dark'):
             ctx = await b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, color_scheme=theme, permissions=['notifications'])
+            # Снимките за сайта: шрифт, близък до системния на iPhone (SF) – Inter
+            await ctx.add_init_script("document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = ':root, :root * { --font: Inter, -apple-system, system-ui, sans-serif !important; }'; document.head.appendChild(st); })")
             pg = await ctx.new_page()
             await pg.clock.install(time=datetime.datetime(2026, 10, 24, 18, 30))
             await pg.goto('http://localhost:8765/app'); await pg.evaluate('localStorage.clear()'); await pg.goto('http://localhost:8765/app')

@@ -61,7 +61,11 @@ for name, (title, desc) in PAGES.items():
   url = '/' if name == 'index' else f'/{name}'
   top = nav if name == 'index' else nav.replace(f'href="{url}"', f'href="{url}" aria-current="page"')
   body = (src / f'{name}.html').read_text().replace('{{PRICE}}', price).replace('{{FINAL}}', final)
-  html = head.replace('{{TITLE}}', title).replace('{{DESC}}', desc) + top + body + foot + '</body>\n</html>\n'
+  # Версия на CSS/JS по съдържанието – браузърът взима новия файл веднага след промяна
+  import hashlib
+  ver = lambda f: hashlib.md5((root / f).read_bytes()).hexdigest()[:8]
+  head2 = head.replace('/css/landing.css"', f'/css/landing.css?v={ver("css/landing.css")}"').replace('/js/landing.js"', f'/js/landing.js?v={ver("js/landing.js")}"')
+  html = head2.replace('{{TITLE}}', title).replace('{{DESC}}', desc) + top + body + foot + '</body>\n</html>\n'
   html = re.sub(r'\{\{IMG:([^}]+)\}\}', img, html)
   html = re.sub(r'\{\{IC:([a-z]+)\}\}', ic, html)
   assert '{{' not in html, name
