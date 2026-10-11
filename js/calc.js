@@ -143,9 +143,18 @@ export function goalProgress(data) {
   // Скорост на час: първо този месец, ако е малко – последните 60 дни
   let base = st;
   if (st.hours < 12) base = periodStats(data, addDays(today, -60), today);
-  // Ефирът (разход в смяната) не се смята в печалбата на час – той се прогнозира отделно, по дни (виж efirLeft)
-  const baseEfir = base.expByCat.dispatch || 0;
-  const ratePerHour = base.hours ? (base.income - base.varExp + baseEfir) / base.hours : 0;
+  // Скорост на час = приход на час − гориво на час.
+  // Горивото зависи от това колко караш, затова е на час: всичкото въведено гориво ÷ всичките часове
+  // за последните 30 дни (ако са под 12 ч – за 60 дни). Така едно голямо зареждане не мести прогнозата.
+  // Ефир, мивка и паркинг се плащат на ден, независимо от часовете – те се прогнозират отделно, по дни.
+  const incomePerHour = base.hours ? base.income / base.hours : 0;
+  let fuelBase = periodStats(data, addDays(today, -29), today);
+  if (fuelBase.hours < 12) fuelBase = periodStats(data, addDays(today, -59), today);
+  const fuelSum = fuelBase.expByCat.fuel || 0;
+  const fuelPerHour = fuelBase.hours ? fuelSum / fuelBase.hours : 0;
+  const fuelPerKm = fuelBase.km ? fuelSum / fuelBase.km : null;
+  const fuelMissing = base.hours > 0 && fuelSum === 0;
+  const ratePerHour = base.hours ? incomePerHour - fuelPerHour : 0;
   const avgShiftHours = base.shifts ? base.hours / base.shifts : 9;
   const workRatio = base === st ? (elapsed ? Math.max(st.workedDays / elapsed, 0.4) : 0.8) : Math.max(base.workedDays / 60, 0.4);
 
@@ -155,15 +164,18 @@ export function goalProgress(data) {
     const withoutWork = fixedForDay(data.costs, data.profile, d, false);
     fixedLeft += withoutWork + (all - withoutWork) * workRatio; // таксата „на работен ден“ – само за очакваните работни дни
   }
-  // Ефир до края на месеца – пропорционално на въведения досега: (ефир досега ÷ изминали дни) × оставащи дни.
-  // Ако този месец още няма ефир, а скоростта е от последните 60 дни – по същия начин за тези 61 дни.
-  const efirPerDay = st.expByCat.dispatch ? st.expByCat.dispatch / elapsed : base !== st ? baseEfir / 61 : 0;
+  // Разходите на ден (ефир, мивка, паркинг) до края на месеца – пропорционално на въведените досега:
+  // (сума досега ÷ изминали дни) × оставащи дни. Ако скоростта е от последните 60 дни – за тези 61 дни.
+  const DAY_CATS = ['dispatch', 'wash', 'parking'];
+  const perDayOf = (k) => (st.expByCat[k] ? st.expByCat[k] / elapsed : base !== st ? (base.expByCat[k] || 0) / 61 : 0);
+  const efirPerDay = perDayOf('dispatch');
   const efirLeft = efirPerDay * remainingDays;
+  const dayCostsLeft = DAY_CATS.reduce((a, k) => a + perDayOf(k), 0) * remainingDays;
   // „Чисто досега“ = приход − разходи от смените − постоянните разходи до днес.
   // До целта остава: цел − чисто досега + постоянните разходи, които предстоят до края на месеца.
   const monthFixed = st.fixedExp + fixedLeft;
   const net = st.net;
-  const remaining = Math.max(0, goal - net + fixedLeft + efirLeft);
+  const remaining = Math.max(0, goal - net + fixedLeft + dayCostsLeft);
   const toEarn = remaining; // нужна печалба от смени до края на месеца
   const hoursNeeded = ratePerHour > 0 ? toEarn / ratePerHour : null;
   const shiftsNeeded = hoursNeeded != null ? Math.ceil(hoursNeeded / avgShiftHours) : null;
@@ -181,7 +193,7 @@ export function goalProgress(data) {
   const profitPerDay = base.workedDays ? (base.income - base.varExp) / base.workedDays : 0;
   const forecast = st.net + profitPerDay * daysInclToday * workRatio - fixedLeft;
   return {
-    goal, net, netToDate: st.net, monthFixed, efirLeft, efirPerDay, pct: goal ? Math.max(0, net) / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
+    goal, net, netToDate: st.net, monthFixed, efirLeft, efirPerDay, dayCostsLeft, incomePerHour, fuelPerHour, fuelPerKm, fuelMissing, pct: goal ? Math.max(0, net) / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
     needToday, workDaysLeft, workedToday, needHoursToday: ratePerHour > 0 ? needToday / ratePerHour : null,
     ratePerHour, hoursNeeded, shiftsNeeded, avgShiftHours, shiftsLeft, needPerShift,
     feasible: hoursNeeded != null && hoursNeeded <= remainingDays * 12,

@@ -18,9 +18,9 @@ async def main():
         calc = await pg.evaluate("""(async()=>{const c=await import('/js/calc.js');const s=await import('/js/store.js');const u=await import('/js/util.js');const d=s.myData();const t=u.todayStr();
           const st=c.periodStats(d,u.startOfMonth(t),u.endOfMonth(t));const g=c.goalProgress(d);
           let fx=0;for(const x of u.eachDay(u.startOfMonth(t),t)) fx+=c.fixedForDay(d.costs,d.profile,x,st?true:false);
-          return {stFixed:st.fixedExp, toToday:c.periodStats(d,u.startOfMonth(t),t).fixedExp, net:g.net, stNet:st.net, rem:g.remaining, goal:g.goal, fl:g.fixedLeft, need:g.needToday}})()""")
+          return {stFixed:st.fixedExp, toToday:c.periodStats(d,u.startOfMonth(t),t).fixedExp, net:g.net, stNet:st.net, rem:g.remaining, goal:g.goal, fl:g.fixedLeft, dl:g.dayCostsLeft, need:g.needToday}})()""")
         ok('Постоянните разходи се смятат само до днес (не за целия месец)', abs(calc['stFixed']-calc['toToday'])<0.01, f"{calc['stFixed']:.0f} = {calc['toToday']:.0f}")
-        ok('Цел: от смените трябват = цел − чисто + постоянни до края', abs(calc['rem'] - max(0, calc['goal']-calc['net']+calc['fl']))<0.01, round(calc['rem']))
+        ok('Цел: от смените трябват = цел − чисто + постоянни до края + ефир/мивка/паркинг до края', abs(calc['rem'] - max(0, calc['goal']-calc['net']+calc['fl']+calc['dl']))<0.01, round(calc['rem']))
         ok('„Днес ти трябват“ се показва', 'Днес ти трябват' in await pg.inner_text('.meter-stack') or 'Утре ти трябват' in await pg.inner_text('.meter-stack'))
         ok('„Очаквано за целия месец“ се вижда без да се отваря нищо', await pg.is_visible('.meter-forecast'))
         # „Изтегли“

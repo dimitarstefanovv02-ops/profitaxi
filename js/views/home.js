@@ -230,7 +230,8 @@ function meter(g, month) {
     g.goal > 0 && roadProgress(g.pct),
     // Още колко часа работа до целта – по това, което изкарваш на час от смените досега
     g.goal > 0 && !g.done && g.hoursNeeded != null && h('div', { class: 'meter-hours' },
-      `~${fmtNum(Math.ceil(g.hoursNeeded))} ч работа${g.shiftsNeeded != null ? ` · ~${g.shiftsNeeded} ${g.shiftsNeeded === 1 ? 'смяна' : 'смени'}` : ''} до целта · при ${money2(g.ratePerHour)}/ч`)),
+      `~${fmtNum(Math.ceil(g.hoursNeeded))} ч работа${g.shiftsNeeded != null ? ` · ~${g.shiftsNeeded} ${g.shiftsNeeded === 1 ? 'смяна' : 'смени'}` : ''} до целта · при ${money2(g.incomePerHour)}/ч приход${g.fuelPerHour > 0 ? ` − ${money2(g.fuelPerHour)}/ч гориво` : ''}`),
+    g.goal > 0 && !g.done && g.fuelMissing && h('div', { class: 'meter-hours' }, 'Въведи и горивото, за да са точни часовете')),
     // Втора карта: колко трябва днес, очаквано за месеца и подробностите
     h('section', { class: 'card meter-plan', 'aria-label': 'Колко ти трябва' },
       // последният ден от месеца, след смяната: „утре“ е вече следващият месец – не показваме
@@ -245,9 +246,9 @@ function meter(g, month) {
       h('div', { class: 'meter-grid' },
         h('div', { class: 'meter-cell' }, h('span', null, 'Часове'), h('b', null, `~${Math.ceil(hours)}`)),
         h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
-        h('div', { class: 'meter-cell' }, h('span', null, 'От смените на час'), h('b', null, money2(g.ratePerHour)))),
+        h('div', { class: 'meter-cell' }, h('span', null, 'Приход на час − гориво'), h('b', null, money2(g.ratePerHour)))),
       h('div', { class: 'meter-note' }, icon('alert', 14),
-        h('span', null, `Наемът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}.${g.efirLeft > 0 ? ` Ефир до края на месеца ~${money(g.efirLeft)} – колкото досега на ден.` : ''} Затова от смените трябват повече от разликата до целта.`)))));
+        h('span', null, `Наемът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}.${g.dayCostsLeft > 0 ? ` Ефир, мивка и паркинг до края на месеца ~${money(g.dayCostsLeft)} – колкото досега на ден.` : ''} Горивото е на час: ${money2(g.fuelPerHour)}/ч${g.fuelPerKm ? ` (${money2(g.fuelPerKm)} на км)` : ''}, от последните 30 дни. Затова от смените трябват повече от разликата до целта.`)))));
 }
 
 function weekCard(data) {
