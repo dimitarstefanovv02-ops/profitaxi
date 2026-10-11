@@ -5,15 +5,14 @@ import { openSheet, sheetHead, toast, field, cardTitle, segmented, confirmSheet 
 import { periodStats, shiftDate } from '../calc.js';
 import { COST_CATS, EXPENSE_CATS } from '../constants.js';
 
-// Разходи по колата: от смените (гориво, автомивка, обслужване, ремонт, гуми) и постоянните/еднократните с „car“
-const SHIFT_CAR = ['fuel', 'wash', 'service', 'repair', 'tires'];
+// Разходи по колата: от смените (обслужване, ремонт, гуми) и постоянните/еднократните с „car“.
+// Горивото, ефирът и автомивката са консумативи – не са разход „по колата“ (влизат в „Гориво, ефир, мивка и др.“).
+const SHIFT_CAR = ['service', 'repair', 'tires'];
 const LOG_SHIFT = ['service', 'repair', 'tires'];
 const GROUPS = [
-  ['Гориво', ['fuel']],
   ['Ремонти, обслужване, гуми', ['repair', 'service', 'tires', 'car_other']],
   ['Застраховки, винетка, преглед', ['insurance', 'casco', 'vignette', 'inspection', 'insure']],
   ['Лизинг', ['leasing']],
-  ['Автомивка', ['wash']],
   ['Таксиметров апарат', ['meter']],
 ];
 
@@ -26,7 +25,7 @@ export function carStats(data, profile = data.profile) {
   // по колата: от смените + постоянни „за колата“ + ремонтите от тази страница
   const byCat = {};
   for (const [k, v] of Object.entries(st.expByCat)) if (SHIFT_CAR.includes(k)) byCat[k] = (byCat[k] || 0) + v;
-  for (const [k, v] of Object.entries(st.fixedByCat || {})) if (COST_CATS[k]?.car || ['fuel', 'wash', 'car_other'].includes(k)) byCat[k] = (byCat[k] || 0) + v;
+  for (const [k, v] of Object.entries(st.fixedByCat || {})) if (COST_CATS[k]?.car || k === 'car_other') byCat[k] = (byCat[k] || 0) + v;
   const groups = GROUPS.map(([label, keys]) => [label, keys.reduce((a, k) => a + (byCat[k] || 0), 0)]).filter(([, v]) => v > 0.004);
   const carExp = groups.reduce((a, [, v]) => a + v, 0);
   // темпо: последните 60 дни (или от покупката, ако е по-скоро)
@@ -103,7 +102,7 @@ export function vehicleView({ go, data, rerender }) {
     h('div', { class: 'ms-row' }, h('span', null, 'Приходи'), h('b', null, money(cs.st.income))),
     h('div', { class: 'ms-row' }, h('span', null, 'Разходи по колата'), h('b', null, `−${money(cs.carExp)}`)),
     cs.groups.map(([label, v]) => h('div', { class: 'ms-row sub' }, h('span', null, label), h('span', null, money(v)))),
-    h('div', { class: 'ms-row' }, h('span', null, 'Други разходи'), h('b', null, `−${money(Math.max(0, cs.st.totalExp - cs.carExp))}`)),
+    h('div', { class: 'ms-row' }, h('span', null, 'Гориво, ефир, мивка и др.'), h('b', null, `−${money(Math.max(0, cs.st.totalExp - cs.carExp))}`)),
     h('div', { class: 'ms-total' }, h('span', null, 'Чисто'), h('b', null, money(cs.st.net))),
     h('p', { class: 'muted small' }, [cs.st.km ? kmTxt(cs.st.km) : null, cs.st.km && cs.carExp ? `${money(cs.carExp / cs.st.km, 2)} разход по колата на км` : null, cs.st.shifts ? `${cs.st.shifts} смени` : null].filter(Boolean).join(' · ')));
 
@@ -133,22 +132,21 @@ export function renewPlan(p, cs) {
   const shiftsPerMonth = cs.workDaysPerWeek > 0 ? cs.workDaysPerWeek * (52.1775 / 12) : 22;
   const avgHours = cs.st.shifts ? cs.st.hours / cs.st.shifts : 9;
   const perShift = perMonth / shiftsPerMonth;
-  return { need, perMonth, perShift, perHour: perShift / Math.max(1, avgHours), shiftsPerMonth, ...r };
+  const perDay = need / (r.years * 365.25); // всеки ден от календара
+  return { need, perMonth, perDay, perShift, perHour: perShift / Math.max(1, avgHours), shiftsPerMonth, ...r };
 }
 function renewCard(p, cs, redraw) {
   const plan = renewPlan(p, cs);
   if (!plan) return h('section', { class: 'card' },
     cardTitle('calendar', 'Заделяй за нова кола'),
-    h('p', { class: 'muted' }, 'Колата се износва с всеки километър. Кажи след колко години искаш нова и колко ще струва – ще ти казвам колко да заделяш от всяка смяна.'),
+    h('p', { class: 'muted' }, 'Колата се износва с всеки километър. Кажи след колко години искаш нова и колко ще струва – ще ти казвам колко да заделяш всеки ден.'),
     h('button', { class: 'btn btn-primary btn-block', style: { marginTop: '12px' }, onclick: () => renewSheet(p, redraw) }, icon('plus', 18), 'Сметни колко да заделям'));
   return h('section', { class: 'card car-inv renew' },
     cardTitle('calendar', 'Заделяй за нова кола', h('button', { class: 'link', onclick: () => renewSheet(p, redraw) }, icon('edit', 15), 'Промени')),
     h('div', { class: 'ci-top' },
-      h('div', null, h('small', null, 'Отделяй от всяка смяна'), h('b', { class: 'ci-big' }, `~${money(plan.perShift)}`)),
-      h('div', { class: 'ci-right' }, h('small', null, 'На месец'), h('b', null, money(plan.perMonth)))),
+      h('div', null, h('small', null, 'Заделяй всеки ден'), h('b', { class: 'ci-big' }, money(plan.perDay, 2)))),
     h('p', { class: 'muted small', style: { marginTop: '10px' } },
-      `За нова кола за ${money(plan.price)}${plan.resale ? `, като продадеш сегашната за ~${money(plan.resale)}` : ''}, след ${plan.years} ${plan.years === 1 ? 'година' : 'години'}. ` +
-      `Това е ~${money(plan.perHour, 2)} на час работа при ~${Math.round(plan.shiftsPerMonth)} смени на месец.`));
+      `За нова кола за ${money(plan.price)}${plan.resale ? `, като продадеш сегашната за ~${money(plan.resale)}` : ''}, след ${plan.years} ${plan.years === 1 ? 'година' : 'години'}.`));
 }
 function renewSheet(p, redraw) {
   const r = p.renewal || {};

@@ -31,8 +31,8 @@ await group('Купена на 01.09, днес 30.09, цена 10 000 €', () =
   // 102 работни дни при 2⅓ на седмица = 102 × 3 = 306 календарни дни (точно, без „307“ от закръгляне)
   eq('Изплащане = днес + 102 / (7/3) × 7 = +306 дни', c.payoffDate, addDays('2026-09-30', 306));
   // разходи по колата: гориво 300 + лизинг 300
-  near('Разходи по колата = 600', c.carExp, 600);
-  eq('Групи: гориво и лизинг', c.groups.map(([l, v]) => [l, Math.round(v)]), [['Гориво', 300], ['Лизинг', 300]]);
+  near('Разходи по колата = лизинг 300 (горивото е консуматив – не е по колата)', c.carExp, 300);
+  eq('Групи: само лизинг (без гориво)', c.groups.map(([l, v]) => [l, Math.round(v)]), [['Лизинг', 300]]);
   noNaN('Без NaN/Infinity', { paid: c.paid, left: c.left, pct: c.pct, perWorkDay: c.perWorkDay, perHour: c.perHour, workDaysPerWeek: c.workDaysPerWeek, daysLeft: c.daysLeft, hoursLeft: c.hoursLeft });
 });
 
@@ -42,7 +42,7 @@ await group('Ремонт от „Колата ми“ намалява изби
   const c = carStats(mk(odd(), [leasing(), repair], inv(10000, '2026-09-01')));
   near('Избити = 900 − 200 = 700', c.paid, 700);
   near('Остават = 9300', c.left, 9300);
-  near('Разходи по колата = 300 + 300 + 200', c.carExp, 800);
+  near('Разходи по колата = 300 + 200 (без горивото)', c.carExp, 500);
   // ремонт преди покупката не се брои
   const before = cost(200, 'once', '2026-08-20', { category: 'repair', carLog: true });
   near('Ремонт преди покупката не се брои', carStats(mk(odd(), [leasing(), before], inv(10000, '2026-09-01'))).paid, 900);
