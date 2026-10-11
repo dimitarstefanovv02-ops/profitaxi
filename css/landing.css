@@ -490,6 +490,14 @@ body.menu-open { overflow: hidden; }
   .steps-txt > h2, .show-txt > h2, .feat-txt > h2 { font-size: 28px; margin-bottom: 12px !important; }
   .feat-txt > h2 + .lead { font-size: 15px; }
   .steps-txt > .steps, .feat-txt > .bul, .feat-txt > .lead ~ .lead { margin-top: 18px !important; }
+  /* „Стъпки“: първите две стъпки са до телефончето, останалите – на цяла ширина */
+  .steps-txt > .steps { display: contents !important; }
+  .steps-txt > .steps > li { grid-column: 1 / -1; grid-template-columns: 34px 1fr; padding: 16px 0; }
+  .steps-txt > .steps > li:nth-child(-n+2) { grid-column: 1; }
+  .steps-txt > .steps > li:nth-child(-n+2) h3 { font-size: 18px; }
+  .steps-txt > .steps > li:nth-child(-n+2) p { font-size: 15px; line-height: 1.45; }
+  .steps-txt > .steps > li:first-child { margin-top: 6px; }
+  .steps-txt > .steps + .btn { margin-top: 24px; justify-self: start; }
   .show-txt > .show-tabs { gap: 6px !important; }
   .show-txt > .show-tabs button { font-size: 13px !important; padding: 0 10px !important; min-height: 34px !important; }
   .show-txt > .show-cap { font-size: 14px; margin-top: 12px; }
