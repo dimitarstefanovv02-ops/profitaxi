@@ -531,7 +531,7 @@ function applyProfile(id, patch, from) {
   const p = db.profiles[id];
   Object.assign(p, clone(patch));
   syncSystemCost(id, 'dispatch', p.dispatch.mode !== 'none' && p.dispatch.amount > 0
-    ? { name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' }
+    ? { name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily', weekCap: p.dispatch.mode === 'daily' && p.dispatch.weekCap > 0 ? p.dispatch.weekCap : null }
     : null, from);
   syncSystemCost(id, 'rent', p.carType === 'rent' && p.rent.amount > 0
     ? { name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period, perWorkDay: false } : null, from);
@@ -551,7 +551,7 @@ function applyProfile(id, patch, from) {
 function syncSystemCost(userId, system, desired, from = todayStr()) {
   const mine = (c) => c.userId === userId && c.system === system;
   const current = db.costs.find((c) => mine(c) && (!c.endDate || c.endDate >= todayStr()));
-  const same = current && desired && current.amount === desired.amount && current.period === desired.period && !!current.perWorkDay === !!desired.perWorkDay;
+  const same = current && desired && current.amount === desired.amount && current.period === desired.period && !!current.perWorkDay === !!desired.perWorkDay && (current.weekCap || null) === (desired.weekCap || null);
   if (same && current.startDate <= from) { current.name = desired.name; return; }
   if (!current && !desired) return;
   db.costs = db.costs.filter((c) => !(mine(c) && c.startDate >= from));

@@ -4,7 +4,7 @@
 <pre id="out">Running…</pre>
 <script src="_harness.js"></script>
 <script type="module">
-import { goalProgress } from '/js/calc.js';
+import { goalProgress, periodStats, monthlyFixed } from '/js/calc.js';
 import { addDays } from '/js/util.js';
 
 // Основни данни: 10 смени в септември 2026 – на 1, 3, 5 … 19-ти, всяка 08:00–18:00 (10 ч),
@@ -190,6 +190,41 @@ await group('Точно 12 часа този месец – вече се пол
   near('12 ч този месец → 240 / 12 = 20', goalProgress(mk(L, [], { monthlyGoal: 1000 })).ratePerHour, 20);
   const L2 = [sh('2026-08-10T08:00', '2026-08-10T18:00', { cash: 100 }), sh('2026-09-05T06:00', '2026-09-05T17:00', { cash: 220 })];
   near('11 ч този месец → последните 60 дни: 320 / 21 = 15,24', goalProgress(mk(L2, [], { monthlyGoal: 1000 })).ratePerHour, 320 / 21);
+});
+
+// Ефир „на работен ден“ с максимум за седмица (ONE Taxi: 8 € на ден, но най-много 40 € за седмица пн–нд)
+await group('Ефир 8 €/работен ден, максимум 40 € за седмица', () => {
+  setNow('2026-10-11T21:00');
+  const efir = () => cost(8, 'day', '2026-01-01', { category: 'dispatch', perWorkDay: true, weekCap: 40 });
+  const day = (d) => sh(`2026-10-${d}T08:00`, `2026-10-${d}T18:00`, { cash: 150 }, []);
+  const every = Array.from({ length: 10 }, (_, i) => day(String(i + 1).padStart(2, '0'))); // 1–10 октомври, всеки ден
+  const st = periodStats(mk(every, [efir()]), '2026-10-01', '2026-10-11');
+  // седмица 28.09–4.10: работи 1–4 окт → 4 × 8 = 32; седмица 5–11.10: работи 5–10 (6 дни) → 5 × 8 = 40, шестият е без такса
+  near('Ефир 1–11 окт = 32 + 40 = 72 (6-ият ден от седмицата е без такса)', st.fixedExp, 72);
+  const three = ['05', '06', '07'].map(day);
+  near('3 работни дни в седмицата = 3 × 8 = 24', periodStats(mk(three, [efir()]), '2026-10-05', '2026-10-11').fixedExp, 24);
+  // седмица, започнала в предишния месец: 28–30.09 вече са платени 24 € → в октомври остават 16
+  const straddle = ['2026-09-28', '2026-09-29', '2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03'].map((d) => sh(`${d}T08:00`, `${d}T18:00`, { cash: 100 }, []));
+  near('Седмица през два месеца: 1–3 окт = 8 + 8 + 0 = 16', periodStats(mk(straddle, [efir()]), '2026-10-01', '2026-10-04').fixedExp, 16);
+  // до края на месеца: работи почти всеки ден (10 от 11) → всяка седмица стига максимума 40
+  const g = goalProgress(mk(every, [efir()], { monthlyGoal: 1000 }));
+  near('Ефир до края на октомври = 3 седмици × 40 = 120', g.fixedLeft, 120);
+  near('Ефир за месеца ≈ 40 × 4,35 = 173,9', monthlyFixed([efir()], {}), 40 * 52.1775 / 12);
+  near('Без максимум: 8 × 24 работни дни = 192', monthlyFixed([cost(8, 'day', '2026-01-01', { category: 'dispatch', perWorkDay: true })], {}), 192);
+});
+
+// Случаят на Димитър (октомври): наем 20 €/ден + ефир 8 €/работен ден до 40 €/седмица, цел 1000 €
+await group('Наем + ефир с максимум: оставащи часове до целта', () => {
+  setNow('2026-10-11T21:00');
+  const s1 = sh('2026-10-06T20:00', '2026-10-06T23:30', { cash: 42, tips: 5 }, [{ category: 'wash', amount: 3 }]);
+  const s2 = sh('2026-10-07T20:00', '2026-10-08T02:00', { cash: 110, tips: 5 }, []);
+  const costs = [cost(20, 'day', '2026-01-01', { category: 'rent' }), cost(8, 'day', '2026-01-01', { category: 'dispatch', perWorkDay: true, weekCap: 40 })];
+  const g = goalProgress(mk([s1, s2], costs, { monthlyGoal: 1000 }));
+  // чисто досега: 162 − 3 − наем 11 × 20 − ефир 2 × 8 = −77
+  near('Чисто досега = 162 − 3 − 220 − 16 = −77', g.net, -77);
+  near('Печалба на час = 159 / 9,5 = 16,74', g.ratePerHour, 159 / 9.5);
+  ok('Наемът за остатъка от месеца (20 дни × 20 = 400) е вътре в остатъка', g.fixedLeft >= 400);
+  ok('Нужни часове ≈ 85–95 (а не 61 без наема)', g.hoursNeeded > 85 && g.hoursNeeded < 95);
 });
 
 finish();

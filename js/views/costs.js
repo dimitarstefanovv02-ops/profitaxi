@@ -93,7 +93,7 @@ function costRow(c, data, go) {
       h('div', { class: 'cost-name' }, c.name),
       h('div', { class: 'cost-det' },
         h('span', null, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),
-        c.perWorkDay && h('span', null, 'само работни дни'),
+        c.perWorkDay && h('span', null, c.weekCap > 0 ? `само работни дни, до ${money(c.weekCap)} за седмица` : 'само работни дни'),
         c.system && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `от ${fmtDate(c.startDate)}`),
         left != null && h('span', { class: cx('chip', left < 0 ? 'bad' : left <= 7 ? 'warn' : ''), style: { padding: '2px 8px' } }, `плащане ${fmtDate(c.dueDate)}`),
         c.endDate && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `до ${fmtDate(c.endDate, { year: true })}`))),

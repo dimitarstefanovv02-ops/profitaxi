@@ -39,6 +39,12 @@ export function dispatchBlock(d, onChange) {
       title: 'Такса за ефир', sub: label, fields: [{ key: 'v', label: 'Сума', value: d.dispatch.amount }],
       actions: [{ label: 'Готово', primary: true, run: ({ v }) => set({ amount: v }) }],
     }), d.dispatch.mode === 'daily' ? 'Начислява се само в дните, в които работиш' : 'Разпределя се по дни автоматично'),
+    // Ефир на ден с максимум за седмица (напр. 8 € на ден, но най-много 40 € за седмицата)
+    d.dispatch.mode === 'daily' && amountTile('Максимум за седмица', d.dispatch.weekCap || 0, () => openNumpad({
+      title: 'Максимум за седмица', sub: 'Напр. 40 € – след като ги платиш, останалите дни от седмицата са без такса. 0 = без максимум',
+      fields: [{ key: 'v', label: 'Сума', value: d.dispatch.weekCap || '' }],
+      actions: [{ label: 'Готово', primary: true, run: ({ v }) => set({ weekCap: v || 0 }) }],
+    }), d.dispatch.weekCap > 0 ? `${money(d.dispatch.amount)} на работен ден, но най-много ${money(d.dispatch.weekCap)} за седмица (пн–нд)` : 'По желание – ако компанията има таван за седмицата'),
     d.dispatch.mode === 'none' && h('p', { class: 'muted small' }, 'Ако плащаш ефир или диспечер, избери как плащаш. Таксата се смята сама.'));
 }
 

@@ -18,7 +18,18 @@ const PER_YEAR = { week: 52.1775, month: 12, quarter: 4, year: 1 };
 
 // Постоянни разходи, разпределени за един ден
 // Еднократните разходи (ремонт, обслужване от „Колата ми“) се броят в деня си. withOnce=false ги пропуска.
-export function fixedForDay(costs, profile, day, worked, withOnce = true) {
+// Такса „на работен ден“ с максимум за седмица (напр. ефир 8 € на ден, но най-много 40 € за седмицата):
+// колко се плаща в този ден, ако е работен – според работните дни по-рано в същата седмица (пн–нд).
+export const isWeekCapped = (c) => c.period === 'day' && c.perWorkDay && Number(c.weekCap) > 0;
+function cappedForDay(c, day, workedSet) {
+  const amt = Number(c.amount) || 0, cap = Number(c.weekCap);
+  if (!workedSet) return Math.min(amt, cap);
+  let before = 0;
+  for (let d = maxStr(startOfWeek(day), c.startDate || ''); d < day; d = addDays(d, 1)) if (workedSet.has(d)) before++;
+  return Math.max(0, Math.min(amt, cap - before * amt));
+}
+// workedSet (по желание): всички работни дни – нужни за таксите с максимум за седмица
+export function fixedForDay(costs, profile, day, worked, withOnce = true, workedSet = null) {
   const d = parseDate(day);
   const dy = d.getFullYear() % 4 === 0 ? 366 : 365;
   let sum = 0;
@@ -26,7 +37,7 @@ export function fixedForDay(costs, profile, day, worked, withOnce = true) {
     if (c.period === 'once') { if (withOnce && c.startDate === day) sum += Number(c.amount) || 0; continue; }
     if (c.startDate > day || (c.endDate && c.endDate < day)) continue;
     let v = 0;
-    if (c.period === 'day') v = c.perWorkDay ? (worked ? c.amount : 0) : c.amount;
+    if (c.period === 'day') v = c.perWorkDay ? (worked ? (isWeekCapped(c) ? cappedForDay(c, day, workedSet) : c.amount) : 0) : c.amount;
     else if (c.period === 'week') v = c.amount / 7;
     else if (c.period === 'month') v = c.amount / daysInMonth(d.getFullYear(), d.getMonth());
     else if (c.period === 'quarter') v = (c.amount * 4) / dy;
@@ -38,7 +49,7 @@ export function fixedForDay(costs, profile, day, worked, withOnce = true) {
 export function fixedByCategory(costs, profile, days, workedSet) {
   const out = {};
   for (const day of days) for (const c of costs) {
-    const v = fixedForDay([c], profile, day, workedSet.has(day));
+    const v = fixedForDay([c], profile, day, workedSet.has(day), true, workedSet);
     if (v) out[c.category] = (out[c.category] || 0) + v;
   }
   return out;
@@ -49,7 +60,8 @@ export function monthlyFixed(costs, profile, workDaysPerMonth = 24) {
   let m = 0;
   for (const c of activeCosts(costs)) {
     const s = shareFor(c, profile);
-    if (c.period === 'day') m += c.amount * (c.perWorkDay ? workDaysPerMonth : 30.44) * s;
+    if (isWeekCapped(c)) m += Math.min(Number(c.weekCap), c.amount * workDaysPerMonth / (PER_YEAR.week / 12)) * (PER_YEAR.week / 12) * s;
+    else if (c.period === 'day') m += c.amount * (c.perWorkDay ? workDaysPerMonth : 30.44) * s;
     else m += ((c.amount * PER_YEAR[c.period]) / 12) * s;
   }
   return m;
@@ -57,17 +69,19 @@ export function monthlyFixed(costs, profile, workDaysPerMonth = 24) {
 export function costMonthly(c, profile) { return monthlyFixed([c], profile); }
 
 // Статистика за период [from, to] (включително)
+export const workedDaysSet = (shifts) => new Set(shifts.filter((s) => s.end).map(shiftDate));
 export function periodStats(data, from, to) {
   const { shifts, costs, profile } = data;
   const today = todayStr();
   const inP = shifts.filter((s) => { const d = shiftDate(s); return d >= from && d <= to && s.end; });
   const workedSet = new Set(inP.map(shiftDate));
+  const allWorked = workedDaysSet(shifts); // и дните преди периода – за таксите с максимум за седмица
   // Постоянните разходи (наем, ефир, данъци…) се трупат ден по ден до днес – иначе в началото
   // на месеца всеки е на минус. Колко още ще излязат до края на месеца е в „Очаквано“ (goalProgress).
   const fixedTo = minStr(to, today);
   const days = from <= fixedTo ? eachDay(from, fixedTo) : [];
   let fixed = 0;
-  for (const d of days) fixed += fixedForDay(costs, profile, d, workedSet.has(d));
+  for (const d of days) fixed += fixedForDay(costs, profile, d, workedSet.has(d), true, allWorked);
 
   const st = { from, to, shifts: inP.length, workedDays: workedSet.size, income: 0, cash: 0, card: 0, app: 0, tips: 0, varExp: 0, fixedExp: fixed, hours: 0, km: 0, expByCat: {}, fuel: {} };
   for (const s of inP) {
@@ -85,7 +99,7 @@ export function periodStats(data, from, to) {
     }
   }
   st.income = st.cash + st.card + st.app + st.tips;
-  st.fixedByCat = fixedByCategory(costs, profile, days, workedSet);
+  st.fixedByCat = fixedByCategory(costs, profile, days, allWorked);
   st.totalExp = st.varExp + st.fixedExp;
   st.net = st.income - st.totalExp;
   st.shiftProfit = st.income - st.varExp;
@@ -117,11 +131,12 @@ export function series(data, from, to, unit) {
   const byDay = {};
   for (const s of data.shifts) { if (!s.end) continue; const d = shiftDate(s); if (d >= from && d <= to) (byDay[d] = byDay[d] || []).push(s); }
   const today = todayStr();
+  const allWorked = workedDaysSet(data.shifts);
   for (const d of eachDay(from, to)) {
     const list = byDay[d] || [];
     const income = list.reduce((a, s) => a + shiftIncome(s), 0);
     const exp = list.reduce((a, s) => a + shiftExpenses(s), 0);
-    const fixed = d <= today ? fixedForDay(data.costs, data.profile, d, list.length > 0) : 0;
+    const fixed = d <= today ? fixedForDay(data.costs, data.profile, d, list.length > 0, true, allWorked) : 0;
     out.push({ key: d, label: String(parseDate(d).getDate()), net: income - exp - fixed, income, worked: list.length > 0, future: d > today });
   }
   return out;
@@ -148,10 +163,24 @@ export function goalProgress(data) {
   const workRatio = base === st ? (elapsed ? Math.max(st.workedDays / elapsed, 0.4) : 0.8) : Math.max(base.workedDays / 60, 0.4);
 
   let fixedLeft = 0;
+  const plain = data.costs.filter((c) => !isWeekCapped(c)), capped = data.costs.filter(isWeekCapped);
+  const allWorked = workedDaysSet(data.shifts);
+  const capLeft = {}; // колко още може да се плати тази седмица по всяка такса с максимум
   if (remainingDays > 0) for (const d of eachDay(addDays(today, 1), to)) {
-    const all = fixedForDay(data.costs, data.profile, d, true);
-    const withoutWork = fixedForDay(data.costs, data.profile, d, false);
+    const all = fixedForDay(plain, data.profile, d, true);
+    const withoutWork = fixedForDay(plain, data.profile, d, false);
     fixedLeft += withoutWork + (all - withoutWork) * workRatio; // таксата „на работен ден“ – само за очакваните работни дни
+    for (const c of capped) {
+      if (c.startDate > d || (c.endDate && c.endDate < d)) continue;
+      const key = c.id + '|' + startOfWeek(d);
+      if (capLeft[key] == null) { // вече платеното тази седмица (дните до днес включително)
+        let paid = 0;
+        for (let x = maxStr(startOfWeek(d), c.startDate || ''); x <= today; x = addDays(x, 1)) if (allWorked.has(x)) paid += cappedForDay(c, x, allWorked);
+        capLeft[key] = Math.max(0, Number(c.weekCap) - paid);
+      }
+      const e = Math.min((Number(c.amount) || 0) * workRatio, capLeft[key]);
+      capLeft[key] -= e; fixedLeft += e * shareFor(c, data.profile);
+    }
   }
   // „Чисто досега“ = приход − разходи от смените − постоянните разходи до днес.
   // До целта остава: цел − чисто досега + постоянните разходи, които предстоят до края на месеца.

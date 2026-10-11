@@ -6,7 +6,7 @@ import * as store from '../store.js';
 import { INCOME_TYPES, incomeTypes, incomeLabel, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat, shiftCats } from '../constants.js';
 import { openCategories } from './categories.js';
 import { showShiftResult } from './shiftResult.js';
-import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
+import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate, workedDaysSet } from '../calc.js';
 import { openNumpad, openSheet, sheetHead, confirmSheet, toast, cardTitle } from '../ui.js';
 import { scanReceipt } from '../quick.js';
 
@@ -57,7 +57,7 @@ export function shiftEditorView(ctx) {
     const inc = shiftIncome(draft), exp = shiftExpenses(draft);
     const day = isoToDateStr(draft.start);
     const sameDay = data.shifts.filter((s) => s.end && s.id !== draft.id && shiftDate(s) === day).length + 1;
-    const fixedShare = fixedForDay(data.costs, profile, day, true, false) / sameDay;
+    const fixedShare = fixedForDay(data.costs, profile, day, true, false, (() => { const w = workedDaysSet(data.shifts); w.add(day); return w; })()) / sameDay;
     const net = inc - exp - fixedShare;
     const cats = shiftCats(profile);
     const kmBad = draft.kmEnd > 0 && draft.kmEnd < draft.kmStart;
