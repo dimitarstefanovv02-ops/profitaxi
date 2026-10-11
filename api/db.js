@@ -302,7 +302,9 @@ const ops = {
     let id = null;
     if (ADMIN_PASSWORD && e === ADMIN_EMAIL && safeEq(hashPw(password, 'owner'), hashPw(ADMIN_PASSWORD, 'owner'))) {
       id = 'admin';
-      await one(['HSETNX', 'pt:db', 'users:admin', JSON.stringify({ id: 'admin', role: 'admin', adminRole: 'owner', name: 'Администратор', email: ADMIN_EMAIL, status: 'active', createdAt: new Date().toISOString() })]);
+      const cur = parse(await one(['HGET', 'pt:db', 'users:admin']));
+      if (!cur) await one(['HSET', 'pt:db', 'users:admin', JSON.stringify({ id: 'admin', role: 'admin', adminRole: 'owner', name: 'Администратор', email: ADMIN_EMAIL, status: 'active', createdAt: new Date().toISOString() })]);
+      else if (cur.email !== ADMIN_EMAIL) await one(['HSET', 'pt:db', 'users:admin', JSON.stringify({ ...cur, email: ADMIN_EMAIL })]);
     } else {
       const uid = await one(['HGET', 'pt:email', e]);
       const rec = uid && parse(await one(['HGET', 'pt:auth', uid]));
