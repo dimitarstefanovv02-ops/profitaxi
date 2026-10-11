@@ -334,7 +334,22 @@ export function trackPage(page) {
 export function getProfile() { return clone(db.profiles[myId()]); }
 export function getShift(sid) { const id = myId(); const s = db.shifts.find((x) => x.id === sid && x.userId === id); return s ? clone(s) : null; }
 export function getActiveShift() { const id = myId(); const s = db.shifts.find((x) => x.userId === id && !x.end); return s ? clone(s) : null; }
-export function myData() { stopFixedDispatch(myId()); return userData(myId()); }
+export function myData() { stopFixedDispatch(myId()); restoreRent(myId()); return userData(myId()); }
+// Еднократна поправка: на 10–11.10.2026 смяна на снимка или цел спираше наема по грешка.
+// Ако наемът е спрян точно тогава и няма друг наем след това – връщаме го.
+function restoreRent(id) {
+  if (!id || PREVIEW) return;
+  const p = db.profiles[id]; if (!p || p.rentFix1) return;
+  p.rentFix1 = true;
+  const mine = db.costs.filter((c) => c.userId === id && c.system === 'rent');
+  const ended = mine.find((c) => c.endDate === '2026-10-10' || c.endDate === '2026-10-11' || c.endDate === '2026-10-09');
+  if (ended && !mine.some((c) => c !== ended && c.startDate > ended.startDate)) {
+    ended.endDate = null;
+    p.carType = 'rent';
+    p.rent = { amount: ended.amount, period: ended.period };
+  }
+  persist();
+}
 // Ефирът вече се въвежда в смяната (плаща се само в работните дни). Ако шофьорът го има като
 // постоянен разход, той спира от началото на текущия месец – за да не се брои два пъти, когато
 // шофьорът добави ефира и в смените от този месец. Миналите месеци остават, както са.
@@ -542,10 +557,11 @@ export function updateProfile(patch, { from } = {}) {
 function applyProfile(id, patch, from) {
   const p = db.profiles[id];
   Object.assign(p, clone(patch));
-  syncSystemCost(id, 'rent', p.carType === 'rent' && p.rent.amount > 0
+  // Наемът се пипа само когато се сменят колата или наемът – не при снимка, цел и т.н.
+  if ('carType' in patch || 'rent' in patch) syncSystemCost(id, 'rent', p.carType === 'rent' && p.rent?.amount > 0
     ? { name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period, perWorkDay: false } : null, from);
   // При кола под наем застраховки, винетка, преглед и т.н. са грижа на собственика
-  if (p.carType === 'rent') {
+  if (p.carType === 'rent' && ('carType' in patch || 'rent' in patch)) {
     const today = from || todayStr();
     for (const c of db.costs) {
       if (c.userId !== id || !COST_CATS[c.category]?.owner || (c.endDate && c.endDate < today)) continue;
