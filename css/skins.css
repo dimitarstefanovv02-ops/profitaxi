@@ -545,12 +545,12 @@
 :root[data-skin="chisto"] .meter > .meter-value {order: 2;}
 :root[data-skin="chisto"] .meter > .road {order: 3;}
 :root[data-skin="chisto"] .meter > .meter-goal {order: 4;}
-:root[data-skin="chisto"] .meter .meter-label {color: var(--ch-on-pri-c) !important; opacity: 1 !important; font-weight: 500; font-size: .875rem !important;}
+:root[data-skin="chisto"] .meter .meter-label {color: var(--ch-on-pri-c) !important; opacity: 1 !important; font-weight: 500; font-size: 1rem !important;}
 :root[data-skin="chisto"] .meter .meter-pct {background: #DDF3DB !important; color: var(--ch-pri-c) !important; height: 32px; padding: 0 12px !important; border-radius: 16px !important; display: inline-flex; align-items: center; font-weight: 700;}
-:root[data-skin="chisto"] .meter .meter-value {font-size: clamp(3rem, 15vw, 3.6rem) !important; font-weight: 800 !important; letter-spacing: -1px !important; color: var(--ch-on-pri-c) !important; margin: 8px 0 0 !important;}
+:root[data-skin="chisto"] .meter .meter-value {font-size: clamp(2.4rem, 11.5vw, 2.9rem) !important; font-weight: 700 !important; letter-spacing: -1px !important; color: var(--ch-on-pri-c) !important; margin: 8px 0 0 !important;}
 :root[data-skin="chisto"] .meter .meter-value.neg {color: #FFB4AB !important;}
 :root[data-skin="chisto"] .meter .meter-goal, :root[data-skin="chisto"] .meter .meter-goal > span, :root[data-skin="chisto"] .meter .goal-edit, :root[data-skin="chisto"] .meter b {color: var(--ch-on-pri-c) !important; opacity: 1 !important;}
-:root[data-skin="chisto"] .meter .meter-goal {font-size: .875rem; margin-top: 0; line-height: 1.45;}
+:root[data-skin="chisto"] .meter .meter-goal {font-size: 1rem; margin-top: 0; line-height: 1.45;}
 :root[data-skin="chisto"] .meter .goal-edit {text-decoration: none !important; font-weight: 400 !important;}
 :root[data-skin="chisto"] .meter .goal-edit .ic {opacity: .7;}
 :root[data-skin="chisto"] .meter .road {height: 16px !important; background: transparent !important; position: relative; margin: 16px 0 8px !important; border-radius: 0 !important; overflow: visible !important;}
@@ -1003,6 +1003,6 @@
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap {border: 0 !important; border-radius: 0 !important; overflow: visible !important; flex-wrap: wrap !important; gap: 8px !important; display: flex !important;}
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap .seg-btn {flex: 0 0 auto !important; border: 1px solid var(--ch-outline) !important; border-radius: 8px !important; min-height: 36px; padding: 0 12px !important; white-space: nowrap;}
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap .seg-btn.on {border-color: transparent !important;}
-:root[data-skin="chisto"] .meter > .meter-hours {order: 5; font-size: .8125rem; color: var(--ch-on-pri-c); opacity: .75; margin-top: 4px;}
+:root[data-skin="chisto"] .meter > .meter-hours {order: 5; font-size: .9375rem; color: var(--ch-on-pri-c); opacity: .8; margin-top: 6px; line-height: 1.4;}
 :root[data-skin="chisto"] .meter .meter-goal b {white-space: nowrap;}
 :root[data-skin="chisto"] .screen > .sub-back + .first-tip {margin-top: 52px !important;}

@@ -129,12 +129,12 @@ h1, .page-title h1, .hero h1 { font-weight: 500 !important; letter-spacing: -.2p
 .meter > .meter-value { order: 2; }
 .meter > .road { order: 3; }
 .meter > .meter-goal { order: 4; }
-.meter .meter-label { color: var(--ch-on-pri-c) !important; opacity: 1 !important; font-weight: 500; font-size: .875rem !important; }
+.meter .meter-label { color: var(--ch-on-pri-c) !important; opacity: 1 !important; font-weight: 500; font-size: 1rem !important; }
 .meter .meter-pct { background: #DDF3DB !important; color: var(--ch-pri-c) !important; height: 32px; padding: 0 12px !important; border-radius: 16px !important; display: inline-flex; align-items: center; font-weight: 700; }
-.meter .meter-value { font-size: clamp(3rem, 15vw, 3.6rem) !important; font-weight: 800 !important; letter-spacing: -1px !important; color: var(--ch-on-pri-c) !important; margin: 8px 0 0 !important; }
+.meter .meter-value { font-size: clamp(2.4rem, 11.5vw, 2.9rem) !important; font-weight: 700 !important; letter-spacing: -1px !important; color: var(--ch-on-pri-c) !important; margin: 8px 0 0 !important; }
 .meter .meter-value.neg { color: #FFB4AB !important; }
 .meter .meter-goal, .meter .meter-goal > span, .meter .goal-edit, .meter b { color: var(--ch-on-pri-c) !important; opacity: 1 !important; }
-.meter .meter-goal { font-size: .875rem; margin-top: 0; line-height: 1.45; }
+.meter .meter-goal { font-size: 1rem; margin-top: 0; line-height: 1.45; }
 .meter .goal-edit { text-decoration: none !important; font-weight: 400 !important; }
 .meter .goal-edit .ic { opacity: .7; }
 /* Вълнообразната лента до целта */
@@ -693,6 +693,6 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .seg.seg-outline.seg-wrap { border: 0 !important; border-radius: 0 !important; overflow: visible !important; flex-wrap: wrap !important; gap: 8px !important; display: flex !important; }
 .seg.seg-outline.seg-wrap .seg-btn { flex: 0 0 auto !important; border: 1px solid var(--ch-outline) !important; border-radius: 8px !important; min-height: 36px; padding: 0 12px !important; white-space: nowrap; }
 .seg.seg-outline.seg-wrap .seg-btn.on { border-color: transparent !important; }
-.meter > .meter-hours { order: 5; font-size: .8125rem; color: var(--ch-on-pri-c); opacity: .75; margin-top: 4px; }
+.meter > .meter-hours { order: 5; font-size: .9375rem; color: var(--ch-on-pri-c); opacity: .8; margin-top: 6px; line-height: 1.4; }
 .meter .meter-goal b { white-space: nowrap; }
 .screen > .sub-back + .first-tip { margin-top: 52px !important; }
