@@ -143,7 +143,7 @@ h3 { font-size: 21px; line-height: 1.25; letter-spacing: -.02em; }
 .hd-menu[aria-expanded="true"] i:last-child { transform: translateY(-4px) rotate(-45deg); }
 .drawer { position: fixed; inset: var(--hd) 0 0; background: var(--ink-bg); overflow-y: auto; border-top: 1px solid var(--ink-line); }
 .drawer nav { display: flex; flex-direction: column; padding-top: 12px; padding-bottom: 32px; }
-.drawer nav > a { font-size: 21px; font-weight: 600; letter-spacing: -.02em; text-decoration: none; padding: 12px 0; border-bottom: 1px solid var(--ink-line); }
+.drawer nav > a { font-size: 19px; font-weight: 600; letter-spacing: -.02em; text-decoration: none; padding: 12px 0; border-bottom: 1px solid var(--ink-line); }
 .drawer nav > a[aria-current] { text-decoration: underline; text-underline-offset: 6px; text-decoration-thickness: 2px; }
 .drawer-cta { display: grid; gap: 10px; margin-top: 28px; }
 body.menu-open { overflow: hidden; }
@@ -156,7 +156,7 @@ body.menu-open { overflow: hidden; }
 .blk-ink .lead { color: var(--on-ink-2); }
 .kicker { font-weight: 600; font-size: 14px; color: var(--on-ink-muted); margin-bottom: 12px; }
 .sec-title { margin-bottom: 28px; }
-.label { display: block; font-weight: 700; font-size: 28px; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 14px; color: var(--muted); }
+.label { display: block; font-weight: 700; font-size: 34px; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 14px; color: var(--muted); }
 .blk-ink .label { color: var(--on-ink-muted); }
 
 /* ---------- Телефон ---------- */
@@ -503,4 +503,4 @@ body.menu-open { overflow: hidden; }
 .logo { display: inline-flex; align-items: baseline; gap: .2em; }
 .logo-mark { width: .84em; height: .72em; flex: none; margin: 0; }
 
-@media (min-width: 900px) { .label { font-size: 34px; } .logo { font-size: 30px; } }
+@media (min-width: 900px) { .label { font-size: 42px; } .logo { font-size: 30px; } }
