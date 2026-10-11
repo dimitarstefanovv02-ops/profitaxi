@@ -28,7 +28,7 @@ export function helpView() {
         const reply = h('input', { class: 'input', placeholder: 'Напиши още…', maxlength: 600 });
         return h('section', { class: 'card ticket' },
           h('div', { class: 'row between' }, h('b', null, store.TICKET_TOPICS[t.topic]), h('span', { class: cx('chip', t.status === 'open' ? 'warn' : 'good') }, t.status === 'open' ? 'Отворен' : 'Решен')),
-          h('div', { class: 'thread' }, t.thread.map((m) => h('div', { class: cx('bubble', m.by === 'admin' ? 'them' : 'me') }, h('p', null, m.text), h('small', null, `${m.by === 'admin' ? 'ProfiTaxi' : 'Ти'} · ${when(m.at)}`)))),
+          h('div', { class: 'thread' }, t.thread.map((m) => h('div', { class: cx('bubble', m.by === 'admin' ? 'them' : 'me') }, h('p', null, m.text), h('small', null, `${m.by === 'admin' ? 'Чисто' : 'Ти'} · ${when(m.at)}`)))),
           h('div', { class: 'row gap', style: { marginTop: '10px' } }, reply,
             h('button', { class: 'btn btn-ghost', onclick: () => { if (!reply.value.trim()) return; store.replyMyTicket(t.id, reply.value); toast('Изпратено'); draw(); } }, 'Изпрати')));
       }));

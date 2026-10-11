@@ -82,7 +82,7 @@ export function reservationsIcs(list) {
       `SUMMARY:${esc(`Курс: ${r.client || 'клиент'}${r.price ? ` – ${r.price} €` : ''}`)}`, `LOCATION:${esc(r.from)}`, `DESCRIPTION:${esc(`${r.from} → ${r.to}${r.phone ? `\nТелефон: ${r.phone}` : ''}${r.note ? `\n${r.note}` : ''}`)}`,
       'BEGIN:VALARM', 'TRIGGER:-PT60M', 'ACTION:DISPLAY', 'DESCRIPTION:Курс след 1 час', 'END:VALARM', 'END:VEVENT'].join('\r\n');
   });
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ProfiTaxi//BG', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Chisto//BG', 'CALSCALE:GREGORIAN', ...ev, 'END:VCALENDAR'].join('\r\n');
 }
 export function addToCalendar(list) {
   if (!list.length) { toast('Няма предстоящи резервации', 'err'); return; }
@@ -97,20 +97,21 @@ export function addToCalendar(list) {
 // ---------------------------------------------------------------------
 export async function shareMonth({ net, income, shifts, hours, name }) {
   const W = 1080, H = 1350; const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
-  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(0, '#2A2350'); g.addColorStop(0.6, '#0E0F14'); x.fillStyle = g; x.fillRect(0, 0, W, H);
-  const font = (w, s) => document.documentElement.dataset.skin === 'fancy' ? `${w} ${s}px Onest, Inter, system-ui, sans-serif` : `${w} ${s}px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
-  x.fillStyle = '#FFC21A'; x.font = font(800, 40); x.fillText(MONTHS[parseDate(todayStr()).getMonth()].toUpperCase() + ' ' + parseDate(todayStr()).getFullYear(), 90, 170);
+  x.fillStyle = '#231F20'; x.fillRect(0, 0, W, H);
+  const font = (w, s) => `${w} ${s}px Onest, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  x.fillStyle = '#BFF0BE'; x.font = font(800, 40); x.fillText(MONTHS[parseDate(todayStr()).getMonth()].toUpperCase() + ' ' + parseDate(todayStr()).getFullYear(), 90, 170);
   x.fillStyle = '#F3F1EA'; x.font = font(700, 64); x.fillText(name ? `${name} изкара` : 'Изкарах', 90, 300);
-  x.font = font(800, 200); x.fillStyle = net >= 0 ? '#FFC21A' : '#FF6B7D'; x.fillText(money(net), 90, 530);
+  x.font = font(800, 200); x.fillStyle = net >= 0 ? '#FFFFFF' : '#FFB4AB'; x.fillText(money(net), 90, 530);
   x.fillStyle = '#B9BCC6'; x.font = font(600, 48); x.fillText('чисто, след всички разходи', 90, 610);
   const row = (label, val, y) => { x.fillStyle = '#8C8F9A'; x.font = font(600, 40); x.fillText(label, 90, y); x.fillStyle = '#F3F1EA'; x.font = font(800, 56); x.fillText(val, 90, y + 70); };
   row('Оборот', money(income), 780); row('Смени', String(shifts), 960); row('Часове зад волана', String(Math.round(hours)), 1140);
-  x.fillStyle = '#F3F1EA'; x.font = font(800, 52); x.fillText('Profi', 640, 1270); x.fillStyle = '#A78BFA'; x.fillText('Taxi', 640 + x.measureText('Profi').width, 1270);
+  x.fillStyle = '#FFFFFF'; x.font = font(800, 56); x.fillText('Чисто', 640, 1270);
+  { const bx = 640 + x.measureText('Чисто').width + 14, by = 1272; [[0, 26, '#FFFFFF'], [22, 40, '#BFF0BE'], [44, 54, '#52C46A']].forEach(([dx, hh, col]) => { x.fillStyle = col; x.fillRect(bx + dx, by - hh, 16, hh); }); }
   x.fillStyle = '#8C8F9A'; x.font = font(600, 30); x.fillText('profitaxi.vercel.app', 640, 1310);
   const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
-  const file = new File([blob], 'profitaxi-mesec.png', { type: 'image/png' });
-  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Моят месец в ProfiTaxi' }); return; } catch { /* отказано */ } }
-  const a = h('a', { href: URL.createObjectURL(blob), download: 'profitaxi-mesec.png' }); document.body.append(a); a.click(); a.remove();
+  const file = new File([blob], 'chisto-mesec.png', { type: 'image/png' });
+  if (navigator.canShare?.({ files: [file] })) { try { await navigator.share({ files: [file], title: 'Моят месец в „Чисто“' }); return; } catch { /* отказано */ } }
+  const a = h('a', { href: URL.createObjectURL(blob), download: 'chisto-mesec.png' }); document.body.append(a); a.click(); a.remove();
   toast('Картинката е запазена');
 }
 
@@ -159,11 +160,11 @@ export async function install() {
       ? h('div', { class: 'inst-steps' },
         step(1, 'share', 'Отвори менюто и натисни „Сподели“', 'Иконката „Сподели“ е квадратче със стрелка нагоре. Ако не я виждаш долу в Safari, натисни менюто „⋯“ и после „Сподели“.'),
         step(2, 'plus', 'Натисни „Добави към началния екран“', 'Превърти надолу в менюто, ако не го виждаш.'),
-        step(3, 'check', 'Натисни „Добави“', 'Иконката ProfiTaxi излиза на началния екран. Отваряй приложението от нея.'))
+        step(3, 'check', 'Натисни „Добави“', 'Иконката „Чисто“ излиза на началния екран. Отваряй приложението от нея.'))
       : h('div', { class: 'inst-steps' },
         step(1, 'more', 'Натисни менюто „⋮“', 'Горе вдясно в Chrome.'),
         step(2, 'download', '„Инсталиране на приложението“', 'Или „Добавяне към началния екран“. После „Инсталиране“.')),
     h('div', { class: 'row gap', style: { marginTop: '16px' } },
       h('button', { class: 'btn btn-ghost btn-lg grow', onclick: close }, 'По-късно'),
-      h('button', { class: 'btn btn-primary btn-lg grow', onclick: () => { markInstalled(); close(); toast('Готово! Отваряй ProfiTaxi от иконката.'); window.dispatchEvent(new Event('profitaxi:installable')); } }, 'Добавих го'))));
+      h('button', { class: 'btn btn-primary btn-lg grow', onclick: () => { markInstalled(); close(); toast('Готово! Отваряй „Чисто“ от иконката.'); window.dispatchEvent(new Event('profitaxi:installable')); } }, 'Добавих го'))));
 }

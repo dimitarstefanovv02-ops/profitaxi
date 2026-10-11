@@ -1,4 +1,4 @@
-/* ProfiTaxi – админ панел. Тъмна индиго странична лента, плътно табло с цветни показатели. */
+/* Чисто – админ панел. Тъмна индиго странична лента, плътно табло с цветни показатели. */
 
 body.admin { --pc: #6366F1; --pc-ink: #fff; --pc-soft: color-mix(in srgb, #6366F1 14%, var(--surface)); --side: #0E1330; --side-2: #171D45; --side-text: #C7CCEA; }
 body.admin #app { max-width: none; }

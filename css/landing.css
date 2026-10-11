@@ -1,4 +1,4 @@
-/* ProfiTaxi – маркетингов сайт. Самостоятелен: не зависи от css/app.css.
+/* Чисто – маркетингов сайт. Самостоятелен: не зависи от css/app.css.
    Светла и тъмна тема (html[data-theme]), направено първо за телефон (360–430px). Шрифт: Onest.
 
    Типографска скала
@@ -498,3 +498,7 @@ body.menu-open { overflow: hidden; }
   .steps-wrap:has(.phone), .show:has(.phone), .feat:has(.feat-vis .phone) { grid-template-columns: minmax(0, 1fr) 112px; }
   .steps-vis .phone, .show-vis .phone, .feat-vis .phone { width: 112px !important; }
 }
+
+/* Логото: името „Чисто“ и след него трите колонки */
+.logo { display: inline-flex; align-items: flex-end; gap: 6px; }
+.logo-mark { width: .82em; height: .7em; flex: none; margin-bottom: .16em; }

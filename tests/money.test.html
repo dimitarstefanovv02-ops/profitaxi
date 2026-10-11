@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>ProfiTaxi – тестове: пари, смени, постоянни разходи, периоди</title>
+<title>Чисто – тестове: пари, смени, постоянни разходи, периоди</title>
 <pre id="out">Running…</pre>
 <script src="_harness.js"></script>
 <script type="module">
@@ -482,7 +482,7 @@ await group('Excel (CSV) – съдържание', async () => {
     exportCsv(mk([s2, s3, s1], [cost(70, 'week', '2026-01-01')]), { from: '2026-09-15', to: '2026-09-16' });
     const text = await blob.text();
     const rows = text.replace(/^﻿/, '').split('\r\n').map((r) => r.split(';'));
-    eq('Име на файла', name, 'profitaxi-2026-09-15-2026-09-16.csv');
+    eq('Име на файла', name, 'chisto-2026-09-15-2026-09-16.csv');
     // Blob.text() маха BOM при декодирането – гледаме байтовете
     const head = new Uint8Array(await blob.slice(0, 3).arrayBuffer());
     eq('Започва с BOM (за кирилица в Excel)', [...head], [0xef, 0xbb, 0xbf]);

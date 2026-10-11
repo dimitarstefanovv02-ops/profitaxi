@@ -35,7 +35,7 @@ async def main():
     ok(await pg.locator('.nav a[href="#/me"]').inner_text()=='Профил', 'Третият бутон се казва „Профил“')
     await pg.click('text=Презентация'); await pg.wait_for_timeout(500)
     ok('#/guide' in pg.url and await pg.locator('.guide-page').count()==16 and await pg.locator('.guide-next').count()==0, 'Профил → Презентация: 16 страници, без „Нататък“')
-    r=await pg.evaluate("async()=>[(await fetch('/guide/p16.webp')).status,(await fetch('/guide/ProfiTaxi-vavedenie.pdf')).status]")
+    r=await pg.evaluate("async()=>[(await fetch('/guide/p16.webp')).status,(await fetch('/guide/Chisto-vavedenie.pdf')).status]")
     ok(r==[200,200], 'Картинките и PDF-ът съществуват', r)
     ok(not errs, 'Без грешки в JS', errs)
     print(f'FAILS: {len(fails)} / 10'); await b.close(); sys.exit(1 if fails else 0)

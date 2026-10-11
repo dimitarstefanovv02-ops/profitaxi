@@ -1,5 +1,5 @@
-// ProfiTaxi – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v69';
+// Чисто – service worker: приложението се отваря и без интернет.
+const VERSION = 'profitaxi-v70';
 const SHELL = [
   '/app', '/app.html', '/css/app.css', '/css/skins.css', '/js/skin.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/sync.js', '/js/schema.js', '/js/config.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',
@@ -28,7 +28,7 @@ self.addEventListener('fetch', (e) => {
 // Известие от сървъра (админ: нов шофьор, въпрос)
 self.addEventListener('push', (e) => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'ProfiTaxi', { body: d.body || '', tag: d.tag, icon: '/icons/admin-192.png', badge: '/icons/admin-192.png', data: { url: d.url || '/admin' } }));
+  e.waitUntil(self.registration.showNotification(d.title || 'Чисто', { body: d.body || '', tag: d.tag, icon: '/icons/admin-192.png', badge: '/icons/admin-192.png', data: { url: d.url || '/admin' } }));
 });
 
 // Натискане на известие отваря приложението на страница Разходи

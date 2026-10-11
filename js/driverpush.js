@@ -22,7 +22,7 @@ export function pushBlocker() {
   if (!store.live()) return 'Известията работят само на живия сайт.';
   if (isIOS() && !standalone()) return 'На iPhone известията идват само в приложението от началния екран: Safari → „Сподели“ → „Добави към началния екран“.';
   if (!pushSupported()) return 'Този телефон или браузър не поддържа известия.';
-  if (Notification.permission === 'denied') return 'Известията са забранени за ProfiTaxi. Разреши ги от настройките на телефона.';
+  if (Notification.permission === 'denied') return 'Известията са забранени за „Чисто“. Разреши ги от настройките на телефона.';
   return null;
 }
 // Задава кои известия да идват; празен списък ги спира

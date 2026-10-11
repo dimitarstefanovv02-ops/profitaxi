@@ -9,7 +9,7 @@ import { passkeySupported, loginWithPasskey, faceLabel, passkeyOn, shouldOffer, 
 
 export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
   h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }),
-  h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')));
+  h('span', { class: 'brand-name' }, 'Чисто'));
 
 const input = (attrs) => h('input', { class: 'input', ...attrs });
 

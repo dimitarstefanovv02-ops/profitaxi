@@ -176,7 +176,7 @@ function greeting() {
   return hr >= 5 && hr < 11 ? 'Добро утро' : hr >= 11 && hr < 18 ? 'Добър ден' : 'Добър вечер';
 }
 
-// Съобщения от ProfiTaxi (или от фирмата) – показват се горе, докато не ги затвориш
+// Съобщения от „Чисто“ (или от фирмата) – показват се горе, докато не ги затвориш
 function messagesBox(redraw) {
   const list = store.myMessages().slice(-2);
   const replies = store.myUnreadTickets();
@@ -187,12 +187,12 @@ function messagesBox(redraw) {
     h('button', { class: 'icon-btn plain', 'aria-label': 'Затвори', onclick: () => { store.readMessage(m.id); redraw(); } }, icon('x', 18)))));
 }
 
-// Кратка анкета: „Колко вероятно е да препоръчаш ProfiTaxi?“ (0–10)
+// Кратка анкета: „Колко вероятно е да препоръчаш „Чисто“?“ (0–10)
 let npsScore = null;
 function npsCard(redraw) {
   const comment = h('input', { class: 'input', placeholder: 'Какво да подобрим? (по желание)', maxlength: 200 });
   return h('section', { class: 'card nps' },
-    h('div', { class: 'row between' }, h('b', null, 'Колко вероятно е да препоръчаш ProfiTaxi на колега?'),
+    h('div', { class: 'row between' }, h('b', null, 'Колко вероятно е да препоръчаш „Чисто“ на колега?'),
       h('button', { class: 'icon-btn plain', 'aria-label': 'Не сега', onclick: () => { store.skipNps(); redraw(); } }, icon('x', 18))),
     h('div', { class: 'nps-scale' }, Array.from({ length: 11 }, (_, i) => h('button', { class: cx('nps-btn', npsScore === i && 'on'), onclick: () => { npsScore = i; redraw(); } }, String(i)))),
     h('div', { class: 'nps-legend' }, h('span', null, 'Изобщо не'), h('span', null, 'Със сигурност')),

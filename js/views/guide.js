@@ -3,13 +3,13 @@
 import { h, icon } from '../util.js';
 
 export const GUIDE_PAGES = 16;
-export const GUIDE_PDF = '/guide/ProfiTaxi-vavedenie.pdf';
+export const GUIDE_PDF = '/guide/Chisto-vavedenie.pdf';
 const page = (n) => `/guide/p${String(n).padStart(2, '0')}.webp`;
 
 export function guideView({ go, route }) {
   const first = route?.query?.get('first') === '1';
   const next = () => go('/onboarding');
-  const pdf = h('a', { class: 'btn btn-ghost btn-block', href: GUIDE_PDF, download: 'ProfiTaxi-vavedenie.pdf' }, icon('download', 18), 'Изтегли като PDF');
+  const pdf = h('a', { class: 'btn btn-ghost btn-block', href: GUIDE_PDF, download: 'Chisto-vavedenie.pdf' }, icon('download', 18), 'Изтегли като PDF');
   return h('div', { class: 'screen guide', 'data-page': 'guide' },
     first && h('div', { class: 'guide-top' }, h('span', { class: 'chip good' }, icon('check', 14), 'Акаунтът е създаден'), h('button', { class: 'link', onclick: next }, 'Пропусни')),
     h('div', { class: 'page-title' }, h('h1', null, first ? 'Добре дошъл! Ето как работи' : 'Презентация')),

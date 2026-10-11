@@ -1,4 +1,4 @@
-// ProfiTaxi – приложение за шофьора: маршрути, проверка за достъп, навигация
+// Чисто – приложение за шофьора: маршрути, проверка за достъп, навигация
 
 import { h, icon, clear, cx, fmtTimer } from './util.js';
 import * as store from './store.js';

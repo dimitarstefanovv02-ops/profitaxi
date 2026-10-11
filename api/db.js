@@ -1,4 +1,4 @@
-// ProfiTaxi – обща база данни за тестовия период.
+// Чисто – обща база данни за тестовия период.
 // Една функция във Vercel + Upstash Redis (безплатен план). Без отделен сървър.
 //
 // Ключове в Redis:
@@ -418,7 +418,7 @@ const ops = {
   async pushTest(_, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
     if (!pushReady()) return { error: 'Известията още не са включени на сървъра' };
-    const n = await notifyAdmins('test', { title: 'ProfiTaxi', body: 'Известията работят ✅', url: '/admin#/overview', tag: 'test' }, s.id);
+    const n = await notifyAdmins('test', { title: 'Чисто', body: 'Известията работят ✅', url: '/admin#/overview', tag: 'test' }, s.id);
     return n ? { ok: true, sent: n } : { error: 'Няма телефон, на който да се прати. Включи известията отново.' };
   },
 
@@ -480,7 +480,7 @@ const ops = {
     const mine = Object.entries(pairs(await one(['HGETALL', 'pt:pk']))).filter(([, v]) => v?.userId === s.id).map(([k]) => k);
     const challenge = await newChallenge('reg', s.id);
     return { publicKey: {
-      challenge, rp: { name: 'ProfiTaxi', id: rpId },
+      challenge, rp: { name: 'Чисто', id: rpId },
       user: { id: PK.b64u(Buffer.from(s.id)), name: u.email || u.name, displayName: u.name || u.email },
       pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
       authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'required', requireResidentKey: true, userVerification: 'required' },
@@ -606,7 +606,7 @@ async function groqTranscribe(buf, mime) {
   if (!r.ok) throw new Error('groq ' + r.status + ' ' + (await r.text()).slice(0, 200));
   return String((await r.json()).text || '').trim();
 }
-const ASK_SYSTEM = `Ти си помощникът в приложението ProfiTaxi. Отговаряй САМО на български, кратко (до 4 изречения), ясно и приятелски, като на шофьор. Отговаряй само за приложението по описанието по-долу и не измисляй функции, които ги няма. Посочвай къде точно се натиска със стрелки, например „Пари → Статистика“. Ако въпросът е за неговите числа (колко е изкарал, колко гориво е платил), кажи му да напише въпроса в търсачката, например „колко изкарах тази седмица“, или да отвори Пари → Статистика. Ако не знаеш или въпросът не е за приложението, кажи го честно и предложи Профил → Помощ → Пиши ни.
+const ASK_SYSTEM = `Ти си помощникът в приложението „Чисто“. Отговаряй САМО на български, кратко (до 4 изречения), ясно и приятелски, като на шофьор. Отговаряй само за приложението по описанието по-долу и не измисляй функции, които ги няма. Посочвай къде точно се натиска със стрелки, например „Пари → Статистика“. Ако въпросът е за неговите числа (колко е изкарал, колко гориво е платил), кажи му да напише въпроса в търсачката, например „колко изкарах тази седмица“, или да отвори Пари → Статистика. Ако не знаеш или въпросът не е за приложението, кажи го честно и предложи Профил → Помощ → Пиши ни.
 
 ОПИСАНИЕ НА ПРИЛОЖЕНИЕТО:
 ${GUIDE}`;

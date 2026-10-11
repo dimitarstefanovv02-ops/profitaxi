@@ -1,4 +1,4 @@
-// ProfiTaxi – админ панел. Отделен вход на /admin. Шофьорите нямат връзка към него.
+// Чисто – админ панел. Отделен вход на /admin. Шофьорите нямат връзка към него.
 // 10 менюта, всяко с табове: всичко за една тема е на едно място.
 // Всяка карта, число и бутон може да се мести и скрива („Подреди“ горе вдясно).
 
@@ -87,7 +87,7 @@ function sidebar(active) {
   const n = store.admin.drivers().length;
   const badge = { '/drivers': [n, ''], '/control': [newAlerts().length, 'alert'], '/messages': [unreadTickets(), 'alert'] };
   return h('aside', { class: 'adm-side' },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi')), h('span', { class: 'adm-badge' }, role() === 'owner' ? 'Админ' : store.ADMIN_ROLES[role()])),
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Чисто'), h('span', { class: 'adm-badge' }, role() === 'owner' ? 'Админ' : store.ADMIN_ROLES[role()])),
     zone('nav', { class: 'adm-nav', 'data-tap': '' }, navFor().map(([p, ic, label]) => [p.slice(1),
       h('a', { href: '#' + p, class: cx(active === p && 'on') }, icon(ic, 19), h('span', null, label),
         badge[p] && badge[p][0] > 0 && h('span', { class: cx('count', badge[p][1]) }, String(badge[p][0])))]), 'nav'),
@@ -147,7 +147,7 @@ let login2fa = null;
 function loginView() {
   const err = h('p', { class: 'err' });
   const shell = (...kids) => h('div', { class: 'auth', style: { maxWidth: '420px', margin: '0 auto' } },
-    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Profi', h('b', null, 'Taxi'))), ...kids);
+    h('div', { class: 'brand' }, h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }), h('span', { class: 'brand-name' }, 'Чисто')), ...kids);
   if (login2fa) {
     const code = h('input', { class: 'input', inputmode: 'numeric', autocomplete: 'one-time-code', placeholder: '6 цифри', maxlength: 6 });
     return shell(
@@ -612,7 +612,7 @@ function weekLines(all) {
   const to = todayStr(), from = addDays(to, -6), pf = addDays(from, -7), pt = addDays(from, -1);
   const T = aggregate(all.map((d) => ({ d, st: periodStats(d, from, to) }))), P = aggregate(all.map((d) => ({ d, st: periodStats(d, pf, pt) })));
   const newD = all.filter((d) => isoToDateStr(d.user.createdAt) >= from).length;
-  return [`ProfiTaxi – седмицата ${fmtDate(from)} – ${fmtDate(to)}`, `Нови шофьори: ${newD}`, `Активни: ${T.active} (предната седмица ${P.active})`, `Смени: ${T.shifts} (предната ${P.shifts})`,
+  return [`Чисто – седмицата ${fmtDate(from)} – ${fmtDate(to)}`, `Нови шофьори: ${newD}`, `Активни: ${T.active} (предната седмица ${P.active})`, `Смени: ${T.shifts} (предната ${P.shifts})`,
     `Оборот на шофьорите: ${money(T.income)}`, `Чисто на час: ${money2(T.perHour)}`, role() !== 'partner' ? `Нови известия за проверка: ${newAlerts().length}` : null].filter(Boolean);
 }
 function weeklyCard(all) {
@@ -754,7 +754,7 @@ function exportDrivers(ids) {
   const rows = [['Име', 'Имейл', 'Телефон', 'Град', 'Фирма', 'Етикети', 'Абонамент', 'Валиден до', 'Последна смяна', 'Последно влизане', 'Здраве', 'Регистриран']];
   ids.forEach((id) => { const d = store.admin.driverData(id); if (!d.user) return; const l = lastShift(d);
     rows.push([d.user.name, d.user.email, d.user.phone, d.user.city, d.user.company, (d.user.tags || []).join(', '), subState(d.user).label, d.user.subscription.validUntil, l ? shiftDate(l) : '', d.user.lastLoginAt ? isoToDateStr(d.user.lastLoginAt) : '', health(d).score, isoToDateStr(d.user.createdAt)]); });
-  downloadCsv(rows, `profitaxi-shofyori-${todayStr()}.csv`); toast(`Свалени ${ids.length} шофьори`);
+  downloadCsv(rows, `chisto-shofyori-${todayStr()}.csv`); toast(`Свалени ${ids.length} шофьори`);
 }
 function tagSheet(ids) {
   openSheet((close) => {
@@ -904,7 +904,7 @@ function gdprCard(u) {
       ['exp', h('button', { class: 'btn btn-ghost act-v', onclick: () => {
         const data = store.admin.exportDriver(u.id);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-        a.download = `profitaxi-danni-${u.name.replace(/\s+/g, '-')}.json`; a.click(); toast('Файлът с данните е свален');
+        a.download = `chisto-danni-${u.name.replace(/\s+/g, '-')}.json`; a.click(); toast('Файлът с данните е свален');
       } }, icon('download', 18), 'Свали всички данни')],
       ['del', h('button', { class: 'btn btn-ghost act-del', onclick: () => confirmSheet({ title: 'Окончателно изтриване?', text: `Всички данни на ${u.name} ще бъдат изтрити завинаги и не могат да се върнат.`, okLabel: 'Изтрий завинаги', danger: true, onOk: () => { store.admin.log(u.id, 'delete'); store.admin.deleteDriver(u.id); toast('Данните са изтрити'); go('/drivers'); } }) }, icon('trash', 18), 'Изтрий окончателно')]]));
 }
@@ -1099,9 +1099,9 @@ const msgState = { title: '', text: '', mode: 'all', city: '', company: '', tag:
 const inbox = { sel: null, filter: 'open', reply: '' };
 const TEMPLATES = [
   ['support', 'Поддръжка', 'Временно има проблем', 'Знаем за проблема с … и работим по него. Ще ви пишем, щом е оправен. Данните ви са запазени.'],
-  ['new', 'Ново в приложението', 'Ново в ProfiTaxi', 'Добавихме … Вижте го в „…“. Пишете ни, ако имате идеи как да стане още по-удобно.'],
+  ['new', 'Ново в приложението', 'Ново в „Чисто“', 'Добавихме … Вижте го в „…“. Пишете ни, ако имате идеи как да стане още по-удобно.'],
   ['pay', 'Напомняне за плащане', 'Абонаментът изтича скоро', 'Абонаментът ви изтича след няколко дни. Подновете го, за да не спира достъпът до отчетите. Данните ви остават.'],
-  ['welcome', 'Добре дошли', 'Добре дошли в ProfiTaxi', 'Започнете с първата смяна от „Днес“ – отнема 10 секунди. В края на месеца ще видите точно колко ви остава.'],
+  ['welcome', 'Добре дошли', 'Добре дошли в „Чисто“', 'Започнете с първата смяна от „Днес“ – отнема 10 секунди. В края на месеца ще видите точно колко ви остава.'],
 ];
 // Готови отговори за входящите – натискаш и го пращаш (или първо го променяш)
 const QUICK = [
@@ -1243,7 +1243,7 @@ function firmsTab(all, comps, codes) {
 function reportLines(all, c) {
   const from = `${repState.month}-01`, to = endOfMonth(from); const [y, m] = repState.month.split('-').map(Number);
   const list = all.filter((d) => d.user.company === c); const T = aggregate(list.map((d) => ({ d, st: periodStats(d, from, to) })));
-  return [`${c} – ${MONTHS[m - 1]} ${y} (ProfiTaxi)`, `Шофьори в ProfiTaxi: ${list.length}`, `Активни през месеца: ${T.active}`, `Смени: ${T.shifts}`, `Оборот общо: ${money(T.income)}`, `Чисто на час (средно): ${money2(T.perHour)}`, 'Само обобщени данни – без имена и лични данни.'];
+  return [`${c} – ${MONTHS[m - 1]} ${y} („Чисто“)`, `Шофьори в „Чисто“: ${list.length}`, `Активни през месеца: ${T.active}`, `Смени: ${T.shifts}`, `Оборот общо: ${money(T.income)}`, `Чисто на час (средно): ${money2(T.perHour)}`, 'Само обобщени данни – без имена и лични данни.'];
 }
 function sendReport(all, c) {
   const lines = reportLines(all, c);
@@ -1284,10 +1284,10 @@ function companyReport(all, comps) {
   return card('doc', 'Месечен отчет за фирма',
     h('div', { class: 'grid2 no-print' }, field('Фирма', sel(comps, repState.company, (v) => { repState.company = v; render(); })), field('Месец', month)),
     h('div', { class: 'report', id: 'company-report' },
-      h('div', { class: 'rep-head' }, h('b', null, repState.company || '—'), h('span', null, `${MONTHS[m - 1]} ${y} · ProfiTaxi`)),
+      h('div', { class: 'rep-head' }, h('b', null, repState.company || '—'), h('span', null, `${MONTHS[m - 1]} ${y} · „Чисто“`)),
       list.length ? h('div', null,
         h('div', { class: 'rep-grid' },
-          repCell('Шофьори в ProfiTaxi', String(list.length)), repCell('Активни през месеца', String(T.active)),
+          repCell('Шофьори в „Чисто“', String(list.length)), repCell('Активни през месеца', String(T.active)),
           repCell('Смени', fmtNum(T.shifts)), repCell('Часове', fmtNum(Math.round(T.hours))),
           repCell('Оборот общо', money(T.income)), repCell('Чисто на час (средно)', money2(T.perHour)),
           repCell('Оборот на смяна', money(T.perShift)), repCell('Км на смяна', T.shifts ? fmtNum(T.km / T.shifts) : '—')),
@@ -1623,7 +1623,7 @@ function npsTab(nps) {
   const score = nps.length ? Math.round(((pro - det) / nps.length) * 100) : null;
   const dist = Array.from({ length: 11 }, (_, i) => nps.filter((x) => x.score === i).length); const mx = Math.max(1, ...dist);
   return flow('dev.nps', [
-    ['score', card('heart', 'Би ли препоръчал ProfiTaxi?',
+    ['score', card('heart', 'Би ли препоръчал „Чисто“?',
       zone('dev.nps.nums', { class: 'big-nums two' }, [['nps', bigNum('Оценка (NPS)', score == null ? '—' : String(score), 'от −100 до +100', score > 30 ? 'live' : '')], ['n', bigNum('Отговори', String(nps.length), `${pro} доволни · ${det} недоволни`)]]),
       h('div', { class: 'nps-dist' }, dist.map((c, i) => h('div', { class: cx('nd', i <= 6 ? 'bad' : i <= 8 ? 'mid' : 'good') }, h('i', { style: { height: `${(c / mx) * 100}%` } }), h('span', null, String(i))))))],
     ['comments', card('list', 'Какво пишат', nps.filter((x) => x.comment).length ? nps.filter((x) => x.comment).slice(0, 10).map((x) => h('p', { class: 'quote-s' }, h('b', null, `${x.score}/10 `), `„${x.comment}“`)) : note('Още няма коментари.'))],
@@ -1758,9 +1758,9 @@ function printInvoice(p) {
   const w = window.open('', '_blank'); if (!w) { toast('Разреши изскачащите прозорци', 'err'); return; }
   const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   w.document.write(`<!doctype html><html lang="bg"><head><meta charset="utf-8"><title>Фактура ${esc(p.invoice)}</title><style>body{font-family:system-ui,sans-serif;max-width:720px;margin:40px auto;padding:0 20px;color:#111}h1{font-size:28px;margin:0}table{width:100%;border-collapse:collapse;margin-top:24px}td,th{border-bottom:1px solid #ddd;padding:10px;text-align:left}.r{text-align:right}.top{display:flex;justify-content:space-between;gap:20px}small{color:#666}.tot{font-size:20px;font-weight:700}@media print{button{display:none}}</style></head><body>
-<div class="top"><div><h1>Фактура</h1><p>№ ${esc(p.invoice)}<br>Дата: ${esc(isoToDateStr(p.at))}</p></div><div><b>ProfiTaxi</b><br><small>(демо – данните на фирмата се попълват при свързване)</small></div></div>
+<div class="top"><div><h1>Фактура</h1><p>№ ${esc(p.invoice)}<br>Дата: ${esc(isoToDateStr(p.at))}</p></div><div><b>„Чисто“</b><br><small>(демо – данните на фирмата се попълват при свързване)</small></div></div>
 <p><b>Получател:</b> ${esc(u.name)}<br>${esc(u.email || '')}<br>${esc(u.city || '')}</p>
-<table><tr><th>Услуга</th><th class="r">Сума</th></tr><tr><td>Абонамент ProfiTaxi – 1 месец</td><td class="r">${(p.amount / 1.2).toFixed(2).replace('.', ',')} €</td></tr><tr><td>ДДС 20%</td><td class="r">${vat.toFixed(2).replace('.', ',')} €</td></tr><tr><td class="tot">Общо</td><td class="r tot">${p.amount.toFixed(2).replace('.', ',')} €</td></tr></table>
+<table><tr><th>Услуга</th><th class="r">Сума</th></tr><tr><td>Абонамент Чисто – 1 месец</td><td class="r">${(p.amount / 1.2).toFixed(2).replace('.', ',')} €</td></tr><tr><td>ДДС 20%</td><td class="r">${vat.toFixed(2).replace('.', ',')} €</td></tr><tr><td class="tot">Общо</td><td class="r tot">${p.amount.toFixed(2).replace('.', ',')} €</td></tr></table>
 <p><small>Платено с ${esc(p.method || 'карта')}.</small></p><button onclick="print()">Печат / PDF</button></body></html>`);
   w.document.close();
 }
@@ -1888,7 +1888,7 @@ async function enablePush(types) {
   if (isIOSDev && !standaloneNow()) return { error: 'На iPhone известията идват само в приложението от началния екран. В Safari: „Сподели“ → „Добави към началния екран“, отвори админа от иконката и натисни пак тук.' };
   if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) return { error: 'Този телефон или браузър не поддържа известия. На iPhone трябва iOS 16.4 или по-нов.' };
   const perm = await Notification.requestPermission();
-  if (perm !== 'granted') return { error: 'Известията са забранени. Разреши ги от Настройки → Известия → ProfiTaxi Stats.' };
+  if (perm !== 'granted') return { error: 'Известията са забранени. Разреши ги от Настройки → Известия → Чисто Админ.' };
   const reg = await navigator.serviceWorker.register('/sw.js').then(() => navigator.serviceWorker.ready);
   let sub = await reg.pushManager.getSubscription();
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });

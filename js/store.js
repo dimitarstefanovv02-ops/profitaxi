@@ -1,4 +1,4 @@
-// ProfiTaxi – слой за данни.
+// Чисто – слой за данни.
 // ДЕМО РЕЖИМ: всичко се пази в localStorage на устройството.
 // Всички екрани говорят само с функциите тук, така че по-късно този файл
 // се заменя с истинска база (напр. Supabase) без промени по интерфейса.
@@ -709,7 +709,7 @@ export const admin = {
   exportAll() { requireAdmin(); requireOwner(); return clone(db); },
   restoreAll(data) {
     requireAdmin(); requireOwner();
-    if (!data || data.version !== VERSION || !Array.isArray(data.users) || !data.users.some((u) => u.role === 'admin')) return { error: 'Файлът не е архив на ProfiTaxi от тази версия' };
+    if (!data || data.version !== VERSION || !Array.isArray(data.users) || !data.users.some((u) => u.role === 'admin')) return { error: 'Файлът не е архив на „Чисто“ от тази версия' };
     const me0 = adminUser(); db = data; ensureExt();
     if (!db.users.some((u) => u.id === me0.id)) localStorage.removeItem(ADMIN_SESSION_KEY);
     audit('Възстанови данните от архив'); commit(); return { ok: true };
@@ -987,7 +987,7 @@ function seedExtra(today) {
   ensureExt();
   const drivers = db.users.filter((u) => u.role === 'driver'); const r = rng(99);
   const ago = (d) => new Date(Date.now() - d * 86400000).toISOString();
-  db.messages.push({ id: uid(), title: 'Добре дошли в ProfiTaxi', text: 'Записвайте всяка смяна – в края на месеца ще видите точно колко ви остава.', target: null, at: ago(20), readBy: drivers.slice(0, 18).map((u) => u.id) });
+  db.messages.push({ id: uid(), title: 'Добре дошли в „Чисто“', text: 'Записвайте всяка смяна – в края на месеца ще видите точно колко ви остава.', target: null, at: ago(20), readBy: drivers.slice(0, 18).map((u) => u.id) });
   const ivan = drivers.find((u) => u.email === 'ivan@demo.bg');
   db.notes[ivan.id] = [{ text: 'Иска фактура на фирма за абонамента.', at: ago(3), by: 'admin@profitaxi.bg' }];
   const pages = { home: .95, shift: .9, money: .7, stats: .45, costs: .5, me: .4, calendar: .25, reservations: .2, profile: .3, car: .25, shifts: .35 };

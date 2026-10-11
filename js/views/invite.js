@@ -6,8 +6,8 @@ import { toast, hero, cardTitle } from '../ui.js';
 export const inviteLink = (code) => `${location.origin}/app#/register?ref=${encodeURIComponent(code)}`;
 async function share(code) {
   const url = inviteLink(code);
-  const text = `Пробвай ProfiTaxi – виждаш колко реално ти остава от всяка смяна. Регистрирай се с моя код ${code}: ${url}`;
-  if (navigator.share) { try { await navigator.share({ title: 'ProfiTaxi', text, url }); return; } catch { /* отказано */ } }
+  const text = `Пробвай Чисто – виждаш колко реално ти остава от всяка смяна. Регистрирай се с моя код ${code}: ${url}`;
+  if (navigator.share) { try { await navigator.share({ title: 'Чисто', text, url }); return; } catch { /* отказано */ } }
   try { await navigator.clipboard.writeText(text); toast('Поканата е копирана'); } catch { toast(url); }
 }
 

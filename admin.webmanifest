@@ -1,6 +1,6 @@
 {
-  "name": "ProfiTaxi Stats",
-  "short_name": "ProfiTaxi Stats",
+  "name": "Чисто Админ",
+  "short_name": "Чисто Админ",
   "lang": "bg",
   "start_url": "/admin",
   "scope": "/admin",

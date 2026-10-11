@@ -58,7 +58,7 @@ export function statsView({ data }) {
         h('div', { class: 'hero-label' }, `Чиста печалба за периода · ${r.label}`),
         h('div', { class: 'hero-num' }, money(st.net)),
         h('div', { class: 'hero-line' }, `приход ${money(st.income)} · разходи ${money(st.totalExp)} · ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}`)),
-      h('div', { class: 'print-only' }, h('h2', null, `ProfiTaxi – ${data.user.name}`), h('p', null, r.label)),
+      h('div', { class: 'print-only' }, h('h2', null, `Чисто – ${data.user.name}`), h('p', null, r.label)),
       (state.unit === 'month' || state.unit === 'year') && monthsCompare(data, state, draw),
       statsBody(data, r.from, r.to, state.unit, { st }),
     ].filter(Boolean));
@@ -241,7 +241,7 @@ export function exportCsv(data, r) {
   const st = periodStats(data, r.from, r.to);
   rows.push([], ['Постоянни разходи за периода', n(st.fixedExp)], ['Чиста печалба', n(st.net)]);
   const csv = '﻿' + rows.map((x) => x.join(';')).join('\r\n');
-  const a = h('a', { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), download: `profitaxi-${r.from}-${r.to}.csv` });
+  const a = h('a', { href: URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })), download: `chisto-${r.from}-${r.to}.csv` });
   document.body.appendChild(a); a.click(); a.remove();
 }
 export { MONTHS_SHORT, minStr };

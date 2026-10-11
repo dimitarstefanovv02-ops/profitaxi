@@ -1,4 +1,4 @@
-// ProfiTaxi – изчисления. Чисти функции върху данните на един шофьор:
+// Чисто – изчисления. Чисти функции върху данните на един шофьор:
 // { user, profile, shifts, costs, reminders }
 
 import { todayStr, addDays, parseDate, daysInMonth, eachDay, isoToDateStr, minStr, maxStr, weekdayIdx, startOfMonth, endOfMonth, startOfWeek, MONTHS_SHORT } from './util.js';
