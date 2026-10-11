@@ -69,6 +69,7 @@ export const COST_CATS = {
   service: { label: 'Обслужване', icon: 'wrench', car: true, owner: true, period: 'month', color: 'var(--c-slate)', noAdd: true },
   repair: { label: 'Ремонти', icon: 'tool', car: true, owner: true, period: 'month', color: 'var(--c-red)', noAdd: true },
   tires: { label: 'Гуми', icon: 'tire', car: true, owner: true, period: 'year', color: 'var(--c-gray)', noAdd: true },
+  cartax: { label: 'Данък МПС (общински)', icon: 'bank', car: true, owner: true, period: 'year', color: 'var(--c-red)' },
   meter: { label: 'Таксиметров апарат', icon: 'receipt', car: true, owner: true, period: 'month', color: 'var(--c-amber)' },
   license: { label: 'Разрешително', icon: 'doc', period: 'year', color: 'var(--c-orange)' },
   parking: { label: 'Паркинг', icon: 'parking', period: 'month', color: 'var(--c-blue)', noAdd: true },

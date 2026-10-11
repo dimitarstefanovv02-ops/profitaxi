@@ -58,6 +58,10 @@ export function carStats(data, profile = data.profile) {
 export function carLog(data) {
   const list = [];
   for (const c of data.costs) if (c.carLog) list.push({ id: c.id, manual: true, date: c.startDate, cat: c.category, label: c.name || store.CAR_LOG_CATS[c.category], amount: c.amount, km: c.km || null, note: c.note || '', ref: c });
+  // платените постоянни разходи по колата (застраховки, винетка, преглед, данък МПС…) – всяко „Платено“ с датата и сумата
+  for (const c of data.costs) if (!c.carLog && (COST_CATS[c.category]?.car)) for (const p of c.payments || []) {
+    list.push({ id: `${c.id}-${p.date}`, manual: false, date: p.date, cat: c.category, label: c.name || COST_CATS[c.category].label, amount: (Number(p.amount) || 0) * (c.share != null ? c.share : 1), km: null, note: 'платено', costId: c.id });
+  }
   for (const s of data.shifts) for (const e of s.expenses || []) if (LOG_SHIFT.includes(e.category)) {
     list.push({ id: e.id || `${s.id}-${e.category}`, manual: false, date: shiftDate(s), cat: e.category, label: EXPENSE_CATS[e.category]?.label || 'Ремонт', amount: Number(e.amount) || 0, km: s.kmEnd || s.kmStart || null, note: e.note || 'от смяната', shiftId: s.id });
   }
@@ -108,13 +112,13 @@ export function vehicleView({ go, data, rerender }) {
 
   const logTotal = log.reduce((a, x) => a + x.amount, 0);
   const logCard = h('section', { class: 'card' },
-    cardTitle('tool', 'Ремонти и обслужване', h('button', { class: 'chip page', onclick: () => entrySheet(null, redraw) }, icon('plus', 14), 'Добави')),
+    cardTitle('tool', 'Какво, кога и колко за колата', h('button', { class: 'chip page', onclick: () => entrySheet(null, redraw) }, icon('plus', 14), 'Добави')),
     log.length
-      ? h('div', { class: 'car-log' }, log.map((x) => h('button', { class: 'cl-row', onclick: () => (x.manual ? entrySheet(x.ref, redraw) : go('/shift/' + x.shiftId)) },
+      ? h('div', { class: 'car-log' }, log.map((x) => h('button', { class: 'cl-row', onclick: () => (x.manual ? entrySheet(x.ref, redraw) : x.shiftId ? go('/shift/' + x.shiftId) : go('/costs')) },
         h('div', { class: 'cl-date' }, fmtDate(x.date, { year: true })),
         h('div', { class: 'grow' }, h('b', null, x.label), h('small', null, [x.km ? kmTxt(x.km) : null, x.note].filter(Boolean).join(' · '))),
         h('b', { class: 'cl-amt' }, money(x.amount, x.amount % 1 ? 2 : 0)))))
-      : h('p', { class: 'muted' }, 'Още няма записани ремонти. Натисни „Добави“ – сума, дата, километри и бележка. Ремонтите от смените („Друг разход“ → Ремонт, Обслужване, Гуми) се появяват тук сами.'),
+      : h('p', { class: 'muted' }, 'Още няма записи. Натисни „Добави“ – ремонт, обслужване, гуми, застраховка, винетка, преглед, данък МПС: сума, дата, километри и бележка. Ремонтите от смените и платените застраховки и винетки от „Постоянни разходи“ се появяват тук сами.'),
     log.length > 0 && h('div', { class: 'ms-total' }, h('span', null, `Общо (${log.length})`), h('b', null, money(logTotal))));
 
   return h('div', { class: 'screen', 'data-page': 'vehicle' },

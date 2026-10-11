@@ -34,7 +34,7 @@ function ensureExt() {
   db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.asks ||= []; db.churn ||= []; db.audit ||= [];
-  db.notDup ||= []; db.reviewed ||= [];
+  db.notDup ||= []; db.reviewed ||= []; db.cars ||= [];
   // Лизингът вече не е вид кола: колата е „Собствена“, а вноската е обикновен месечен разход
   for (const [, p] of Object.entries(db.profiles || {})) { if (p && p.carType === 'leasing') p.carType = 'own'; if (p && p.fuel === 'cng') p.fuel = 'petrol_cng'; } // само метан – няма такива коли
   for (const c of db.costs || []) if (c && c.system === 'leasing') { delete c.system; c.name = c.name === 'Лизингова вноска' ? 'Лизинг' : c.name; }
@@ -367,11 +367,106 @@ function userData(id) {
     user: clone(db.users.find((u) => u.id === id)),
     profile: clone(db.profiles[id]),
     shifts: clone(db.shifts.filter((s) => s.userId === id)).sort((a, b) => b.start.localeCompare(a.start)),
-    costs: clone(db.costs.filter((c) => c.userId === id)),
+    costs: myCostsWithCars(id),
+    cars: clone(carsOf(id)),
     reminders: clone(db.reminders.filter((r) => r.userId === id)),
     reservations: clone(db.reservations.filter((r) => r.userId === id)).sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time)),
   };
 }
+// ================= Обща кола =================
+// Колата има собственик и шофьори (members). Лична кола: общите разходи се делят по дялове (share, %).
+// Кола под наем: собственикът задава наем на всеки шофьор (rent), собствените му разходи по колата не са на шофьорите.
+const carsOf = (id) => (db.cars || []).filter((c) => c.ownerId === id || (c.members || []).some((m) => m.userId === id));
+const memberOf = (car, id) => (car.members || []).find((m) => m.userId === id);
+function myCostsWithCars(id) {
+  const out = clone(db.costs.filter((c) => c.userId === id && !c.carId));
+  for (const car of carsOf(id)) {
+    const m = memberOf(car, id);
+    if (car.type === 'own' && m) {
+      // общите разходи на колата (застраховка, ремонт…) – с моя дял
+      for (const c of db.costs.filter((x) => x.carId === car.id)) out.push({ ...clone(c), share: (Number(m.share) || 0) / 100, startDate: c.startDate > m.joinedAt ? c.startDate : m.joinedAt });
+    }
+    if (car.type === 'rent' && m && m.rent?.amount > 0) {
+      // наемът, който собственикът е задал на този шофьор
+      out.push({ id: `carrent-${car.id}`, userId: id, carId: car.id, system: 'carrent', name: `Наем · ${car.name || 'колата'}`, category: 'rent', amount: Number(m.rent.amount), period: m.rent.period || 'week', perWorkDay: false, startDate: m.rent.from || m.joinedAt, endDate: null, dueDate: null, payments: [] });
+    }
+  }
+  return out;
+}
+const inviteCode = () => Math.random().toString(36).slice(2, 8).toUpperCase() + Math.random().toString(36).slice(2, 6).toUpperCase();
+export function myCars() { return clone(carsOf(myId())); }
+export function createCar({ type, name, plate, photo }) {
+  const id = myId();
+  const car = { id: uid(), ownerId: id, type: type === 'rent' ? 'rent' : 'own', name: name || '', plate: plate || '', photo: photo || null, invite: inviteCode(), createdAt: new Date().toISOString(),
+    // при лична кола собственикът също кара – започва със 100 %
+    members: type === 'rent' ? [] : [{ userId: id, name: me().name, share: 100, joinedAt: todayStr() }] };
+  db.cars.push(car); commit(); return clone(car);
+}
+function ownCar(carId) { const c = db.cars.find((x) => x.id === carId && x.ownerId === myId()); if (!c) throw new Error('Само собственикът може да променя колата'); return c; }
+export function updateCar(carId, patch) { const c = ownCar(carId); Object.assign(c, clone(patch)); commit(); return clone(c); }
+export function newInvite(carId) { const c = ownCar(carId); c.invite = inviteCode(); commit(); return c.invite; }
+export function removeMember(carId, userId) {
+  const c = ownCar(carId); c.members = (c.members || []).filter((m) => m.userId !== userId);
+  if (c.type === 'own') evenShares(c);
+  commit();
+}
+export function setShares(carId, shares) { // { userId: % }
+  const c = ownCar(carId); for (const m of c.members || []) if (shares[m.userId] != null) m.share = Math.max(0, Math.min(100, Number(shares[m.userId]) || 0)); commit();
+}
+export function setMemberRent(carId, userId, rent) { // { amount, period, from }
+  const c = ownCar(carId); const m = memberOf(c, userId); if (!m) return; m.rent = rent && rent.amount > 0 ? { amount: Number(rent.amount), period: rent.period || 'week', from: rent.from || todayStr() } : null; commit();
+}
+export function deleteCar(carId) { ownCar(carId); db.cars = db.cars.filter((x) => x.id !== carId); db.costs = db.costs.filter((x) => x.carId !== carId); commit(); }
+function evenShares(c) { // поравно; остатъкът от закръглянето е на първия (собственика)
+  const ms = c.members || [], n = ms.length; if (!n) return;
+  const each = Math.floor((100 / n) * 100) / 100;
+  ms.forEach((m) => { m.share = each; });
+  ms[0].share = Math.round((100 - each * (n - 1)) * 100) / 100;
+}
+// Присъединяване с код от линка
+export async function joinCar(code) {
+  const id = myId(); code = String(code || '').trim().toUpperCase();
+  if (LIVE) {
+    const r = await call('joinCar', { invite: code }, scope());
+    if (r.error) return r;
+    await syncNow(); afterJoin(r.carId); return r;
+  }
+  const c = db.cars.find((x) => x.invite === code);
+  if (!c) return { error: 'Няма кола с този код. Поискай нов линк от собственика.' };
+  if (c.ownerId === id && c.type === 'rent') return { error: 'Това е твоята кола.' };
+  if (memberOf(c, id)) return { ok: true, carId: c.id, already: true };
+  c.members = [...(c.members || []), { userId: id, name: me().name, share: 0, joinedAt: todayStr() }]; if (c.type === 'own') evenShares(c);
+  commit(); afterJoin(c.id); return { ok: true, carId: c.id };
+}
+// Колата под наем: наемът вече идва от собственика – собственият наем на шофьора спира от днес
+function afterJoin(carId) {
+  const c = db.cars.find((x) => x.id === carId); if (!c || c.type !== 'rent') return;
+  const id = myId(); const p = db.profiles[id];
+  if (db.costs.some((x) => x.userId === id && x.system === 'rent' && (!x.endDate || x.endDate >= todayStr()))) { syncSystemCost(id, 'rent', null, todayStr()); }
+  if (p) { p.carType = 'rent'; p.rent = { amount: 0, period: p.rent?.period || 'week' }; }
+  commit();
+}
+export function leaveCar(carId) {
+  const id = myId(); const c = db.cars.find((x) => x.id === carId); if (!c) return;
+  if (LIVE) { call('leaveCar', { carId }, scope()).then(() => syncNow()); }
+  c.members = (c.members || []).filter((m) => m.userId !== id); if (c.type === 'own') evenShares(c);
+  commit();
+}
+// За собственика: км, часове, работни дни и смени на всеки шофьор (без пари)
+export function carDrivers(carId, from, to) {
+  const c = db.cars.find((x) => x.id === carId); if (!c) return [];
+  return (c.members || []).map((m) => {
+    const u = db.users.find((x) => x.id === m.userId) || { name: m.name };
+    const list = db.shifts.filter((s) => s.userId === m.userId && s.end && s.start.slice(0, 10) >= (m.joinedAt || '') && s.start.slice(0, 10) >= from && s.start.slice(0, 10) <= to);
+    const days = new Set(list.map((s) => s.start.slice(0, 10)));
+    const km = list.reduce((a, s) => a + Math.max(0, (s.kmEnd || 0) - (s.kmStart || 0)), 0);
+    const hours = list.reduce((a, s) => a + Math.max(0, (new Date(s.end) - new Date(s.start)) / 36e5), 0);
+    const last = list.map((s) => s.start).sort().pop() || null;
+    return { ...clone(m), name: u.name || m.name, phone: u.phone || '', photo: db.profiles[m.userId]?.photo || null, shifts: list.length, days: days.size, km, hours, last };
+  });
+}
+export function carCosts(carId) { return clone(db.costs.filter((x) => x.carId === carId)); }
+
 export function lastKm() {
   const id = myId();
   const done = db.shifts.filter((s) => s.userId === id && s.kmEnd).sort((a, b) => b.start.localeCompare(a.start));
@@ -415,7 +510,7 @@ export function deleteCost(cid, { from = todayStr() } = {}) {
   commit();
 }
 // „Колата ми“: ремонти, обслужване, гуми – еднократни разходи с дата, км и бележка (влизат в чистото за деня си)
-export const CAR_LOG_CATS = { repair: 'Ремонт', service: 'Обслужване', tires: 'Гуми', car_other: 'Друго за колата' };
+export const CAR_LOG_CATS = { repair: 'Ремонт', service: 'Обслужване', tires: 'Гуми', insurance: 'Застраховка', vignette: 'Винетка', inspection: 'Технически преглед', cartax: 'Данък МПС', car_other: 'Друго за колата' };
 export function saveCarEntry(e) {
   const id = myId();
   const amount = Math.round((Number(e.amount) || 0) * 100) / 100;

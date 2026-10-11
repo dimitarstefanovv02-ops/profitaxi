@@ -87,13 +87,14 @@ function systemCost(c, go) {
 function costRow(c, data, go) {
   const cat = costCat(c.category);
   const left = c.dueDate ? Math.round((parseDate(c.dueDate) - parseDate(todayStr())) / 86400000) : null;
-  return h('button', { class: 'cost-row', style: { '--rc': cat.color }, onclick: () => (c.system ? systemCost(c, go) : editCost(c, data)) },
+  return h('button', { class: 'cost-row', style: { '--rc': cat.color }, onclick: () => (c.carId ? go('/cars') : c.system ? systemCost(c, go) : editCost(c, data)) },
     h('div', { class: 'cost-ic' }, icon(cat.icon, 20)),
     h('div', { class: 'grow' },
       h('div', { class: 'cost-name' }, c.name),
       h('div', { class: 'cost-det' },
         h('span', null, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${PERIODS[c.period]?.label || ''}`),
         c.perWorkDay && h('span', null, 'само работни дни'),
+        c.carId && h('span', { class: 'chip', style: { padding: '2px 8px' } }, c.system === 'carrent' ? 'от собственика' : `обща кола · твоят дял ${Math.round((c.share ?? 1) * 100)}%`),
         c.system && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `от ${fmtDate(c.startDate)}`),
         left != null && h('span', { class: cx('chip', left < 0 ? 'bad' : left <= 7 ? 'warn' : ''), style: { padding: '2px 8px' } }, `плащане ${fmtDate(c.dueDate)}`),
         c.endDate && h('span', { class: 'chip', style: { padding: '2px 8px' } }, `до ${fmtDate(c.endDate, { year: true })}`))),
@@ -123,7 +124,7 @@ function remRow(r, data, km) {
       h('button', { class: 'btn btn-ok btn-sm', onclick: paid }, icon('check', 16), cost ? 'Платено' : 'Готово')));
 }
 
-function editCost(c, data) {
+export function editCost(c, data) {
   const isNew = !c.id;
   const rent = data.profile.carType === 'rent';
   const list = fixedCats(data.profile);

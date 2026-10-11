@@ -130,11 +130,35 @@ const OWN = ['shifts', 'costs', 'reminders', 'reservations', 'tickets', 'nps', '
 const PUBLIC = ['settings', 'flags', 'ideas'];
 
 // Какво вижда един шофьор: само своето + общите неща
+// Обща кола: собственикът вижда на шофьорите си само км, часове, дни и смени (без пари);
+// шофьорите виждат колата, общите ѝ разходи (при лична кола) и имената на останалите.
+function carScope(all, id) {
+  const owned = new Set(), member = new Set(), drivers = new Set(), people = new Set();
+  for (const [f, v] of Object.entries(all)) {
+    if (fieldColl(f) !== 'cars' || !v) continue;
+    const ms = (v.members || []).map((m) => m.userId);
+    if (v.ownerId === id) { owned.add(v.id); ms.forEach((x) => { if (x !== id) { drivers.add(x); people.add(x); } }); }
+    if (ms.includes(id)) { member.add(v.id); people.add(v.ownerId); ms.forEach((x) => x !== id && people.add(x)); }
+  }
+  return { owned, member, drivers, people };
+}
+const SHIFT_PUBLIC = (s) => ({ id: s.id, userId: s.userId, start: s.start, end: s.end, kmStart: s.kmStart, kmEnd: s.kmEnd });
+const USER_PUBLIC = (u) => ({ id: u.id, role: u.role, name: u.name, phone: u.phone, city: u.city, company: u.company, status: u.status });
 function driverView(all, id) {
   const me = all[`users:${id}`]; if (!me) return null;
   const out = {};
+  const cs = carScope(all, id);
   for (const [f, v] of Object.entries(all)) {
     const c = fieldColl(f), k = fieldKey(f);
+    if (c === 'cars') {
+      if (cs.owned.has(k)) out[f] = v;
+      else if (cs.member.has(k)) { const { invite, ...rest } = v; out[f] = rest; } // кода за покана го вижда само собственикът
+      continue;
+    }
+    if (c === 'costs' && v?.carId && v.userId !== id) { if (cs.member.has(v.carId) && all[`cars:${v.carId}`]?.type === 'own') out[f] = v; continue; }
+    if (c === 'shifts' && v?.userId !== id) { if (cs.drivers.has(v?.userId)) out[f] = SHIFT_PUBLIC(v); continue; }
+    if (c === 'profiles' && k !== id && cs.people.has(k)) { out[f] = { photo: v?.photo || null }; continue; }
+    if (c === 'users' && k !== id && cs.people.has(k)) { out[f] = USER_PUBLIC(v); continue; }
     if (c === 'users') {
       if (k === id) out[f] = v;
       else if (v?.referredBy === id) out[f] = { id: v.id, role: v.role, name: v.name, referredBy: v.referredBy, createdAt: v.createdAt, subscription: v.subscription, status: v.status };
@@ -188,6 +212,10 @@ async function applyPush(s, set = {}, del = []) {
       v = stripPw(f, v); PROTECTED.forEach((p) => { if (p in old) v[p] = old[p]; else delete v[p]; });
       v.id = id; v.email = old.email;
     } else if (c === 'profiles' || c === 'dismissed') { if (k !== id) { rejected.push(f); continue; } }
+    else if (c === 'cars') { // колата се създава и променя само от собственика
+      if (old ? old.ownerId !== id : v.ownerId !== id) { rejected.push(f); continue; }
+      v.ownerId = id; v.id = k;
+    }
     else if (c === 'usage') { if (!k.endsWith('|' + id)) { rejected.push(f); continue; } }
     else if (OWN.includes(c) && c !== 'payments') {
       if (v.userId !== id || (old && old.userId !== id)) { rejected.push(f); continue; }
@@ -212,7 +240,9 @@ async function applyPush(s, set = {}, del = []) {
       if (c === 'users') extra.push(['HDEL', 'pt:auth', k], ['HDEL', 'pt:email', norm(old.email)]);
       continue;
     }
-    if (OWN.includes(c) && c !== 'payments' && old.userId === id) hdel.push(f); else rejected.push(f);
+    if (OWN.includes(c) && c !== 'payments' && old.userId === id) hdel.push(f);
+    else if (c === 'cars' && old.ownerId === id) hdel.push(f);
+    else rejected.push(f);
   }
   const cmds = [];
   if (hset.length) cmds.push(['HSET', 'pt:db', ...hset]);
@@ -528,9 +558,37 @@ const ops = {
     return { ok: true, removed: mine.length };
   },
 
+  // Присъединяване към обща кола с кода от линка
+  async joinCar({ invite }, s) {
+    if (!s || s.role !== 'driver') return { error: 'Влез в профила си' };
+    const code = String(invite || '').trim().toUpperCase(); if (!code) return { error: 'Няма код' };
+    const all = await allFields();
+    const entry = Object.entries(all).find(([f, v]) => fieldColl(f) === 'cars' && v?.invite === code);
+    if (!entry) return { error: 'Няма кола с този код. Поискай нов линк от собственика.' };
+    const [f, car] = entry; const u = all[`users:${s.id}`];
+    if (car.ownerId === s.id && car.type === 'rent') return { error: 'Това е твоята кола.' };
+    const ms = car.members || [];
+    if (!ms.some((m) => m.userId === s.id)) {
+      ms.push({ userId: s.id, name: u?.name || '', share: 0, joinedAt: new Date().toISOString().slice(0, 10) });
+      if (car.type === 'own') { const n = ms.length, each = Math.floor((100 / n) * 100) / 100; ms.forEach((m) => { m.share = each; }); ms[0].share = Math.round((100 - each * (n - 1)) * 100) / 100; }
+      car.members = ms;
+      await redis([['HSET', 'pt:db', f, JSON.stringify(car)], ['INCR', 'pt:rev']]);
+    }
+    return { ok: true, carId: car.id };
+  },
+  async leaveCar({ carId }, s) {
+    if (!s || s.role !== 'driver') return { error: 'Влез в профила си' };
+    const f = `cars:${carId}`; const car = parse(await one(['HGET', 'pt:db', f]));
+    if (!car) return { ok: true };
+    car.members = (car.members || []).filter((m) => m.userId !== s.id);
+    if (car.type === 'own' && car.members.length) { const n = car.members.length, each = Math.floor((100 / n) * 100) / 100; car.members.forEach((m) => { m.share = each; }); car.members[0].share = Math.round((100 - each * (n - 1)) * 100) / 100; }
+    await redis([['HSET', 'pt:db', f, JSON.stringify(car)], ['INCR', 'pt:rev']]);
+    return { ok: true };
+  },
+
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
+const NEEDS_LOGIN = new Set(['joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
 

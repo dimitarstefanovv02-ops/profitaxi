@@ -1371,3 +1371,23 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .crop-img { position: absolute; left: 0; top: 0; max-width: none !important; transform-origin: 0 0; pointer-events: none; }
 .crop-ctl { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
 .crop-zoom { flex: 1; accent-color: currentColor; }
+/* ===== Обща кола и автопарк ===== */
+.car-list { display: flex; flex-direction: column; gap: 10px; }
+.car-item { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; padding: 14px 16px !important; }
+.car-item .ci-ic, .cc-row .cc-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-3); flex: none; }
+.car-item .grow, .cc-row .grow { display: flex; flex-direction: column; min-width: 0; }
+.car-item small, .cc-row small { color: var(--muted); font-size: .82rem; }
+.inv-link { background: var(--surface-2); border-radius: 12px; padding: 10px 12px; overflow-wrap: anywhere; font-size: .82rem; }
+.inv-link code { font-family: ui-monospace, Menlo, monospace; }
+.drv-list { display: flex; flex-direction: column; }
+.drv-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.drv-row:first-child { border-top: 0; }
+.drv-face { width: 44px; height: 44px; border-radius: 12px; overflow: hidden; flex: none; display: grid; place-items: center; background: var(--surface-3); font-weight: 700; }
+.drv-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.drv-row .grow { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.drv-nums { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .92rem; }
+.drv-nums b { font-weight: 800; }
+.drv-act { display: flex; gap: 2px; }
+.car-costs { display: flex; flex-direction: column; }
+.cc-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; color: inherit; width: 100%; font: inherit; }
+.cc-row:first-child { border-top: 0; }

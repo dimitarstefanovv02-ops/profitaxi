@@ -13,7 +13,8 @@ export const shiftHours = (s) => Math.max(0, ((s.end ? new Date(s.end) : new Dat
 export const shiftDate = (s) => isoToDateStr(s.start);
 
 // Дял на шофьора от разходите за колата, ако я дели с друг
-const shareFor = (cost, profile) => (COST_CATS[cost.category]?.car ? (profile.sharePct ?? 100) / 100 : 1);
+// Делът от разхода: при обща кола – делът на шофьора в колата (cost.share), иначе „процент от разходите на колата“
+const shareFor = (cost, profile) => (cost.share != null ? cost.share : COST_CATS[cost.category]?.car ? (profile.sharePct ?? 100) / 100 : 1);
 const PER_YEAR = { week: 52.1775, month: 12, quarter: 4, year: 1 };
 
 // Постоянни разходи, разпределени за един ден

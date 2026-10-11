@@ -22,6 +22,7 @@ import { helpView } from './views/help.js';
 import { guideView } from './views/guide.js';
 import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } from './arrange.js';
 import { vehicleView } from './views/vehicle.js';
+import { carsView, joinView } from './views/cars.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
 import { tipFor } from './tips.js';
@@ -35,6 +36,7 @@ const PRIVATE = {
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/calendar': calendarView, '/search': searchView,
   '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/vehicle': vehicleView,
+  '/cars': carsView, '/join': joinView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
 const TABS = [
@@ -42,7 +44,7 @@ const TABS = [
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Профил'],
 ];
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
 export const go = (path, replace) => {
@@ -66,6 +68,8 @@ function render() {
   document.documentElement.dataset.page = route.name.slice(1);
 
   if (!user) {
+    // Линк за покана към обща кола: запомняме кода и след входа/регистрацията отиваме там
+    if (route.name === '/join' && route.param) { try { localStorage.setItem('profitaxi.joinCode', route.param); } catch { /* */ } return go('/register', true); }
     const view = PUBLIC[route.name];
     if (!view) return go('/login', true);
     return mount(app, view({ go }), route, false);
@@ -79,6 +83,7 @@ function render() {
   if (!profile.onboarded && route.name !== '/onboarding' && route.name !== '/guide') return go('/onboarding', true);
   const view = PRIVATE[route.name];
   if (!view) return go('/home', true);
+  { let jc = null; try { jc = localStorage.getItem('profitaxi.joinCode'); } catch { /* */ } if (jc && route.name !== '/join') { try { localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } return go('/join/' + jc, true); } }
 
   if (!autoRan) { autoRan = true; store.runAutoReminders(); }
   const ctx = { go, route, user, data: store.myData(), rerender: render };
