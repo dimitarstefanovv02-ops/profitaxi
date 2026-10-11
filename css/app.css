@@ -1391,3 +1391,4 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .car-costs { display: flex; flex-direction: column; }
 .cc-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border: 0; border-top: 1px solid var(--line); background: none; text-align: left; color: inherit; width: 100%; font: inherit; }
 .cc-row:first-child { border-top: 0; }
+.nav.nav-3.nav-2 { grid-template-columns: repeat(2, 1fr); }

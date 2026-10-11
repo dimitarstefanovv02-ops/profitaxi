@@ -1,0 +1,42 @@
+import asyncio
+from playwright.async_api import async_playwright
+import tempfile, os; S=tempfile.gettempdir()+'/'
+B='http://localhost:8765'
+R=[]
+def ok(n,c,x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  ['+str(x)+']' if x!='' else ''}")
+async def main():
+    async with async_playwright() as p:
+        b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':390,'height':844},device_scale_factor=2); errs=[]; pg.set_default_timeout(8000)
+        pg.on('pageerror',lambda e: errs.append(str(e)))
+        await pg.goto(B+'/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B+'/app#/register'); await pg.wait_for_timeout(500)
+        await pg.click('button.option:has-text("Собственик на коли")'); await pg.wait_for_timeout(150)
+        ok('При собственик полето „Колата е“ се скрива', not await pg.locator('h3:has-text("Колата е")').is_visible())
+        await pg.fill('input[autocomplete=name]','Петър Собственик'); await pg.fill('input[type=email]','owner@test.bg'); await pg.fill('input[type=password]','123456')
+        await pg.fill('input[type=tel]','0877333444')
+        await pg.select_option('select >> nth=0','Пловдив'); await pg.wait_for_timeout(150); await pg.select_option('select >> nth=1', index=1)
+        if await pg.locator('.sms-box button, button:has-text("Изпрати код")').count():
+            await pg.click('button:has-text("Изпрати код")'); await pg.wait_for_timeout(300)
+            code = await pg.evaluate("async()=>{const s=await import('/js/store.js'); return s.sendSmsCode('0877333444').demoCode}")
+            await pg.fill('input[inputmode=numeric]', code); await pg.click('button:has-text("Потвърди")'); await pg.wait_for_timeout(300)
+        await pg.click('input[type=checkbox]'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1200)
+        await pg.screenshot(path=S+'fl0.png')
+        ok('След регистрация – направо автопаркът (без настройка на колата)', '#/home' in pg.url and await pg.locator('h1:has-text("Автопарк")').count()==1, pg.url)
+        ok('Долу има само „Автопарк“ и „Профил“', await pg.locator('.nav a').count()==2)
+        await pg.goto(B+'/app#/money'); await pg.wait_for_timeout(400)
+        ok('„Пари“ не се отваря за собственик', '#/home' in pg.url)
+        car = await pg.evaluate("async()=>{const s=await import('/js/store.js'); const c=s.createCar({type:'rent',name:'Skoda Octavia',plate:'PB0001AA'}); const d=new Date(); d.setDate(d.getDate()+5); s.saveCost({carId:c.id,name:'ГО',category:'insurance',amount:300,period:'year',startDate:'2026-01-01',dueDate:d.toISOString().slice(0,10)}); return c}")
+        await pg.goto(B+'/app#/home'); await pg.wait_for_timeout(600)
+        t = await pg.locator('#app').inner_text()
+        ok('Автопаркът показва колата и плащането до 30 дни', 'Skoda Octavia' in t and 'Плащания до 30 дни' in t and 'ГО' in t)
+        await pg.screenshot(path=S+'fl1.png')
+        await pg.click('.chip:has-text("Платено")'); await pg.wait_for_timeout(500)
+        ok('„Платено“ мести падежа (вече не е в 30-те дни)', 'Плащания до 30 дни' not in await pg.locator('#app').inner_text())
+        await pg.goto(B+'/app#/me'); await pg.wait_for_timeout(500)
+        t = await pg.locator('#app').inner_text()
+        ok('Профилът на собственика – без „Колата“ и картата с колата', 'Настройки на колата' not in t and 'Вид акаунт' in t)
+        await pg.click('text=Вид акаунт'); await pg.wait_for_timeout(300); await pg.click('.sheet button.option:has-text("Шофьор")'); await pg.wait_for_timeout(600)
+        ok('Смяна към шофьор – три бутона долу', await pg.locator('.nav a').count()==3)
+        ok('Без грешки', not errs, errs[:2])
+        await b.close()
+    print('\n'.join(R)); print(f"FAILS: {sum(1 for r in R if r.startswith('FAIL'))} / {len(R)}")
+asyncio.run(main())

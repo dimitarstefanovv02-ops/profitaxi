@@ -175,6 +175,9 @@ export function checkAccessCode(code, company) {
   if (c.limit && c.uses >= c.limit) return { error: 'Кодът е използван максимален брой пъти' };
   return { code: clone(c) };
 }
+// Собственик на автопарк: не кара – без първа настройка на колата и без разходка
+const fleetProfile = (f) => (f.accountType === 'fleet' ? { carType: 'own', accountType: 'fleet', onboarded: true } : { carType: f.carType });
+export const isFleet = (p) => p?.accountType === 'fleet';
 export function register(f) {
   load();
   const err = validateAccount(f);
@@ -188,7 +191,7 @@ export function register(f) {
   let accessCode = null, promo = null;
   if (f.accessCode != null) { const r = checkAccessCode(f.accessCode, f.company); if (r.error) return { error: r.error }; accessCode = r.code.code; }
   if (f.promo && String(f.promo).trim()) { const r = checkPromo(f.promo); if (r.error) return { error: r.error }; promo = r.promo; }
-  const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
+  const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: fleetProfile(f) });
   u.phoneVerified = true;
   u.source = accessCode ? 'code' : promo ? 'promo' : referrer ? 'invite' : (f.source || 'site');
   if (accessCode) { u.accessCode = accessCode; db.codes.find((x) => x.code === accessCode).uses++; }
@@ -198,7 +201,7 @@ export function register(f) {
     else u.discount = pr.value; // % отстъпка за първия платен месец
   }
   if (referrer) u.referredBy = referrer.id; // наградата идва, когато новият шофьор плати
-  db.profiles[u.id].tour = 'pending'; // кратка разходка при първото влизане
+  db.profiles[u.id].tour = f.accountType === 'fleet' ? 'done' : 'pending'; // кратка разходка при първото влизане (само за шофьори)
   localStorage.setItem(SESSION_KEY, u.id);
   commit();
   return { user: clone(u) };
@@ -1025,7 +1028,7 @@ async function liveAuth(op, body, sc, sessionKey) {
 async function registerLive(f) {
   const perr = validatePhone(f.phone); if (perr) return { error: perr };
   if (!phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
-  const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: { carType: f.carType } });
+  const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: fleetProfile(f) });
   const profile = db.profiles[u.id];
   db.users = db.users.filter((x) => x.id !== u.id); delete db.profiles[u.id];
   const { password, ...user } = u;

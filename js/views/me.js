@@ -3,7 +3,7 @@
 
 import { h, icon, cx } from '../util.js';
 import { zone, setArranging } from '../arrange.js';
-import { toast, topSearch } from '../ui.js';
+import { toast, topSearch, openSheet, sheetHead } from '../ui.js';
 // „Подреди екраните“: режимът важи за всички страници, докато не натиснеш „Готово“
 function startArrange() { setArranging(true); toast('Задръж карта или бутон и го влачи. Мини през страниците от менюто долу.'); }
 import * as store from '../store.js';
@@ -18,7 +18,15 @@ function carSub(data) {
   return n ? `${n} ремонта · колко си избил от колата` : 'Ремонти, разходи по колата и колко си избил от нея';
 }
 
+// Шофьор ⇄ собственик на коли (който сам не кара)
+function kindSheet(fleet, go) {
+  openSheet((close) => h('div', { class: 'form' },
+    sheetHead('Вид акаунт', close, 'Можеш да го смениш по всяко време – данните ти остават.'),
+    h('button', { class: cx('option', !fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'driver' }); close(); go('/home'); } }, icon('car', 24), 'Шофьор', h('small', null, 'Карам и следя колко ми остава')),
+    h('button', { class: cx('option', fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'fleet', onboarded: true }); close(); go('/home'); } }, icon('key', 24), 'Собственик на коли', h('small', null, 'Колите ми карат други шофьори – началният екран е автопаркът'))));
+}
 export function meView({ go, user, data }) {
+  const fleet = store.isFleet(data.profile);
   const row = (k, ic, title, sub, onclick, href) => [k, h(href ? 'a' : 'button', { class: 'big-link', href, onclick },
     h('span', { class: 'bl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), sub && h('span', null, sub)), icon('right', 18))];
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
@@ -27,11 +35,12 @@ export function meView({ go, user, data }) {
     h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Профил'), h('div', { class: 'date' }, 'Акаунт, колата и помощ')),
       h('button', { class: 'tab-avatar', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo', () => go('/me')) },
         data.profile.photo ? h('img', { src: data.profile.photo, alt: '' }) : h('span', null, user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')))),
-    profileCover(user, data.profile),
+    !fleet && profileCover(user, data.profile),
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',
-      row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile')),
-    group('car', 'Колата',
+      row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile'),
+      row('kind', fleet ? 'key' : 'car', 'Вид акаунт', fleet ? 'Собственик на коли – не караш' : 'Шофьор', () => kindSheet(fleet, go))),
+    !fleet && group('car', 'Колата',
       data.profile.carType !== 'rent' && row('vehicle', 'tool', 'Колата ми', carSub(data), null, '#/vehicle'),
       row('carset', 'car', 'Настройки на колата', 'Своя или под наем, гориво, данни за колата', null, '#/car'),
       row('cars', 'users', 'Обща кола и автопарк', (data.cars || []).length ? `${data.cars.length} ${data.cars.length === 1 ? 'кола' : 'коли'} – шофьори, разходи, покани` : 'Кола с няколко шофьори или коли под наем – покани с линк', null, '#/cars')),

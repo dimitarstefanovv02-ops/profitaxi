@@ -789,3 +789,4 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 @media (min-width: 560px) { .cover4 { border-radius: 24px; overflow: hidden; } .cover4 .c4-photo { border-radius: 0; } }
 .cover4 .c4-line, .cover4 .c4-line b, .cover4 .c4-line span { font-weight: 700 !important; }
 .cover4 .c4-top span { opacity: .85; }
+.nav.nav-3.nav-2 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }

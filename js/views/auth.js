@@ -85,10 +85,21 @@ export function registerView({ go }) {
   const promo = input({ placeholder: 'напр. START2', value: promoFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const cc = cityCompanyPicker();
   let carType = '';
+  // Вид акаунт: шофьор или собственик на коли, който сам не кара
+  let kind = 'driver';
+  const kindBox = h('div');
+  const carGroup = h('div');
+  const drawKind = () => {
+    fill(kindBox, h('div', { class: 'option-grid' },
+      h('button', { type: 'button', class: cx('option', kind === 'driver' && 'on'), onclick: () => { kind = 'driver'; drawKind(); } }, icon('car', 24), 'Шофьор', h('small', null, 'Карам и следя колко ми остава')),
+      h('button', { type: 'button', class: cx('option', kind === 'fleet' && 'on'), onclick: () => { kind = 'fleet'; drawKind(); } }, icon('key', 24), 'Собственик на коли', h('small', null, 'Колите ми карат други шофьори'))));
+    carGroup.style.display = kind === 'fleet' ? 'none' : '';
+  };
   const carBox = h('div');
   const drawCar = () => fill(carBox, h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
     h('button', { type: 'button', class: cx('option', carType === k && 'on'), onclick: () => { carType = k; drawCar(); } }, icon(v.icon, 24), v.label, h('small', null, v.hint)))));
   drawCar();
+  drawKind();
   drawSms();
   const agree = h('input', { type: 'checkbox', style: { width: '22px', height: '22px', accentColor: 'var(--accent)', flex: 'none' } });
   const err = h('p', { class: 'err', role: 'alert' });
@@ -102,7 +113,7 @@ export function registerView({ go }) {
       [pw.value.length < 6, 'Паролата трябва да е поне 6 символа'],
       [!v.city, 'Избери град'],
       [!v.company, 'Избери фирма или напиши името ѝ'],
-      [!carType, 'Избери каква е колата'],
+      [kind === 'driver' && !carType, 'Избери каква е колата'],
       [!phone.value.trim(), 'Въведи телефон'],
       [store.phoneCodeOn() && !phoneOk, 'Потвърди телефона с кода от SMS'],
       [!store.live() && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
@@ -111,10 +122,10 @@ export function registerView({ go }) {
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
     const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
-    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType, refCode: ref.value, promo: promo.value });
+    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promo.value });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
-    go('/guide?first=1');
+    go(kind === 'fleet' ? '/home' : '/guide?first=1');
   };
   const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 15)), title), ...kids);
   return h('div', { class: 'auth' },
@@ -123,6 +134,7 @@ export function registerView({ go }) {
       h('h1', null, 'Нов акаунт'),
       h('p', null, 'Безплатно по време на теста, без карта. Полетата със звездичка са задължителни.')),
     h('form', { class: 'form', onsubmit: submit, novalidate: true },
+      group('key', 'Аз съм', kindBox),
       group('user', 'Акаунт',
         field('Име', name, null, true),
         field('Имейл', email, null, true),
@@ -130,7 +142,7 @@ export function registerView({ go }) {
         (store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true)),
         field('Промо код', promo, 'По желание – ако имаш код за отстъпка')),
       group('target', 'Къде караш', cc.el),
-      group('car', 'Колата е', carBox),
+      (carGroup.replaceChildren(group('car', 'Колата е', carBox)), carGroup),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Създай акаунт')),

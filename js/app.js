@@ -22,7 +22,7 @@ import { helpView } from './views/help.js';
 import { guideView } from './views/guide.js';
 import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } from './arrange.js';
 import { vehicleView } from './views/vehicle.js';
-import { carsView, joinView } from './views/cars.js';
+import { carsView, joinView, fleetHomeView } from './views/cars.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
 import { tipFor } from './tips.js';
@@ -39,11 +39,17 @@ const PRIVATE = {
   '/cars': carsView, '/join': joinView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
-const TABS = [
+const DRIVER_TABS = [
   ['/home', 'home', 'Днес'],
   ['/money', 'wallet', 'Пари'],
   ['/me', 'user', 'Профил'],
 ];
+// Собственик на автопарк (не кара): Автопарк и Профил
+const FLEET_TABS = [
+  ['/home', 'car', 'Автопарк'],
+  ['/me', 'user', 'Профил'],
+];
+let TABS = DRIVER_TABS;
 const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
@@ -81,7 +87,12 @@ function render() {
 
   const profile = store.getProfile();
   if (!profile.onboarded && route.name !== '/onboarding' && route.name !== '/guide') return go('/onboarding', true);
-  const view = PRIVATE[route.name];
+  const fleet = store.isFleet(profile);
+  TABS = fleet ? FLEET_TABS : DRIVER_TABS;
+  PARENT['/cars'] = fleet ? '/home' : '/me'; PARENT['/join'] = PARENT['/cars']; PARENT_LABEL['/home'] = fleet ? 'Автопарк' : 'Днес';
+  // Собственикът на автопарк не кара: „Днес“ е автопаркът, смените и парите на шофьора ги няма
+  if (fleet && ['/money', '/shifts', '/shift', '/stats', '/vehicle', '/car', '/onboarding'].includes(route.name)) return go('/home', true);
+  const view = fleet && route.name === '/home' ? fleetHomeView : PRIVATE[route.name];
   if (!view) return go('/home', true);
   { let jc = null; try { jc = localStorage.getItem('profitaxi.joinCode'); } catch { /* */ } if (jc && route.name !== '/join') { try { localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } return go('/join/' + jc, true); } }
 
@@ -92,7 +103,7 @@ function render() {
   mount(app, view(ctx), route, tab);
   // Разходка: веднъж след регистрация или когато е пусната от Профил → Помощ
   let tourNow = false; try { tourNow = sessionStorage.getItem('profitaxi.tourNow') === '1'; } catch { /* */ }
-  if (route.name === '/home' && !tourOpen() && (tourNow || ctx.data.profile.tour === 'pending')) {
+  if (!fleet && route.name === '/home' && !tourOpen() && (tourNow || ctx.data.profile.tour === 'pending')) {
     try { sessionStorage.removeItem('profitaxi.tourNow'); } catch { /* */ }
     notified = true;
     setTimeout(() => { if (location.hash.startsWith('#/home') && !tourOpen()) startTour(DRIVER_TOUR, { home: '/home', onDone: () => { if (store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
@@ -132,7 +143,7 @@ function mount(app, el, route, withNav) {
 
 function nav(active) {
   let cur = active; while (PARENT[cur]) cur = PARENT[cur];
-  return h('nav', { class: 'nav nav-3', 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
+  return h('nav', { class: cx('nav', 'nav-3', TABS.length === 2 && 'nav-2'), 'aria-label': 'Основно меню' }, TABS.map(([path, ic, label]) =>
     h('a', { href: '#' + path, class: cx(cur === path && 'on'), 'aria-current': cur === path ? 'page' : null },
       h('span', { class: 'nav-ic' }, icon(ic, 22)), label)));
 }

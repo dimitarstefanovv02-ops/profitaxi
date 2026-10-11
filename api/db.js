@@ -623,6 +623,7 @@ async function runCron(slot, { force = false } = {}) {
   for (const [id, list] of byUser) {
     const u = all[`users:${id}`]; if (!u || (u.status && u.status !== 'active')) continue;
     const d = userData(all, id); const base = '/app';
+    if (d.profile?.accountType === 'fleet') continue; // собственик на автопарк – не кара, без напомняния за смени
     const msgs = [];
     const created = new Date(u.createdAt || 0); const createdDay = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
     const hasY = d.shifts.some((x) => shiftDate(x) === yest);

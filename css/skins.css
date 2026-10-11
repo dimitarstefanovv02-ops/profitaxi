@@ -1097,3 +1097,4 @@
 }
 :root[data-skin="chisto"] .cover4 .c4-line, :root[data-skin="chisto"] .cover4 .c4-line b, :root[data-skin="chisto"] .cover4 .c4-line span {font-weight: 700 !important;}
 :root[data-skin="chisto"] .cover4 .c4-top span {opacity: .85;}
+:root[data-skin="chisto"] .nav.nav-3.nav-2 {grid-template-columns: repeat(2, minmax(0, 1fr)) !important;}
