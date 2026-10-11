@@ -143,7 +143,9 @@ export function goalProgress(data) {
   // Скорост на час: първо този месец, ако е малко – последните 60 дни
   let base = st;
   if (st.hours < 12) base = periodStats(data, addDays(today, -60), today);
-  const ratePerHour = base.hours ? (base.income - base.varExp) / base.hours : 0;
+  // Ефирът (разход в смяната) не се смята в печалбата на час – той се прогнозира отделно, по дни (виж efirLeft)
+  const baseEfir = base.expByCat.dispatch || 0;
+  const ratePerHour = base.hours ? (base.income - base.varExp + baseEfir) / base.hours : 0;
   const avgShiftHours = base.shifts ? base.hours / base.shifts : 9;
   const workRatio = base === st ? (elapsed ? Math.max(st.workedDays / elapsed, 0.4) : 0.8) : Math.max(base.workedDays / 60, 0.4);
 
@@ -153,11 +155,15 @@ export function goalProgress(data) {
     const withoutWork = fixedForDay(data.costs, data.profile, d, false);
     fixedLeft += withoutWork + (all - withoutWork) * workRatio; // таксата „на работен ден“ – само за очакваните работни дни
   }
+  // Ефир до края на месеца – пропорционално на въведения досега: (ефир досега ÷ изминали дни) × оставащи дни.
+  // Ако този месец още няма ефир, а скоростта е от последните 60 дни – по същия начин за тези 61 дни.
+  const efirPerDay = st.expByCat.dispatch ? st.expByCat.dispatch / elapsed : base !== st ? baseEfir / 61 : 0;
+  const efirLeft = efirPerDay * remainingDays;
   // „Чисто досега“ = приход − разходи от смените − постоянните разходи до днес.
   // До целта остава: цел − чисто досега + постоянните разходи, които предстоят до края на месеца.
   const monthFixed = st.fixedExp + fixedLeft;
   const net = st.net;
-  const remaining = Math.max(0, goal - net + fixedLeft);
+  const remaining = Math.max(0, goal - net + fixedLeft + efirLeft);
   const toEarn = remaining; // нужна печалба от смени до края на месеца
   const hoursNeeded = ratePerHour > 0 ? toEarn / ratePerHour : null;
   const shiftsNeeded = hoursNeeded != null ? Math.ceil(hoursNeeded / avgShiftHours) : null;
@@ -175,7 +181,7 @@ export function goalProgress(data) {
   const profitPerDay = base.workedDays ? (base.income - base.varExp) / base.workedDays : 0;
   const forecast = st.net + profitPerDay * daysInclToday * workRatio - fixedLeft;
   return {
-    goal, net, netToDate: st.net, monthFixed, pct: goal ? Math.max(0, net) / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
+    goal, net, netToDate: st.net, monthFixed, efirLeft, efirPerDay, pct: goal ? Math.max(0, net) / goal : 0, remaining, toEarn, fixedLeft, forecast, remainingDays,
     needToday, workDaysLeft, workedToday, needHoursToday: ratePerHour > 0 ? needToday / ratePerHour : null,
     ratePerHour, hoursNeeded, shiftsNeeded, avgShiftHours, shiftsLeft, needPerShift,
     feasible: hoursNeeded != null && hoursNeeded <= remainingDays * 12,

@@ -247,7 +247,7 @@ function meter(g, month) {
         h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
         h('div', { class: 'meter-cell' }, h('span', null, 'От смените на час'), h('b', null, money2(g.ratePerHour)))),
       h('div', { class: 'meter-note' }, icon('alert', 14),
-        h('span', null, `Наемът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}. Затова от смените трябват повече от разликата до целта.`)))));
+        h('span', null, `Наемът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}.${g.efirLeft > 0 ? ` Ефир до края на месеца ~${money(g.efirLeft)} – колкото досега на ден.` : ''} Затова от смените трябват повече от разликата до целта.`)))));
 }
 
 function weekCard(data) {
