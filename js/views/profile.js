@@ -153,7 +153,8 @@ export function profileCover(user, d) {
       d.carPhoto ? h('img', { class: 'c3-car', src: d.carPhoto, alt: 'Колата' })
         : h('button', { class: 'c3-addcar', type: 'button', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), 'Добави снимка на колата'),
       d.carPhoto && h('button', { class: 'c3-cam', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18))),
-    h('a', { class: 'c3-bar c3-bot', href: '#/car' }, icon('car', 16), h('span', null, facts.length ? facts.join(' · ') : 'Добави код, номер и модел на колата')));
+    h('a', { class: 'c3-bar c3-bot', href: '#/car' },
+      facts.length ? facts.map((f) => h('span', { class: 'c3-chip' }, f)) : h('span', { class: 'c3-chip' }, icon('plus', 14), 'Добави код, номер и модел')));
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)
