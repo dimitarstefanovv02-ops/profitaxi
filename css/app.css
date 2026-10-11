@@ -1360,3 +1360,7 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .st-row .grow > span { font-weight: 600; font-size: .92rem; }
 .st-row small { font-size: .74rem; color: var(--muted); }
 .st-row > b { font-size: 1.08rem; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* Днес: ред „Вчера“ */
+.yday-line { display: flex; align-items: center; gap: 12px; padding: 14px 16px !important; text-decoration: none; color: inherit; font-size: .95rem; }
+.yday-line .yl-ic { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); flex: none; }
+.yday-line .grow { min-width: 0; line-height: 1.35; }

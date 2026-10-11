@@ -302,3 +302,10 @@ export function celebrate(n = 40) {
   document.body.append(box);
   setTimeout(() => box.remove(), 2600);
 }
+
+// Горе на главните екрани (Днес, Пари, Профил): търсачката и бутонът за светла/тъмна тема
+export function topSearch(onTheme) {
+  return h('div', { class: 'g-search-row' },
+    h('a', { class: 'g-search', href: '#/search' }, icon('search', 22), h('span', null, 'Питай или търси'), icon('mic', 22)),
+    themeToggle(onTheme));
+}

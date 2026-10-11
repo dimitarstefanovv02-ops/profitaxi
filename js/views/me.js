@@ -3,7 +3,7 @@
 
 import { h, icon, cx } from '../util.js';
 import { zone, setArranging } from '../arrange.js';
-import { toast } from '../ui.js';
+import { toast, topSearch } from '../ui.js';
 // „Подреди екраните“: режимът важи за всички страници, докато не натиснеш „Готово“
 function startArrange() { setArranging(true); toast('Задръж карта или бутон и го влачи. Мини през страниците от менюто долу.'); }
 import * as store from '../store.js';
@@ -23,8 +23,8 @@ export function meView({ go, user, data }) {
     h('span', { class: 'bl-ic' }, icon(ic, 22)), h('span', { class: 'grow' }, h('b', null, title), sub && h('span', null, sub)), icon('right', 18))];
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
   return h('div', { class: 'screen', 'data-page': 'me' },
+    topSearch(() => go('/me')),
     profileCover(user, data.profile),
-    h('a', { class: 'search-link', href: '#/search' }, icon('search', 20), h('span', null, 'Търси: „как да…“ или „колко изкарах…“'), icon('mic', 20)),
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',
       row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile')),

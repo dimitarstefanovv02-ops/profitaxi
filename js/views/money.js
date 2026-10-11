@@ -3,7 +3,7 @@
 
 import { h, icon, cx, money, todayStr, startOfMonth, endOfMonth, MONTHS, parseDate, addDays } from '../util.js';
 import { goalProgress, series, periodStats } from '../calc.js';
-import { barChart, cardTitle, empty, openSheet, sheetHead } from '../ui.js';
+import { barChart, cardTitle, empty, openSheet, sheetHead, topSearch } from '../ui.js';
 import { shiftRow } from './home.js';
 import { exportCsv, fuelLine } from './stats.js';
 import { shareMonth } from '../quick.js';
@@ -38,6 +38,7 @@ export function moneyView({ go, data, rerender }) {
   const redraw = rerender || (() => go('/money'));
 
   return h('div', { class: 'screen', 'data-page': 'money' },
+    topSearch(redraw),
     h('div', { class: 'page-title' }, h('h1', null, 'Пари'),
       h('button', { class: 'month-pick', type: 'button', onclick: () => pickMonth(data, cur, redraw) }, monthName(cur), icon('down', 18))),
 

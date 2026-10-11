@@ -5,7 +5,7 @@ import { h, icon, cx, money, money2, todayStr, addDays, fmtDateLong, fmtTimer, M
 import * as store from '../store.js';
 import { isNightShift, goalProgress, periodStats, shiftIncome, shiftExpenses, shiftHours, upcomingReminders, shiftNetAfterFixed, shiftDate, shiftKm, weekStrip, timeInsights, records } from '../calc.js';
 import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
-import { roadProgress, openNumpad, openSheet, sheetHead, stat, tone, toast, cardTitle, more, reveal, themeToggle } from '../ui.js';
+import { roadProgress, openNumpad, openSheet, sheetHead, stat, tone, toast, cardTitle, more, reveal, themeToggle, topSearch } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
 import { INCOME_TYPES, incomeTypes, incomeLabel, FUELS, FUEL_TYPES, shiftCats } from '../constants.js';
@@ -72,8 +72,7 @@ export function homeView({ go, user, data, rerender, route }) {
   const redrawHome = rerender || (() => go('/home'));
 
   return h('div', { class: 'screen', 'data-page': 'home' },
-    h('div', { class: 'g-search-row' }, h('a', { class: 'g-search', href: '#/search' }, icon('search', 22), h('span', null, 'Питай или търси'), icon('mic', 22), data.profile.photo ? h('span', { class: 'avatar has-photo' }, h('img', { src: data.profile.photo, alt: '' })) : h('span', { class: 'avatar' }, (user.name || '?').split(' ').map((x) => x[0]).join('').slice(0, 2))),
-      themeToggle(() => go('/home'))),
+    topSearch(() => go('/home')),
     h('div', { class: 'hello' },
       h('div', null,
         h('h1', null, `${greeting()}, ${user.name.split(' ')[0]}`),
@@ -98,6 +97,8 @@ export function homeView({ go, user, data, rerender, route }) {
 
     // 1. Колко ти остава този месец (първия ден – какво да направи)
     ['meter', !data.shifts.length && introNow ? firstDay(() => { introNow = false; redrawHome(); }) : meter(g, month)],
+    // Вчера: един ред – приход, чисто, часове
+    ['yday-line', yesterdayLine(data)],
 
     // 2. Главното действие: смяната
     ['shift', h('div', { class: 'home-shift' },
@@ -486,4 +487,15 @@ function remindOffer(redraw) {
     h('div', { class: 'yday-btns' },
       h('button', { class: 'btn btn-primary btn-sm', onclick: async () => { const r = await setPushTypes(['remind', 'weekly', 'msg']); if (r.error) toast(r.error, 'err'); else toast('Напомнянията са включени'); hide(); } }, 'Да'),
       h('button', { class: 'btn btn-ghost btn-sm', onclick: hide }, 'Не')));
+}
+
+// Вчера с един поглед (само ако си карал): приход, чисто след разходите за деня, часове
+function yesterdayLine(data) {
+  const y = addDays(todayStr(), -1);
+  const st = periodStats(data, y, y);
+  if (!st.shifts) return null;
+  return h('a', { class: 'card yday-line', href: '#/stats' },
+    h('span', { class: 'yl-ic' }, icon('calendar', 18)),
+    h('span', { class: 'grow' }, h('b', null, 'Вчера'), ` · ${money(st.income)} приход · `, h('b', { class: tone(st.net) }, `${money(st.net)} чисто`), ` · ${fmtDuration(st.hours)}`),
+    icon('right', 16));
 }
