@@ -226,18 +226,16 @@ function meter(g, month) {
     g.goal > 0
       ? h('div', { class: 'meter-goal' }, g.done ? h('button', { class: 'goal-edit', onclick: editGoal }, `Целта от ${money(g.goal)} е постигната. Браво!`) : h('button', { class: 'goal-edit', onclick: editGoal, 'aria-label': 'Смени целта' }, `Цел ${money(g.goal)}`, icon('edit', 13)), h('span', null, ' · от смените трябват още ', h('b', null, money(g.remaining))))
       : h('button', { class: 'meter-goal goal-edit', onclick: editGoal }, icon('target', 15), 'Задай цел за месеца'),
-    g.goal > 0 && roadProgress(g.pct)),
+    g.goal > 0 && roadProgress(g.pct),
+    // Още колко часа работа до целта – по това, което изкарваш на час от смените досега
+    g.goal > 0 && !g.done && g.hoursNeeded != null && h('div', { class: 'meter-hours' },
+      `~${fmtNum(Math.ceil(g.hoursNeeded))} ч работа${g.shiftsNeeded != null ? ` · ~${g.shiftsNeeded} ${g.shiftsNeeded === 1 ? 'смяна' : 'смени'}` : ''} до целта · при ${money2(g.ratePerHour)}/ч`)),
     // Втора карта: колко трябва днес, очаквано за месеца и подробностите
     h('section', { class: 'card meter-plan', 'aria-label': 'Колко ти трябва' },
       // последният ден от месеца, след смяната: „утре“ е вече следващият месец – не показваме
       showPlan && hours != null && !(g.workedToday && g.remainingDays === 0) && h('div', { class: 'meter-today' }, h('span', { class: 'mt-ic' }, icon('flag', 22)),
         h('div', null, h('small', null, g.workedToday ? 'Утре ти трябват' : 'Днес ти трябват'),
           h('div', { class: 'mt-val' }, h('b', null, money(g.needToday)), h('span', null, g.needHoursToday != null ? ` от смяната (~${fmtNum(Math.max(1, Math.round(g.needHoursToday)))} ч)` : ' от смяната')))),
-      // Още колко часа работа до целта – по това, което изкарваш на час от смените досега
-      showPlan && hours != null && h('div', { class: 'meter-today meter-hours' }, h('span', { class: 'mt-ic' }, icon('clock', 22)),
-        h('div', null, h('small', null, 'До целта остават'),
-          h('div', { class: 'mt-val' }, h('b', null, `~${fmtNum(Math.ceil(hours))} ч`), h('span', null, ` работа${g.shiftsNeeded != null ? ` · ~${g.shiftsNeeded} ${g.shiftsNeeded === 1 ? 'смяна' : 'смени'}` : ''}`)),
-          h('small', { class: 'mt-sub' }, `при ${money2(g.ratePerHour)} на час от смените досега`))),
       showPlan && hours == null && h('div', { class: 'meter-note' }, icon('clock', 14), h('span', null, 'Колко ти трябва на ден ще сметнем след първата ти смяна.')),
       showPlan && h('div', { class: 'mp-line' }),
       h('div', { class: 'meter-forecast' }, h('div', null, h('small', null, 'Очаквано за целия месец'), h('b', { class: g.forecast < 0 ? 'neg' : '' }, money(g.forecast))),

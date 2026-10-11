@@ -1003,5 +1003,5 @@
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap {border: 0 !important; border-radius: 0 !important; overflow: visible !important; flex-wrap: wrap !important; gap: 8px !important; display: flex !important;}
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap .seg-btn {flex: 0 0 auto !important; border: 1px solid var(--ch-outline) !important; border-radius: 8px !important; min-height: 36px; padding: 0 12px !important; white-space: nowrap;}
 :root[data-skin="chisto"] .seg.seg-outline.seg-wrap .seg-btn.on {border-color: transparent !important;}
-:root[data-skin="chisto"] .meter-plan .meter-hours {margin-top: 14px !important;}
-:root[data-skin="chisto"] .meter-plan .mt-sub {font-size: .75rem !important; margin-top: 2px;}
+:root[data-skin="chisto"] .meter > .meter-hours {order: 5; font-size: .8125rem; color: var(--ch-on-pri-c); opacity: .75; margin-top: 4px;}
+:root[data-skin="chisto"] .meter .meter-goal b {white-space: nowrap;}

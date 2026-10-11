@@ -1334,4 +1334,4 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .screen.no-nav > .top, .auth > .brand, .auth > .back { padding-right: 52px; }
 .nav.nav-3 { grid-template-columns: repeat(3, 1fr) 52px; }
 .nav-theme { align-self: center; justify-self: center; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--muted); }
-.meter-plan .meter-hours { margin-top: 12px; }
+.meter-hours { font-size: .82rem; opacity: .8; margin-top: 4px; }
