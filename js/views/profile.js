@@ -143,7 +143,7 @@ export function profileCover(user, d) {
     catch { toast('Снимката е твърде голяма', 'err'); }
   };
   // Тъмна карта: снимка/инициали, име, град и фирма; код, номер и модел; абонамент
-  return h('section', { class: cx('cover cover2', d.carPhoto && 'has-car'), style: d.carPhoto ? { '--car': `url("${d.carPhoto}")` } : null },
+  return h('section', { class: cx('cover cover2', d.carPhoto && 'has-car') },
     h('div', { class: 'cv-top' },
       h('button', { class: 'cover-avatar', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo') },
         d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
@@ -151,6 +151,8 @@ export function profileCover(user, d) {
         h('h1', null, user.name),
         h('div', { class: 'cv-sub' }, [user.city, user.company].filter(Boolean).join(' · ') || 'Добави град и фирма')),
       h('a', { class: 'cv-edit', href: '#/profile' }, 'Смени')),
+    // Снимката на колата – отделна лента между името (горе) и данните (долу), нищо не я закрива
+    d.carPhoto && h('button', { class: 'cv-photo', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, h('img', { src: d.carPhoto, alt: 'Колата' })),
     h('div', { class: 'cv-badges' },
       car.code && h('span', { class: 'cover-code' }, h('small', null, 'Код'), car.code),
       car.plate && h('span', { class: 'plate' }, h('em', null, 'BG'), car.plate)),
