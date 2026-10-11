@@ -3,7 +3,7 @@
 
 import { h, fill, icon, cx, money, uid, toLocalInput, fromLocalInput, fmtDateLong, isoToDateStr, round2, fmtDuration } from '../util.js';
 import * as store from '../store.js';
-import { INCOME_TYPES, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat, shiftCats } from '../constants.js';
+import { INCOME_TYPES, incomeTypes, incomeLabel, EXPENSE_CATS, FUELS, FUEL_TYPES, expenseCat, shiftCats } from '../constants.js';
 import { openCategories } from './categories.js';
 import { showShiftResult } from './shiftResult.js';
 import { shiftIncome, shiftExpenses, shiftKm, shiftHours, fixedForDay, shiftDate } from '../calc.js';
@@ -94,7 +94,7 @@ export function shiftEditorView(ctx) {
 
       h('section', { class: 'card f-card', 'data-sec': 'inc' },
         cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(inc, inc % 1 ? 2 : 0))),
-        h('div', { class: 'f-list' }, Object.entries(INCOME_TYPES).map(([k, t]) =>
+        h('div', { class: 'f-list' }, incomeTypes(draft.income).map(([k, t]) =>
           fRow({ ic: t.icon, color: t.color, label: t.label, value: draft.income[k] ? money(draft.income[k], draft.income[k] % 1 ? 2 : 0) : '', onTap: () => editIncome(k), add: true })))),
 
       h('section', { class: 'card f-card', 'data-sec': 'exp' },
@@ -169,7 +169,7 @@ export function shiftEditorView(ctx) {
     const actions = cur > 0
       ? [{ label: `Добави към ${money(cur, cur % 1 ? 2 : 0)}`, run: ({ v }) => { draft.income[k] = round2(cur + v); draw(); } }, { label: 'Смени на новата', primary: true, run: ({ v }) => { draft.income[k] = v; draw(); } }]
       : [{ label: 'Запиши', primary: true, run: ({ v }) => { draft.income[k] = v; draw(); } }];
-    openNumpad({ title: INCOME_TYPES[k].label, sub: cur > 0 ? `Сега: ${money(cur, 2)}` : 'Сума за смяната', fields: [{ key: 'v', label: 'Сума', value: '' }], actions });
+    openNumpad({ title: incomeLabel(k), sub: cur > 0 ? `Сега: ${money(cur, 2)}` : 'Сума за смяната', fields: [{ key: 'v', label: 'Сума', value: '' }], actions });
   }
   function editKm(field) {
     openNumpad({ title: field === 'kmStart' ? 'Начален километраж' : 'Краен километраж', fields: [{ key: 'v', label: 'Километраж', value: draft[field] || '', unit: 'км', decimals: 0 }],

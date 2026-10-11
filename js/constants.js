@@ -29,9 +29,13 @@ export const FUEL_TYPES = {
 export const INCOME_TYPES = {
   cash: { label: 'Кеш', icon: 'coins', color: 'var(--c-green)' },
   card: { label: 'Карта', icon: 'card', color: 'var(--c-blue)' },
-  app: { label: 'Приложения', icon: 'phone', color: 'var(--c-violet)' },
   tips: { label: 'Бакшиш', icon: 'heart', color: 'var(--c-amber)' },
 };
+// „Приложения“ вече не е отделно поле (въвежда се в кеш или карта).
+// Показва се само при стари смени, в които има сума, за да може да се коригира.
+const APP_INCOME = { label: 'Приложения', icon: 'phone', color: 'var(--c-violet)' };
+export const incomeTypes = (inc) => Object.entries(inc && inc.app > 0 ? { cash: INCOME_TYPES.cash, card: INCOME_TYPES.card, app: APP_INCOME, tips: INCOME_TYPES.tips } : INCOME_TYPES);
+export const incomeLabel = (k) => (INCOME_TYPES[k] || APP_INCOME).label;
 
 // Разходи по време на смяна – само неща, свързани с таксито.
 // Шофьорът може да скрива вградените и да добавя свои категории.

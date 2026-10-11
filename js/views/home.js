@@ -8,7 +8,7 @@ import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
 import { roadProgress, openNumpad, openSheet, sheetHead, stat, tone, toast, cardTitle, more, reveal, themeToggle } from '../ui.js';
 import { upcomingReservations, reservationRow, editReservation, whenLabel, mapsUrl, reservationsView } from './reservations.js';
 import { calendarView } from './calendar.js';
-import { INCOME_TYPES, FUELS, FUEL_TYPES, shiftCats } from '../constants.js';
+import { INCOME_TYPES, incomeTypes, incomeLabel, FUELS, FUEL_TYPES, shiftCats } from '../constants.js';
 import { showShiftResult } from './shiftResult.js';
 import { scanReceipt } from '../quick.js';
 import { zone } from '../arrange.js';
@@ -324,7 +324,7 @@ function driveMode(s, data, go, g, redraw) {
     h('div', { class: 'drive-card' },
       h('div', { class: 'drive-label' }, 'Приходи'),
       h('div', { class: 'f-list drive-list inc' },
-        Object.entries(INCOME_TYPES).map(([k, t]) => row(t.icon, t.color, t.label, null, s.income[k] || 0, () => quickIncome(k))))),
+        incomeTypes(s.income).map(([k, t]) => row(t.icon, t.color, t.label, null, s.income[k] || 0, () => quickIncome(k))))),
     h('div', { class: 'drive-card' },
       h('div', { class: 'drive-label' }, 'Разходи'),
       h('div', { class: 'f-list drive-list exp' },
@@ -388,8 +388,8 @@ function forgotBanner(s, go, redraw) {
 }
 function quickIncome(k) {
   const a0 = store.getActiveShift(); if (!a0) return;
-  openNumpad({ title: `${INCOME_TYPES[k].label}: добави`, sub: `Досега: ${money(a0.income[k] || 0, 2)}`, fields: [{ key: 'v', label: 'Сума', value: '' }],
-    actions: [{ label: 'Добави', primary: true, run: ({ v }) => { if (!v) return; const a = store.getActiveShift(); a.income[k] = round2((a.income[k] || 0) + v); store.saveShift(a); toast(`${INCOME_TYPES[k].label} +${money(v, v % 1 ? 2 : 0)}`); } }] });
+  openNumpad({ title: `${incomeLabel(k)}: добави`, sub: `Досега: ${money(a0.income[k] || 0, 2)}`, fields: [{ key: 'v', label: 'Сума', value: '' }],
+    actions: [{ label: 'Добави', primary: true, run: ({ v }) => { if (!v) return; const a = store.getActiveShift(); a.income[k] = round2((a.income[k] || 0) + v); store.saveShift(a); toast(`${incomeLabel(k)} +${money(v, v % 1 ? 2 : 0)}`); } }] });
 }
 // Гориво за активната смяна (по желание с данни от снимана бележка)
 function quickFuel(profile, pre = {}) {

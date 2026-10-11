@@ -38,7 +38,7 @@ async def main():
         ok('След презареждане лентата не се връща', await pg.locator('.install-bar').count()==0)
         # режим „шофирам“
         await pg.click('.shift-cta'); await pg.wait_for_timeout(300); await pg.click('text=Старт'); await pg.wait_for_timeout(500)
-        ok('Докато смяната тече: режим „шофирам“ с редове едно под друго', await pg.locator('.drive-list .f-row').count()==8 and await pg.locator('.meter').count()==0)
+        ok('Докато смяната тече: режим „шофирам“ с редове едно под друго', await pg.locator('.drive-list .f-row').count()==7 and await pg.locator('.meter').count()==0)
         await pg.click('.drive-list .f-row >> nth=0'); await pg.keyboard.type('50'); await pg.click('.np-actions >> text=Добави'); await pg.wait_for_timeout(250)
         await pg.click('.drive-list .f-row >> nth=0'); await pg.keyboard.type('25'); await pg.click('.np-actions >> text=Добави'); await pg.wait_for_timeout(250)
         await pg.click('.drive-list >> nth=1 >> .f-row >> nth=0'); await pg.keyboard.type('30'); await pg.click('.np-field >> nth=1'); await pg.keyboard.type('20'); await pg.click('.np-actions >> text=Добави'); await pg.wait_for_timeout(300)

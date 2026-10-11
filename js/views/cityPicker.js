@@ -26,7 +26,7 @@ export function cityCompanyPicker({ city = '', company = '' } = {}) {
     const compOther = st.company === OTHER && h('input', { class: 'input', placeholder: 'Име на фирмата', value: st.companyOther, oninput: (e) => { st.companyOther = e.target.value; } });
     fill(box,
       field('Град', h('div', { class: 'form', style: { gap: '8px' } }, citySel, cityOther), null, true),
-      field('Таксиметрова фирма', h('div', { class: 'form', style: { gap: '8px' } }, compSel, compOther), 'Ако работиш само с приложения или самостоятелно, избери „Друга“ и го напиши.', true));
+      field('Таксиметрова фирма', h('div', { class: 'form', style: { gap: '8px' } }, compSel, compOther), 'Ако работиш самостоятелно, избери „Друга“ и го напиши.', true));
   };
   draw();
   return {

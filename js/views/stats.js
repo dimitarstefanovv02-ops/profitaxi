@@ -2,7 +2,7 @@
 
 import { h, icon, cx, money, money2, todayStr, addDays, startOfWeek, startOfMonth, endOfMonth, parseDate, MONTHS, MONTHS_SHORT, fmtDate, fmtNum, fmtNum1, fmtDuration, WD_SHORT, dateStr, minStr, fmtTime } from '../util.js';
 import { periodStats, series, timeInsights, records, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, shiftNetAfterFixed, shiftProfit } from '../calc.js';
-import { INCOME_TYPES, FUEL_TYPES, expenseCat, costCat } from '../constants.js';
+import { INCOME_TYPES, incomeTypes, FUEL_TYPES, expenseCat, costCat } from '../constants.js';
 import { segmented, barChart, shareRows, stat, tone, cardTitle, hero, empty , more} from '../ui.js';
 
 // Състояние на избрания период (пази се между отварянията)
@@ -75,7 +75,7 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
   const usePeriod = ti.shifts >= 15;
   const tiAll = usePeriod ? ti : timeInsights(data.shifts);
   const rec = records(data);
-  const incomeItems = Object.entries(INCOME_TYPES).map(([k, t]) => ({ label: t.label, icon: t.icon, color: t.color, value: st[k] }));
+  const incomeItems = incomeTypes(st).map(([k, t]) => ({ label: t.label, icon: t.icon, color: t.color, value: st[k] }));
   const expItems = [
     ...Object.entries(st.expByCat).map(([k, v]) => ({ label: expenseCat(k).label, icon: expenseCat(k).icon, color: expenseCat(k).color, value: v })),
     ...Object.entries(st.fixedByCat).map(([k, v]) => ({ label: costCat(k).label, icon: costCat(k).icon, color: costCat(k).color, value: v })),
@@ -232,11 +232,12 @@ function recordsCard(rec, admin) {
 // Excel: CSV с ; и запетая за десетични (както го отваря Excel на български)
 export function exportCsv(data, r) {
   const n = (v) => String(Math.round((Number(v) || 0) * 100) / 100).replace('.', ','); // липсваща сума = 0, не „NaN“
-  const rows = [['Дата', 'Начало', 'Край', 'Часове', 'Км', 'Кеш', 'Карта', 'Приложения', 'Бакшиш', 'Приход', 'Разходи', 'Печалба от смяната', 'Бележка']];
   const list = data.shifts.filter((s) => s.end && shiftDate(s) >= r.from && shiftDate(s) <= r.to).sort((a, b) => a.start.localeCompare(b.start));
+  const hasApp = list.some((s) => s.income.app > 0); // колона „Приложения“ само ако има стари смени с такава сума
+  const rows = [['Дата', 'Начало', 'Край', 'Часове', 'Км', 'Кеш', 'Карта', ...(hasApp ? ['Приложения'] : []), 'Бакшиш', 'Приход', 'Разходи', 'Печалба от смяната', 'Бележка']];
   for (const s of list) {
     rows.push([shiftDate(s), fmtTime(s.start), fmtTime(s.end), n(shiftHours(s)), shiftKm(s),
-      n(s.income.cash), n(s.income.card), n(s.income.app), n(s.income.tips), n(shiftIncome(s)), n(shiftExpenses(s)), n(shiftIncome(s) - shiftExpenses(s)), (s.note || '').replace(/[;\n]/g, ' ')]);
+      n(s.income.cash), n(s.income.card), ...(hasApp ? [n(s.income.app)] : []), n(s.income.tips), n(shiftIncome(s)), n(shiftExpenses(s)), n(shiftIncome(s) - shiftExpenses(s)), (s.note || '').replace(/[;\n]/g, ' ')]);
   }
   const st = periodStats(data, r.from, r.to);
   rows.push([], ['Постоянни разходи за периода', n(st.fixedExp)], ['Чиста печалба', n(st.net)]);

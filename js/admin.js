@@ -8,7 +8,7 @@ import './picker.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, setTheme, shareRows, cardTitle, isDark } from './ui.js';
 import { startTour, ADMIN_TOUR } from './tour.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
-import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, expenseCat, costCat } from './constants.js';
+import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costCat } from './constants.js';
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
 import { cityCompanyPicker } from './views/cityPicker.js';
 import { VAPID_PUBLIC } from './config.js';
@@ -845,10 +845,10 @@ function driverDetail(r) {
       tks.length > 0 && ['tickets', card('inbox', 'Въпроси към нас', tks.map((t) => h('a', { class: 'list-btn', href: '#/messages?t=inbox', onclick: () => { inbox.sel = t.id; } }, h('span', { class: 'grow' }, h('b', null, store.TICKET_TOPICS[t.topic]), h('small', { class: 'muted' }, ` · ${t.thread[0].text}`)), h('span', { class: cx('chip', t.status === 'open' ? 'warn' : 'good') }, t.status === 'open' ? 'Отворен' : 'Затворен'))))],
       owner && ['gdpr', gdprCard(u)],
       ['stats', wide(h('section', { class: 'card' }, cardTitle('chart', 'Статистика'), statsBox))],
-      ['shifts', wide(card('list', 'Смени', table(['Дата', 'Време', 'Часове', 'Км', 'Кеш', 'Карта', 'Прил.', 'Бакшиш', 'Разходи', 'Печалба'],
+      ['shifts', wide(card('list', 'Смени', table(['Дата', 'Време', 'Часове', 'Км', 'Кеш', 'Карта', 'Бакшиш', 'Разходи', 'Печалба'],
         shifts.map((x) => ({ cells: [
           fmtDate(shiftDate(x), { year: true }), `${new Date(x.start).toTimeString().slice(0, 5)} – ${x.end ? new Date(x.end).toTimeString().slice(0, 5) : 'кара'}`,
-          fmtDuration(shiftHours(x)), shiftKm(x), money(x.income.cash), money(x.income.card), money(x.income.app), money(x.income.tips), money(shiftExpenses(x)),
+          fmtDuration(shiftHours(x)), shiftKm(x), money(x.income.cash), money((x.income.card || 0) + (x.income.app || 0)), money(x.income.tips), money(shiftExpenses(x)),
           h('b', { class: tone(shiftIncome(x) - shiftExpenses(x)) }, money(shiftIncome(x) - shiftExpenses(x)))] })), { rightFrom: 2 }),
         data.shifts.length > 60 && note(`Показани са последните 60 от ${data.shifts.length}. Всички са в Excel файла.`)))],
       ['costs', wide(card('calendar', 'Постоянни разходи', table(['Разход', 'Сума', 'Период', 'На месец', 'Следващо плащане', 'Плащания'],
@@ -1571,7 +1571,7 @@ function chartsTab() {
       flow('stats.charts', [
         pts && pts.length > 1 && ['net', card('chart', 'Чиста печалба на всички', barChart(pts, { height: 170 }))],
         pts && pts.length > 1 && ['act', activePts ? card('users', 'Активни шофьори по дни', barChart(activePts, { height: 170, cls: 'violet', fmt: (v) => `${Math.round(v)} шофьори` })) : card('coins', 'Приход по месеци', barChart(pts, { height: 170, valueKey: 'income', cls: 'violet' }))],
-        ['pay', card('card', 'Как плащат клиентите', donut(Object.entries(INCOME_TYPES).map(([k, t], i) => ({ label: t.label, value: T[k], color: PALETTE[i] })), 'приход', money(T.income)))],
+        ['pay', card('card', 'Как плащат клиентите', donut(incomeTypes(T).map(([k, t], i) => ({ label: t.label, value: T[k], color: PALETTE[i] })), 'приход', money(T.income)))],
         ['hour', card('clock', 'Приход на час през денонощието', ti.hasData ? colBars([0, 3, 6, 9, 12, 15, 18, 21].map((hh) => { const xs = ti.byHour.slice(hh, hh + 3).filter((x) => x.rate); return { label: `${hh}ч`, value: xs.length ? xs.reduce((a, x) => a + x.rate, 0) / xs.length : 0 }; }), (v) => `${Math.round(v)}€`) : note('Няма данни'))],
         ['top', wide(card('trophy', 'Класиране за периода', table(['Шофьор', 'Град', 'Смени', 'Приход', 'Чисто', '€/час', '€/км'],
           rows.filter((x) => x.st.shifts).sort((a, b) => b.st.net - a.st.net).slice(0, 10).map(({ d, st }, i) => ({ href: '#/driver/' + d.user.id,
