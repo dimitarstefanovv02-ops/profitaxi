@@ -123,7 +123,7 @@ h3 { font-size: 21px; line-height: 1.25; letter-spacing: -.02em; }
 /* ---------- Шапка ---------- */
 .hd { position: sticky; top: 0; z-index: 50; background: var(--ink-bg); color: var(--on-ink); border-bottom: 1px solid var(--ink-line); }
 .hd-in { display: flex; align-items: center; height: var(--hd); gap: 20px; }
-.logo { font-weight: 700; font-size: 22px; letter-spacing: -.045em; text-decoration: none; color: inherit; white-space: nowrap; }
+.logo { font-weight: 700; font-size: 28px; letter-spacing: -.045em; text-decoration: none; color: inherit; white-space: nowrap; }
 .hd-nav { display: none; gap: 2px; }
 .hd-nav a { text-decoration: none; font-weight: 500; font-size: 15px; padding: 9px 14px; border-radius: 999px; }
 .hd-nav a:hover, .hd-nav a[aria-current] { background: var(--ink-surface); }
@@ -156,7 +156,7 @@ body.menu-open { overflow: hidden; }
 .blk-ink .lead { color: var(--on-ink-2); }
 .kicker { font-weight: 600; font-size: 14px; color: var(--on-ink-muted); margin-bottom: 12px; }
 .sec-title { margin-bottom: 28px; }
-.label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 10px; color: var(--muted); }
+.label { display: block; font-weight: 700; font-size: 22px; letter-spacing: -.02em; margin-bottom: 14px; color: var(--muted); }
 .blk-ink .label { color: var(--on-ink-muted); }
 
 /* ---------- Телефон ---------- */
@@ -502,3 +502,5 @@ body.menu-open { overflow: hidden; }
 /* Логото: името „Чисто“ и след него трите колонки */
 .logo { display: inline-flex; align-items: baseline; gap: .2em; }
 .logo-mark { width: .84em; height: .72em; flex: none; margin: 0; }
+
+@media (min-width: 900px) { .label { font-size: 26px; } .logo { font-size: 30px; } }
