@@ -1016,3 +1016,9 @@
 :root[data-skin="chisto"] .cover2 .cv-carbtn {position: absolute; right: 16px; bottom: 16px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.55); color: #fff !important; border: 1px solid rgba(255,255,255,.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);}
 :root[data-skin="chisto"] .cover2:not(.has-car) .cv-carbtn {background: color-mix(in srgb, var(--ch-on-pri-c) 12%, transparent); border: 0;}
 :root[data-skin="chisto"] .cover2 {position: relative;}
+:root[data-skin="chisto"] .meter .meter-value, :root[data-skin="chisto"] .month-sum .ms-total b {font-size: clamp(2.4rem, 11.5vw, 2.9rem) !important; font-weight: 700 !important; line-height: 1.05 !important; letter-spacing: -1px !important;}
+:root[data-skin="chisto"] .meter .meter-label, :root[data-skin="chisto"] .month-sum .ms-total span {font-size: 1rem !important; font-weight: 500 !important;}
+:root[data-skin="chisto"] .meter .meter-goal, :root[data-skin="chisto"] .month-sum p {font-size: 1rem !important; line-height: 1.45 !important;}
+:root[data-skin="chisto"] .meter > .meter-hours {font-size: .9375rem !important;}
+:root[data-skin="chisto"] .month-sum .ms-row span, :root[data-skin="chisto"] .meter-forecast small {font-size: .875rem !important;}
+:root[data-skin="chisto"] .month-sum .ms-row b, :root[data-skin="chisto"] .meter-forecast b {font-size: 1.375rem !important; font-weight: 800 !important;}
