@@ -25,7 +25,7 @@
   --pc: var(--ch-pri); --violet: var(--ch-pri); --v-soft: var(--ch-sec-c); --v-line: var(--ch-outline-v); --v-strong: var(--ch-outline-v);
   --c-green: var(--ch-ter); --c-red: var(--ch-err); --c-blue: var(--ch-on-v); --c-violet: var(--ch-on-v); --c-amber: var(--ch-on-v); --c-orange: var(--ch-on-v);
   --c-teal: var(--ch-on-v); --c-sky: var(--ch-on-v); --c-pink: var(--ch-on-v); --c-slate: var(--ch-on-v); --c-gray: var(--ch-outline);
-  --font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --display: var(--font);
+  --font: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; --display: var(--font);
   --r-xl: 28px; --r-lg: 24px; --r-md: 16px; --r-sm: 12px;
 }
 :root[data-theme="dark"], :root[data-theme="dark"] [data-page] {
@@ -560,7 +560,7 @@ details.more > summary .ic { color: var(--ch-on-v); }
   --pc: var(--ch-pri); --violet: var(--ch-pri); --v-soft: var(--ch-sec-c); --v-line: var(--ch-outline-v); --v-strong: var(--ch-outline-v);
   --c-green: var(--ch-ter); --c-red: var(--ch-err); --c-blue: var(--ch-on-v); --c-violet: var(--ch-on-v); --c-amber: var(--ch-on-v); --c-orange: var(--ch-on-v);
   --c-teal: var(--ch-on-v); --c-sky: var(--ch-on-v); --c-pink: var(--ch-on-v); --c-slate: var(--ch-on-v); --c-gray: var(--ch-outline);
-  --font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --display: var(--font);
+  --font: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; --display: var(--font);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="sun"]), :root:not([data-theme="light"]):not([data-theme="sun"]) [data-page] {
@@ -575,7 +575,7 @@ details.more > summary .ic { color: var(--ch-on-v); }
   --pc: var(--ch-pri); --violet: var(--ch-pri); --v-soft: var(--ch-sec-c); --v-line: var(--ch-outline-v); --v-strong: var(--ch-outline-v);
   --c-green: var(--ch-ter); --c-red: var(--ch-err); --c-blue: var(--ch-on-v); --c-violet: var(--ch-on-v); --c-amber: var(--ch-on-v); --c-orange: var(--ch-on-v);
   --c-teal: var(--ch-on-v); --c-sky: var(--ch-on-v); --c-pink: var(--ch-on-v); --c-slate: var(--ch-on-v); --c-gray: var(--ch-outline);
-  --font: 'Onest', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; --display: var(--font);
+  --font: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; --display: var(--font);
   }
 }
 .win { background: var(--ch-lowest) !important; border-radius: 16px !important; }
@@ -638,7 +638,7 @@ details.more > summary .ic { color: var(--ch-on-v); }
 /* Бутонът за тема: в менюто (4-то място) или горе вдясно на екраните без меню */
 .theme-fab { background: var(--ch-high) !important; color: var(--ch-on) !important; box-shadow: none !important; }
 .nav-theme, .g-search-row .theme-toggle { background: var(--ch-high) !important; color: var(--ch-on) !important; border: 0; }
-.nav.nav-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) 56px !important; padding-right: 8px; }
+.nav.nav-3 { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; padding-right: 0; }
 /* Числата – плътни, с еднаква ширина */
 .meter-value, .hero-num, .ms-total b, .wk-num, .stat-value, .drive-timer, .result-net, .np-val { font-weight: 800 !important; letter-spacing: -.02em !important; font-variant-numeric: proportional-nums !important; }
 body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; font-feature-settings: 'pnum' 1; }

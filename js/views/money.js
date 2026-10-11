@@ -35,7 +35,6 @@ export function moneyView({ go, data, rerender }) {
   const net = isNow ? g.net : st.net;
   const spent = st.varExp + st.fixedExp; // постоянните – ден по ден до днес
   const pts = series(data, from, to, 'day');
-  const recent = data.shifts.filter((s) => s.end).slice(0, 5);
   const redraw = rerender || (() => go('/money'));
 
   return h('div', { class: 'screen', 'data-page': 'money' },
@@ -65,10 +64,6 @@ export function moneyView({ go, data, rerender }) {
       ['excel', h('button', { class: 'big-link', onclick: () => exportCsv(data, { from: '2000-01-01', to: today }) }, h('span', { class: 'bl-ic' }, icon('download', 22)), h('span', { class: 'grow' }, h('b', null, 'Свали в Excel'), h('span', null, 'Всички смени за счетоводителя')), icon('right', 18))],
     ])],
 
-    ['recent', h('div', { class: 'recent-block' },
-      h('div', { class: 'block-head' }, h('h2', null, 'Последни смени'), h('a', { class: 'link', href: '#/shifts' }, 'Всички')),
-      h('section', { class: 'card recent-card' }, recent.length ? recent.map((s) => shiftRow(data, s))
-        : empty('list', 'Още няма смени', 'Започни смяна от „Днес“.', h('button', { class: 'btn btn-primary', onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи смяна'))))],
     ]));
 }
 

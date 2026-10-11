@@ -98,7 +98,7 @@ export function addToCalendar(list) {
 export async function shareMonth({ net, income, shifts, hours, name }) {
   const W = 1080, H = 1350; const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   x.fillStyle = '#231F20'; x.fillRect(0, 0, W, H);
-  const font = (w, s) => `${w} ${s}px Onest, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+  const font = (w, s) => `${w} ${s}px -apple-system, BlinkMacSystemFont, system-ui, "Segoe UI", Roboto, sans-serif`;
   x.fillStyle = '#BFF0BE'; x.font = font(800, 40); x.fillText(MONTHS[parseDate(todayStr()).getMonth()].toUpperCase() + ' ' + parseDate(todayStr()).getFullYear(), 90, 170);
   x.fillStyle = '#F3F1EA'; x.font = font(700, 64); x.fillText(name ? `${name} изкара` : 'Изкарах', 90, 300);
   x.font = font(800, 200); x.fillStyle = net >= 0 ? '#FFFFFF' : '#FFB4AB'; x.fillText(money(net), 90, 530);
