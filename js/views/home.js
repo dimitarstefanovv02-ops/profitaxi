@@ -230,7 +230,7 @@ function meter(g, month) {
     g.goal > 0 && roadProgress(g.pct),
     // Още колко часа работа до целта – по това, което изкарваш на час от смените досега
     g.goal > 0 && !g.done && g.hoursNeeded != null && h('div', { class: 'meter-hours' },
-      `~${fmtNum(Math.ceil(g.hoursNeeded))} ч работа${g.shiftsNeeded != null ? ` · ~${g.shiftsNeeded} ${g.shiftsNeeded === 1 ? 'смяна' : 'смени'}` : ''} до целта · при средно ${money2(g.incomePerHour)}/ч приход`),
+      `~${fmtNum(Math.ceil(g.hoursNeeded))} ч работа до целта · при средно ${money2(g.incomePerHour)}/ч приход`),
     g.goal > 0 && !g.done && g.fuelMissing && h('div', { class: 'meter-hours' }, 'Въведи и горивото, за да са точни часовете')),
     // Втора карта: колко трябва днес, очаквано за месеца и подробностите
     h('section', { class: 'card meter-plan', 'aria-label': 'Колко ти трябва' },
