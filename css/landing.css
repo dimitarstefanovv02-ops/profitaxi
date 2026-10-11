@@ -500,5 +500,5 @@ body.menu-open { overflow: hidden; }
 }
 
 /* Логото: името „Чисто“ и след него трите колонки */
-.logo { display: inline-flex; align-items: flex-end; gap: 6px; }
-.logo-mark { width: .82em; height: .7em; flex: none; margin-bottom: .16em; }
+.logo { display: inline-flex; align-items: baseline; gap: .2em; }
+.logo-mark { width: .84em; height: .72em; flex: none; margin: 0; }
