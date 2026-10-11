@@ -145,16 +145,19 @@ export function profileCover(user, d) {
   // Тънка лента горе (име, град и фирма), снимката на колата в средата с профилната снимка в ъгъла,
   // тънка лента долу (код, номер, модел)
   const facts = [car.code && `Код ${car.code}`, car.plate, car.model].filter(Boolean);
-  return h('section', { class: 'cover cover3' },
-    h('a', { class: 'c3-bar c3-top', href: '#/profile', 'aria-label': 'Лични данни' },
-      h('div', { class: 'c3-who' }, h('b', null, user.name), h('small', null, [user.city, user.company].filter(Boolean).join(' · ') || 'Добави град и фирма')),
-      h('span', { class: 'c3-edit', 'aria-hidden': 'true' }, icon('edit', 16))),
-    h('div', { class: cx('c3-photo', !d.carPhoto && 'empty') },
-      d.carPhoto ? h('img', { class: 'c3-car', src: d.carPhoto, alt: 'Колата' })
-        : h('button', { class: 'c3-addcar', type: 'button', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), 'Добави снимка на колата'),
-      d.carPhoto && h('button', { class: 'c3-cam', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18))),
-    h('a', { class: 'c3-bar c3-bot', href: '#/car' },
-      facts.length ? facts.map((f) => h('span', { class: 'c3-chip' }, f)) : h('span', { class: 'c3-chip' }, icon('plus', 14), 'Добави код, номер и модел')));
+  // Снимката на колата от край до край на екрана, без рамки; един ред текст горе и един долу
+  const who = [user.city, user.company].filter(Boolean).join(' · ');
+  // Всеки ред се събира на един ред – ако е дълъг, буквите леко се смаляват (не се реже с „…“)
+  const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } });
+  const sec = h('section', { class: 'cover4' },
+    h('a', { class: 'c4-line c4-top', href: '#/profile' }, h('b', null, user.name), who && h('span', null, ' · ' + who)),
+    h('div', { class: cx('c4-photo', !d.carPhoto && 'empty') },
+      d.carPhoto ? h('img', { src: d.carPhoto, alt: 'Колата' })
+        : h('button', { class: 'c4-addcar', type: 'button', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), 'Добави снимка на колата'),
+      d.carPhoto && h('button', { class: 'c4-cam', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18))),
+    h('a', { class: 'c4-line c4-bot', href: '#/car' }, facts.length ? facts.join(' · ') : 'Добави код, номер и модел на колата'));
+  setTimeout(() => sec.querySelectorAll('.c4-line').forEach(fit), 0);
+  return sec;
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)

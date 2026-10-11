@@ -768,3 +768,16 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .cover3 .c3-bot span.c3-chip { overflow: visible; }
 /* Профилната снимка горе – малко по-голяма */
 .screen > .tab-head .tab-avatar { width: 68px !important; height: 68px !important; border-radius: 18px !important; }
+/* ---------- Профил: снимката от край до край, без рамки; ред текст горе и ред долу ---------- */
+.cover4 { margin: 0 -16px 8px; }
+.cover4 .c4-line { display: block; padding: 0 16px; text-align: center; white-space: nowrap; overflow: hidden; color: var(--ch-on) !important; text-decoration: none; }
+.cover4 .c4-top { font-size: clamp(.95rem, 4.4vw, 1.1rem); padding-bottom: 10px; }
+.cover4 .c4-top b { font-weight: 700; }
+.cover4 .c4-top span { color: var(--ch-on-v); }
+.cover4 .c4-bot { font-size: clamp(.9rem, 4.2vw, 1.05rem); font-weight: 600; padding-top: 10px; }
+.cover4 .c4-photo { position: relative; aspect-ratio: 16 / 10; background: #111; }
+.cover4 .c4-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cover4 .c4-photo.empty { aspect-ratio: auto; height: 140px; display: flex; align-items: center; justify-content: center; background: var(--ch-c); }
+.cover4 .c4-addcar { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 20px; border: 1px dashed var(--ch-outline); background: transparent; color: var(--ch-on); font-weight: 600; }
+.cover4 .c4-cam { position: absolute; right: 12px; bottom: 12px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: rgba(20,19,19,.55); color: #fff; border: 1px solid rgba(255,255,255,.3); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+@media (min-width: 560px) { .cover4 { margin: 0 0 8px; } .cover4 .c4-photo { border-radius: 24px; overflow: hidden; } }
