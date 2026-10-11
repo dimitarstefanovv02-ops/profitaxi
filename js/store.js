@@ -336,11 +336,14 @@ export function getShift(sid) { const id = myId(); const s = db.shifts.find((x) 
 export function getActiveShift() { const id = myId(); const s = db.shifts.find((x) => x.userId === id && !x.end); return s ? clone(s) : null; }
 export function myData() { stopFixedDispatch(myId()); return userData(myId()); }
 // Ефирът вече се въвежда в смяната (плаща се само в работните дни). Ако шофьорът го има като
-// постоянен разход, той спира от днес – миналите дни остават, както са платени.
+// постоянен разход, той спира от началото на текущия месец – за да не се брои два пъти, когато
+// шофьорът добави ефира и в смените от този месец. Миналите месеци остават, както са.
 function stopFixedDispatch(id) {
   if (!id || PREVIEW) return;
-  if (!db.costs.some((c) => c.userId === id && c.system === 'dispatch' && (!c.endDate || c.endDate >= todayStr()))) return;
-  syncSystemCost(id, 'dispatch', null, todayStr());
+  const m1 = todayStr().slice(0, 8) + '01';
+  if (!db.costs.some((c) => c.userId === id && c.system === 'dispatch' && (!c.endDate || c.endDate >= m1))) return;
+  db.costs = db.costs.filter((c) => !(c.userId === id && c.system === 'dispatch' && c.startDate >= m1));
+  db.costs.forEach((c) => { if (c.userId === id && c.system === 'dispatch' && (!c.endDate || c.endDate >= m1)) c.endDate = addDays(m1, -1); });
   if (db.profiles[id]) db.profiles[id].dispatch = { mode: 'none', amount: 0 };
   persist();
 }
