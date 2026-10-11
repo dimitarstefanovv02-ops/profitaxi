@@ -1087,3 +1087,11 @@
 :root[data-skin="chisto"] .cover4 {margin: 0 0 8px;}
 :root[data-skin="chisto"] .cover4 .c4-photo {border-radius: 24px; overflow: hidden;}
 }
+:root[data-skin="chisto"] .cover4 .c4-line {background: var(--ch-pri-c); color: var(--ch-on-pri-c) !important; padding: 11px 16px !important;}
+:root[data-skin="chisto"] .cover4 .c4-top span {color: var(--ch-on-pri-c) !important; opacity: .72;}
+:root[data-skin="chisto"] .cover4 .c4-top {padding-bottom: 11px !important;}
+:root[data-skin="chisto"] .cover4 .c4-bot {padding-top: 11px !important;}
+@media (min-width: 560px) {
+:root[data-skin="chisto"] .cover4 {border-radius: 24px; overflow: hidden;}
+:root[data-skin="chisto"] .cover4 .c4-photo {border-radius: 0;}
+}
