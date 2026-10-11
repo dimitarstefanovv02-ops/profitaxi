@@ -7,7 +7,7 @@ import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, pars
 import * as store from '../store.js';
 import { zone } from '../arrange.js';
 import { CAR_TYPES, FUELS } from '../constants.js';
-import { carBlock, fuelBlock, dispatchBlock, shareBlock } from './carSettings.js';
+import { carBlock, fuelBlock, shareBlock } from './carSettings.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero, THEMES, TEXT_SIZES, getTextSize, setTextSize } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
 import { cityCompanyPicker } from './cityPicker.js';
@@ -101,13 +101,12 @@ export function carView({ go, user, data }) {
         h('div', { class: 'grid2' }, field('Код на колата', carInput('code', 'напр. 214'), 'Номерът ти във фирмата'), field('Рег. номер', carInput('plate', 'СВ 1234 АВ', true))),
         field('Модел', carInput('model', 'напр. Toyota Corolla Hybrid'))),
       h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
-      h('section', { class: 'card' }, cardTitle('radio', 'Ефир / диспечер'), dispatchBlock(d, draw)),
       h('section', { class: 'card' }, shareBlock(d, draw)));
     refreshBar();
   };
   draw();
   fill(root, h('div', { class: 'page-title' }, h('h1', null, 'Настройки на колата')),
-    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя или под наем, данните за колата, горивото и ефирът. Целта за месеца се сменя от „Днес“.'),
+    h('p', { class: 'muted', style: { margin: '-6px 0 12px' } }, 'Своя или под наем, данните за колата и горивото. Ефирът се добавя в смяната. Целта за месеца се сменя от „Днес“.'),
     body, bar);
   return root;
 }
@@ -120,7 +119,7 @@ export function askFrom(onPick) {
     const date = h('input', { class: 'input', type: 'date', value: m0, max: today });
     const pick = (from) => { close(); onPick(from); };
     return h('div', { class: 'form' },
-      sheetHead('От кога важи промяната?', close, 'Наемът и ефирът се смятат от тази дата'),
+      sheetHead('От кога важи промяната?', close, 'Наемът се смята от тази дата'),
       h('button', { class: 'btn btn-primary btn-lg btn-block', onclick: () => pick(m0) }, icon('calendar', 20), `От 1 ${month} (целия месец)`),
       today !== m0 && h('button', { class: 'btn btn-ghost btn-lg btn-block', onclick: () => pick(today) }, `От днес, ${fmtDate(today)}`),
       h('div', { class: 'row gap' }, date, h('button', { class: 'btn btn-outline', onclick: () => date.value && pick(date.value > today ? today : date.value) }, 'От дата')),

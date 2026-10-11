@@ -30,7 +30,7 @@ export function meView({ go, user, data }) {
       row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile')),
     group('car', 'Колата',
       data.profile.carType !== 'rent' && row('vehicle', 'tool', 'Колата ми', carSub(data), null, '#/vehicle'),
-      row('carset', 'car', 'Настройки на колата', 'Своя или под наем, гориво, ефир, данни за колата', null, '#/car')),
+      row('carset', 'car', 'Настройки на колата', 'Своя или под наем, гориво, данни за колата', null, '#/car')),
     group('help', 'Помощ',
       row('guide', 'doc', 'Презентация', 'Как работи приложението – за преглед и теглене', null, '#/guide'),
       row('tour', 'sparkle', 'Кратка разходка', '5 стъпки за 1 минута', () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); }),

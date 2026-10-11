@@ -12,7 +12,7 @@ import { encode, decode } from './schema.js';
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
-const VERSION = 10;
+const VERSION = 11;
 const listeners = new Set();
 let db = null;
 
@@ -334,7 +334,16 @@ export function trackPage(page) {
 export function getProfile() { return clone(db.profiles[myId()]); }
 export function getShift(sid) { const id = myId(); const s = db.shifts.find((x) => x.id === sid && x.userId === id); return s ? clone(s) : null; }
 export function getActiveShift() { const id = myId(); const s = db.shifts.find((x) => x.userId === id && !x.end); return s ? clone(s) : null; }
-export function myData() { return userData(myId()); }
+export function myData() { stopFixedDispatch(myId()); return userData(myId()); }
+// Ефирът вече се въвежда в смяната (плаща се само в работните дни). Ако шофьорът го има като
+// постоянен разход, той спира от днес – миналите дни остават, както са платени.
+function stopFixedDispatch(id) {
+  if (!id || PREVIEW) return;
+  if (!db.costs.some((c) => c.userId === id && c.system === 'dispatch' && (!c.endDate || c.endDate >= todayStr()))) return;
+  syncSystemCost(id, 'dispatch', null, todayStr());
+  if (db.profiles[id]) db.profiles[id].dispatch = { mode: 'none', amount: 0 };
+  persist();
+}
 function userData(id) {
   return {
     user: clone(db.users.find((u) => u.id === id)),
@@ -530,9 +539,6 @@ export function updateProfile(patch, { from } = {}) {
 function applyProfile(id, patch, from) {
   const p = db.profiles[id];
   Object.assign(p, clone(patch));
-  syncSystemCost(id, 'dispatch', p.dispatch.mode !== 'none' && p.dispatch.amount > 0
-    ? { name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' }
-    : null, from);
   syncSystemCost(id, 'rent', p.carType === 'rent' && p.rent.amount > 0
     ? { name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period, perWorkDay: false } : null, from);
   // При кола под наем застраховки, винетка, преглед и т.н. са грижа на собственика
@@ -1060,7 +1066,7 @@ function seedMore(today, drivers, r, ago) {
 
 // Демо шофьорът за пробване и за снимките на сайта. Измислен човек, кола и фирма.
 // Сметката е реалистична: около 3100 € оборот и около 2000 € чисто на месец.
-//   Постоянни: ефир 40 €/седм., автомивка 20 €/седм., данъци 260, обслужване 60, застраховки и др. ≈ 670 €/мес
+//   Ефир: 8 € в смяната, най-много 5 пъти в седмицата (40 €). Постоянни: автомивка 20 €/седм., данъци 260, обслужване 60, застраховки и др. ≈ 670 €/мес
 //   Гориво: ≈ 20 € на смяна ≈ 100 €/седм. ≈ 440 €/мес
 //   22 смени × 9,5 ч × ≈ 14,8 €/ч ≈ 3100 € оборот
 function seedPersona(today) {
@@ -1068,13 +1074,12 @@ function seedPersona(today) {
   const days = 150;
   const startDay = addDays(today, -days);
   const u = newDriver({ name: 'Иван Петров', email: 'ivan@demo.bg', password: 'demo123', phone: '0888 214 214', city: 'София', company: 'Lumen Taxi', trialDays: 0, plan: 'paid',
-    profile: { onboarded: true, carType: 'own', fuel: 'hybrid', dispatch: { mode: 'weekly', amount: 40 }, monthlyGoal: 2000,
+    profile: { onboarded: true, carType: 'own', fuel: 'hybrid', dispatch: { mode: 'none', amount: 0 }, monthlyGoal: 2000,
       car: { code: '214', plate: 'СВ 4827 КТ', model: 'Toyota Corolla Hybrid' }, photo: '/img/demo-avatar.svg', carPhoto: '/img/demo-car.jpg' } });
   u.createdAt = new Date(startDay + 'T09:00:00').toISOString();
   u.subscription = { plan: 'paid', validUntil: addDays(today, 20), paidSince: addDays(startDay, 14) };
   u.refCode = 'IVAN-214';
   const add = (c) => db.costs.push({ id: uid(), userId: u.id, startDate: startDay, endDate: null, dueDate: null, payments: [], ...c });
-  add({ system: 'dispatch', name: 'Ефир / диспечер', category: 'dispatch', amount: 40, period: 'week', perWorkDay: false });
   add({ name: 'Автомивка (абонамент)', category: 'wash', amount: 20, period: 'week' });
   add({ name: 'Данъци и осигуровки', category: 'taxes', amount: 260, period: 'month', dueDate: addDays(today, 18) });
   add({ name: 'Обслужване', category: 'service', amount: 60, period: 'month' });
@@ -1084,6 +1089,7 @@ function seedPersona(today) {
   add({ name: 'Телефон и интернет', category: 'phone', amount: 20, period: 'month', dueDate: addDays(today, 9) });
   add({ name: 'Таксиметров апарат', category: 'meter', amount: 12, period: 'month' });
   let km = 241380;
+  const efirWeek = {};
   for (let i = days; i >= 1; i--) {
     const day = addDays(today, -i);
     const wd = (new Date(day + 'T12:00:00').getDay() + 6) % 7;
@@ -1098,10 +1104,12 @@ function seedPersona(today) {
     const gross = hours * rate;
     const tips = round2(gross * (0.02 + r() * 0.02));
     const rest = gross - tips;
-    const card = round2(rest * (0.26 + r() * 0.08)), app = round2(rest * (0.1 + r() * 0.06));
-    const income = { cash: round2(rest - card - app), card, app, tips };
+    const card = round2(rest * (0.36 + r() * 0.12));
+    const income = { cash: round2(rest - card), card, tips };
     const qty = round2(k * 0.074 * (0.95 + r() * 0.1));
     const expenses = [{ id: uid(), category: 'fuel', fuelType: 'petrol', amount: round2(qty * 1.36), qty }];
+    const wk = addDays(day, -wd); efirWeek[wk] = (efirWeek[wk] || 0) + 1;
+    if (efirWeek[wk] <= 5) expenses.push({ id: uid(), category: 'dispatch', amount: 8 }); // ефир: 8 € на ден, 6-ият ден е без
     if (r() < 0.15) expenses.push({ id: uid(), category: 'parking', amount: 2 });
     db.shifts.push({ id: uid(), userId: u.id, start: start.toISOString(), end: end.toISOString(), kmStart: km, kmEnd: km + k, income, expenses, note: '' });
     km += k + Math.floor(r() * 6);
@@ -1127,7 +1135,7 @@ function seedDriver(d, today) {
 
   // Системни разходи от началото на акаунта
   const sys = [];
-  if (p.dispatch.mode !== 'none') sys.push({ system: 'dispatch', name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' });
+  if (false) sys.push({ system: 'dispatch', name: 'Ефир / диспечер', category: 'dispatch', amount: p.dispatch.amount, period: { daily: 'day', weekly: 'week', monthly: 'month' }[p.dispatch.mode], perWorkDay: p.dispatch.mode === 'daily' });
   if (d.leasing) sys.push({ name: 'Лизинг', category: 'leasing', amount: d.leasing, period: 'month', endDate: addDays(today, 400) });
   if (p.carType === 'rent') sys.push({ system: 'rent', name: 'Наем на колата', category: 'rent', amount: p.rent.amount, period: p.rent.period });
   sys.forEach((c) => db.costs.push({ id: uid(), userId: u.id, startDate: startDay, endDate: null, dueDate: null, payments: [], ...c }));
@@ -1149,6 +1157,7 @@ function seedDriver(d, today) {
 
   // Смени
   let km = 180000 + Math.floor(r() * 120000);
+  const efirWeek = {}, efirDays = new Set();
   const fuelType = { petrol: 'petrol', petrol_lpg: 'lpg', diesel: 'diesel', hybrid: 'petrol', lpg: 'lpg', electric: 'electric' }[p.fuel];
   const price = { petrol: 1.32, diesel: 1.38, lpg: 0.62, electric: 0.35 };
   const cons = { petrol_lpg: 12.5, petrol: 8.5, diesel: 6.8, hybrid: 5.2, lpg: 12.5, electric: 17 }[p.fuel];
@@ -1166,17 +1175,20 @@ function seedDriver(d, today) {
     const k = Math.round(d.style.kmMin + r() * (d.style.kmMax - d.style.kmMin));
     const boost = (wd >= 4 ? 1.15 : 1) * (night ? 1.08 : 1) * (0.85 + r() * 0.3);
     const gross = k * d.style.rate * boost * 0.62;
-    const cardShare = 0.15 + r() * 0.25, appShare = r() * 0.2;
+    const cardShare = 0.2 + r() * 0.35;
     const income = {
-      cash: round2(gross * (1 - cardShare - appShare)),
+      cash: round2(gross * (1 - cardShare)),
       card: round2(gross * cardShare),
-      app: round2(gross * appShare),
       tips: round2(r() < 0.6 ? 2 + r() * 10 : 0),
     };
     const expenses = [];
     const qty = round2((k * cons) / 100 * (0.9 + r() * 0.2));
     expenses.push({ id: uid(), category: 'fuel', fuelType, amount: round2(qty * price[fuelType]), qty });
     if (p.fuel === 'petrol_lpg' && r() < 0.35) { const q = round2(1 + r() * 2); expenses.push({ id: uid(), category: 'fuel', fuelType: 'petrol', amount: round2(q * price.petrol), qty: q }); }
+    if (p.dispatch.mode !== 'none' && !efirDays.has(day)) { // ефир: по 8 € на работен ден, най-много 5 дни в седмицата
+      const wk = addDays(day, -wd); efirWeek[wk] = (efirWeek[wk] || 0) + 1; efirDays.add(day);
+      if (efirWeek[wk] <= 5) expenses.push({ id: uid(), category: 'dispatch', amount: 8 });
+    }
     if (r() < 0.25) expenses.push({ id: uid(), category: 'wash', amount: 6 });
     if (r() < 0.2) expenses.push({ id: uid(), category: 'parking', amount: 2 });
     if (r() < 0.01) expenses.push({ id: uid(), category: 'fine', amount: 50, label: 'Глоба за паркиране' });

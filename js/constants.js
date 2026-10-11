@@ -41,6 +41,8 @@ export const incomeLabel = (k) => (INCOME_TYPES[k] || APP_INCOME).label;
 // Шофьорът може да скрива вградените и да добавя свои категории.
 export const EXPENSE_CATS = {
   fuel: { label: 'Гориво', icon: 'fuel', color: 'var(--c-orange)' },
+  // Ефирът се плаща само в дните, в които работиш – затова е разход на смяната, а не постоянен
+  dispatch: { label: 'Ефир', icon: 'radio', color: 'var(--c-violet)' },
   wash: { label: 'Автомивка', icon: 'wash', color: 'var(--c-sky)' },
   parking: { label: 'Паркинг', icon: 'parking', color: 'var(--c-blue)' },
   service: { label: 'Обслужване', icon: 'wrench', color: 'var(--c-slate)' },
@@ -53,7 +55,7 @@ export const EXPENSE_CATS = {
 // Постоянни (периодични) разходи. owner: само при собствена кола (вкл. на лизинг)
 // (при кола под наем ги плаща собственикът). system: идват от профила.
 export const COST_CATS = {
-  dispatch: { label: 'Ефир / диспечер', icon: 'radio', system: true, color: 'var(--c-violet)' },
+  dispatch: { label: 'Ефир / диспечер', icon: 'radio', system: true, color: 'var(--c-violet)', noAdd: true }, // вече е разход в смяната; старите записи се смятат
   leasing: { label: 'Лизинг', icon: 'doc', car: true, owner: true, period: 'month', color: 'var(--c-blue)' },
   rent: { label: 'Наем на колата', icon: 'key', system: true, car: true, color: 'var(--c-blue)' },
   // noAdd: вече не се добавят като постоянен разход (въвеждат се в смяната или в „Колата ми“) – старите записи се смятат

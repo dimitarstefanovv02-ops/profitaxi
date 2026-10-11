@@ -6,7 +6,7 @@ import { INCOME_TYPES, incomeTypes, FUEL_TYPES, expenseCat, costCat } from '../c
 import { segmented, barChart, shareRows, stat, tone, cardTitle, hero, empty , more} from '../ui.js';
 
 // Състояние на избрания период (пази се между отварянията)
-const state = { unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr() };
+const state = { unit: 'month', anchor: todayStr(), from: addDays(todayStr(), -29), to: todayStr(), open: {} };
 const WD_LONG = ['понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота', 'неделя'];
 
 export function periodRange(st) {
@@ -57,9 +57,8 @@ export function statsView({ data }) {
         h('div', { class: 'hero-ctl' }, periodPicker(state, draw)),
         h('div', { class: 'hero-label' }, `Чиста печалба за периода · ${r.label}`),
         h('div', { class: 'hero-num' }, money(st.net)),
-        h('div', { class: 'hero-line' }, `приход ${money(st.income)} · разходи ${money(st.totalExp)} · ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}`)),
+        h('div', { class: 'hero-line' }, `${st.workedDays} ${st.workedDays === 1 ? 'работен ден' : 'работни дни'} · ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'} · ${fmtDuration(st.hours)}`)),
       h('div', { class: 'print-only' }, h('h2', null, `Чисто – ${data.user.name}`), h('p', null, r.label)),
-      (state.unit === 'month' || state.unit === 'year') && monthsCompare(data, state, draw),
       statsBody(data, r.from, r.to, state.unit, { st }),
     ].filter(Boolean));
   };
@@ -75,54 +74,90 @@ export function statsBody(data, from, to, unit, { st = periodStats(data, from, t
   const usePeriod = ti.shifts >= 15;
   const tiAll = usePeriod ? ti : timeInsights(data.shifts);
   const rec = records(data);
-  const incomeItems = incomeTypes(st).map(([k, t]) => ({ label: t.label, icon: t.icon, color: t.color, value: st[k] }));
-  const expItems = [
-    ...Object.entries(st.expByCat).map(([k, v]) => ({ label: expenseCat(k).label, icon: expenseCat(k).icon, color: expenseCat(k).color, value: v })),
-    ...Object.entries(st.fixedByCat).map(([k, v]) => ({ label: costCat(k).label, icon: costCat(k).icon, color: costCat(k).color, value: v })),
-  ];
   const dayShifts = unit === 'day' ? data.shifts.filter((s) => s.end && shiftDate(s) === from) : [];
 
   if (!st.shifts && !st.fixedExp) return h('section', { class: 'card' }, empty('chart', 'Няма смени за този период', admin ? 'Шофьорът не е въвел смени за избрания период.' : 'Започни смяна или избери друг период, за да видиш статистика.'));
+  const k = keyNumbers(st);
   return h('div', null,
+    // Четирите основни числа за периода – като в таблицата
+    h('div', { class: 'st-sum' },
+      sumTile('Оборот', k.turnover, 'без бакшиш'),
+      sumTile('Приходи', st.income, 'с бакшиша'),
+      sumTile('Разходи', st.totalExp, 'всички'),
+      sumTile('Чиста печалба', st.net, 'остава ти', true)),
+
+    // Падащи полета: приходи, разходи, ефективност
+    fold('inc', 'coins', 'Приходи', money(st.income), [
+      line('Приход на час', k.hours ? money2(st.income / k.hours) : '—', 'приходи ÷ часове'),
+      line('Печалба на час', k.hours ? money2(st.net / k.hours) : '—', 'чисто след всички разходи ÷ часове', st.net),
+      line('Оборот на час', k.hours ? money2(k.turnover / k.hours) : '—', 'без бакшиш'),
+      line('Бакшиш на час', k.hours ? money2(st.tips / k.hours) : '—'),
+      line('Бакшиш общо', money2(st.tips)),
+    ]),
+    fold('exp', 'wallet', 'Разходи', money(st.totalExp), [
+      line('Общо разходи на час', k.hours ? money2(st.totalExp / k.hours) : '—', 'всички разходи ÷ часове'),
+      line('Наем общо', money2(k.rent), k.rent ? 'до днес, ден по ден' : 'няма въведен наем'),
+      line('Ефир общо', money2(k.efir), 'от смените'),
+      line('Гориво общо', money2(k.fuel)),
+      line('Гориво на 100 км', st.km ? money2((k.fuel / st.km) * 100) : '—', 'в евро'),
+      line('Автомивки общо', money2(k.wash)),
+      k.other > 0.005 && line('Други разходи', money2(k.other), k.otherNames),
+    ]),
+    fold('eff', 'gauge', 'Ефективност', fmtDuration(st.hours), [
+      line('Работни дни', String(st.workedDays)),
+      line('Километри общо', `${fmtNum(st.km)} км`),
+      line('Часове общо', fmtDuration(st.hours)),
+      line('Километри на час', k.hours ? `${fmtNum1(st.km / k.hours)} км` : '—'),
+      ...k.per100.map((f) => line(`Гориво на 100 км${k.per100.length > 1 ? ` (${f.label})` : ''}`, f.value, f.sub)),
+      line('Бакшиш от оборота', k.turnover ? `${fmtNum1((st.tips / k.turnover) * 100)} %` : '—'),
+    ]),
+
     pts && pts.length > 1 && st.shifts > 0 && h('section', { class: 'card' },
       cardTitle('chart', chartUnit === 'day' ? 'Чисто по дни' : 'Чисто по месеци'),
       barChart(pts, { highlight: chartUnit === 'day' ? todayStr() : todayStr().slice(0, 8) + '01' })),
 
-    h('div', { class: 'grid2', style: { marginTop: '14px' } },
-      stat('На час', money2(st.netPerHour), { icon: 'clock', cls: 'stat-card', sub: 'чисто' }),
-      stat('На км', money2(st.netPerKm), { icon: 'road', cls: 'stat-card', sub: 'чисто' })),
-
-    unit === 'day' && dayShifts.length > 0 && h('section', { class: 'card', style: { marginTop: '14px' } },
+    unit === 'day' && dayShifts.length > 0 && h('section', { class: 'card' },
       cardTitle('list', 'Смени за деня'),
       dayShifts.map((s) => h(admin ? 'div' : 'a', { class: 'list-btn', href: admin ? null : '#/shift/' + s.id, style: { justifyContent: 'space-between' } },
         h('span', null, `${fmtTime(s.start)} – ${fmtTime(s.end)}`),
         h('b', { class: tone(shiftNetAfterFixed(data, s)) }, money(shiftNetAfterFixed(data, s)))))),
 
-    h('section', { class: 'card', style: { marginTop: '14px' } },
-      cardTitle('wallet', 'Разходи', h('b', { class: 'num' }, money(st.totalExp))),
-      h('div', { class: 'grid2', style: { marginBottom: '14px' } },
-        stat('От смените', money(st.varExp), { icon: 'fuel', color: 'var(--c-orange)' }), stat('Постоянни', money(st.fixedExp), { icon: 'calendar', color: 'var(--c-blue)' })),
-      shareRows(expItems, st.totalExp)),
-
-    fuelLine(st) && h('section', { class: 'card' }, fuelLine(st)),
-    more('Покажи подробности: приходи, часове, гориво, рекорди',
-    h('div', { class: 'grid2', style: { marginTop: '12px' } },
-      stat('Часове', fmtDuration(st.hours), { icon: 'clock', cls: 'stat-card', sub: st.shifts ? `~${fmtDuration(st.avgShiftHours)} на смяна` : '' }),
-      stat('Километри', fmtNum(st.km), { icon: 'gauge', cls: 'stat-card', sub: st.shifts ? `~${money(st.avgShiftIncome)} приход на смяна` : '' }),
-      stat('Приход на час', money2(st.incomePerHour), { icon: 'coins', cls: 'stat-card' }),
-      stat('Разход на км', money2(st.costPerKm), { icon: 'fuel', cls: 'stat-card' })),
-    h('section', { class: 'card', style: { marginTop: '14px' } },
-      cardTitle('coins', 'Приходи', h('b', { class: 'num' }, money(st.income))),
-      stackBar(incomeItems, st.income),
-      shareRows(incomeItems, st.income)),
-    Object.keys(st.fuel).length > 0 && h('section', { class: 'card' },
-      cardTitle('fuel', 'Гориво'),
-      h('div', { class: 'grid2' }, Object.entries(st.fuel).map(([t, f]) =>
-        stat(FUEL_TYPES[t]?.label || t, f.per100 ? `${fmtNum1(f.per100)} ${FUEL_TYPES[t]?.unit}` : money(f.amount),
-          { icon: t === 'electric' ? 'bolt' : 'fuel', color: 'var(--c-orange)', sub: f.per100 ? `на 100 км, ${money(f.amount)} общо` : 'въведи количество за разход на 100 км' })))),
-
     timeCard(tiAll, usePeriod),
-    recordsCard(rec, admin)));
+    recordsCard(rec, admin));
+}
+
+// Числата за таблиците: оборот, наем, ефир, гориво, мивки, други
+export function keyNumbers(st) {
+  const cat = (k) => (st.expByCat[k] || 0) + (st.fixedByCat[k] || 0);
+  const turnover = st.cash + st.card + (st.app || 0);
+  const rent = cat('rent'), efir = cat('dispatch'), fuel = cat('fuel'), wash = cat('wash');
+  const other = st.totalExp - rent - efir - fuel - wash;
+  const names = [...Object.keys(st.expByCat), ...Object.keys(st.fixedByCat)].filter((x, i, a) => !['rent', 'dispatch', 'fuel', 'wash'].includes(x) && a.indexOf(x) === i)
+    .map((x) => (st.expByCat[x] != null ? expenseCat(x) : costCat(x)).label.toLowerCase());
+  const per100 = Object.entries(st.fuel).map(([t, f]) => ({
+    label: FUEL_TYPES[t]?.label || t,
+    value: f.per100 ? `${fmtNum1(f.per100)} ${FUEL_TYPES[t]?.unit || 'л'}` : '—',
+    sub: f.per100 ? null : 'въвеждай и литрите при зареждане',
+  }));
+  if (!per100.length) per100.push({ label: '', value: '—', sub: 'няма зареждане за периода' });
+  return { turnover, rent, efir, fuel, wash, other, otherNames: names.slice(0, 4).join(', '), per100, hours: st.hours };
+}
+function sumTile(label, value, sub, isNet) {
+  return h('div', { class: cx('st-tile', isNet && 'net') },
+    h('span', { class: 'st-l' }, label),
+    h('b', { class: cx('st-v', isNet && tone(value)) }, money(value)),
+    h('small', null, sub));
+}
+function fold(key, ic, title, value, rows) {
+  const d = h('details', { class: 'card st-fold', open: !!state.open[key], ontoggle: () => { state.open[key] = d.open; } },
+    h('summary', null, h('span', { class: 'st-fic' }, icon(ic, 20)), h('span', { class: 'grow' }, title), h('b', { class: 'num' }, value), h('span', { class: 'st-chev' }, icon('down', 18))),
+    h('div', { class: 'st-rows' }, rows.filter(Boolean)));
+  return d;
+}
+function line(label, value, sub, toneOf) {
+  return h('div', { class: 'st-row' },
+    h('div', { class: 'grow' }, h('span', null, label), sub && h('small', null, sub)),
+    h('b', { class: cx('num', toneOf != null && tone(toneOf)) }, value));
 }
 
 // Сравнение по месеци: чистото за всеки месец и с колко % е по-добре/по-зле от предишния.

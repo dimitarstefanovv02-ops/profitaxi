@@ -105,7 +105,7 @@ export function shiftEditorView(ctx) {
             const fuelSub = c.key === 'fuel' ? (fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} ${fuelUnit}${fuelKm ? ` · ${String(round2(fuelQty / fuelKm * 100)).replace('.', ',')} ${fuelUnit}/100 км` : ''}` : 'Сума и литри') : null;
             return fRow({ ic: c.icon, color: c.color, label: c.label, sub: fuelSub, value: sum ? money(sum, sum % 1 ? 2 : 0) : '', onTap: () => (c.key === 'fuel' ? editFuel() : editExpense({ category: c.key })), add: true });
           }),
-          fRow({ ic: 'plus', color: 'var(--c-slate)', label: 'Друг разход', sub: 'Обслужване, ремонт, гуми, глоба…', value: '', onTap: otherExpense, add: true })),
+          fRow({ ic: 'plus', color: 'var(--c-slate)', label: 'Друг разход', sub: 'Паркинг, обслужване, ремонт, гуми…', value: '', onTap: otherExpense, add: true })),
         draft.expenses.length > 0 && h('div', { class: 'exp-list' }, draft.expenses.map((e) =>
           h('div', { class: 'exp-item', style: { '--qc': expenseCat(e.category).color } },
             h('span', { class: 'e-ic' }, icon(expenseCat(e.category).icon, 17)),
@@ -117,7 +117,7 @@ export function shiftEditorView(ctx) {
       h('div', { class: 'f-tools' },
           h('button', { class: 'btn btn-ghost btn-sm', onclick: () => scanReceipt((r) => editFuel(r.amount ? { amount: r.amount, qty: r.qty, fuelType: r.type && fuelTypes.includes(r.type) ? r.type : undefined } : {})) }, icon('camera', 16), 'Снимай бележка'),
           h('button', { class: 'btn btn-ghost btn-sm', onclick: copyLast }, icon('copy', 16), 'Като предишната')),
-      fixedShare > 0 && h('p', { class: 'auto-note' }, icon('info', 15), `Наемът, ефирът и другите постоянни разходи се смятат сами (${money(fixedShare, 2)} за деня).`),
+      fixedShare > 0 && h('p', { class: 'auto-note' }, icon('info', 15), `Наемът и другите постоянни разходи се смятат сами (${money(fixedShare, 2)} за деня).`),
 
       // Лента за запис
       h('div', { class: 'save-bar' },
@@ -148,6 +148,7 @@ export function shiftEditorView(ctx) {
       Object.entries(p.income).forEach(([k, v]) => { draft.income[k] = round2((draft.income[k] || 0) + v); });
       const t = fuelTypes[0];
       if (p.fuel && (p.fuel.amount || p.fuel.qty)) draft.expenses.push({ id: uid(), category: 'fuel', fuelType: t, amount: p.fuel.amount || 0, qty: p.fuel.qty || 0 });
+      if (p.dispatch) draft.expenses.push({ id: uid(), category: 'dispatch', amount: p.dispatch, label: '' });
       if (p.wash) draft.expenses.push({ id: uid(), category: 'wash', amount: p.wash, label: '' });
       if (p.parking) draft.expenses.push({ id: uid(), category: 'parking', amount: p.parking, label: '' });
       if (p.kmStart) draft.kmStart = p.kmStart;
@@ -182,7 +183,7 @@ export function shiftEditorView(ctx) {
       title: expenseCat(e.category).label,
       top: ['other', 'service', 'repair', 'tires', 'fine'].includes(e.category) ? () => h('input', { class: 'input', style: { marginBottom: '12px' }, placeholder: 'Описание (по желание)', value: label, oninput: (ev) => { label = ev.target.value; } }) : null,
       sub: isNewE && lastAmount(e.category) ? `Миналия път: ${money(lastAmount(e.category), 2)}` : null,
-      fields: [{ key: 'v', label: 'Сума', value: e.amount || (isNewE ? lastAmount(e.category) || '' : '') }],
+      fields: [{ key: 'v', label: 'Сума', value: e.amount || (isNewE ? lastAmount(e.category) || (e.category === 'dispatch' ? 8 : '') : '') }],
       actions: [{ label: isNewE ? 'Добави' : 'Запиши', primary: true, run: ({ v }) => {
         if (!v) return;
         if (isNewE) draft.expenses.push({ id: uid(), category: e.category, amount: v, label });

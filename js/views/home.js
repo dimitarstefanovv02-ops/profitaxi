@@ -247,7 +247,7 @@ function meter(g, month) {
         h('div', { class: 'meter-cell' }, h('span', null, 'Смени'), h('b', null, g.shiftsNeeded != null ? `~${g.shiftsNeeded}` : '—')),
         h('div', { class: 'meter-cell' }, h('span', null, 'От смените на час'), h('b', null, money2(g.ratePerHour)))),
       h('div', { class: 'meter-note' }, icon('alert', 14),
-        h('span', null, `Наемът, ефирът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}. Затова от смените трябват повече от разликата до целта.`)))));
+        h('span', null, `Наемът и другите постоянни разходи се смятат ден по ден: дотук ${money(st.fixedExp)}, до края на месеца още ${money(g.fixedLeft)}. Затова от смените трябват повече от разликата до целта.`)))));
 }
 
 function weekCard(data) {
@@ -330,7 +330,7 @@ function driveMode(s, data, go, g, redraw) {
       h('div', { class: 'f-list drive-list exp' },
         cats.slice(0, 3).map((c) => row(c.icon, c.color, c.label, c.key === 'fuel' ? (fuelQty ? `${String(round2(fuelQty)).replace('.', ',')} л` : 'сума и литри') : null, sumOf(c.key),
           () => (c.key === 'fuel' ? quickFuel(data.profile) : quickExpense(c.key, c.label)))),
-        row('plus', 'var(--c-slate)', 'Друг разход', 'ремонт, гуми, глоба…', 0, () => otherLive(cats.slice(3)))),
+        row('plus', 'var(--c-slate)', 'Друг разход', 'паркинг, ремонт, гуми…', 0, () => otherLive(cats.slice(3)))),
       h('button', { class: 'btn btn-tonal btn-block drive-scan', onclick: () => scanReceipt((r) => quickFuel(data.profile, r)) }, icon('camera', 18), 'Снимай бележка за гориво')),
     h('button', { class: 'btn btn-dark btn-xl drive-end', onclick: () => finishLive(s, go) }, icon('stop', 22), 'Приключи смяната'));
 }
@@ -343,6 +343,7 @@ async function sayLive(s, redraw) {
     Object.entries(p.income).forEach(([k, v]) => { a.income[k] = round2((a.income[k] || 0) + v); });
     const t = (FUELS[store.getProfile()?.fuel]?.types || ['petrol'])[0];
     if (p.fuel && (p.fuel.amount || p.fuel.qty)) a.expenses.push({ id: uid(), category: 'fuel', fuelType: t, amount: p.fuel.amount || 0, qty: p.fuel.qty || 0 });
+    if (p.dispatch) a.expenses.push({ id: uid(), category: 'dispatch', amount: p.dispatch, label: '' });
     if (p.wash) a.expenses.push({ id: uid(), category: 'wash', amount: p.wash, label: '' });
     if (p.parking) a.expenses.push({ id: uid(), category: 'parking', amount: p.parking, label: '' });
     if (p.kmEnd) a.kmEnd = p.kmEnd;
@@ -351,7 +352,10 @@ async function sayLive(s, redraw) {
 }
 // Разход към текущата смяна (автомивка, паркинг, друго)
 function quickExpense(cat, label) {
-  openNumpad({ title: `${label}: добави`, fields: [{ key: 'v', label: 'Сума', value: '' }],
+  // Ефирът: предлагаме сумата от миналия път (или 8 €) – едно докосване
+  let pre = '';
+  if (cat === 'dispatch') { const done = store.myData().shifts.filter((s) => s.end).sort((x, y) => y.start.localeCompare(x.start)); pre = 8; for (const s of done) { const e = s.expenses.find((x) => x.category === 'dispatch' && x.amount > 0); if (e) { pre = e.amount; break; } } }
+  openNumpad({ title: `${label}: добави`, fields: [{ key: 'v', label: 'Сума', value: pre }],
     actions: [{ label: 'Добави', primary: true, run: ({ v }) => { if (!v) return; const a = store.getActiveShift(); if (!a) return; a.expenses.push({ id: uid(), category: cat, amount: v, label: '' }); store.saveShift(a); toast(`${label}: +${money(v, v % 1 ? 2 : 0)}`); } }] });
 }
 function otherLive(rest) {

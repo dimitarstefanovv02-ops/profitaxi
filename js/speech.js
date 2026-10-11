@@ -42,6 +42,7 @@ const CATS = [
   ['card', /^(карт|пос|card|терминал)/],
   ['tips', /^(бакшиш|tips|бакшиши)/],
   ['fuel', /^(горив|бензин|дизел|газ|метан|зареди|зарежда|ток)/],
+  ['dispatch', /^(ефир|диспечер|радио)/],
   ['wash', /^(автомивк|мивк|миене|измих)/],
   ['parking', /^(паркинг|паркира)/],
   ['kmStart', /^(начал|тръгнах|начален)/],
@@ -56,7 +57,7 @@ export function parseSpeech(text, { kmStart = 0 } = {}) {
     .replace(/(\d+)\s*(лв|лева|евро|€|eur)\.?/g, '$1');
   const toks = norm.split(/[\s,;:]+|(?<=\d)(?=[а-яa-z])/i).filter(Boolean);
   const nums = []; toks.forEach((t, i) => { const m = /^(\d+(?:\.\d+)?)$/.exec(t.replace(/[.,]$/, '')); if (m) nums.push({ i, v: parseFloat(m[1]), used: false }); });
-  const out = { income: {}, fuel: null, wash: 0, parking: 0, kmStart: 0, kmEnd: 0 };
+  const out = { income: {}, fuel: null, dispatch: 0, wash: 0, parking: 0, kmStart: 0, kmEnd: 0 };
   // литри: число, последвано от „литра“
   nums.forEach((n) => { if (QTY.test(toks[n.i + 1] || '')) { n.used = true; out.fuel = out.fuel || { amount: 0, qty: 0 }; out.fuel.qty = n.v; } });
   // Всяко число отива при най-близката дума (кеш, карта…): първо най-близките двойки.
@@ -84,6 +85,7 @@ export function parseSpeech(text, { kmStart = 0 } = {}) {
     const v = n.v, cat = k.cat;
     if (['cash', 'card', 'app', 'tips'].includes(cat)) out.income[cat] = (out.income[cat] || 0) + v;
     else if (cat === 'fuel') { out.fuel = out.fuel || { amount: 0, qty: 0 }; out.fuel.amount += v; }
+    else if (cat === 'dispatch') out.dispatch += v;
     else if (cat === 'wash') out.wash += v;
     else if (cat === 'parking') out.parking += v;
     else if (cat === 'kmStart') out.kmStart = Math.round(v);

@@ -520,3 +520,25 @@ body.menu-open { overflow: hidden; }
 .show-hint svg { width: 20px; height: 20px; flex: none; fill: none; stroke: #52C46A; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; animation: tapHint 1.6s ease-in-out infinite; }
 @keyframes tapHint { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .show-hint svg { animation: none; } }
+
+/* Началото: заглавие на два реда, подзаглавие и текст */
+.hero h1 .h1-2 { display: block; }
+.hero-sub { font-weight: 700; font-size: 20px; line-height: 1.25; letter-spacing: -.02em; color: var(--on-ink-2); margin: 0 0 12px; }
+@media (min-width: 900px) { .hero-sub { font-size: 26px; margin-bottom: 16px; } }
+@media (max-width: 599px) {
+  .hero h1 { font-size: 30px !important; margin-bottom: 12px !important; }
+  .hero-sub { grid-row: 3; grid-column: 1; font-size: 16px; margin-bottom: 10px; }
+  .hero .lead { grid-row: 4 !important; grid-column: 1 !important; font-size: 14px !important; }
+  .hero .cta { grid-row: 5 !important; }
+  .hero-note { grid-row: 6 !important; }
+  .hero-vis { grid-row: 2 / span 3 !important; }
+}
+
+/* Съвсем малко зелено – колкото да не е само черно и бяло */
+:root, :root[data-theme="light"] { --hint: #4B6A4F; --hint-ink: #C4D0C1; }
+:root[data-theme="dark"] { --hint: #B4C9B2; --hint-ink: #B4C9B2; }
+.kicker, .blk-ink .label, .hero-sub { color: var(--hint-ink); }
+.label { color: var(--hint); }
+.steps .n { color: var(--hint); }
+.blk-ink .steps .n { color: var(--hint-ink); }
+.arrow-link { text-decoration-color: var(--hint); border-color: var(--hint); }

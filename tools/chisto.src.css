@@ -9,7 +9,7 @@
   --ch-bg: #FDF9F9; --ch-lowest: #FFFFFF; --ch-low: #F1EBEB; --ch-c: #EBE5E5; --ch-high: #E4DEDE; --ch-highest: #DCD5D5;
   --ch-on: #1D1B1B; --ch-on-v: #48423F; --ch-outline: #776F70; --ch-outline-v: #C9C0C1;
   --ch-pri: #231F20; --ch-on-pri: #FFFFFF; --ch-pri-c: #231F20; --ch-on-pri-c: #FFFFFF;
-  --ch-sec-c: #DDD5D6; --ch-on-sec-c: #1E1B1C;
+  --ch-sec-c: #DAE0D7; --ch-on-sec-c: #1E1B1C;
   --ch-ter: #2F6B39; --ch-ter-c: #BFF0BE; --ch-on-ter-c: #00210A;
   --ch-err: #BA1A1A; --ch-err-c: #FFDAD6; --ch-on-err-c: #410002;
   --ch-inv: #322F30; --ch-on-inv: #F5EFEF;
@@ -32,7 +32,7 @@
   --ch-bg: #131212; --ch-lowest: #0D0C0C; --ch-low: #211F1F; --ch-c: #242222; --ch-high: #2F2C2C; --ch-highest: #3A3737;
   --ch-on: #E6E1E1; --ch-on-v: #CCC4C5; --ch-outline: #968E8F; --ch-outline-v: #4A4546;
   --ch-pri: #E8E1E1; --ch-on-pri: #231F20; --ch-pri-c: #3A3536; --ch-on-pri-c: #FFFFFF;
-  --ch-sec-c: #4A4546; --ch-on-sec-c: #EDE6E6;
+  --ch-sec-c: #3E4A40; --ch-on-sec-c: #EDE6E6;
   --ch-ter: #A3D3A2; --ch-ter-c: #1F4D2A; --ch-on-ter-c: #BFF0BE;
   --ch-err: #FFB4AB; --ch-err-c: #93000A; --ch-on-err-c: #FFDAD6;
   --ch-inv: #E6E1E1; --ch-on-inv: #322F30;
@@ -43,7 +43,7 @@
     --ch-bg: #131212; --ch-lowest: #0D0C0C; --ch-low: #211F1F; --ch-c: #242222; --ch-high: #2F2C2C; --ch-highest: #3A3737;
     --ch-on: #E6E1E1; --ch-on-v: #CCC4C5; --ch-outline: #968E8F; --ch-outline-v: #4A4546;
     --ch-pri: #E8E1E1; --ch-on-pri: #231F20; --ch-pri-c: #3A3536; --ch-on-pri-c: #FFFFFF;
-    --ch-sec-c: #4A4546; --ch-on-sec-c: #EDE6E6;
+    --ch-sec-c: #3E4A40; --ch-on-sec-c: #EDE6E6;
     --ch-ter: #A3D3A2; --ch-ter-c: #1F4D2A; --ch-on-ter-c: #BFF0BE;
     --ch-err: #FFB4AB; --ch-err-c: #93000A; --ch-on-err-c: #FFDAD6;
     --ch-inv: #E6E1E1; --ch-on-inv: #322F30;
@@ -130,7 +130,7 @@ h1, .page-title h1, .hero h1 { font-weight: 500 !important; letter-spacing: -.2p
 .meter > .road { order: 3; }
 .meter > .meter-goal { order: 4; }
 .meter .meter-label { color: var(--ch-on-pri-c) !important; opacity: 1 !important; font-weight: 500; font-size: .875rem !important; }
-.meter .meter-pct { background: var(--ch-on-pri-c) !important; color: var(--ch-pri-c) !important; height: 32px; padding: 0 12px !important; border-radius: 16px !important; display: inline-flex; align-items: center; font-weight: 700; }
+.meter .meter-pct { background: #DDF3DB !important; color: var(--ch-pri-c) !important; height: 32px; padding: 0 12px !important; border-radius: 16px !important; display: inline-flex; align-items: center; font-weight: 700; }
 .meter .meter-value { font-size: clamp(3rem, 15vw, 3.6rem) !important; font-weight: 800 !important; letter-spacing: -1px !important; color: var(--ch-on-pri-c) !important; margin: 8px 0 0 !important; }
 .meter .meter-value.neg { color: #FFB4AB !important; }
 .meter .meter-goal, .meter .meter-goal > span, .meter .goal-edit, .meter b { color: var(--ch-on-pri-c) !important; opacity: 1 !important; }

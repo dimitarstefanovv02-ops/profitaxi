@@ -50,7 +50,7 @@ export function moneyView({ go, data, rerender }) {
         h('div', { class: 'ms-row' }, h('span', null, 'Изкарах'), h('b', null, money(st.income))),
         h('div', { class: 'ms-row' }, h('span', null, 'Разходи'), h('b', null, `−${money(spent)}`))),
       h('p', { class: 'muted small' }, isNow
-        ? `Наемът, ефирът и другите постоянни плащания се смятат ден по ден – дотук ${money(st.fixedExp)}. Очаквано за целия месец: ${money(g.forecast)}.`
+        ? `Наемът и другите постоянни плащания се смятат ден по ден – дотук ${money(st.fixedExp)}. Очаквано за целия месец: ${money(g.forecast)}.`
         : `Постоянните плащания за месеца: ${money(st.fixedExp)}. ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}.`)),
       h('div', { class: 'ms-chips' },
         fuelLine(st),

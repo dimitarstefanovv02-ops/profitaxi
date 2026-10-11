@@ -1339,3 +1339,24 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .g-search-row { display: flex; align-items: center; gap: 10px; margin: 0 0 16px; }
 .g-search-row .g-search { flex: 1; min-width: 0; margin: 0 !important; }
 .g-search-row .theme-toggle { flex: none; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; }
+
+/* ===== Статистика: основните числа и падащите полета ===== */
+.st-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 14px 0; }
+.st-tile { background: var(--surface-2); border-radius: 22px; padding: 14px 16px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.st-tile .st-l { font-size: .82rem; font-weight: 600; color: var(--muted); }
+.st-tile .st-v { font-size: 1.45rem; font-weight: 800; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.st-tile small { font-size: .72rem; color: var(--faint, var(--muted)); }
+.st-tile.net { background: var(--surface-3); }
+.st-fold { padding: 0 !important; overflow: hidden; margin: 0 0 10px !important; }
+.st-fold > summary { list-style: none; display: flex; align-items: center; gap: 12px; padding: 16px 18px; cursor: pointer; font-weight: 700; font-size: 1.02rem; min-height: 60px; }
+.st-fold > summary::-webkit-details-marker { display: none; }
+.st-fold .st-fic { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-3); flex: none; }
+.st-fold > summary .num { font-variant-numeric: tabular-nums; }
+.st-chev { display: grid; place-items: center; transition: transform .2s; color: var(--muted); }
+.st-fold[open] .st-chev { transform: rotate(180deg); }
+.st-rows { display: flex; flex-direction: column; gap: 8px; padding: 0 12px 14px; }
+.st-row { display: flex; align-items: center; gap: 12px; background: var(--surface-2); border-radius: 18px; padding: 12px 14px; }
+.st-row .grow { display: flex; flex-direction: column; min-width: 0; }
+.st-row .grow > span { font-weight: 600; font-size: .92rem; }
+.st-row small { font-size: .74rem; color: var(--muted); }
+.st-row > b { font-size: 1.08rem; font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }

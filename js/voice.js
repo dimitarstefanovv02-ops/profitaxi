@@ -10,6 +10,7 @@ export { parseSpeech, wordsToDigits } from './speech.js';
 export const parsedItems = (p) => [
   ...Object.entries(p.income).map(([k, v]) => [{ cash: 'Кеш', card: 'Карта', app: 'Приложения', tips: 'Бакшиш' }[k], money(v, v % 1 ? 2 : 0)]),
   p.fuel && ['Гориво', [p.fuel.amount ? money(p.fuel.amount, p.fuel.amount % 1 ? 2 : 0) : '', p.fuel.qty ? `${String(p.fuel.qty).replace('.', ',')} л` : ''].filter(Boolean).join(' · ')],
+  p.dispatch && ['Ефир', money(p.dispatch, p.dispatch % 1 ? 2 : 0)],
   p.wash && ['Автомивка', money(p.wash, p.wash % 1 ? 2 : 0)],
   p.parking && ['Паркинг', money(p.parking, p.parking % 1 ? 2 : 0)],
   p.kmStart && ['Начален км', p.kmStart.toLocaleString('bg-BG')],
