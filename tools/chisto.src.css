@@ -681,3 +681,15 @@ body, .screen, .adm-main { font-variant-numeric: proportional-nums !important; f
 .keys { display: flex; flex-direction: column; gap: 10px; }
 .key-row { display: flex; align-items: center; gap: 14px; }
 .key-row kbd { min-width: 72px; text-align: center; padding: 6px 10px; border-radius: 8px; background: var(--ch-highest); font: inherit; font-weight: 700; }
+/* Админ: темата е горе до звънчето; в страничното меню не се повтаря */
+.adm-side .sf-theme { display: none !important; }
+/* Админ на телефон: изборите с много бутони се плъзгат вместо да се смачкват */
+@media (max-width: 699px) {
+  body.admin .seg:not(.seg-wrap) { display: flex !important; overflow-x: auto !important; scrollbar-width: none; flex-wrap: nowrap !important; }
+  body.admin .seg:not(.seg-wrap)::-webkit-scrollbar { display: none; }
+  body.admin .seg:not(.seg-wrap) .seg-btn { flex: 0 0 auto !important; padding: 0 14px !important; white-space: nowrap; }
+}
+/* Изборите, които се пренасят на нов ред (филтри, теми на въпроси) – отделни чипове, не един ред */
+.seg.seg-outline.seg-wrap { border: 0 !important; border-radius: 0 !important; overflow: visible !important; flex-wrap: wrap !important; gap: 8px !important; display: flex !important; }
+.seg.seg-outline.seg-wrap .seg-btn { flex: 0 0 auto !important; border: 1px solid var(--ch-outline) !important; border-radius: 8px !important; min-height: 36px; padding: 0 12px !important; white-space: nowrap; }
+.seg.seg-outline.seg-wrap .seg-btn.on { border-color: transparent !important; }
