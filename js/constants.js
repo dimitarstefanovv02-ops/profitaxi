@@ -76,6 +76,8 @@ export const COST_CATS = {
   phone: { label: 'Телефон и интернет', icon: 'phone', period: 'month', color: 'var(--c-violet)' },
   taxes: { label: 'Данъци и осигуровки', icon: 'bank', period: 'month', color: 'var(--c-red)' },
   accountant: { label: 'Счетоводител', icon: 'receipt', period: 'month', color: 'var(--c-pink)' },
+  fine: { label: 'Глоба', icon: 'alert', period: 'month', color: 'var(--c-red)', noAdd: true },
+  tacho: { label: 'Тахограф', icon: 'gauge', car: true, owner: true, period: 'year', color: 'var(--c-slate)', noAdd: true },
   other: { label: 'Други', icon: 'more', period: 'month', color: 'var(--c-gray)' },
 };
 

@@ -17,6 +17,7 @@ import { GUIDE } from '../lib/guide.js';
 import * as PK from '../lib/passkey.js';
 import { periodStats, shiftDate } from '../js/calc.js';
 import { todayStr } from '../js/util.js';
+import { rentState, deadlines, idleDays } from '../js/fleet.js';
 
 // Датите (вчера, понеделник, 10:00 и 20:00) са по българско време
 process.env.TZ ||= 'Europe/Sofia';
@@ -58,6 +59,7 @@ async function notifyDrivers(items) {
       let data = null;
       if (it.msg && forUserSrv(it.msg.target, u)) data = { title: clip(it.msg.title || 'Съобщение', 60), body: clip(it.msg.text, 160), url: base + '#/home', tag: 'msg-' + it.msg.id };
       if (it.reply && it.reply.userId === u.id) data = { title: 'Отговор на въпроса ти', body: clip(it.text, 160), url: base + '#/help', tag: 'tk-' + it.reply.id };
+      if (it.direct && it.direct.userId === u.id) data = { title: clip(it.direct.title, 60), body: clip(it.direct.body, 160), url: base + (it.direct.url || '#/home'), tag: it.direct.tag };
       if (data) jobs.push(sendPush(r.sub, { ...data, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); }).catch(() => {}));
     }
     await Promise.race([Promise.allSettled(jobs), sleep(5000)]);
@@ -133,16 +135,21 @@ const PUBLIC = ['settings', 'flags', 'ideas'];
 // Обща кола: собственикът вижда на шофьорите си само км, часове, дни и смени (без пари);
 // шофьорите виждат колата, общите ѝ разходи (при лична кола) и имената на останалите.
 function carScope(all, id) {
-  const owned = new Set(), member = new Set(), drivers = new Set(), people = new Set();
+  const owned = new Set(), member = new Set(), drivers = new Set(), people = new Set(), fuel = new Set();
   for (const [f, v] of Object.entries(all)) {
     if (fieldColl(f) !== 'cars' || !v) continue;
     const ms = (v.members || []).map((m) => m.userId);
-    if (v.ownerId === id) { owned.add(v.id); ms.forEach((x) => { if (x !== id) { drivers.add(x); people.add(x); } }); }
+    if (v.ownerId === id) { owned.add(v.id); ms.forEach((x) => { if (x !== id) { drivers.add(x); people.add(x); if (v.type === 'own') fuel.add(x); } }); }
     if (ms.includes(id)) { member.add(v.id); people.add(v.ownerId); ms.forEach((x) => x !== id && people.add(x)); }
   }
-  return { owned, member, drivers, people };
+  return { owned, member, drivers, people, fuel };
 }
-const SHIFT_PUBLIC = (s) => ({ id: s.id, userId: s.userId, start: s.start, end: s.end, kmStart: s.kmStart, kmEnd: s.kmEnd });
+const SHIFT_PUBLIC = (s, withFuel) => {
+  const o = { id: s.id, userId: s.userId, start: s.start, end: s.end, kmStart: s.kmStart, kmEnd: s.kmEnd, carId: s.carId || null };
+  // при лична кола, карана и от други: собственикът вижда горивото (без приходите)
+  if (withFuel) { const f = (s.expenses || []).filter((e) => e.category === 'fuel'); o.fuel = { amount: f.reduce((a, e) => a + (Number(e.amount) || 0), 0), qty: f.reduce((a, e) => a + (Number(e.qty) || 0), 0) }; }
+  return o;
+};
 const USER_PUBLIC = (u) => ({ id: u.id, role: u.role, name: u.name, phone: u.phone, city: u.city, company: u.company, status: u.status });
 function driverView(all, id) {
   const me = all[`users:${id}`]; if (!me) return null;
@@ -156,7 +163,9 @@ function driverView(all, id) {
       continue;
     }
     if (c === 'costs' && v?.carId && v.userId !== id) { if (cs.member.has(v.carId) && all[`cars:${v.carId}`]?.type === 'own') out[f] = v; continue; }
-    if (c === 'shifts' && v?.userId !== id) { if (cs.drivers.has(v?.userId)) out[f] = SHIFT_PUBLIC(v); continue; }
+    if (c === 'shifts' && v?.userId !== id) { if (cs.drivers.has(v?.userId)) out[f] = SHIFT_PUBLIC(v, cs.fuel.has(v.userId)); continue; }
+    // дневникът на колата: собственикът вижда всичко за колите си, шофьорът – своите записи
+    if (c === 'carlog') { if (v && (cs.owned.has(v.carId) || v.by === id || v.driverId === id)) out[f] = v; continue; }
     if (c === 'profiles' && k !== id && cs.people.has(k)) { out[f] = { photo: v?.photo || null }; continue; }
     if (c === 'users' && k !== id && cs.people.has(k)) { out[f] = USER_PUBLIC(v); continue; }
     if (c === 'users') {
@@ -187,6 +196,14 @@ async function applyPush(s, set = {}, del = []) {
   if (fields.length > 3000) return { error: 'Твърде много промени наведнъж' };
   const cur = {}; const vals = await one(['HMGET', 'pt:db', ...fields]); fields.forEach((f, i) => { cur[f] = parse(vals[i]); });
   const isAdmin = s.role === 'admin', id = s.id;
+  // за дневника на колата трябват колите и името на шофьора
+  const cars = {}; let all2 = {};
+  const logF = fields.filter((f) => fieldColl(f) === 'carlog');
+  if (logF.length && !isAdmin) {
+    const ids = [...new Set(logF.flatMap((f) => [set[f]?.carId, cur[f]?.carId]).filter(Boolean))];
+    const keys = [...ids.map((x) => 'cars:' + x), 'users:' + id];
+    const vs = await one(['HMGET', 'pt:db', ...keys]); keys.forEach((k2, i) => { const v2 = parse(vs[i]); if (k2.startsWith('cars:')) cars[k2.slice(5)] = v2; else all2[k2] = v2; });
+  }
   const newTickets = [], toDrivers = [];
   const hset = [], hdel = [], extra = [], rejected = [];
   for (const [f, raw] of Object.entries(set)) {
@@ -217,6 +234,31 @@ async function applyPush(s, set = {}, del = []) {
       v.ownerId = id; v.id = k;
     }
     else if (c === 'usage') { if (!k.endsWith('|' + id)) { rejected.push(f); continue; } }
+    else if (c === 'carlog') {
+      const car = cars[v.carId] || null; const was = old ? cars[old.carId] || null : null;
+      const owner = car && car.ownerId === id && (!old || (was && was.ownerId === id));
+      if (owner) { v.ownerId = id; v.id = k; v.by = old?.by || v.by || id; }
+      else {
+        const member = !v.carId || (car && (car.members || []).some((m) => m.userId === id));
+        const okKind = ['pay', 'damage', 'personal', 'handover'].includes(v.kind);
+        if (!member || !okKind || v.by !== id || v.driverId !== id || (old && (old.by !== id || old.status === 'ok'))) { rejected.push(f); continue; }
+        if (v.kind === 'pay') v.status = 'claimed';
+        v.ownerId = car ? car.ownerId : null; v.id = k;
+      }
+      if (!old && v.notify !== false) {
+        const who = all2[`users:${id}`]?.name || 'Шофьор';
+        const eur2 = (x) => `${Math.round((Number(x) || 0) * 100) / 100} €`.replace('.', ',');
+        if (owner && v.driverId && v.driverId !== id) {
+          const t = { remind: ['Напомняне за наема', v.text || `Наемът за колата: ${eur2(v.amount)}. Отбележи „Платих“, щом платиш.`], fine: ['Глоба', `${eur2(v.amount)}${v.text ? ' – ' + v.text : ''}. Записана е в разходите ти.`], handover: ['Колата е предадена', `Километраж при предаване: ${v.km || ''} км`] }[v.kind];
+          if (t) toDrivers.push({ direct: { userId: v.driverId, title: t[0], body: t[1], url: '#/home', tag: `cl-${k}` } });
+        }
+        if (!owner && car) {
+          const t = { pay: [`${who}: Платих`, `${eur2(v.amount)} наем – потвърди в „Автопарк“.`], damage: [`${who}: щета по колата`, v.text || 'Виж снимките в колата.'] }[v.kind];
+          if (t) toDrivers.push({ direct: { userId: car.ownerId, title: t[0], body: t[1], url: `#/cars/${car.id}`, tag: `cl-${k}` } });
+        }
+      }
+      if (owner && old && old.status !== 'ok' && v.status === 'ok' && v.kind === 'pay' && v.driverId !== id) toDrivers.push({ direct: { userId: v.driverId, title: 'Плащането е потвърдено', body: `Собственикът потвърди ${Math.round(v.amount)} € наем.`, url: '#/home', tag: `cl-${k}` } });
+    }
     else if (OWN.includes(c) && c !== 'payments') {
       if (v.userId !== id || (old && old.userId !== id)) { rejected.push(f); continue; }
       if (c === 'tickets' && old) v = { ...v, thread: unionThread(old.thread, v.thread) };
@@ -242,6 +284,7 @@ async function applyPush(s, set = {}, del = []) {
     }
     if (OWN.includes(c) && c !== 'payments' && old.userId === id) hdel.push(f);
     else if (c === 'cars' && old.ownerId === id) hdel.push(f);
+    else if (c === 'carlog' && ((cars[old.carId] && cars[old.carId].ownerId === id) || (old.by === id && old.status !== 'ok'))) hdel.push(f);
     else rejected.push(f);
   }
   const cmds = [];
@@ -250,7 +293,7 @@ async function applyPush(s, set = {}, del = []) {
   cmds.push(...extra);
   if (cmds.length) cmds.push(['INCR', 'pt:rev']);
   const res = await redis(cmds);
-  if (toDrivers.length) await notifyDrivers(toDrivers.slice(0, 5));
+  if (toDrivers.length) await notifyDrivers(toDrivers.slice(0, 40));
   for (const t of newTickets.slice(0, 3)) { const m = t.thread[t.thread.length - 1]; await notifyAdmins('ticket', { title: `Въпрос от ${t.name || 'шофьор'}`, body: String(m?.text || '').slice(0, 140), url: '/admin#/messages?t=inbox', tag: 'tk-' + t.id }); }
   return { ok: true, rejected, rev: cmds.length ? res[res.length - 1] : undefined };
 }
@@ -623,8 +666,8 @@ async function runCron(slot, { force = false } = {}) {
   for (const [id, list] of byUser) {
     const u = all[`users:${id}`]; if (!u || (u.status && u.status !== 'active')) continue;
     const d = userData(all, id); const base = '/app';
-    if (d.profile?.accountType === 'fleet') continue; // собственик на автопарк – не кара, без напомняния за смени
-    const msgs = [];
+    const msgs = slot === 'am' ? fleetMsgs(all, id, d.profile || {}, today, now) : [];
+    if (d.profile?.accountType === 'fleet') { pushAll(list, msgs); continue; } // собственик на автопарк – не кара, без напомняния за смени
     const created = new Date(u.createdAt || 0); const createdDay = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
     const hasY = d.shifts.some((x) => shiftDate(x) === yest);
     const off = (d.profile.offDays || []).includes(yest);
@@ -638,8 +681,11 @@ async function runCron(slot, { force = false } = {}) {
         msgs.push({ kind: 'weekly', title: 'Миналата седмица', body: `${eur(st.net)} чисто от ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}${pct != null ? `, ${pct >= 0 ? '+' : '−'}${Math.abs(pct)}% спрямо предната` : ''}.`, url: base + '#/money', tag: 'week-' + yest });
       }
     }
+    pushAll(list, msgs);
+  }
+  function pushAll(list, msgs) {
     for (const [k, r] of list) for (const m of msgs) {
-      if (!(r.types || DRV_TYPES).includes(m.kind)) continue;
+      if (m.kind !== 'fleet' && !(r.types || DRV_TYPES).includes(m.kind)) continue;
       const { kind, ...data } = m;
       jobs.push(sendPush(r.sub, { ...data, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); else if (st >= 200 && st < 300) sent++; }).catch(() => {}));
     }
@@ -647,6 +693,33 @@ async function runCron(slot, { force = false } = {}) {
   await Promise.race([Promise.allSettled(jobs), sleep(8000)]);
   if (dead.length) await one(['HDEL', 'pt:push', ...new Set(dead)]);
   return { ok: true, sent, users: byUser.size };
+}
+// Автопарк (сутрин): срокове 14 и 3 дни преди изтичане, просрочен наем, коли, които стоят, седмичен отчет в избрания ден
+function fleetMsgs(all, id, profile, today, now) {
+  const cars = Object.entries(all).filter(([f, v]) => fieldColl(f) === 'cars' && v?.ownerId === id).map(([, v]) => v);
+  if (!cars.length) return [];
+  const vals = Object.values(all);
+  const out = [];
+  const nm = (c) => c.name || c.plate || 'Колата';
+  const report = [];
+  for (const car of cars) {
+    const costs = vals.filter((v) => v && v.carId === car.id && v.amount != null && v.period);
+    const logs = vals.filter((v) => v && v.carId === car.id && v.kind && v.by);
+    const ms = (car.members || []).filter((m) => m.userId !== car.ownerId);
+    for (const x of deadlines(car, costs, today)) if ([14, 3, 0].includes(x.left)) out.push({ kind: 'fleet', title: `${nm(car)}: ${x.title}`, body: x.left === 0 ? `Изтича днес (${fmtDay(x.date)}).` : `Изтича след ${x.left} дни – ${fmtDay(x.date)}.${x.amount ? ` Сума ${eur(x.amount)}.` : ''}`, url: `/app#/cars/${car.id}`, tag: `dl-${x.key}-${x.date}-${x.left}` });
+    for (const m of ms) {
+      const r = rentState(m, logs, today);
+      if (r.late && [1, 3, 7, 14].includes(r.lateDays)) out.push({ kind: 'fleet', title: `${(all[`users:${m.userId}`]?.name || m.name || 'Шофьор').split(' ')[0]} не е платил наема`, body: `${nm(car)}: дължи ${eur(r.debt)}, просрочено ${r.lateDays} ${r.lateDays === 1 ? 'ден' : 'дни'}.`, url: '/app#/home', tag: `late-${car.id}-${m.userId}-${today}` });
+    }
+    const shifts = vals.filter((v) => v && v.start && v.userId && ms.some((m) => m.userId === v.userId) && (!v.carId || v.carId === car.id));
+    const last = shifts.filter((x) => x.end).map((x) => x.end).sort().pop() || null;
+    const idle = idleDays(last, today);
+    if (car.status !== 'service' && car.status !== 'free' && ms.length && [2, 3, 5].includes(idle)) out.push({ kind: 'fleet', title: `${nm(car)} стои ${idle} дни`, body: 'Няма смяна от няколко дни. Може да я дадеш на друг шофьор.', url: `/app#/cars/${car.id}`, tag: `idle-${car.id}-${today}` });
+    const wk = shifts.filter((x) => x.end && shiftDate(x) >= addDays(today, -7) && shiftDate(x) < today);
+    report.push(`${nm(car)} ${Math.round(wk.reduce((a, x) => a + Math.max(0, (x.kmEnd || 0) - (x.kmStart || 0)), 0))} км, ${new Set(wk.map(shiftDate)).size} дни`);
+  }
+  if (now.getDay() === (profile.reportDay ?? 1)) out.push({ kind: 'fleet', title: 'Седмичен отчет за колите', body: report.join(' · '), url: '/app#/home', tag: `fleetweek-${today}` });
+  return out.slice(0, 6);
 }
 // Без тайна: извикването е безопасно – праща само в 10:00/20:00 софийско време и само веднъж на ден.
 const cronAllowed = (req) => { const sec = process.env.CRON_SECRET; return !sec || req.headers.authorization === `Bearer ${sec}`; };

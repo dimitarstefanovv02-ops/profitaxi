@@ -46,6 +46,16 @@ async def main():
         # Шофьорът не може да промени колата
         bad = await g.evaluate(S.join(["async () => {", f"const st = await import('/js/sync.js'); const r = await st.call('push', {{ set: {{ 'cars:{car['id']}': {{ id: '{car['id']}', ownerId: '{gid}', type: 'rent', members: [] }} }}, del: [] }}); return r; }}"]))
         ok('Шофьорът не може да си присвои колата', 'cars:' + car['id'] in (bad.get('rejected') or []), bad)
+        # Дневник на колата: „Платих“ от шофьора, потвърждение от собственика, глоба само от собственика
+        pr = await g.evaluate(S.join(["async () => {", f"const l = s.addCarLog({{ carId: '{car['id']}', kind: 'pay', amount: 140 }}); await s.syncNow(); return l.id; }}"]))
+        badf = await g.evaluate(S.join(["async () => {", f"const st = await import('/js/sync.js'); return await st.call('push', {{ set: {{ 'carlog:x1': {{ id: 'x1', carId: '{car['id']}', kind: 'fine', by: '{gid}', driverId: '{gid}', amount: -500 }} }}, del: [] }}); }}"]))
+        ok('Шофьорът не може да си пише глоба/запис от името на собственика', 'carlog:x1' in (badf.get('rejected') or []), badf)
+        fake = await g.evaluate(S.join(["async () => {", f"const st = await import('/js/sync.js'); return await st.call('push', {{ set: {{ 'carlog:x2': {{ id: 'x2', carId: '{car['id']}', kind: 'pay', by: '{gid}', driverId: '{gid}', amount: 140, status: 'ok' }} }}, del: [] }}); }}"]))
+        st2 = await a.evaluate(S.join(["async () => {", "await s.syncNow(); return s.carLogs('" + car['id'] + "').filter((l) => l.kind === 'pay').map((l) => [l.id, l.status]); }"]))
+        ok('Собственикът вижда „Платих“ (сам потвърдено не става)', sorted(x[1] for x in st2) == ['claimed', 'claimed'], st2)
+        await a.evaluate(S.join(["async () => {", f"s.confirmPay('{pr}'); s.addCarLog({{ carId: '{car['id']}', kind: 'fine', driverId: '{gid}', amount: 50, text: 'скорост' }}); await s.syncNow(); }}"]))
+        gl = await g.evaluate(S.join(["async () => {", "await s.syncNow(); return { pay: s.myLogs('pay').map((l) => l.status).sort(), fine: s.myData().costs.filter((c) => c.category === 'fine').map((c) => c.amount) }; }"]))
+        ok('При шофьора: потвърдено + глобата е в разходите му', gl['pay'] == ['claimed', 'ok'] and gl['fine'] == [50], gl)
         ok('Без грешки', not ea and not eg, (ea + eg)[:2])
         await b.close()
     print('\n'.join(R)); print(f"FAILS: {sum(1 for r in R if r.startswith('FAIL'))} / {len(R)}")

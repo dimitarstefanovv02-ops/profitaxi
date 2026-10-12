@@ -51,6 +51,7 @@ export function shiftEditorView(ctx) {
   const fuelTypes = FUELS[profile.fuel]?.types || ['petrol'];
   const isNew = !draft.id;
   const wasActive = !isNew && !store.getShift(draft.id)?.end;
+  const mustKm = !!store.drivingCar(); // колата е на собственик или обща – км са задължителни
 
   function draw() {
     if (!draft) return;
@@ -81,7 +82,7 @@ export function shiftEditorView(ctx) {
         cardTitle('gauge', 'Данни', h('b', { class: 'num' }, [shiftKm(draft) ? `${shiftKm(draft)} км` : '', shiftHours(draft) ? fmtDuration(shiftHours(draft)) : ''].filter(Boolean).join(' · '))),
         h('div', { class: 'f-list' },
           fRow({ ic: 'road', color: 'var(--c-teal)', label: 'Начален км', value: draft.kmStart ? `${draft.kmStart.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmStart') }),
-          fRow({ ic: 'flag', color: 'var(--c-teal)', label: 'Краен км', value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad }),
+          fRow({ ic: 'flag', color: 'var(--c-teal)', label: 'Краен км', sub: mustKm && !draft.kmEnd && draft.end ? 'Задължително – колата е на собственик' : null, value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad || (mustKm && !draft.kmEnd && !!draft.end && root.querySelector('.need')) }),
           kmBad && h('p', { class: 'err' }, 'Крайният километраж е по-малък от началния'),
           timeRow('Тръгване', draft.start, (v) => { draft.start = v; draw(); }),
           draft.end ? timeRow('Прибиране', draft.end, (v) => { draft.end = v; draw(); }, timeBad, 'home')
@@ -227,6 +228,11 @@ export function shiftEditorView(ctx) {
     if (!draft) return; // двойно натискане след запис
     if (draft.end && new Date(draft.end) <= new Date(draft.start)) { toast('Краят трябва да е след началото', 'err'); return; }
     if (draft.kmEnd > 0 && draft.kmEnd < draft.kmStart) { toast('Провери километража', 'err'); return; }
+    // Кола на собственик (или обща): километрите са задължителни, за да няма пропуснати км
+    if (draft.end && mustKm && (!(draft.kmStart > 0) || !(draft.kmEnd > draft.kmStart))) {
+      toast(!(draft.kmStart > 0) ? 'Въведи началния километраж' : 'Въведи крайния километраж – задължително е за колата', 'err');
+      root.querySelector('[data-sec="data"]')?.classList.add('need'); return;
+    }
     // Необичайна смяна (над 24 часа или с край в бъдещето) – питаме, но позволяваме
     const longH = draft.end ? (new Date(draft.end) - new Date(draft.start)) / 3600000 : 0;
     const future = draft.end && new Date(draft.end) - new Date() > 10 * 60000;

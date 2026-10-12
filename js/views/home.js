@@ -12,6 +12,7 @@ import { INCOME_TYPES, incomeTypes, incomeLabel, FUELS, FUEL_TYPES, shiftCats } 
 import { showShiftResult } from './shiftResult.js';
 import { scanReceipt } from '../quick.js';
 import { zone } from '../arrange.js';
+import { myCarCard, personalKm } from './fleetui.js';
 
 // Кой панел е отворен на място в „Днес“: календарът или резервациите (като „Покажи повече“)
 let openPanel = null;
@@ -82,6 +83,8 @@ export function homeView({ go, user, data, rerender, route }) {
         data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/me', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/me', 'aria-label': 'Профил' }, initials))),
 
     messagesBox(rerender || (() => go('/home'))),
+    // Наемът на колата, която караш (от собственика): дълг, „Платих“, напомнянето
+    ...store.myCars().filter((c) => c.ownerId !== user.id).map((c) => myCarCard(c, user, rerender || (() => go('/home')), { compact: true })),
     store.flagOn('nps') && store.npsDue() && npsCard(rerender || (() => go('/home'))),
     trial != null && h('div', { class: 'trial' }, icon('clock', 18),
       h('span', { class: 'grow' }, trial > 0 ? `Пробен период: остават ${trial} ${trial === 1 ? 'ден' : 'дни'}` : 'Пробният период изтича днес')),
@@ -104,7 +107,9 @@ export function homeView({ go, user, data, rerender, route }) {
     ['shift', h('div', { class: 'home-shift' },
       active ? liveShift(active, go, data) : h('button', { class: 'btn btn-primary btn-xl shift-cta', onclick: startShift }, icon('play', 22), 'Започни смяна'),
       active && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '8px' }, onclick: () => { showAll = false; (rerender || (() => go('/home')))(); } }, icon('car', 18), 'Режим „шофирам“'),
-      !active && h('button', { class: 'btn btn-ghost btn-block', 'data-tour': 'past', style: { marginTop: '8px' }, onclick: () => go('/shift/new') }, icon('plus', 18), 'Въведи минала смяна'))],
+      !active && h('div', { class: 'row gap home-sub' },
+        h('button', { class: 'btn btn-ghost grow', 'data-tour': 'past', onclick: () => go('/shift/new') }, icon('plus', 18), 'Минала смяна'),
+        h('button', { class: 'btn btn-ghost grow', 'data-tour': 'personal', onclick: () => personalKm(rerender || (() => go('/home'))) }, icon('route', 18), 'Лично каране')))],
 
     // 3. Календар и лични резервации – с едно натискане
     (store.flagOn('calendar') || store.flagOn('reservations')) && ['links', h('div', null,

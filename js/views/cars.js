@@ -7,6 +7,9 @@ import * as store from '../store.js';
 import { openSheet, sheetHead, toast, field, cardTitle, segmented, confirmSheet, empty, topSearch } from '../ui.js';
 import { costCat } from '../constants.js';
 import { editCost } from './costs.js';
+import { carInfo, statusChip, statusSheet, quickAdd, recordSheet, carVoice, driverSheet, remind, rentSheet, handoverSheet, carDocsSheet, myCarCard, damageSheet, logRow, carName, shortName, first, leftText, face, STATUS, RENT_PERIODS } from './fleetui.js';
+import { carProfit, payback } from '../fleet.js';
+export { fleetHomeView } from './fleethome.js';
 
 const TYPE = { own: 'Лична кола', rent: 'Кола под наем' };
 const PERIOD = { day: 'на ден', week: 'на седмица', month: 'на месец' };
@@ -63,10 +66,10 @@ function newCarSheet(go) {
       sheetHead('Нова кола', close),
       h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Каква е колата'), seg, note),
       field('Марка и модел', name),
-      field('Рег. номер', plate),
+      field('Рег. номер', plate, 'Задължително – по него се търси колата', true),
       err,
       h('button', { class: 'btn btn-primary btn-lg', onclick: () => {
-        if (!name.value.trim() && !plate.value.trim()) { err.textContent = 'Въведи модел или номер'; return; }
+        if (!plate.value.trim()) { err.textContent = 'Регистрационният номер е задължителен'; return; }
         const c = store.createCar({ type, name: name.value.trim(), plate: plate.value.trim().toUpperCase() });
         close(); toast('Колата е добавена'); go('/cars/' + c.id);
       } }, icon('check', 18), 'Добави'));
@@ -82,17 +85,46 @@ function carDetail({ go, data, user, rerender }, id) {
   const today = todayStr();
   const from = startOfMonth(today), to = endOfMonth(today);
   const drivers = store.carDrivers(car.id, from, to);
-  const costs = store.carCosts(car.id).filter((c) => !c.endDate || c.endDate >= today);
+  const info = carInfo(car, today);
+  const costs = info.costs.filter((c) => c.period !== 'once' && (!c.endDate || c.endDate >= today));
+  const once = info.costs.filter((c) => c.period === 'once').sort((a, b) => b.startDate.localeCompare(a.startDate));
   const me = (car.members || []).find((m) => m.userId === user.id);
   const monthName = MONTHS[parseDate(today).getMonth()];
+  const st = info.status;
 
-  const head = [h('div', { class: 'page-title' }, h('h1', null, car.name || 'Кола')),
-    h('p', { class: 'muted', style: { margin: '-6px 0 14px' } }, [car.plate, TYPE[car.type], owner ? 'ти си собственик' : null].filter(Boolean).join(' · '))];
+  const head = [h('div', { class: 'page-title car-head' }, h('div', null, h('h1', null, car.name || car.plate || 'Кола'),
+      h('p', { class: 'muted' }, [car.plate, TYPE[car.type], owner ? 'ти си собственик' : null].filter(Boolean).join(' · '))),
+    owner && statusChip(st, () => statusSheet(car, redraw))),
+    owner && h('div', { class: 'car-acts' },
+      h('button', { class: 'btn btn-primary', onclick: () => quickAdd(info, redraw) }, icon('plus', 18), 'Запиши'),
+      h('button', { class: 'btn btn-dark', onclick: () => carVoice(info, redraw) }, icon('mic', 18), 'Кажи'),
+      h('button', { class: 'btn btn-ghost', onclick: () => carDocsSheet(car, redraw) }, icon('edit', 16), 'Данни'))];
+
+  // Пари по колата – само за собственика
+  const year = today.slice(0, 4);
+  const pm = owner && carProfit(info.costs, info.logs, from, today);
+  const py = owner && carProfit(info.costs, info.logs, `${year}-01-01`, today);
+  const pb = owner && payback(car, info.costs, info.logs, today);
+  const moneyCard = owner && car.type === 'rent' && h('section', { class: 'card car-money' },
+    cardTitle('coins', `Печалба · ${monthName}`),
+    h('div', { class: cx('big-num', pm.net >= 0 ? 'pos' : 'neg') }, `${pm.net >= 0 ? '+' : '−'}${money(Math.abs(pm.net))}`),
+    h('p', { class: 'muted small' }, `събран наем ${money(pm.income)} · разходи ${money(pm.expense)} · за ${year} г.: ${py.net >= 0 ? '+' : '−'}${money(Math.abs(py.net))}`),
+    pb ? h('div', { class: 'payback' },
+      h('div', { class: 'pb-top' }, h('b', null, 'Изплащане на колата'), h('span', null, `${fmtNum(pb.pct)}%`)),
+      h('div', { class: 'pb-bar' }, h('i', { style: { width: `${pb.pct}%` } })),
+      h('small', { class: 'muted' }, pb.left <= 0 ? `Колата е изплатена – ${money(pb.done)} от ${money(pb.price)}` : pb.done <= 0 ? `Печалбата от покупката досега е ${money(pb.done)} – още не е започнала да се изплаща` : `${money(pb.done)} от ${money(pb.price)} · остават ${money(pb.left)}${pb.months && pb.months <= 120 ? ` · ~${pb.months} мес. при сегашния темп` : ''}`))
+      : h('button', { class: 'link-btn', onclick: () => carDocsSheet(car, redraw) }, 'Въведи покупната цена, за да видиш кога се изплаща колата'));
+
+  // Чакащи потвърждение „Платих“
+  const pend = owner && info.pendings.length > 0 && h('section', { class: 'card pend-card' },
+    cardTitle('bell', 'Чакат потвърждение'),
+    info.pendings.map((l) => h('div', { class: 'hist-row' }, h('span', null, first(info.users[l.driverId]?.name)), h('b', null, money(l.amount, l.amount % 1 ? 2 : 0)), h('small', null, fmtDate(l.date)),
+      h('button', { class: 'chip page', onclick: () => { store.confirmPay(l.id); toast('Потвърдено'); redraw(); } }, icon('check', 14), 'Потвърди'))));
 
   // Покана с линк – само собственикът
   const invite = owner && h('section', { class: 'card invite-car' },
     cardTitle('users', 'Покани шофьор'),
-    h('p', { class: 'muted small', style: { marginBottom: '10px' } }, 'Прати линка на шофьора. Като го отвори и влезе (или се регистрира), колата излиза и при него.'),
+    h('p', { class: 'muted small', style: { marginBottom: '10px' } }, 'Прати линка на шофьора. Като го отвори и влезе (или се регистрира), колата и наемът излизат и при него.'),
     h('div', { class: 'inv-link' }, h('code', null, linkOf(car))),
     h('div', { class: 'row gap', style: { marginTop: '10px', flexWrap: 'wrap' } },
       h('button', { class: 'btn btn-dark', onclick: async () => { try { await navigator.clipboard.writeText(linkOf(car)); toast('Линкът е копиран'); } catch { toast('Копирай линка ръчно'); } } }, icon('copy', 16), 'Копирай'),
@@ -100,57 +132,74 @@ function carDetail({ go, data, user, rerender }, id) {
       h('button', { class: 'btn btn-ghost', onclick: () => confirmSheet({ title: 'Нов линк?', text: 'Старият линк спира да работи. Шофьорите, които вече са в колата, остават.', okLabel: 'Нов линк', onOk: () => { store.newInvite(car.id); redraw(); } }) }, 'Нов линк')),
     h('p', { class: 'faint small', style: { marginTop: '8px' } }, `Код: ${car.invite}`));
 
-  // Шофьорите: км, часове, дни, смени – без пари
+  // Шофьорите: км, часове, дни, смени (+ гориво при лична кола), наемът и дългът – без приходите им
   const others = drivers.filter((d) => !(owner && d.userId === user.id && car.type === 'rent'));
+  const fuelOf = (uid2) => info.shifts.filter((s) => s.userId === uid2 && s.end && s.start.slice(0, 10) >= from && s.start.slice(0, 10) <= to).reduce((a, s) => ({ amount: a.amount + (s.fuel?.amount ?? (s.expenses || []).filter((e) => e.category === 'fuel').reduce((x, e) => x + (Number(e.amount) || 0), 0)), qty: a.qty + (s.fuel?.qty ?? (s.expenses || []).filter((e) => e.category === 'fuel').reduce((x, e) => x + (Number(e.qty) || 0), 0)) }), { amount: 0, qty: 0 });
   const driversCard = h('section', { class: 'card' },
-    cardTitle('users', `Шофьори · ${monthName}`),
-    others.length ? h('div', { class: 'drv-list' }, others.map((d) => h('div', { class: 'drv-row' },
-      h('span', { class: 'drv-face' }, d.photo ? h('img', { src: d.photo, alt: '' }) : (d.name || '?').split(' ').map((x) => x[0]).slice(0, 2).join('')),
-      h('div', { class: 'grow' },
-        h('b', null, d.name + (d.userId === user.id ? ' (ти)' : '')),
-        h('div', { class: 'drv-nums' },
-          h('span', null, h('b', null, fmtNum(d.km)), ' км'),
-          h('span', null, h('b', null, fmtDuration(d.hours))),
-          h('span', null, h('b', null, String(d.days)), d.days === 1 ? ' ден' : ' дни'),
-          h('span', null, h('b', null, String(d.shifts)), d.shifts === 1 ? ' смяна' : ' смени')),
-        h('small', { class: 'muted' }, [
-          car.type === 'own' ? `дял от разходите ${fmtNum(d.share || 0)}%` : d.rent?.amount ? `наем ${money(d.rent.amount)} ${PERIOD[d.rent.period] || ''}` : 'наемът не е зададен',
-          d.last ? `последна смяна ${fmtDate(d.last.slice(0, 10))}` : 'още няма смени',
-        ].join(' · '))),
-      owner && h('div', { class: 'drv-act' },
-        d.phone && d.userId !== user.id && h('a', { class: 'icon-btn plain', href: 'tel:' + d.phone, 'aria-label': 'Обади се' }, icon('phone', 18)),
-        car.type === 'rent' && h('button', { class: 'icon-btn plain', 'aria-label': 'Наем', onclick: () => rentSheet(car, d, redraw) }, icon('key', 18)),
-        d.userId !== user.id && h('button', { class: 'icon-btn plain', 'aria-label': 'Махни от колата', onclick: () => confirmSheet({ title: `Да махна ли ${d.name}?`, text: 'Шофьорът спира да вижда колата. Смените му остават при него.', okLabel: 'Махни', danger: true, onOk: () => { store.removeMember(car.id, d.userId); redraw(); } }) }, icon('trash', 18))))))
-      : h('p', { class: 'muted' }, owner ? 'Още няма шофьори. Прати им линка отгоре.' : 'Само ти си в колата.'),
-    owner && car.type === 'own' && others.length > 1 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '10px' }, onclick: () => sharesSheet(car, drivers, redraw) }, 'Дялове от разходите'),
-    h('p', { class: 'faint small', style: { marginTop: '8px' } }, 'Виждаш само километри, часове, дни и смени – приходите и разходите на шофьорите остават лични.'));
+    cardTitle('users', `Шофьори · ${monthName}`, owner && car.type === 'rent' && info.rents.some((x) => x.r.debt > 0) && h('button', { class: 'chip page', onclick: () => { remind(car, info.rents.filter((x) => x.r.debt > 0).map((x) => ({ userId: x.m.userId, amount: x.r.debt }))); redraw(); } }, icon('bell', 14), 'Напомни')),
+    others.length ? h('div', { class: 'drv-list' }, others.map((d) => {
+      const rr = info.rents.find((x) => x.m.userId === d.userId)?.r;
+      const fuel = car.type === 'own' && d.userId !== user.id ? fuelOf(d.userId) : null;
+      const rentLine = d.userId === car.ownerId ? `дял от разходите ${fmtNum(d.share || 0)}%`
+        : d.rent?.amount ? `${car.type === 'own' ? 'плаща' : 'наем'} ${money(d.rent.amount)} ${RENT_PERIODS[d.rent.period] || ''}` : car.type === 'rent' ? 'наемът не е зададен' : `дял от разходите ${fmtNum(d.share || 0)}%`;
+      return h(owner && d.userId !== user.id ? 'button' : 'div', { class: cx('drv-row', owner && 'tap'), onclick: owner && d.userId !== user.id ? () => driverSheet(info, d.userId, redraw) : null },
+        face(d),
+        h('div', { class: 'grow' },
+          h('b', null, d.name + (d.userId === user.id ? ' (ти)' : ''), d.slot ? h('span', { class: 'slot' }, { day: 'ден', night: 'нощ', all: 'цял ден' }[d.slot]) : null),
+          h('div', { class: 'drv-nums' },
+            h('span', null, h('b', null, fmtNum(d.km)), ' км'),
+            h('span', null, h('b', null, fmtDuration(d.hours))),
+            h('span', null, h('b', null, String(d.days)), d.days === 1 ? ' ден' : ' дни'),
+            h('span', null, h('b', null, String(d.shifts)), d.shifts === 1 ? ' смяна' : ' смени'),
+            fuel && fuel.amount > 0 && h('span', null, h('b', null, money(fuel.amount)), ' гориво', fuel.qty ? ` · ${fmtNum(fuel.qty)} л` : '')),
+          h('small', { class: 'muted' }, [rentLine, owner && rr && d.userId !== user.id && rr.periods.length ? (rr.debt > 0 ? null : rr.advance > 0 ? `аванс ${money(rr.advance)}` : 'платено') : null, d.last ? `последна смяна ${fmtDate(d.last.slice(0, 10))}` : 'още няма смени'].filter(Boolean).join(' · ')),
+          owner && rr && rr.debt > 0 && h('small', { class: 'neg b' }, `дължи ${money(rr.debt, rr.debt % 1 ? 2 : 0)}${rr.late ? ` · просрочено ${rr.lateDays} ${rr.lateDays === 1 ? 'ден' : 'дни'}` : ' · днес'}`)),
+        owner && d.userId !== user.id && icon('right', 18));
+    })) : h('p', { class: 'muted' }, owner ? 'Още няма шофьори. Прати им линка отдолу.' : 'Само ти си в колата.'),
+    owner && car.type === 'own' && (car.members || []).length > 1 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '10px' }, onclick: () => sharesSheet(car, drivers, redraw) }, '% от разходите'),
+    owner && info.gaps.gap > 0 && h('p', { class: 'gap-line' }, icon('alert', 15), `Неотчетени ${fmtNum(info.gaps.gap)} км – началният километраж на смяна е по-голям от крайния на предишната.`),
+    h('p', { class: 'faint small', style: { marginTop: '8px' } }, car.type === 'own' ? 'Виждаш километри, часове, дни, смени и гориво – без приходите на шофьорите.' : 'Виждаш километри, часове, дни и смени – приходите и разходите на шофьорите остават лични. Натисни шофьор за наема, депозита и документите му.'));
 
-  // Общите разходи на колата
+  // Срокове: застраховки, винетка, преглед, лиценз, тахограф – и документите на шофьорите
+  const dls = owner ? info.deadlines.filter((x) => x.left <= 60) : [];
+  const dlCard = owner && h('section', { class: 'card' },
+    cardTitle('calendar', 'Срокове', h('button', { class: 'chip page', onclick: () => carDocsSheet(car, redraw) }, icon('edit', 14), 'Смени')),
+    dls.length ? dls.map((x) => h('div', { class: 'cc-row' }, h('span', { class: cx('cc-ic', x.left < 0 ? 'bad' : x.left <= 3 ? 'bad' : x.left <= 14 ? 'warn' : '') }, icon(x.kind === 'driver' ? 'user' : 'shield', 17)),
+      h('span', { class: 'grow' }, h('b', null, x.title), h('small', { class: x.left <= 3 ? 'neg' : x.left <= 14 ? 'warn' : '' }, `${fmtDate(x.date)} · ${leftText(x.left)}`)),
+      x.amount ? h('b', { class: 'num' }, money(x.amount)) : null,
+      x.costId && h('button', { class: 'chip page', onclick: () => { store.markCostPaid(x.costId); toast('Платено – следващият падеж е преместен'); redraw(); } }, 'Платено')))
+      : h('p', { class: 'muted' }, info.deadlines.length ? 'Нищо не изтича в следващите 60 дни.' : 'Добави до кога са ГО, каско, винетка, преглед, лиценз и тахограф – напомняме 14 и 3 дни преди това.'));
+
+  // Разходите на колата
   const costsCard = (owner || car.type === 'own') && h('section', { class: 'card' },
-    cardTitle('calendar', car.type === 'own' ? 'Общи разходи на колата' : 'Разходи по колата',
-      owner && h('button', { class: 'chip page', onclick: () => addCarCost(car, data, redraw) }, icon('plus', 14), 'Добави')),
+    cardTitle('wrench', car.type === 'own' ? 'Общи разходи на колата' : 'Разходи по колата',
+      owner && h('button', { class: 'chip page', onclick: () => addCarCost(car, data, redraw) }, icon('plus', 14), 'Постоянен')),
     costs.length ? h('div', { class: 'car-costs' }, costs.map((c) => {
       const cat = costCat(c.category);
       const myPart = car.type === 'own' && me ? c.amount * (Number(me.share) || 0) / 100 : null;
-      return h(owner ? 'button' : 'div', { class: 'cc-row', onclick: owner ? () => { editCost({ ...c }, carData(data)); setTimeout(() => {}, 0); } : null },
+      return h(owner ? 'button' : 'div', { class: 'cc-row', onclick: owner ? () => editCost({ ...c }, carData(data)) : null },
         h('span', { class: 'cc-ic' }, icon(cat.icon, 18)),
         h('span', { class: 'grow' }, h('b', null, c.name), h('small', null, [c.dueDate ? `следващо плащане ${fmtDate(c.dueDate)}` : null, myPart != null ? `твоят дял ${money(myPart, 2)}` : null].filter(Boolean).join(' · '))),
         h('b', { class: 'num' }, `${money(c.amount, c.amount % 1 ? 2 : 0)} ${({ week: '/седм.', month: '/мес.', quarter: '/3 мес.', year: '/год.' })[c.period] || ''}`));
-    })) : h('p', { class: 'muted' }, owner ? 'Застраховки, винетка, преглед, данък МПС, обслужване – с падежи и напомняния.' : 'Собственикът още не е добавил общи разходи.'),
+    })) : h('p', { class: 'muted' }, owner ? 'Застраховки, винетка, преглед, данък МПС – с падежи и напомняния.' : 'Собственикът още не е добавил общи разходи.'),
+    once.length > 0 && h('div', { class: 'car-costs once' }, h('small', { class: 'faint' }, 'Еднократни'), once.slice(0, 8).map((c) => h('div', { class: 'cc-row' },
+      h('span', { class: 'cc-ic' }, icon(costCat(c.category).icon, 17)), h('span', { class: 'grow' }, h('b', null, c.name), h('small', null, fmtDate(c.startDate))), h('b', { class: 'num' }, money(c.amount, c.amount % 1 ? 2 : 0)),
+      owner && h('button', { class: 'icon-btn plain', 'aria-label': 'Изтрий', onclick: () => confirmSheet({ title: 'Да изтрия ли разхода?', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCost(c.id, { from: '1900-01-01' }); redraw(); } }) }, icon('trash', 15))))),
     car.type === 'own' && me && h('p', { class: 'faint small', style: { marginTop: '8px' } }, `Твоят дял е ${fmtNum(me.share || 0)}% – влиза сам в твоите постоянни разходи.`));
 
-  // За шофьора на кола под наем
-  const myRent = !owner && car.type === 'rent' && h('section', { class: 'card' },
-    cardTitle('key', 'Твоят наем'),
-    me?.rent?.amount ? h('p', null, h('b', null, `${money(me.rent.amount)} ${PERIOD[me.rent.period] || ''}`), h('span', { class: 'muted' }, ' – зададен от собственика, смята се сам в разходите ти.'))
-      : h('p', { class: 'muted' }, 'Собственикът още не е задал наема.'));
+  // Дневник
+  const shown = info.logs.filter((l) => owner || l.driverId === user.id || l.by === user.id).slice(0, 15);
+  const logCard = shown.length > 0 && h('section', { class: 'card' }, cardTitle('list', 'Дневник на колата'), shown.map((l) => logRow(l, info, redraw)));
+
+  // За шофьора, който кара колата
+  const mine = !owner && me && myCarCard(car, user, redraw);
 
   const danger = h('div', { style: { marginTop: '18px' } },
     owner
       ? h('button', { class: 'btn btn-ghost btn-block', onclick: () => confirmSheet({ title: 'Да изтрия ли колата?', text: 'Шофьорите спират да я виждат, общите ѝ разходи се махат. Смените на всеки остават при него.', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCar(car.id); go('/cars'); } }) }, icon('trash', 16), 'Изтрий колата')
       : h('button', { class: 'btn btn-ghost btn-block', onclick: () => confirmSheet({ title: 'Да изляза ли от колата?', text: 'Спираш да я виждаш и общите ѝ разходи вече не са твои.', okLabel: 'Излез', danger: true, onOk: () => { store.leaveCar(car.id); go('/cars'); } }) }, 'Излез от колата'));
 
-  return h('div', { class: 'screen', 'data-page': 'cars' }, ...head, invite, myRent, driversCard, costsCard, danger);
+  return h('div', { class: 'screen', 'data-page': 'cars' }, ...head, mine, pend, moneyCard, driversCard, dlCard, costsCard, logCard, invite, danger);
 }
 
 // Разходите на колата се въвеждат като „своя кола“ (с всички видове – застраховки, винетка, преглед…)
@@ -161,8 +210,8 @@ function sharesSheet(car, drivers, redraw) {
   const inputs = {};
   const err = h('p', { class: 'err' });
   openSheet((close) => h('div', { class: 'form' },
-    sheetHead('Дялове от разходите', close, 'Колко процента от общите разходи плаща всеки. Общо 100%.'),
-    drivers.map((d) => { inputs[d.userId] = h('input', { class: 'input', type: 'number', inputmode: 'decimal', min: 0, max: 100, step: 'any', value: d.share ?? '' }); return field(d.name, inputs[d.userId]); }),
+    sheetHead('% от разходите', close, 'Колко процента от общите разходи на колата плаща всеки. Общо 100%.'),
+    drivers.map((d) => { inputs[d.userId] = h('input', { class: 'input', type: 'number', inputmode: 'decimal', min: 0, max: 100, step: 'any', value: d.share ?? '' }); return field(`${d.name} – %`, inputs[d.userId]); }),
     h('button', { class: 'btn btn-ghost', onclick: () => { const n = drivers.length; drivers.forEach((d) => { inputs[d.userId].value = String(Math.round((100 / n) * 100) / 100); }); } }, 'Поравно'),
     err,
     h('button', { class: 'btn btn-primary btn-lg', onclick: () => {
@@ -171,22 +220,6 @@ function sharesSheet(car, drivers, redraw) {
       if (Math.abs(sum - 100) > 0.5) { err.textContent = `Сборът е ${fmtNum(sum)}% – трябва да е 100%`; return; }
       store.setShares(car.id, sh); close(); toast('Запазено'); redraw();
     } }, icon('check', 18), 'Запази')));
-}
-
-function rentSheet(car, d, redraw) {
-  let period = d.rent?.period || 'week';
-  const amount = h('input', { class: 'input', type: 'number', inputmode: 'decimal', min: 0, step: 'any', value: d.rent?.amount || '' });
-  const fromIn = h('input', { class: 'input', type: 'date', value: d.rent?.from || todayStr() });
-  openSheet((close) => {
-    const seg = h('div');
-    const draw = () => seg.replaceChildren(segmented(PERIOD, period, (p) => { period = p; draw(); }, { small: true, page: true }));
-    draw();
-    return h('div', { class: 'form' },
-      sheetHead(`Наем · ${d.name}`, close, 'Смята се сам в разходите на шофьора, ден по ден.'),
-      field('Сума', amount), h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'За'), seg),
-      field('От дата', fromIn),
-      h('button', { class: 'btn btn-primary btn-lg', onclick: () => { store.setMemberRent(car.id, d.userId, { amount: Number(amount.value) || 0, period, from: fromIn.value || todayStr() }); close(); toast('Запазено'); redraw(); } }, icon('check', 18), 'Запази'));
-  });
 }
 
 // ---------- Присъединяване с линк ----------
@@ -205,54 +238,3 @@ export function joinView({ go, route }) {
   return root;
 }
 
-// ---------- Начален екран на собственика на автопарк ----------
-export function fleetHomeView({ go, data, user, rerender }) {
-  const redraw = rerender || (() => go('/home'));
-  const today = todayStr();
-  const from = startOfMonth(today), to = endOfMonth(today);
-  const cars = store.myCars().filter((c) => c.ownerId === user.id);
-  const rows = cars.map((c) => ({ car: c, drivers: store.carDrivers(c.id, from, to).filter((d) => d.userId !== user.id) }));
-  const all = rows.flatMap((r) => r.drivers);
-  const sum = (k) => all.reduce((a, d) => a + (d[k] || 0), 0);
-  const people = new Set(all.map((d) => d.userId)).size;
-  // плащанията по колите до 30 дни напред (и просрочените)
-  const soon = rows.flatMap((r) => store.carCosts(r.car.id).filter((c) => c.dueDate && (!c.endDate || c.endDate >= today) && c.dueDate <= addDaysStr(today, 30)).map((c) => ({ c, car: r.car })))
-    .sort((a, b) => a.c.dueDate.localeCompare(b.c.dueDate));
-  const greet = new Date().getHours() < 12 ? 'Добро утро' : new Date().getHours() < 18 ? 'Добър ден' : 'Добър вечер';
-
-  return h('div', { class: 'screen', 'data-page': 'fleet' },
-    topSearch(redraw),
-    h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Автопарк'), h('div', { class: 'date' }, `${greet}, ${user.name.split(' ')[0]}`))),
-    cars.length ? h('section', { class: 'meter fleet-sum' },
-      h('div', { class: 'meter-label' }, h('span', null, `${(MONTHS[parseDate(today).getMonth()] || '').replace(/^./, (x) => x.toUpperCase())} · ${cars.length} ${cars.length === 1 ? 'кола' : 'коли'} · ${people} ${people === 1 ? 'шофьор' : 'шофьори'}`)),
-      h('div', { class: 'meter-value' }, `${fmtNum(sum('km'))} км`),
-      h('div', { class: 'meter-goal' }, `${fmtDuration(sum('hours'))} работа · ${sum('days')} работни дни · ${sum('shifts')} смени`))
-      : h('section', { class: 'card' },
-        cardTitle('key', 'Как започваш'),
-        h('ol', { class: 'fleet-steps' },
-          h('li', null, h('b', null, 'Добави колата'), ' – модел и номер.'),
-          h('li', null, h('b', null, 'Прати линка'), ' на шофьора във Viber или SMS.'),
-          h('li', null, h('b', null, 'Задай наема'), ' – на ден, седмица или месец. Смята се сам при шофьора.'),
-          h('li', null, h('b', null, 'Добави застраховки, винетка, преглед'), ' – с падежи и напомняния.')),
-        h('p', { class: 'faint small' }, 'Виждаш километрите, часовете и дните на шофьорите – без техните пари.')),
-
-    soon.length > 0 && h('section', { class: 'card' },
-      cardTitle('calendar', 'Плащания до 30 дни'),
-      soon.map(({ c, car }) => {
-        const left = Math.round((parseDate(c.dueDate) - parseDate(today)) / 86400000);
-        return h('div', { class: 'cc-row' },
-          h('span', { class: 'cc-ic' }, icon(costCat(c.category).icon, 18)),
-          h('span', { class: 'grow' }, h('b', null, `${c.name} · ${car.name || car.plate}`), h('small', { class: left < 0 ? 'neg' : '' }, left < 0 ? `просрочено с ${-left} ${-left === 1 ? 'ден' : 'дни'}` : left === 0 ? 'днес' : `след ${left} ${left === 1 ? 'ден' : 'дни'} · ${fmtDate(c.dueDate)}`)),
-          h('b', { class: 'num' }, money(c.amount, c.amount % 1 ? 2 : 0)),
-          h('button', { class: 'chip page', onclick: () => { store.markCostPaid(c.id); toast('Платено – следващият падеж е преместен'); redraw(); } }, icon('check', 14), 'Платено'));
-      })),
-
-    rows.length > 0 && h('div', { class: 'car-list', style: { marginTop: '12px' } }, rows.map(({ car, drivers }) => h('a', { class: 'card car-item', href: '#/cars/' + car.id },
-      h('span', { class: 'ci-ic' }, icon(car.type === 'rent' ? 'key' : 'users', 20)),
-      h('span', { class: 'grow' },
-        h('b', null, [car.name, car.plate].filter(Boolean).join(' · ') || 'Кола'),
-        h('small', null, drivers.length ? `${drivers.map((d) => d.name.split(' ')[0]).join(', ')} · ${fmtNum(drivers.reduce((a, d) => a + d.km, 0))} км този месец` : 'още няма шофьори – прати линка')),
-      icon('right', 18)))),
-    h('button', { class: 'btn btn-primary btn-block', style: { marginTop: '14px' }, onclick: () => go('/cars?new=1') }, icon('plus', 18), 'Добави кола'));
-}
-const addDaysStr = (d, n) => { const x = parseDate(d); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };

@@ -34,7 +34,7 @@ function ensureExt() {
   db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.asks ||= []; db.churn ||= []; db.audit ||= [];
-  db.notDup ||= []; db.reviewed ||= []; db.cars ||= [];
+  db.notDup ||= []; db.reviewed ||= []; db.cars ||= []; db.carlog ||= [];
   // Лизингът вече не е вид кола: колата е „Собствена“, а вноската е обикновен месечен разход
   for (const [, p] of Object.entries(db.profiles || {})) { if (p && p.carType === 'leasing') p.carType = 'own'; if (p && p.fuel === 'cng') p.fuel = 'petrol_cng'; } // само метан – няма такива коли
   for (const c of db.costs || []) if (c && c.system === 'leasing') { delete c.system; c.name = c.name === 'Лизингова вноска' ? 'Лизинг' : c.name; }
@@ -389,10 +389,14 @@ function myCostsWithCars(id) {
       // общите разходи на колата (застраховка, ремонт…) – с моя дял
       for (const c of db.costs.filter((x) => x.carId === car.id)) out.push({ ...clone(c), share: (Number(m.share) || 0) / 100, startDate: c.startDate > m.joinedAt ? c.startDate : m.joinedAt });
     }
-    if (car.type === 'rent' && m && m.rent?.amount > 0) {
-      // наемът, който собственикът е задал на този шофьор
-      out.push({ id: `carrent-${car.id}`, userId: id, carId: car.id, system: 'carrent', name: `Наем · ${car.name || 'колата'}`, category: 'rent', amount: Number(m.rent.amount), period: m.rent.period || 'week', perWorkDay: false, startDate: m.rent.from || m.joinedAt, endDate: null, dueDate: null, payments: [] });
+    if (m && m.rent?.amount > 0 && car.ownerId !== id) {
+      // наемът, който собственикът е задал на този шофьор (при лична кола – плащане за взимане на колата за период)
+      out.push({ id: `carrent-${car.id}`, userId: id, carId: car.id, system: 'carrent', name: `Наем · ${car.name || 'колата'}`, category: 'rent', amount: Number(m.rent.amount), period: m.rent.period || 'week', perWorkDay: false, startDate: m.rent.from || m.joinedAt, endDate: m.rent.to || null, dueDate: null, payments: [] });
     }
+  }
+  // глоби, които собственикът е прехвърлил, и удръжки от депозита – еднократни разходи
+  for (const l of (db.carlog || []).filter((x) => x.driverId === id && x.by !== id && ['fine', 'deduct'].includes(x.kind) && x.amount > 0)) {
+    out.push({ id: `cl-${l.id}`, userId: id, carId: l.carId, system: 'carlog', name: l.kind === 'fine' ? `Глоба${l.text ? ' · ' + l.text : ''}` : `Удръжка от депозита${l.text ? ' · ' + l.text : ''}`, category: l.kind === 'fine' ? 'fine' : 'repair', amount: Number(l.amount), period: 'once', startDate: l.date || todayStr(), endDate: null, dueDate: null, payments: [], carLog: true });
   }
   return out;
 }
@@ -417,7 +421,7 @@ export function setShares(carId, shares) { // { userId: % }
   const c = ownCar(carId); for (const m of c.members || []) if (shares[m.userId] != null) m.share = Math.max(0, Math.min(100, Number(shares[m.userId]) || 0)); commit();
 }
 export function setMemberRent(carId, userId, rent) { // { amount, period, from }
-  const c = ownCar(carId); const m = memberOf(c, userId); if (!m) return; m.rent = rent && rent.amount > 0 ? { amount: Number(rent.amount), period: rent.period || 'week', from: rent.from || todayStr() } : null; commit();
+  const c = ownCar(carId); const m = memberOf(c, userId); if (!m) return; m.rent = rent && rent.amount > 0 ? { amount: Number(rent.amount), period: rent.period || 'week', from: rent.from || todayStr(), to: rent.to || null } : null; commit();
 }
 export function deleteCar(carId) { ownCar(carId); db.cars = db.cars.filter((x) => x.id !== carId); db.costs = db.costs.filter((x) => x.carId !== carId); commit(); }
 function evenShares(c) { // поравно; остатъкът от закръглянето е на първия (собственика)
@@ -470,22 +474,102 @@ export function carDrivers(carId, from, to) {
 }
 export function carCosts(carId) { return clone(db.costs.filter((x) => x.carId === carId)); }
 
+// ================= Дневник на колата =================
+// Плащания на наема („Платих“ → собственикът потвърждава), депозит и удръжки, глоби, щети със снимки,
+// предаване на колата с километраж, лично каране, напомняния. Шофьорът пише само своите записи
+// (Платих, щета, лично каране), собственикът – всичко за колите си.
+const DRIVER_KINDS = ['pay', 'damage', 'personal', 'handover'];
+export function carLogs(carId) {
+  const id = myId(); const car = db.cars.find((c) => c.id === carId);
+  const owner = car && car.ownerId === id;
+  return clone((db.carlog || []).filter((l) => l.carId === carId && (owner || l.by === id || l.driverId === id)))
+    .sort((a, b) => String(b.date || b.at).localeCompare(String(a.date || a.at)) || String(b.at).localeCompare(String(a.at)));
+}
+export function myLogs(kind) { const id = myId(); return clone((db.carlog || []).filter((l) => (l.by === id || l.driverId === id) && (!kind || l.kind === kind))); }
+export function addCarLog(rec) {
+  const id = myId(); const car = rec.carId ? db.cars.find((c) => c.id === rec.carId) : null;
+  const owner = car && car.ownerId === id;
+  if (!owner) {
+    if (!DRIVER_KINDS.includes(rec.kind)) throw new Error('Само собственикът може да записва това');
+    if (car && !memberOf(car, id)) throw new Error('Не си в тази кола');
+  }
+  const l = { id: uid(), at: new Date().toISOString(), date: todayStr(), ...clone(rec), by: id, ownerId: car ? car.ownerId : null };
+  if (!owner) { l.driverId = id; if (l.kind === 'pay') l.status = 'claimed'; }
+  else if (l.kind === 'pay' && !l.status) l.status = 'ok';
+  db.carlog.push(l); commit(); return clone(l);
+}
+export function updateCarLog(lid, patch) {
+  const id = myId(); const l = db.carlog.find((x) => x.id === lid); if (!l) return null;
+  const car = db.cars.find((c) => c.id === l.carId); const owner = car && car.ownerId === id;
+  if (!owner && (l.by !== id || l.status === 'ok')) return null;
+  Object.assign(l, clone(patch)); if (!owner && l.kind === 'pay') l.status = 'claimed';
+  commit(); return clone(l);
+}
+export function deleteCarLog(lid) {
+  const id = myId(); const l = db.carlog.find((x) => x.id === lid); if (!l) return;
+  const car = db.cars.find((c) => c.id === l.carId);
+  if (!(car && car.ownerId === id) && !(l.by === id && l.status !== 'ok')) return;
+  db.carlog = db.carlog.filter((x) => x.id !== lid); commit();
+}
+export const confirmPay = (lid) => updateCarLog(lid, { status: 'ok', confirmedAt: new Date().toISOString() });
+// Колата, която шофьорът кара (на друг собственик или обща) – за смените и личното каране
+export function drivingCar(uidArg) {
+  const id = uidArg || myId();
+  const list = (db.cars || []).filter((c) => memberOf(c, id) && (c.ownerId !== id || c.type === 'own') && (c.members || []).length > (c.ownerId === id ? 1 : 0));
+  return clone(list.find((c) => c.ownerId !== id) || list[0] || null);
+}
+// Всички смени по колата (на всички шофьори) – за собственика: км, часове, гориво
+export function carShifts(carId) {
+  const c = db.cars.find((x) => x.id === carId); if (!c) return [];
+  const ids = new Set((c.members || []).map((m) => m.userId));
+  return clone(db.shifts.filter((s) => ids.has(s.userId) && (s.carId ? s.carId === carId : s.start.slice(0, 10) >= ((memberOf(c, s.userId) || {}).joinedAt || ''))));
+}
+// Колко км е дала колата на шофьора: собственикът задава при предаването
+export function setHandover(carId, userId, km, date = todayStr()) {
+  const c = ownCar(carId); const m = memberOf(c, userId); if (!m) return;
+  m.handoverKm = Math.round(Number(km) || 0); m.handoverAt = date; commit();
+  if (m.handoverKm) addCarLog({ carId, kind: 'handover', driverId: userId, km: m.handoverKm, date });
+}
+export function setMemberDocs(carId, userId, docs) { const c = ownCar(carId); const m = memberOf(c, userId); if (!m) return; m.docs = { ...(m.docs || {}), ...docs }; commit(); }
+export function setMemberSlot(carId, userId, slot) { const c = ownCar(carId); const m = memberOf(c, userId); if (!m) return; m.slot = slot; commit(); }
+export function setCarStatus(carId, status) { const c = ownCar(carId); c.status = status || ''; c.statusAt = todayStr(); commit(); }
+// Еднократен разход по колата (гуми, ремонт…) – от собственика
+export function addCarCost(carId, { category = 'other', amount, name, date = todayStr() }) {
+  ownCar(carId);
+  saveCost({ carId, name: name || costCat0(category), category, amount: Number(amount) || 0, period: 'once', startDate: date, carLog: true });
+}
+const costCat0 = (k) => (COST_CATS[k] || {}).label || 'Разход';
+
 export function lastKm() {
   const id = myId();
   const done = db.shifts.filter((s) => s.userId === id && s.kmEnd).sort((a, b) => b.start.localeCompare(a.start));
-  return done[0]?.kmEnd || 0;
+  let km = done[0]?.kmEnd || 0; let at = done[0]?.start || '';
+  // личното каране след последната смяна
+  for (const l of (db.carlog || []).filter((x) => x.by === id && x.kind === 'personal' && x.kmEnd)) if ((l.at || '') > at) { km = l.kmEnd; at = l.at; }
+  // колата, която кара: километражът при предаване и последният на другите шофьори
+  const car = drivingCar(id);
+  if (car) {
+    const m = memberOf(car, id);
+    if (m?.handoverKm && (!at || (m.handoverAt || '') >= at.slice(0, 10))) km = Math.max(km, m.handoverKm);
+  }
+  return km;
+}
+// Лично каране (не таксиметрова смяна): само километри – за да няма изтървани км по колата
+export function addPersonalKm({ kmStart, kmEnd, date = todayStr(), note = '' }) {
+  const car = drivingCar();
+  return addCarLog({ carId: car ? car.id : null, kind: 'personal', kmStart: Math.round(kmStart) || 0, kmEnd: Math.round(kmEnd) || 0, km: Math.max(0, Math.round(kmEnd - kmStart)), date, note, start: new Date().toISOString() });
 }
 
 export function startShift(kmStart) {
   const id = myId();
   if (db.shifts.some((s) => s.userId === id && !s.end)) return getActiveShift();
-  const s = { id: uid(), userId: id, start: new Date().toISOString(), end: null, kmStart: kmStart || 0, kmEnd: 0, income: { cash: 0, card: 0, app: 0, tips: 0 }, expenses: [], note: '' };
+  const s = { id: uid(), userId: id, start: new Date().toISOString(), end: null, kmStart: kmStart || 0, kmEnd: 0, income: { cash: 0, card: 0, app: 0, tips: 0 }, expenses: [], note: '', carId: drivingCar(id)?.id || null };
   db.shifts.push(s); commit(); return clone(s);
 }
 export function saveShift(shift) {
   const id = myId();
   const s = { ...clone(shift), userId: id };
-  if (!s.id) s.id = uid();
+  if (!s.id) { s.id = uid(); if (s.carId === undefined) s.carId = drivingCar(id)?.id || null; }
   const i = db.shifts.findIndex((x) => x.id === s.id);
   if (i >= 0) { if (db.shifts[i].userId !== id) return null; db.shifts[i] = s; } else db.shifts.push(s);
   commit(); return clone(s);
