@@ -83,6 +83,9 @@ export function registerView({ go }) {
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const promoFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('promo') || '';
   const promo = input({ placeholder: 'напр. START2', value: promoFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
+  // Код за обща кола (от собственика) – идва и от линка за покана
+  let joinPre = ''; try { joinPre = localStorage.getItem('profitaxi.joinCode') || ''; } catch { /* */ }
+  const carCode = input({ placeholder: 'напр. 56JRLJMIQL', value: joinPre, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const cc = cityCompanyPicker();
   let carType = '';
   // Вид акаунт: шофьор или собственик на коли, който сам не кара
@@ -106,6 +109,9 @@ export function registerView({ go }) {
   const submit = async (e) => {
     e.preventDefault();
     const v = cc.value();
+    // Кодът за кола е 10 знака; ако е сложен в полето за промо код – разпознаваме го сами
+    let joinCode = carCode.value.trim().toUpperCase(), promoCode = promo.value.trim().toUpperCase();
+    if (!joinCode && /^[A-Z0-9]{10}$/.test(promoCode)) { joinCode = promoCode; promoCode = ''; promo.value = ''; carCode.value = joinCode; }
     // проверки в реда на формата
     const checks = [
       [!name.value.trim(), 'Въведи име'],
@@ -116,16 +122,17 @@ export function registerView({ go }) {
       [kind === 'driver' && !carType, 'Избери каква е колата'],
       [!phone.value.trim(), 'Въведи телефон'],
       [store.phoneCodeOn() && !phoneOk, 'Потвърди телефона с кода от SMS'],
-      [!store.live() && !!promo.value.trim() && !!store.checkPromo(promo.value).error, store.checkPromo(promo.value).error],
+      [!store.live() && !!promoCode && !!store.checkPromo(promoCode).error, store.checkPromo(promoCode).error],
     ];
     const bad = checks.find(([c]) => c);
     if (bad) { err.textContent = bad[1]; return; }
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
     const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
-    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promo.value });
+    try { if (joinCode) localStorage.setItem('profitaxi.joinCode', joinCode); else localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } // след първата настройка влизаш в колата
+    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promoCode });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
-    go(kind === 'fleet' ? '/home' : '/guide?first=1');
+    go(kind === 'fleet' ? '/home' : joinCode ? '/home' : '/guide?first=1');
   };
   const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 15)), title), ...kids);
   return h('div', { class: 'auth' },
@@ -140,7 +147,8 @@ export function registerView({ go }) {
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
         (store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true)),
-        field('Промо код', promo, 'По желание – ако имаш код за отстъпка')),
+        field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
+        field('Код за кола', carCode, 'По желание – ако собственикът на колата ти е пратил код или линк')),
       group('target', 'Къде караш', cc.el),
       (carGroup.replaceChildren(group('car', 'Колата е', carBox)), carGroup),
       h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),

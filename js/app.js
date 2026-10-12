@@ -94,7 +94,7 @@ function render() {
   if (fleet && ['/money', '/shifts', '/shift', '/stats', '/vehicle', '/car', '/onboarding'].includes(route.name)) return go('/home', true);
   const view = fleet && route.name === '/home' ? fleetHomeView : PRIVATE[route.name];
   if (!view) return go('/home', true);
-  { let jc = null; try { jc = localStorage.getItem('profitaxi.joinCode'); } catch { /* */ } if (jc && route.name !== '/join') { try { localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } return go('/join/' + jc, true); } }
+  { let jc = null; try { jc = localStorage.getItem('profitaxi.joinCode'); } catch { /* */ } if (jc && profile.onboarded && route.name !== '/join') { try { localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } return go('/join/' + jc, true); } }
 
   if (!autoRan) { autoRan = true; store.runAutoReminders(); }
   const ctx = { go, route, user, data: store.myData(), rerender: render };

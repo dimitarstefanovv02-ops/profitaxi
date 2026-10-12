@@ -30,7 +30,7 @@ export function onboardingView({ go, user }) {
           if (!last) { step++; draw(); return; }
           store.updateProfile({ ...d, onboarded: true });
           toast('Готово, можеш да започнеш смяна');
-          go('/home');
+          if (location.hash.startsWith('#/onboarding')) go('/home'); // иначе вече отиваме към колата от поканата
         } }, last ? 'Започни' : 'Напред'),
         !last && h('button', { class: 'btn btn-block', style: { marginTop: '6px', color: 'var(--muted)' }, onclick: () => { step++; draw(); } }, 'Пропусни')));
   }
