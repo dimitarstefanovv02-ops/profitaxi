@@ -1,12 +1,12 @@
 // Чисто – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v110';
+const VERSION = 'profitaxi-v111';
 const SHELL = [
   '/app', '/app.html', '/css/app.css', '/css/skins.css', '/js/skin.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/sync.js', '/js/schema.js', '/js/config.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',
   '/js/views/auth.js', '/js/views/onboarding.js', '/js/views/home.js', '/js/views/shift.js', '/js/views/shifts.js',
   '/js/views/stats.js', '/js/views/costs.js', '/js/views/profile.js', '/js/views/carSettings.js', '/js/views/cityPicker.js',
   '/js/views/reservations.js', '/js/views/invite.js', '/js/views/categories.js', '/js/views/shiftResult.js', '/js/views/calendar.js', '/js/tour.js', '/js/views/money.js', '/js/views/me.js',
-  '/js/quotes.js', '/js/notify.js', '/js/views/ideas.js', '/js/views/help.js', '/js/views/guide.js', '/js/views/vehicle.js', '/js/views/cars.js', '/js/views/fleetui.js', '/js/views/fleethome.js', '/js/fleet.js', '/js/arrange.js', '/js/quick.js', '/js/picker.js', '/js/kb.js', '/js/tips.js', '/js/driverpush.js', '/js/passkey.js', '/js/voice.js', '/js/speech.js', '/js/views/search.js',
+  '/js/quotes.js', '/js/notify.js', '/js/views/ideas.js', '/js/views/help.js', '/js/views/guide.js', '/js/views/vehicle.js', '/js/views/cars.js', '/js/views/fleetui.js', '/js/views/fleethome.js', '/js/views/fleetguide.js', '/js/fleetguide-data.js', '/js/fleet.js', '/js/arrange.js', '/js/quick.js', '/js/picker.js', '/js/kb.js', '/js/tips.js', '/js/driverpush.js', '/js/passkey.js', '/js/voice.js', '/js/speech.js', '/js/views/search.js',
   '/icons/icon.svg',
 ];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });

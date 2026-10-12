@@ -19,6 +19,8 @@ async def main():
             code = await pg.evaluate("async()=>{const s=await import('/js/store.js'); return s.sendSmsCode('0877333444').demoCode}")
             await pg.fill('input[inputmode=numeric]', code); await pg.click('button:has-text("Потвърди")'); await pg.wait_for_timeout(300)
         await pg.click('input[type=checkbox]'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1200)
+        ok('След регистрация – разходката за собственика', 'fguide?walk=1' in pg.url, pg.url)
+        await pg.click('text=Пропусни'); await pg.wait_for_timeout(600)
         await pg.screenshot(path=S+'fl0.png')
         ok('След регистрация – направо автопаркът (без настройка на колата)', '#/home' in pg.url and await pg.locator('h1:has-text("Автопарк")').count()==1, pg.url)
         ok('Долу има само „Автопарк“ и „Профил“', await pg.locator('.nav a').count()==2)

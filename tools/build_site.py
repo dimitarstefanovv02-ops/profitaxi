@@ -48,6 +48,10 @@ ICONS = {
   'check': '<path d="M4.5 12.5l5 5 10-11"/>',
   'arrow': '<path d="M4 12h15M13.5 6l6 6-6 6"/>',
   'plus': '<path d="M12 5v14M5 12h14"/>',
+  'key': '<circle cx="8" cy="15" r="4.5"/><path d="M11.2 11.8 20 3M16.5 6.5l2.5 2.5M14 9l2 2"/>',
+  'camera': '<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3L9.5 4.5h5L16.2 7h2.3A1.5 1.5 0 0 1 20 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><circle cx="12" cy="13" r="3.5"/>',
+  'alert': '<path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.3v.2"/>',
+  'road': '<path d="M8 3.5 4 20.5M16 3.5l4 17M12 4v2.5M12 10v3M12 16.5v3.5"/>',
 }
 def ic(m):
   return f'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">{ICONS[m.group(1)]}</svg>'

@@ -23,7 +23,7 @@ function kindSheet(fleet, go) {
   openSheet((close) => h('div', { class: 'form' },
     sheetHead('Вид акаунт', close, 'Можеш да го смениш по всяко време – данните ти остават.'),
     h('button', { class: cx('option', !fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'driver' }); close(); go('/home'); } }, icon('car', 24), 'Шофьор', h('small', null, 'Карам и следя колко ми остава')),
-    h('button', { class: cx('option', fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'fleet', onboarded: true }); close(); go('/home'); } }, icon('key', 24), 'Собственик на коли', h('small', null, 'Колите ми карат други шофьори – началният екран е автопаркът'))));
+    h('button', { class: cx('option', fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'fleet', onboarded: true }); close(); let seen = false; try { seen = localStorage.getItem('profitaxi.fwalk') === '1'; } catch { /* */ } go(seen ? '/home' : '/fguide?walk=1&first=1'); } }, icon('key', 24), 'Собственик на коли', h('small', null, 'Колите ми карат други шофьори – началният екран е автопаркът'))));
 }
 export function meView({ go, user, data }) {
   const fleet = store.isFleet(data.profile);

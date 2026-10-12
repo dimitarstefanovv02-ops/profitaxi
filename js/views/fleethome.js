@@ -75,7 +75,7 @@ export function fleetHomeView({ go, user, rerender }) {
           h('li', null, h('b', null, 'Прати линка'), ' на шофьора във Viber или SMS.'),
           h('li', null, h('b', null, 'Задай наема и километража'), ' – излизат сами при шофьора.'),
           h('li', null, h('b', null, 'Добави сроковете'), ' – ГО, каско, винетка, преглед. Напомняме навреме.')),
-        h('button', { class: 'btn btn-ghost btn-block', onclick: () => go('/guide?fleet=1') }, icon('play', 16), 'Разходка из приложението')),
+        h('button', { class: 'btn btn-ghost btn-block', onclick: () => go('/fguide?walk=1') }, icon('play', 16), 'Разходка из приложението')),
 
     // Днес
     cars.length > 0 && h('section', { class: 'card today-strip' },

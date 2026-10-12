@@ -23,6 +23,7 @@ import { guideView } from './views/guide.js';
 import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } from './arrange.js';
 import { vehicleView } from './views/vehicle.js';
 import { carsView, joinView, fleetHomeView } from './views/cars.js';
+import { fleetGuideView } from './views/fleetguide.js';
 import { calendarView } from './views/calendar.js';
 import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
 import { tipFor } from './tips.js';
@@ -36,7 +37,7 @@ const PRIVATE = {
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/calendar': calendarView, '/search': searchView,
   '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/vehicle': vehicleView,
-  '/cars': carsView, '/join': joinView,
+  '/cars': carsView, '/join': joinView, '/fguide': fleetGuideView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
 const DRIVER_TABS = [
@@ -50,7 +51,7 @@ const FLEET_TABS = [
   ['/me', 'user', 'Профил'],
 ];
 let TABS = DRIVER_TABS;
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me', '/fguide': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
 export const go = (path, replace) => {
@@ -99,7 +100,7 @@ function render() {
   if (!autoRan) { autoRan = true; store.runAutoReminders(); }
   const ctx = { go, route, user, data: store.myData(), rerender: render };
   if (route.raw !== lastRaw) store.trackPage(route.name.slice(1));
-  const tab = (TABS.some(([p]) => p === route.name) || !!PARENT[route.name]) && !(route.name === '/guide' && route.query.get('first'));
+  const tab = (TABS.some(([p]) => p === route.name) || !!PARENT[route.name]) && !(route.name === '/guide' && route.query.get('first')) && !(route.name === '/fguide' && route.query.get('walk'));
   mount(app, view(ctx), route, tab);
   // Разходка: веднъж след регистрация или когато е пусната от Профил → Помощ
   let tourNow = false; try { tourNow = sessionStorage.getItem('profitaxi.tourNow') === '1'; } catch { /* */ }
@@ -121,7 +122,7 @@ function mount(app, el, route, withNav) {
   const y = window.scrollY;
   // Подстраниците имат връщане към „своя“ бутон от менюто
   const parent = PARENT[route.name];
-  if (parent && el.classList?.contains('screen')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent, 'aria-label': 'Назад: ' + PARENT_LABEL[parent] }, icon(document.documentElement.dataset.skin === 'chisto' ? 'arrowLeft' : 'left', 20), h('span', { class: 'back-txt' }, PARENT_LABEL[parent])));
+  if (parent && el.classList?.contains('screen') && !el.classList.contains('fwalk')) el.prepend(h('a', { class: 'back sub-back', href: '#' + parent, 'aria-label': 'Назад: ' + PARENT_LABEL[parent] }, icon(document.documentElement.dataset.skin === 'chisto' ? 'arrowLeft' : 'left', 20), h('span', { class: 'back-txt' }, PARENT_LABEL[parent])));
   // Първото отваряне на екран: кратка подсказка (не по време на разходката)
   if (el.classList?.contains('screen') && store.currentUser() && !tourOpen() && !store.previewMode?.()) {
     const t = tipFor(route.name);

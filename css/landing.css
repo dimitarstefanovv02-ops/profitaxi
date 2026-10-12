@@ -572,3 +572,12 @@ body.menu-open { overflow: hidden; }
   .hero-vis .phone { width: 230px; }
   .hero h1 { font-size: clamp(36px, 5.6vw, 46px); }
 }
+.show-cta { margin-top: 20px; }
+#avtopark .lead { margin: 8px 0 18px; }
+@media (max-width: 599px) {
+  #avtopark .show-txt > .kicker, #avtopark .show-txt > .lead { grid-column: 1; }
+  #avtopark .show-txt > .kicker { font-size: 15px; margin-bottom: 6px; }
+  #avtopark .show-txt > .lead { font-size: 15px; margin: 0 0 12px; }
+  #avtopark .show-vis:has(.phone) { grid-row: 1 / span 4 !important; }
+  #avtopark .show-cta { width: 100%; }
+}

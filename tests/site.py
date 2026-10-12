@@ -70,8 +70,8 @@ with sync_playwright() as p:
         check(pg.locator(f'a[href="{u}"]').count() >= 1, f'home links to {u}')
     # Витрина
     pg.click('[data-shot="reservations"]'); pg.wait_for_timeout(300)
-    check('reservations' in pg.locator('.show-vis img').get_attribute('src'), 'showcase tab')
-    check('резервации' in pg.locator('.show-cap').inner_text().lower(), 'showcase caption')
+    check('reservations' in pg.locator('.show-vis img').first.get_attribute('src'), 'showcase tab')
+    check('резервации' in pg.locator('.show-cap').first.inner_text().lower(), 'showcase caption')
     check(pg.locator('[data-shot="reservations"]').get_attribute('aria-selected') == 'true', 'showcase aria-selected')
     # Мобилно меню
     pg.click('#menu-btn'); check(pg.locator('#drawer').is_visible(), 'drawer opens')

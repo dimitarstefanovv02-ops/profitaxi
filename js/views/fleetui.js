@@ -28,7 +28,8 @@ export function carInfo(car, today = todayStr()) {
   const status = carStatus(car, { rents: rents.map((x) => x.r), lastShift: last, active, today });
   const personal = logs.filter((l) => l.kind === 'personal');
   const startKm = Math.min(...members.map((m) => m.handoverKm || Infinity));
-  const gaps = kmGaps([...shifts, ...personal.map((l) => ({ start: l.start || l.at, kmStart: l.kmStart, kmEnd: l.kmEnd, userId: l.by }))], Number.isFinite(startKm) ? startKm : 0);
+  // само смените, записани в тази кола (старите без кола имат друг километраж)
+  const gaps = kmGaps([...shifts.filter((x) => x.carId === car.id), ...personal.map((l) => ({ start: l.start || l.at, kmStart: l.kmStart, kmEnd: l.kmEnd, userId: l.by }))], Number.isFinite(startKm) ? startKm : 0);
   return { car, logs, shifts, costs, users, members, rents, status, active, drivingToday, last, idle: idleDays(last, today), gaps, deadlines: deadlines(car, costs, today), pendings: logs.filter((l) => l.kind === 'pay' && l.status !== 'ok') };
 }
 
@@ -144,7 +145,7 @@ export function driverSheet(info, userId, redraw) {
     m.rent?.amount ? h('div', { class: 'blk' },
       h('div', { class: 'blk-h' }, h('b', null, `Наем ${money(m.rent.amount)} ${RENT_PERIODS[m.rent.period] || ''}`), r.debt > 0 ? h('span', { class: 'neg' }, `дължи ${money(r.debt, 2)}`) : r.advance > 0 ? h('span', { class: 'pos' }, `аванс ${money(r.advance, 2)}`) : h('span', { class: 'pos' }, 'платено')),
       h('div', { class: 'weeks' }, r.periods.slice(-12).map((p) => h('span', { class: cx('wk', p.status), title: `${fmtDate(p.start)} – ${fmtDate(p.end)}` }, h('b', null, fmtDate(p.start)), h('small', null, p.status === 'paid' ? 'платено' : p.paid > 0 ? `${money(p.paid)} от ${money(p.amount)}` : money(p.amount))))),
-      r.history.length ? h('div', { class: 'hist' }, r.history.slice(0, 12).map((l) => h('div', { class: 'hist-row' }, h('span', null, fmtDate(l.date)), h('b', null, money(l.amount, l.amount % 1 ? 2 : 0)), h('small', { class: l.status === 'ok' ? 'pos' : 'warn' }, l.status === 'ok' ? 'потвърдено' : 'чака потвърждение'),
+      r.history.length ? h('div', { class: 'hist' }, r.history.slice(0, 12).map((l) => h('div', { class: 'hist-row' }, h('span', null, fmtDate(l.date)), h('b', null, money(l.amount, l.amount % 1 ? 2 : 0)), h('small', { class: l.status === 'ok' ? 'pos' : 'warn' }, l.status === 'ok' ? 'потвърдено' : 'чака'),
         l.status !== 'ok' && h('button', { class: 'chip page', onclick: () => { store.confirmPay(l.id); close(); toast('Потвърдено'); redraw(); } }, 'Потвърди'),
         h('button', { class: 'icon-btn plain', 'aria-label': 'Изтрий', onclick: () => confirmSheet({ title: 'Да изтрия ли плащането?', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCarLog(l.id); close(); redraw(); } }) }, icon('trash', 16))))) : h('p', { class: 'muted small' }, 'Още няма плащания.'))
       : h('p', { class: 'muted' }, 'Наемът не е зададен.'),
@@ -152,7 +153,7 @@ export function driverSheet(info, userId, redraw) {
       dep.list.map((l) => h('div', { class: 'hist-row' }, h('span', null, fmtDate(l.date)), h('b', null, `${l.kind === 'deposit' ? '+' : '−'}${money(l.amount)}`), h('small', null, l.kind === 'deposit' ? 'оставен' : l.kind === 'refund' ? 'върнат' : `удръжка${l.text ? ' · ' + l.text : ''}`)))),
     (fines.length || dmg.length) ? h('div', { class: 'blk' }, h('div', { class: 'blk-h' }, h('b', null, 'Глоби и щети')),
       [...fines, ...dmg].sort((a, b) => String(b.date).localeCompare(String(a.date))).map((l) => h('div', { class: 'hist-row' }, h('span', null, fmtDate(l.date)), h('b', null, l.amount ? money(l.amount) : '—'), h('small', null, `${l.kind === 'fine' ? 'глоба' : 'щета'}${l.text ? ' · ' + l.text : ''}`)))) : null,
-    docs.length ? h('div', { class: 'blk' }, h('div', { class: 'blk-h' }, h('b', null, 'Документи')), docs.map((x2) => h('div', { class: 'hist-row' }, h('span', null, x2.title.split(' · ')[0]), h('small', { class: x2.left < 0 ? 'neg' : x2.left <= 14 ? 'warn' : '' }, `до ${fmtDate(x2.date)} · ${leftText(x2.left)}`)))) : null,
+    docs.length ? h('div', { class: 'blk' }, h('div', { class: 'blk-h' }, h('b', null, 'Документи')), docs.map((x2) => h('div', { class: 'doc-row' }, h('span', null, x2.title.split(' · ')[0]), h('small', { class: x2.left < 0 ? 'neg' : x2.left <= 14 ? 'warn' : '' }, `до ${fmtDate(x2.date)} · ${leftText(x2.left)}`)))) : null,
     h('div', { class: 'act-grid' },
       h('button', { class: 'btn btn-primary', onclick: () => { close(); recordSheet(info, 'pay', { driverId: userId }, redraw); } }, icon('coins', 16), 'Платено'),
       r.debt > 0 && h('button', { class: 'btn btn-dark', onclick: () => { remind(info.car, [{ userId, amount: r.debt }]); close(); redraw(); } }, icon('bell', 16), 'Напомни'),
@@ -306,9 +307,9 @@ export function logRow(l, info, redraw) {
     h('span', { class: 'cc-ic' }, icon(LOG_IC[l.kind] || 'doc', 17)),
     h('span', { class: 'grow' }, h('b', null, `${LOG_TXT[l.kind] || l.kind}${who ? ' · ' + first(who) : ''}`),
       h('small', null, [fmtDate(l.date || (l.at || '').slice(0, 10)), l.km ? `${fmtNum(l.km)} км` : null, l.kind === 'personal' && l.kmStart ? `${fmtNum(l.kmStart)} → ${fmtNum(l.kmEnd)}` : null, l.text, l.kind === 'pay' ? (l.status === 'ok' ? 'потвърдено' : 'чака потвърждение') : null].filter(Boolean).join(' · ')),
+      owner && l.kind === 'pay' && l.status !== 'ok' && h('button', { class: 'chip page', style: { alignSelf: 'flex-start', marginTop: '6px' }, onclick: () => { store.confirmPay(l.id); toast('Потвърдено'); redraw(); } }, icon('check', 14), 'Потвърди'),
       l.photos?.length ? h('div', { class: 'ph-row small' }, l.photos.map((p) => h('a', { class: 'ph', href: p, target: '_blank', onclick: (e) => { e.preventDefault(); photoView(p); } }, h('img', { src: p, alt: '' })))) : null),
     l.amount ? h('b', { class: 'num' }, money(l.amount, l.amount % 1 ? 2 : 0)) : null,
-    owner && l.kind === 'pay' && l.status !== 'ok' && h('button', { class: 'chip page', onclick: () => { store.confirmPay(l.id); toast('Потвърдено'); redraw(); } }, 'Потвърди'),
     owner && h('button', { class: 'icon-btn plain', 'aria-label': 'Изтрий', onclick: () => confirmSheet({ title: 'Да изтрия ли записа?', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCarLog(l.id); redraw(); } }) }, icon('trash', 15)));
 }
 export function photoView(src) { openSheet((close) => h('div', null, sheetHead('Снимка', close), h('img', { src, alt: '', style: { width: '100%', borderRadius: '14px' } })), { tall: true }); }

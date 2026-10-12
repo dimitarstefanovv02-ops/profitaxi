@@ -132,7 +132,7 @@ export function registerView({ go }) {
     const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promoCode });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
-    go(kind === 'fleet' ? '/home' : joinCode ? '/home' : '/guide?first=1');
+    go(kind === 'fleet' ? '/fguide?walk=1&first=1' : joinCode ? '/home' : '/guide?first=1');
   };
   const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 15)), title), ...kids);
   return h('div', { class: 'auth' },
