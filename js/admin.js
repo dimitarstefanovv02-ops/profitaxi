@@ -7,6 +7,7 @@ import * as store from './store.js';
 import './picker.js';
 import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart, stat, tone, segmented, empty, setTheme, shareRows, cardTitle, isDark } from './ui.js';
 import { startTour, ADMIN_TOUR } from './tour.js';
+import { rentState as rentStateA } from './fleet.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
 import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costCat } from './constants.js';
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
@@ -22,6 +23,7 @@ document.body.classList.add('admin');
 const NAV = [
   ['/overview', 'home', 'Днес', 'owner support partner'],
   ['/drivers', 'users', 'Шофьори', 'owner support partner'],
+  ['/owners', 'car', 'Собственици', 'owner support'],
   ['/control', 'shield', 'Контрол', 'owner support'],
   ['/messages', 'inbox', 'Съобщения', 'owner support'],
   ['/partners', 'key', 'Партньори', 'owner partner'],
@@ -65,7 +67,7 @@ function render() {
   const r = parse();
   if (!store.adminUser()) { document.body.classList.remove('arranging'); return fill(app, loginView()); }
   if (ALIAS[r.name]) { location.replace('#' + ALIAS[r.name]); return; }
-  const views = { '/overview': overview, '/drivers': drivers, '/driver': driverDetail, '/new': newDriver, '/control': control, '/messages': messagesPage,
+  const views = { '/overview': overview, '/drivers': drivers, '/driver': driverDetail, '/new': newDriver, '/owners': owners, '/control': control, '/messages': messagesPage,
     '/partners': partners, '/growth': growth, '/stats': statsPage, '/dev': devPage, '/money': moneyPage, '/settings': settings };
   const base = PARENT[r.name] || r.name;
   if (!views[r.name] || !navFor().some((n) => n[0] === base)) { location.replace('#/overview'); return; }
@@ -135,6 +137,7 @@ function searchAll(q) {
     const hit = [u.name, u.email, u.company, u.city].join(' ').toLowerCase().includes(s) || (dig.length >= 4 && store.normPhone(u.phone).includes(dig)) || (plate.length >= 3 && plateKey(c.plate).includes(plate)) || (c.code && String(c.code) === q.trim());
     if (hit) out.push({ ic: 'user', title: u.name, sub: [u.city, u.company, u.phone, c.plate].filter(Boolean).join(' · '), kind: 'Шофьор', href: '#/driver/' + u.id });
   });
+  if (role() !== 'partner') { const pk = plateKey(q); if (pk.length >= 3) store.admin.cars().filter((c) => plateKey(c.plate).includes(pk)).forEach((c) => out.push({ ic: 'car', title: c.plate, sub: [c.name, c.type === 'rent' ? 'под наем' : 'обща кола', `${(c.members || []).length} шофьори`].join(' · '), kind: 'Кола', href: '#/owners?t=cars', on: () => { ownState.plate = c.plate; ownState.kind = 'all'; } })); }
   companiesOf(all).filter((c) => c.toLowerCase().includes(s)).forEach((c) => out.push({ ic: 'car', title: c, sub: `${all.filter((d) => d.user.company === c).length} шофьори`, kind: 'Фирма', href: '#/partners?t=firms', on: () => { repState.company = c; } }));
   if (role() !== 'support') store.admin.codes().filter((c) => c.code.toLowerCase().includes(s)).forEach((c) => out.push({ ic: 'key', title: c.code, sub: c.company, kind: 'Код', href: '#/partners?t=codes' }));
   if (isOwner()) store.admin.promos().filter((c) => c.code.toLowerCase().includes(s)).forEach((c) => out.push({ ic: 'gift', title: c.code, sub: c.kind === 'months' ? `${c.value} мес. безплатно` : `-${c.value}%`, kind: 'Промо', href: '#/money?t=promos' }));
@@ -666,6 +669,62 @@ function alertsLine() {
 // =====================================================================
 //   ШОФЬОРИ
 // =====================================================================
+// ---------- Собственици и общи коли ----------
+// Собственици: акаунти „Собственик на коли“ и шофьори, чиито коли карат и други. Под всеки – колите и шофьорите им.
+// Коли: филтър за колите с няколко шофьори / под наем; търсене по рег. номер (задължителен за тях).
+const ownState = { q: '', kind: 'multi', plate: '' };
+function owners(r) {
+  const cars = store.admin.cars();
+  const logs = store.admin.carLogs();
+  const all = store.admin.allData();
+  const byId = Object.fromEntries(all.map((d) => [d.user.id, d]));
+  const today = todayStr(), m1 = startOfMonth(today);
+  const kmOf = (uid, carId, from = '') => { const d = byId[uid]; if (!d) return 0; return d.shifts.filter((s) => s.end && shiftDate(s) >= m1 && shiftDate(s) >= from && (s.carId ? s.carId === carId : true)).reduce((a, s) => a + shiftKm(s), 0); };
+  const drvOf = (c) => (c.members || []).filter((m) => m.userId !== c.ownerId || c.type === 'own');
+  const ownerIds = [...new Set(cars.filter((c) => drvOf(c).some((m) => m.userId !== c.ownerId) || byId[c.ownerId]?.profile?.accountType === 'fleet').map((c) => c.ownerId))];
+  all.filter((d) => d.profile?.accountType === 'fleet' && !ownerIds.includes(d.user.id)).forEach((d) => ownerIds.push(d.user.id));
+  const multi = cars.filter((c) => drvOf(c).length > 1 || (c.type === 'rent' && drvOf(c).length >= 1));
+  const { bar, cur } = tabs('/owners', [['list', 'Собственици', ownerIds.length], ['cars', 'Коли', multi.length], ['nop', 'Без рег. номер', cars.filter((c) => !c.plate && drvOf(c).length > 1).length, 'alert']]);
+  const debtOf = (c, m) => { try { return rentStateA(m, logs.filter((l) => l.carId === c.id), today).debt; } catch { return 0; } };
+  const carRow = (c) => {
+    const o = byId[c.ownerId];
+    const ds = drvOf(c).filter((m) => m.userId !== c.ownerId || c.type === 'own');
+    return h('div', { class: 'own-car' },
+      h('div', { class: 'oc-head' }, h('b', { class: 'plate' }, c.plate || 'без номер'), h('span', null, c.name || ''), h('span', { class: cx('chip', c.type === 'rent' ? 'warn' : '') }, c.type === 'rent' ? 'Под наем' : 'Лична, обща'),
+        c.status === 'service' ? h('span', { class: 'chip' }, 'В сервиз') : c.status === 'free' ? h('span', { class: 'chip' }, 'Свободна') : null,
+        o && h('a', { class: 'oc-owner', href: '#/driver/' + o.user.id }, 'собственик: ', h('b', null, o.user.name))),
+      ds.length ? h('div', { class: 'oc-drv' }, ds.map((m) => { const d = byId[m.userId]; const debt = c.ownerId !== m.userId ? debtOf(c, m) : 0;
+        return h('a', { class: 'oc-row', href: '#/driver/' + m.userId }, d ? face(d.user, d.profile, 30) : null, h('span', { class: 'grow' }, h('b', null, d?.user.name || m.name), h('small', null, [d?.user.phone, m.rent?.amount ? `наем ${money(m.rent.amount)} ${({ day: '/ден', week: '/седм.', month: '/мес.', once: 'за периода' })[m.rent.period] || ''}` : c.type === 'own' ? `${fmtNum(m.share || 0)}% от разходите` : null, `${fmtNum(kmOf(m.userId, c.id, m.joinedAt || ''))} км този месец`].filter(Boolean).join(' · '))),
+          debt > 0 ? h('span', { class: 'chip bad' }, `дължи ${money(debt)}`) : null); }))
+        : h('p', { class: 'muted small' }, 'Още няма шофьори.'));
+  };
+  let body;
+  if (cur === 'list') {
+    const q = ownState.q.trim().toLowerCase();
+    const list = ownerIds.map((id) => byId[id]).filter(Boolean).filter((d) => !q || [d.user.name, d.user.phone, d.user.city, d.user.company, ...cars.filter((c) => c.ownerId === d.user.id).map((c) => c.plate)].join(' ').toLowerCase().includes(q));
+    body = h('div', null,
+      h('input', { class: 'input', type: 'search', placeholder: 'Име, телефон, рег. номер', value: ownState.q, style: { minHeight: '44px', marginBottom: '12px' }, oninput: (e) => { ownState.q = e.target.value; render(); setTimeout(() => { const i = document.querySelector('.adm input[type=search]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }); } }),
+      list.length ? list.map((d) => { const mine = cars.filter((c) => c.ownerId === d.user.id); const nd = new Set(mine.flatMap((c) => drvOf(c).filter((m) => m.userId !== d.user.id).map((m) => m.userId))).size;
+        return h('section', { class: 'card adm-card own-card' },
+          h('div', { class: 'own-head' }, face(d.user, d.profile, 44), h('a', { class: 'grow', href: '#/driver/' + d.user.id }, h('b', null, d.user.name), h('small', null, [d.user.phone, d.user.city, d.profile?.accountType === 'fleet' ? 'Собственик на коли' : 'Шофьор с обща кола'].filter(Boolean).join(' · '))),
+            h('span', { class: 'own-n' }, h('b', null, String(mine.length)), ' коли · ', h('b', null, String(nd)), ' шофьори')),
+          mine.length ? mine.map(carRow) : h('p', { class: 'muted small' }, 'Още няма добавени коли.')); })
+        : empty('car', 'Няма собственици', 'Тук излизат акаунтите „Собственик на коли“ и шофьорите, които дават колата си на други.'));
+  } else {
+    const pk = plateKey(ownState.plate);
+    const base = cur === 'nop' ? cars.filter((c) => !c.plate && drvOf(c).length > 1) : cars;
+    const kinds = { multi: 'С няколко шофьори', rent: 'Под наем', own: 'Лични, общи', all: 'Всички коли' };
+    const list = base.filter((c) => cur === 'nop' || (ownState.kind === 'multi' ? multi.includes(c) : ownState.kind === 'rent' ? c.type === 'rent' : ownState.kind === 'own' ? c.type === 'own' && drvOf(c).length > 1 : true))
+      .filter((c) => !pk || plateKey(c.plate).includes(pk)).sort((a, b) => String(a.plate).localeCompare(String(b.plate)));
+    body = h('div', null,
+      cur !== 'nop' && segmented(kinds, ownState.kind, (k) => { ownState.kind = k; render(); }, { small: true, wrap: true, page: true }),
+      cur !== 'nop' && h('input', { class: 'input', type: 'search', placeholder: 'Рег. номер, напр. РВ1234', value: ownState.plate, style: { minHeight: '44px', margin: '10px 0 12px' }, oninput: (e) => { ownState.plate = e.target.value; render(); setTimeout(() => { const i = document.querySelector('.adm input[type=search]'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }); } }),
+      cur === 'nop' && note('Колите с няколко шофьори трябва да имат рег. номер – по него се търсят. Новите коли в приложението вече не се записват без номер.'),
+      list.length ? h('section', { class: 'card adm-card' }, list.map(carRow)) : empty('car', 'Няма такива коли', 'Промени филтъра или номера.'));
+  }
+  return h('div', null, pageHead('Собственици', `${ownerIds.length} собственици · ${multi.length} коли с няколко шофьори или под наем`), bar, body);
+}
+
 const FILTERS = { all: 'Всички', active: 'Активни', inactive: 'Неактивни 14+ дни', new: 'Нови', stuck: 'Заседнали', blocked: 'Спрени' };
 const filterFn = {
   all: () => true, active: isActive, inactive: (d) => { const s = daysSince(d); return s == null || s >= 14; },

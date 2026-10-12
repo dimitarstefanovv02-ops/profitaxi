@@ -821,6 +821,8 @@ const nameOf = (id) => db.users.find((x) => x.id === id)?.name || '—';
 export const admin = {
   drivers() { requireAdmin(); return clone(db.users.filter((u) => u.role === 'driver' && visible(u))); },
   driverData(id) { requireAdmin(); const u = db.users.find((x) => x.id === id); return u && visible(u) ? userData(id) : { user: null }; },
+  cars() { requireAdmin(); return clone(db.cars || []); },
+  carLogs() { requireAdmin(); return clone(db.carlog || []); },
   allData() {
     requireAdmin();
     return db.users.filter((u) => u.role === 'driver' && visible(u)).map((u) => userData(u.id));

@@ -1494,3 +1494,16 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .sw-acts { opacity: 0; transition: opacity .1s; }
 .sw.swiping .sw-acts { opacity: 1; }
 .my-car.owes { box-shadow: 0 0 0 2px var(--neg) inset; }
+/* Админ – собственици */
+.own-card { margin-bottom: 12px; }
+.own-head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.own-head a { display: flex; flex-direction: column; text-decoration: none; color: inherit; min-width: 0; }
+.own-head small, .oc-row small { color: var(--muted); font-size: .82rem; }
+.own-n { font-size: .9rem; white-space: nowrap; }
+.own-car { padding: 12px 0; border-top: 1px solid var(--line); }
+.oc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oc-head .plate { font-family: ui-monospace, Menlo, monospace; background: var(--surface-2); padding: 3px 8px; border-radius: 8px; letter-spacing: .5px; }
+.oc-owner { margin-left: auto; font-size: .85rem; color: var(--muted); text-decoration: none; }
+.oc-drv { display: flex; flex-direction: column; margin-top: 8px; padding-left: 10px; border-left: 2px solid var(--line); }
+.oc-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; text-decoration: none; color: inherit; }
+.oc-row .grow { display: flex; flex-direction: column; min-width: 0; }
