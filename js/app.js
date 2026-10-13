@@ -25,7 +25,7 @@ import { vehicleView } from './views/vehicle.js';
 import { carsView, joinView, fleetHomeView } from './views/cars.js';
 import { fleetGuideView } from './views/fleetguide.js';
 import { calendarView } from './views/calendar.js';
-import { startTour, closeTour, tourOpen, DRIVER_TOUR } from './tour.js';
+import { startTour, closeTour, abortTour, tourOpen, DRIVER_TOUR } from './tour.js';
 import { tipFor } from './tips.js';
 import { installBar, installBarVisible } from './quick.js';
 
@@ -75,11 +75,12 @@ function render() {
   document.documentElement.dataset.page = route.name.slice(1);
 
   if (!user) {
+    if (tourOpen()) abortTour(); // разходката не продължава след изход (иначе връща към „Днес“)
     // Линк за покана към обща кола: запомняме кода и след входа/регистрацията отиваме там
     if (route.name === '/join' && route.param) { try { localStorage.setItem('profitaxi.joinCode', route.param); } catch { /* */ } return go('/register', true); }
     const view = PUBLIC[route.name];
     if (!view) return go('/login', true);
-    return mount(app, view({ go }), route, false);
+    return mount(app, view({ go, route }), route, false);
   }
   if (route.name === '/verified') return mount(app, verifiedView({ go, route }), route, false);
   if (PUBLIC[route.name]) return go('/home', true);
@@ -108,7 +109,7 @@ function render() {
   if (!fleet && route.name === '/home' && !tourOpen() && (tourNow || ctx.data.profile.tour === 'pending')) {
     try { sessionStorage.removeItem('profitaxi.tourNow'); } catch { /* */ }
     notified = true;
-    setTimeout(() => { if (location.hash.startsWith('#/home') && !tourOpen()) startTour(DRIVER_TOUR, { home: '/home', onDone: () => { if (store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
+    setTimeout(() => { if (location.hash.startsWith('#/home') && !tourOpen()) startTour(DRIVER_TOUR, { home: '/home', onDone: () => { if (store.currentUser() && store.getProfile()?.tour === 'pending') store.updateProfile({ tour: 'done' }); } }); }, 500);
   }
   if (!notified) { notified = true; checkNotifications(ctx.data); }
 }
@@ -194,7 +195,7 @@ setInterval(() => { const u = store.currentUser(); if (u && store.accessState(u)
 let pending = false;
 window.addEventListener('hashchange', render);
 const busy = () => { const a = document.activeElement; return !!document.querySelector('.sheet-wrap, .tour') || (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)); };
-store.onChange(() => { if (busy()) pending = true; else render(); });
+store.onChange(() => { if (tourOpen() && !store.currentUser()) abortTour(); if (busy()) pending = true; else render(); });
 document.addEventListener('focusout', () => setTimeout(() => { if (pending && !busy()) { pending = false; render(); } }, 0));
 window.addEventListener('profitaxi:sheetclosed', () => { if (pending && !busy()) { pending = false; render(); } });
 

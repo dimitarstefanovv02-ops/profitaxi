@@ -91,6 +91,8 @@ export function startTour(steps, { onDone, home } = {}) {
 export const tourOpen = () => !!active;
 // При смяна на екрана от шофьора разходката се затваря (броим я за видяна). Собствените ѝ преходи не я затварят.
 export function closeTour() { if (active && !active.nav) active.close(true); }
+// След изход: само махаме разходката, без да я броим и без връщане към началния екран
+export function abortTour() { if (active) active.close(false); }
 
 // Стъпки за шофьора (началният екран)
 export const DRIVER_TOUR = [
