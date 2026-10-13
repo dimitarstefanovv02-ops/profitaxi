@@ -152,20 +152,32 @@ function validatePhone(phone) {
 }
 // SMS код за потвърждаване на телефона. В демото кодът се показва на екрана;
 // с истински доставчик (напр. SMS шлюз) се изпраща като SMS.
+// В облака кодът се праща и проверява от сървъра (Brevo); тук – само в демото.
+let VCFG = null;
+export async function loadVerifyCfg() {
+  if (!LIVE) return (VCFG = { sms: PHONE_CODE, email: false });
+  try { const r = await call('verifyCfg', {}, 'app'); if (!r.error) VCFG = { sms: !!r.sms, email: !!r.email }; } catch { /* без интернет */ }
+  return VCFG || { sms: false, email: false };
+}
 export function sendSmsCode(phone) {
+  if (LIVE) return call('sendCode', { phone }, 'app');
   load(); const err = validatePhone(phone); if (err) return { error: err };
   const code = String(1000 + Math.floor(Math.random() * 9000));
   db.sms[digits(phone)] = { code, at: Date.now(), ok: false }; persist();
   return { ok: true, demoCode: code };
 }
 export function verifySmsCode(phone, code) {
+  if (LIVE) return call('verifyCode', { phone, code }, 'app');
   load(); const r = db.sms[digits(phone)];
   if (!r || Date.now() - r.at > 10 * 60000) return { error: 'Кодът е изтекъл. Изпрати нов.' };
   if (String(code).trim() !== r.code) return { error: 'Грешен код' };
   r.ok = true; persist(); return { ok: true };
 }
 const phoneVerified = (phone) => !PHONE_CODE || !!db.sms[digits(phone)]?.ok;
-export const phoneCodeOn = () => PHONE_CODE;
+export const phoneCodeOn = () => (VCFG ? VCFG.sms : PHONE_CODE);
+export const emailVerifyOn = () => !!VCFG?.email;
+export async function resendVerify() { if (!LIVE) return { ok: true }; return call('resendVerify', {}, 'app'); }
+export async function resetPassword(token, password) { if (!LIVE) return { error: 'Само в облака' }; return call('resetPw', { token, password }, 'app'); }
 // Кодове за достъп на партньори (таксиметрови фирми)
 export function checkAccessCode(code, company) {
   load(); const c = db.codes.find((x) => x.code === String(code || '').trim().toUpperCase());

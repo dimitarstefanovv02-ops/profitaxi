@@ -68,16 +68,22 @@ export function registerView({ go }) {
   const drawSms = () => fill(smsBox, phoneOk
     ? h('div', { class: 'sms-ok' }, icon('check', 18), 'Телефонът е потвърден')
     : h('div', { class: 'sms-row' },
-      h('button', { type: 'button', class: 'btn btn-ghost', onclick: () => {
-        const r = store.sendSmsCode(phone.value); if (r.error) { err.textContent = r.error; return; }
-        err.textContent = ''; smsSent = true; drawSms(); lastCode = r.demoCode; drawSms(); if (!store.live()) toast(`Демо: кодът от SMS е ${r.demoCode}`);
-      } }, smsSent ? (store.live() ? 'Нов код' : 'Изпрати пак') : (store.live() ? 'Вземи код' : 'Изпрати код по SMS')),
+      h('button', { type: 'button', class: 'btn btn-ghost',
+      onclick: async (e) => {
+        const b = e.currentTarget; b.disabled = true;
+        const r = await store.sendSmsCode(phone.value); b.disabled = false; if (r.error) { err.textContent = r.error; return; }
+        err.textContent = ''; smsSent = true; lastCode = r.demoCode || ''; drawSms(); if (!store.live()) toast(`Демо: кодът от SMS е ${r.demoCode}`); else toast('Пратихме ти SMS с код'); setTimeout(() => smsCode.focus(), 50);
+      } }, smsSent ? 'Изпрати пак' : 'Изпрати код по SMS'),
       smsSent && smsCode,
-      smsSent && store.live() && lastCode && h('div', { class: 'sms-hint small' }, `В теста не пращаме SMS – кодът ти е `, h('b', null, lastCode)),
-      smsSent && h('button', { type: 'button', class: 'btn btn-page', onclick: () => {
-        const r = store.verifySmsCode(phone.value, smsCode.value); if (r.error) { err.textContent = r.error; return; }
+      smsSent && store.live() && lastCode && h('div', { class: 'sms-hint small' }, `Пробен режим – кодът е `, h('b', null, lastCode)),
+      smsSent && h('button', { type: 'button', class: 'btn btn-page', onclick: async () => {
+        const r = await store.verifySmsCode(phone.value, smsCode.value); if (r.error) { err.textContent = r.error; return; }
         err.textContent = ''; phoneOk = true; drawSms();
       } }, 'Потвърди')));
+  // полето за телефон: с код по SMS, ако е включен от админа (настройката идва от сървъра)
+  const phoneWrap = h('div');
+  const drawPhone = () => fill(phoneWrap, store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true));
+  drawPhone(); store.loadVerifyCfg().then(drawPhone);
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
   const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
@@ -146,7 +152,7 @@ export function registerView({ go }) {
         field('Име', name, null, true),
         field('Имейл', email, null, true),
         field('Парола', pw, null, true),
-        (store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true)),
+        phoneWrap,
         field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
         field('Код за кола', carCode, 'По желание – ако собственикът на колата ти е пратил код или линк')),
       group('target', 'Къде караш', cc.el),
@@ -165,9 +171,12 @@ export function forgotView() {
     if (!/^\S+@\S+\.\S+$/.test(email.value)) { toast('Въведи валиден имейл', 'err'); return; }
     const r = await store.forgotPassword(email.value);
     if (r.error) { toast(r.error, 'err'); return; }
-    fill(box, h('div', { class: 'card' },
-      h('h2', null, 'Получихме молбата ти'),
-      h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, ще ти сменим паролата и ще ти се обадим на телефона от профила – обикновено до няколко часа.`)));
+    fill(box, r.mode === 'mail'
+      ? h('div', { class: 'card' }, h('h2', null, 'Провери имейла си'),
+        h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, пратихме линк за нова парола. Линкът работи 1 час. Не го виждаш? Провери в „Спам“ / „Промоции“.`))
+      : h('div', { class: 'card' },
+        h('h2', null, 'Получихме молбата ти'),
+        h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, ще ти сменим паролата и ще ти се обадим на телефона от профила – обикновено до няколко часа.`)));
   };
   box.appendChild(h('form', { class: 'form', onsubmit: submit },
     field('Имейл', email),
@@ -187,4 +196,45 @@ async function offerPasskey() {
   const { confirmSheet } = await import('../ui.js');
   confirmSheet({ title: `Вход с ${faceLabel()}?`, text: `Следващия път влизаш само с ${faceLabel()} – без имейл и парола. Можеш да го изключиш от Лични данни.`, okLabel: 'Включи',
     onOk: async () => { const r = await enablePasskey(); toast(r.error || `Входът с ${faceLabel()} е включен`, r.error ? 'err' : undefined); } });
+}
+
+// Линкът от писмото „Нова парола“: #/reset/<токен>
+export function resetView({ go, route }) {
+  const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
+  const pw2 = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Още веднъж' });
+  const err = h('p', { class: 'err', role: 'alert' });
+  const submit = async (e) => {
+    e.preventDefault();
+    if (pw.value.length < 6) { err.textContent = 'Паролата трябва да е поне 6 символа'; return; }
+    if (pw.value !== pw2.value) { err.textContent = 'Паролите не съвпадат'; return; }
+    const r = await store.resetPassword(route.param, pw.value);
+    if (r.error) { err.textContent = r.error; return; }
+    toast('Паролата е сменена. Влез с новата.'); go('/login');
+  };
+  return h('div', { class: 'auth' },
+    h('div', { class: 'auth-hero', style: { margin: '18px 0 22px' } }, h('h1', null, 'Нова парола'), h('p', null, 'Задай нова парола за акаунта си.')),
+    h('form', { class: 'form', onsubmit: submit, novalidate: true }, field('Нова парола', pw), field('Повтори паролата', pw2), err,
+      h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Запази паролата')));
+}
+// След линка „Потвърди имейла“
+export function verifiedView({ go, route }) {
+  const ok = route?.query?.get('ok') === '1';
+  return h('div', { class: 'auth' },
+    h('div', { class: 'auth-hero', style: { margin: '28px 0 22px' } },
+      h('h1', null, ok ? 'Имейлът е потвърден' : 'Линкът не става'),
+      h('p', null, ok ? 'Готово! Вече можеш сам да си смениш паролата, ако я забравиш.' : 'Линкът е изтекъл или вече е използван. Влез и натисни „Изпрати пак“.')),
+    h('button', { class: 'btn btn-primary btn-xl btn-block', onclick: () => go(store.currentUser() ? '/home' : '/login') }, store.currentUser() ? 'Към приложението' : 'Вход'));
+}
+
+// Напомняне „Потвърди имейла си“ – на началния екран, докато не е потвърден
+export function verifyBanner(user, redraw) {
+  if (!user || user.emailVerified !== false) return null;
+  let hidden = false; try { hidden = sessionStorage.getItem('profitaxi.verifyHide') === '1'; } catch { /* */ }
+  if (hidden) return null;
+  return h('section', { class: 'card verify-card' },
+    h('div', { class: 'row gap', style: { alignItems: 'flex-start' } }, h('span', { class: 'vc-ic' }, icon('inbox', 20)),
+      h('div', { class: 'grow' }, h('b', null, 'Потвърди имейла си'), h('p', { class: 'muted small' }, `Пратихме линк на ${user.email}. Така ще можеш сам да си смениш паролата.`))),
+    h('div', { class: 'row gap', style: { marginTop: '10px' } },
+      h('button', { class: 'btn btn-dark btn-sm', onclick: async () => { const r = await store.resendVerify(); toast(r.error || 'Пратихме ново писмо. Провери и в „Спам“.', r.error ? 'err' : undefined); } }, 'Изпрати пак'),
+      h('button', { class: 'btn btn-ghost btn-sm', onclick: () => { try { sessionStorage.setItem('profitaxi.verifyHide', '1'); } catch { /* */ } redraw && redraw(); } }, 'По-късно')));
 }

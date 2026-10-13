@@ -1541,3 +1541,6 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .doc-row:nth-child(2) { border-top: 0; }
 .doc-row small { color: var(--muted); } .doc-row small.warn { color: #B45309; } .doc-row small.neg { color: var(--neg); }
 .fw-top { padding-right: 56px; }
+.verify-card { border: 1.5px solid #F59E0B !important; }
+.vc-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #FEF3C7; color: #B45309; flex: none; }
+.vs-grid { display: flex; flex-wrap: wrap; gap: 8px; } .chip.warn { background: #FEF3C7; color: #92400E; }

@@ -5,7 +5,7 @@ import * as store from './store.js';
 import { applyTheme, toast, themeToggle } from './ui.js';
 import './picker.js';
 import { checkNotifications } from './notify.js';
-import { loginView, registerView, forgotView } from './views/auth.js';
+import { loginView, registerView, forgotView, resetView, verifiedView } from './views/auth.js';
 import { onboardingView } from './views/onboarding.js';
 import { homeView } from './views/home.js';
 import { shiftsView } from './views/shifts.js';
@@ -31,7 +31,7 @@ import { installBar, installBarVisible } from './quick.js';
 
 applyTheme();
 
-const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forgotView };
+const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forgotView, '/reset': resetView, '/verified': verifiedView };
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
@@ -81,6 +81,7 @@ function render() {
     if (!view) return go('/login', true);
     return mount(app, view({ go }), route, false);
   }
+  if (route.name === '/verified') return mount(app, verifiedView({ go, route }), route, false);
   if (PUBLIC[route.name]) return go('/home', true);
 
   const access = store.accessState(user);

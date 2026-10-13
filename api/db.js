@@ -15,6 +15,7 @@ import { fieldColl, fieldKey } from '../js/schema.js';
 import { sendPush, pushReady } from '../lib/webpush.js';
 import { GUIDE } from '../lib/guide.js';
 import * as PK from '../lib/passkey.js';
+import * as MSG from '../lib/messenger.js';
 import { periodStats, shiftDate } from '../js/calc.js';
 import { todayStr } from '../js/util.js';
 import { rentState, deadlines, idleDays } from '../js/fleet.js';
@@ -86,8 +87,9 @@ function memCmd([cmd, key, ...a]) {
     case 'HSET': { for (let i = 0; i < a.length; i += 2) hmap(key).set(a[i], a[i + 1]); return a.length / 2; }
     case 'HSETNX': { if (hmap(key).has(a[0])) return 0; hmap(key).set(a[0], a[1]); return 1; }
     case 'HDEL': { let n = 0; a.forEach((f) => { if (hmap(key).delete(f)) n++; }); return n; }
-    case 'GET': return mem.s.get(key) ?? null;
-    case 'INCR': { const v = Number(mem.s.get(key) || 0) + 1; mem.s.set(key, String(v)); return v; }
+    case 'GET': if (mem.exp?.get(key) < Date.now()) { mem.s.delete(key); mem.exp.delete(key); } return mem.s.get(key) ?? null;
+    case 'INCR': { if (mem.exp?.get(key) < Date.now()) { mem.s.delete(key); mem.exp.delete(key); } const v = Number(mem.s.get(key) || 0) + 1; mem.s.set(key, String(v)); return v; }
+    case 'EXPIRE': { const t = (mem.exp ||= new Map()); t.set(key, Date.now() + Number(a[0]) * 1000); return 1; }
     case 'HINCRBY': { const v = Number(hmap(key).get(a[0]) || 0) + Number(a[1]); hmap(key).set(a[0], String(v)); return v; }
     default: throw new Error('memory: ' + cmd);
   }
@@ -181,7 +183,7 @@ function driverView(all, id) {
 const viewFor = (all, s) => s.role === 'admin' ? all : driverView(all, s.id);
 
 // Полета, които шофьорът не може да си сменя сам
-const PROTECTED = ['role', 'status', 'subscription', 'tags', 'refMonths', 'referredBy', 'accessCode', 'promo', 'discount', 'source', 'adminRole', 'refCode', 'createdAt'];
+const PROTECTED = ['emailVerified', 'emailVerifiedAt', 'phoneVerified', 'role', 'status', 'subscription', 'tags', 'refMonths', 'referredBy', 'accessCode', 'promo', 'discount', 'source', 'adminRole', 'refCode', 'createdAt'];
 
 const unionThread = (a = [], b = []) => {
   const seen = new Set(); const out = [];
@@ -333,15 +335,19 @@ const ops = {
     const all = await allFields();
     const ph = String(user.phone || '').replace(/\D/g, '').replace(/^359/, '0');
     if (ph && Object.entries(all).some(([f, x]) => f.startsWith('users:') && x?.role === 'driver' && String(x.phone || '').replace(/\D/g, '').replace(/^359/, '0') === ph)) return { error: 'Има акаунт с този телефон. Влез в него или се свържи с нас.' };
+    const settings = all.settings || {};
+    const ver = verifyCfg(settings);
+    // код по SMS: телефонът трябва да е потвърден в последните 30 минути
+    if (ver.sms) { const ok = parse(await one(['HGET', 'pt:smsok', ph])); if (!ok || Date.now() - ok.at > 30 * 60e3) return { error: 'Потвърди телефона с кода от SMS' }; }
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     const today = new Date().toISOString().slice(0, 10);
-    const settings = all.settings || {};
     const u = {
       ...stripPw('users:x', user), id, role: 'driver', status: 'active', email: String(user.email).trim(),
       createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(), tags: [], refMonths: 0, referredBy: null,
       subscription: { plan: 'trial', validUntil: addDays(today, Number(settings.trialDays) || 14) },
       phoneVerified: true, source: 'site',
     };
+    if (ver.email) u.emailVerified = false;
     const set = {};
     if (accessCode != null) {
       const code = String(accessCode).trim().toUpperCase(); const c = all[`codes:${code}`];
@@ -368,6 +374,7 @@ const ops = {
     const hs = []; Object.entries(set).forEach(([f, v]) => hs.push(f, JSON.stringify(v)));
     await redis([['HSET', 'pt:db', ...hs], ...authCmds(id, email, 'driver', password), ['INCR', 'pt:rev']]);
     const token = await issueToken(id, 'driver');
+    if (ver.email) { try { await mailVerify(u, hostOf(arguments[0])); } catch (e) { console.error('mail', e); } }
     const all2 = { ...all, ...set }; const rev = await one(['GET', 'pt:rev']);
     const n = Object.values(all2).filter((x) => x && x.role === 'driver').length;
     await notifyAdmins('reg', { title: 'Нов шофьор 🚕', body: `${u.name} · ${[u.city, u.company].filter(Boolean).join(', ')} – общо ${n}`, url: '/admin#/drivers?f=new', tag: 'reg-' + id });
@@ -470,6 +477,12 @@ const ops = {
     const e = norm(email);
     if (!/^\S+@\S+\.\S+$/.test(e)) return { error: 'Невалиден имейл' };
     const id = await one(['HGET', 'pt:email', e]);
+    const ver = verifyCfg(parse(await one(['HGET', 'pt:db', 'settings'])) || {});
+    if (ver.email) {
+      // линк за нова парола по имейла (не казваме дали има такъв акаунт)
+      if (id) { const u = parse(await one(['HGET', 'pt:db', `users:${id}`])); if (u && u.role === 'driver' && await limit(`reset:${id}`, 3, 3600)) { const t = await newMailToken(id, 'reset'); const m = MSG.resetMail(u.name, `${hostOf(arguments[0])}/app#/reset/${t}`); try { await MSG.sendMail({ to: u.email, name: u.name, ...m }); } catch (er) { console.error('mail', er); } } }
+      await sleep(300); return { ok: true, mode: 'mail' };
+    }
     if (id) {
       const u = parse(await one(['HGET', 'pt:db', `users:${id}`]));
       if (u && u.role === 'driver') {
@@ -481,8 +494,72 @@ const ops = {
       }
     }
     await sleep(300);
-    return { ok: true }; // не казваме дали има такъв акаунт
+    return { ok: true, mode: 'admin' }; // не казваме дали има такъв акаунт
   },
+
+  // ---------- Потвърждения: код по SMS, имейл, нова парола ----------
+  async verifyCfg() { const v = verifyCfg(parse(await one(['HGET', 'pt:db', 'settings'])) || {}); return { sms: v.sms, email: v.email }; },
+  async sendCode({ phone }) {
+    const ph = String(phone || '').replace(/\D/g, '').replace(/^359/, '0');
+    if (!/^0[89]\d{8}$/.test(ph)) return { error: 'Невалиден мобилен номер' };
+    const st = parse(await one(['HGET', 'pt:db', 'settings'])) || {}; const v = verifyCfg(st);
+    if (!v.sms) return { error: 'Кодът по SMS не е включен' };
+    const rec = parse(await one(['HGET', 'pt:sms', ph])) || { sent: [] };
+    const now = Date.now(); const sent = (rec.sent || []).filter((t) => now - t < 864e5);
+    if (sent.length && now - sent[sent.length - 1] < 60e3) return { error: `Изчакай ${Math.ceil((60e3 - (now - sent[sent.length - 1])) / 1000)} секунди и опитай пак`, wait: Math.ceil((60e3 - (now - sent[sent.length - 1])) / 1000) };
+    if (sent.filter((t) => now - t < 36e5).length >= v.perHour) return { error: 'Много опити за този номер. Опитай пак след час.' };
+    if (sent.length >= v.perDay) return { error: 'Много опити за този номер днес. Опитай утре или ни пиши.' };
+    const day = todayStr(); const n = Number(await one(['INCR', `pt:smscount:${day}`])); await one(['EXPIRE', `pt:smscount:${day}`, 3 * 864e2]);
+    if (n > v.cap) {
+      if (n === v.cap + 1) await notifyAdmins('ticket', { title: 'Дневният таван за SMS е достигнат', body: `${v.cap} SMS днес. Вдигни тавана от Настройки → Потвърждения, ако трябва.`, url: '/admin#/settings?t=verify', tag: 'smscap-' + day });
+      return { error: 'В момента не можем да пратим SMS. Опитай след малко или ни пиши.' };
+    }
+    const code = String(crypto.randomInt(1000, 10000));
+    await one(['HSET', 'pt:sms', ph, JSON.stringify({ h: hashPw(code, 'sms:' + ph), at: now, tries: 0, sent: [...sent, now] })]);
+    try { await MSG.sendSms({ to: ph, text: MSG.smsText(code) }); }
+    catch (e) { console.error('sms', e); return { error: 'SMS-ът не можа да се изпрати. Провери номера или опитай пак.' }; }
+    return { ok: true, ...(MSG.mockMode() ? { demoCode: code } : {}) };
+  },
+  async verifyCode({ phone, code }) {
+    const ph = String(phone || '').replace(/\D/g, '').replace(/^359/, '0');
+    const rec = parse(await one(['HGET', 'pt:sms', ph]));
+    if (!rec || !rec.h || Date.now() - rec.at > 10 * 60e3) return { error: 'Кодът е изтекъл. Изпрати нов.' };
+    if ((rec.tries || 0) >= 5) return { error: 'Много грешни опити. Изпрати нов код.' };
+    if (!safeEq(hashPw(String(code || '').trim(), 'sms:' + ph), rec.h)) { rec.tries = (rec.tries || 0) + 1; await one(['HSET', 'pt:sms', ph, JSON.stringify(rec)]); await sleep(300); return { error: 'Грешен код' }; }
+    await redis([['HSET', 'pt:sms', ph, JSON.stringify({ sent: rec.sent || [] })], ['HSET', 'pt:smsok', ph, JSON.stringify({ at: Date.now() })]]);
+    return { ok: true };
+  },
+  async resendVerify(body, s) {
+    if (!s || s.role !== 'driver') return { error: 'Влез в профила си' };
+    const u = parse(await one(['HGET', 'pt:db', `users:${s.id}`])); if (!u) return { error: 'Няма акаунт' };
+    if (u.emailVerified !== false) return { ok: true, already: true };
+    if (!(await limit(`verify:${s.id}`, 3, 3600))) return { error: 'Пратихме ти вече няколко писма. Провери и в „Спам“ или опитай след час.' };
+    await mailVerify(u, hostOf(body)); return { ok: true };
+  },
+  async resetPw({ token, password }) {
+    if (String(password || '').length < 6) return { error: 'Паролата трябва да е поне 6 символа' };
+    const t = parse(await one(['HGET', 'pt:mailtok', String(token || '')]));
+    if (!t || t.kind !== 'reset' || Date.now() - t.at > 36e5) return { error: 'Линкът е изтекъл. Поискай нов от „Забравена парола“.' };
+    const u = parse(await one(['HGET', 'pt:db', `users:${t.id}`])); if (!u) return { error: 'Няма такъв акаунт' };
+    const toks = pairs(await one(['HGETALL', 'pt:tok'])); const old = Object.entries(toks).filter(([, v]) => v?.id === t.id).map(([k]) => k); // изход от всички устройства
+    await redis([...authCmds(t.id, u.email, 'driver', password), ['HDEL', 'pt:mailtok', String(token)], ...(old.length ? [['HDEL', 'pt:tok', ...old]] : []),
+      ...(u.emailVerified === false ? [['HSET', 'pt:db', `users:${t.id}`, JSON.stringify({ ...u, emailVerified: true, emailVerifiedAt: new Date().toISOString() })], ['INCR', 'pt:rev']] : [])]);
+    return { ok: true };
+  },
+  // за админа: дали ключовете са сложени, колко SMS днес, пробно изпращане
+  async verifyStatus(_, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    return { mail: MSG.mailReady(), sms: MSG.smsReady(), mock: MSG.mockMode(), from: MSG.mailFrom(), smsToday: Number(await one(['GET', `pt:smscount:${todayStr()}`]) || 0) };
+  },
+  async verifyTest({ email, phone }, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    try {
+      if (email) await MSG.sendMail({ to: email, subject: 'Проба от „Чисто“', html: '<p>Имейлите от „Чисто“ работят.</p>', text: 'Имейлите от „Чисто“ работят.' });
+      if (phone) await MSG.sendSms({ to: phone, text: 'Чисто: SMS-ите работят.' });
+      return { ok: true };
+    } catch (e) { return { error: String(e.message || e).slice(0, 200) }; }
+  },
+  async devOutbox() { if (!MSG.mockMode()) return { error: 'no' }; return { list: MSG.outbox.slice(-20) }; },
 
   // Абонамент за известия на телефона на админа
   async pushSub({ sub, types }, s) {
@@ -635,8 +712,17 @@ const ops = {
 
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
+const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// Потвърждения: включени ли са (от админа) и има ли ключ (във Vercel)
+function verifyCfg(st) {
+  const v = st?.verify || {};
+  return { sms: !!v.sms && MSG.smsReady(), email: !!v.email && MSG.mailReady(), cap: Number(v.smsCap) || 200, perHour: Number(v.perHour) || 3, perDay: Number(v.perDay) || 5 };
+}
+const hostOf = (body) => { const h0 = String(body?.__host || 'localhost').split(',')[0].trim(); return (MEMORY ? 'http://' : 'https://') + h0; };
+async function limit(key, max, secs) { const k = `pt:lim:${key}`; const n = Number(await one(['INCR', k])); if (n === 1) await one(['EXPIRE', k, secs]); return n <= max; }
+async function newMailToken(id, kind) { const t = crypto.randomBytes(24).toString('hex'); await one(['HSET', 'pt:mailtok', t, JSON.stringify({ id, kind, at: Date.now() })]); return t; }
+async function mailVerify(u, host) { const t = await newMailToken(u.id, 'verify'); const m = MSG.verifyMail(u.name, `${host}/api/db?verify=${t}`); await MSG.sendMail({ to: u.email, name: u.name, ...m }); }
 function addDays(d, n) { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); }
 
 // ---------- помощни за известията на шофьора, гласа, AI и Face ID ----------
@@ -795,6 +881,19 @@ export default async function handler(req, res) {
       if (!URL_ && !MEMORY) return send(res, 503, { error: 'no db' });
       if (!cronAllowed(req)) return send(res, 401, { error: 'Забранено' });
       try { return send(res, 200, await runCron(slot)); } catch (e) { console.error('cron', e); return send(res, 500, { error: 'cron' }); }
+    }
+    const vt = new URL(req.url || '/', 'http://x').searchParams.get('verify');
+    if (vt) {
+      // линкът от писмото „Потвърди имейла“
+      let ok = false;
+      try {
+        const t = parse(await one(['HGET', 'pt:mailtok', vt]));
+        if (t && t.kind === 'verify' && Date.now() - t.at < 7 * 864e5) {
+          const u = parse(await one(['HGET', 'pt:db', `users:${t.id}`]));
+          if (u) { await redis([['HSET', 'pt:db', `users:${t.id}`, JSON.stringify({ ...u, emailVerified: true, emailVerifiedAt: new Date().toISOString() })], ['HDEL', 'pt:mailtok', vt], ['INCR', 'pt:rev']]); ok = true; }
+        }
+      } catch (e) { console.error('verify', e); }
+      res.statusCode = 302; res.setHeader('Location', `/app#/verified?ok=${ok ? 1 : 0}`); res.end(); return;
     }
     return send(res, 200, { live: !!(URL_ || MEMORY) });
   }

@@ -13,6 +13,7 @@ import { showShiftResult } from './shiftResult.js';
 import { scanReceipt } from '../quick.js';
 import { zone } from '../arrange.js';
 import { myCarCard, personalKm } from './fleetui.js';
+import { verifyBanner } from './auth.js';
 
 // Кой панел е отворен на място в „Днес“: календарът или резервациите (като „Покажи повече“)
 let openPanel = null;
@@ -83,6 +84,7 @@ export function homeView({ go, user, data, rerender, route }) {
         data.profile.photo ? h('a', { class: 'avatar has-photo', href: '#/me', 'aria-label': 'Профил' }, h('img', { src: data.profile.photo, alt: '' })) : h('a', { class: 'avatar', href: '#/me', 'aria-label': 'Профил' }, initials))),
 
     messagesBox(rerender || (() => go('/home'))),
+    verifyBanner(user, rerender || (() => go('/home'))),
     // Наемът на колата, която караш (от собственика): дълг, „Платих“, напомнянето
     ...store.myCars().filter((c) => c.ownerId !== user.id).map((c) => myCarCard(c, user, rerender || (() => go('/home')), { compact: true })),
     store.flagOn('nps') && store.npsDue() && npsCard(rerender || (() => go('/home'))),

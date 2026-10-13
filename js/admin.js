@@ -13,6 +13,7 @@ import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costC
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
 import { cityCompanyPicker } from './views/cityPicker.js';
 import { VAPID_PUBLIC } from './config.js';
+import { call as apiCall } from './sync.js';
 import { zone, initArrange, setArranging, arranging, resetZones, resetAll, zonesOnPage, ordered, onRender, hasLayout } from './arrange.js';
 
 applyTheme();
@@ -1837,9 +1838,41 @@ function printInvoice(p) {
 // =====================================================================
 function settings() {
   const owner = isOwner();
-  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], ['notify', 'Известия'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && (store.live() ? ['wipe', 'Изчисти'] : ['demo', 'Демо данни'])]);
-  const body = { general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab, wipe: wipeTab, notify: notifyTab };
+  const { bar, cur } = tabs('/settings', [owner && ['general', 'Общи'], owner && ['verify', 'Потвърждения'], ['notify', 'Известия'], owner && ['admins', 'Админи и роли'], owner && ['security', 'Сигурност'], owner && ['backup', 'Архив'], ['layout', 'Подредба'], owner && (store.live() ? ['wipe', 'Изчисти'] : ['demo', 'Демо данни'])]);
+  const body = { verify: verifyTab, general: generalTab, admins: adminsTab, security: securityTab, backup: backupTab, layout: layoutTab, demo: demoTab, wipe: wipeTab, notify: notifyTab };
   return h('div', null, pageHead('Настройки', 'Общи настройки на услугата'), bar, body[cur]());
+}
+// Код по SMS и потвърждение на имейла (през Brevo). Ключовете са във Vercel, тук само се включват.
+function verifyTab() {
+  const s = store.admin.settings(); const v = s.verify || {};
+  const status = h('div', { class: 'muted small' }, store.live() ? 'Проверявам ключовете…' : 'Работи само в облака (на живо). В демото кодът се показва на екрана.');
+  if (store.live()) apiCall('verifyStatus', {}, 'admin').then((r) => {
+    if (r.error) { status.textContent = r.error; return; }
+    fill(status, h('div', { class: 'vs-grid' },
+      h('span', { class: cx('chip', r.mail ? 'good' : 'bad') }, r.mail ? `Имейл: готов (${r.from})` : 'Имейл: липсват BREVO_API_KEY и MAIL_FROM'),
+      h('span', { class: cx('chip', r.sms ? 'good' : 'bad') }, r.sms ? 'SMS: готов' : 'SMS: липсва BREVO_API_KEY'),
+      r.mock && h('span', { class: 'chip warn' }, 'Пробен режим – нищо не се праща истински'),
+      h('span', { class: 'chip' }, `SMS днес: ${r.smsToday} от ${Number(v.smsCap) || 200}`)));
+  });
+  const tg = (key, label, sub) => h('div', { class: 'row between', style: { padding: '10px 0', borderTop: '1px solid var(--line)' } },
+    h('span', null, h('b', null, label), h('br'), h('small', { class: 'muted' }, sub)),
+    h('button', { class: cx('toggle', v[key] && 'on'), role: 'switch', 'aria-checked': String(!!v[key]), 'aria-label': label, onclick: () => { store.admin.saveSettings({ verify: { ...v, [key]: !v[key] } }); toast(!v[key] ? 'Включено' : 'Изключено'); } }));
+  const cap = h('input', { class: 'input', type: 'number', min: 10, value: v.smsCap || 200 });
+  const ph = h('input', { class: 'input', type: 'number', min: 1, max: 10, value: v.perHour || 3 });
+  const pd = h('input', { class: 'input', type: 'number', min: 1, max: 20, value: v.perDay || 5 });
+  const tMail = h('input', { class: 'input', type: 'email', placeholder: 'твоят имейл' }), tPh = h('input', { class: 'input', type: 'tel', placeholder: '08…' });
+  return flow('settings.verify', [
+    ['st', card('shield', 'Състояние', status, note('Ключовете се слагат във Vercel → Settings → Environment Variables: BREVO_API_KEY, MAIL_FROM, SMS_SENDER. След това – Redeploy.'))],
+    ['on', card('check', 'Включи', tg('sms', 'Код по SMS при регистрация', 'Един телефон – един акаунт. Всяко SMS се плаща в Brevo.'), tg('email', 'Потвърждение на имейла', 'Писмо с линк при регистрация. „Забравена парола“ праща линк за нова парола.'),
+      note('Ако ключът липсва, включеното не прави нищо – регистрацията продължава да работи без код.'))],
+    ['lim', card('lock', 'Лимити за SMS', h('div', { class: 'form' },
+      field('Таван на всички SMS за деня', cap, 'Предпазва бюджета. При достигане ти идва известие.'),
+      field('Кодове за един номер на час', ph), field('Кодове за един номер на ден', pd),
+      h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ verify: { ...v, smsCap: Math.max(10, Number(cap.value) || 200), perHour: Math.max(1, Math.min(10, Number(ph.value) || 3)), perDay: Math.max(1, Math.min(20, Number(pd.value) || 5)) } }); toast('Запазено'); } }, 'Запази')),
+      note('Между два кода за един номер има 60 секунди изчакване. Кодът важи 10 минути, 5 грешни опита – нов код.'))],
+    store.live() && ['test', card('inbox', 'Пробно изпращане', h('div', { class: 'form' }, field('Имейл', tMail), field('Телефон', tPh),
+      h('button', { class: 'btn btn-page btn-lg', onclick: async () => { const r = await apiCall('verifyTest', { email: tMail.value.trim() || null, phone: tPh.value.trim() || null }, 'admin'); toast(r.error || 'Изпратено – провери', r.error ? 'err' : undefined); } }, 'Изпрати проба')))],
+  ]);
 }
 function generalTab() {
   const s = store.admin.settings();

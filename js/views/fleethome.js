@@ -7,6 +7,7 @@ import { toast, cardTitle, topSearch, openSheet, sheetHead, field, confirmSheet,
 import { carInfo, statusChip, statusSheet, recordSheet, remind, swipeRow, carName, shortName, first, leftText, face, STATUS } from './fleetui.js';
 import { carProfit } from '../fleet.js';
 import { costCat } from '../constants.js';
+import { verifyBanner } from './auth.js';
 
 const cap = (s) => s.replace(/^./, (x) => x.toUpperCase());
 const pct = (a, b) => (Math.abs(b) > 0.5 ? Math.round((a - b) / Math.abs(b) * 100) : null);
@@ -60,6 +61,7 @@ export function fleetHomeView({ go, user, rerender }) {
   return h('div', { class: 'screen', 'data-page': 'fleet' },
     topSearch(redraw),
     h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Автопарк'), h('div', { class: 'date' }, `${greet}, ${first(user.name)}`))),
+    verifyBanner(user, redraw),
     cars.length ? h('section', { class: 'meter fleet-sum' },
       h('div', { class: 'meter-label' }, h('span', null, `${cap(MONTHS[parseDate(today).getMonth()])} · ${cars.length} ${cars.length === 1 ? 'кола' : 'коли'}`)),
       h('div', { class: cx('meter-value', now.net < 0 && 'neg') }, `${now.net >= 0 ? '+' : '−'}${money(Math.abs(now.net))}`),
