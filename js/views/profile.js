@@ -274,7 +274,38 @@ function changePw() {
     return h('div', { class: 'form' },
       sheetHead('Смяна на паролата', close),
       field('Текуща парола', a), field('Нова парола', b, 'Поне 6 символа'), err,
-      h('button', { class: 'btn btn-page btn-lg', onclick: async () => { const r = await store.changePassword(a.value, b.value); if (r.error) { err.textContent = r.error; return; } close(); toast('Паролата е сменена'); } }, 'Смени'));
+      h('button', { class: 'btn btn-page btn-lg', onclick: async () => { const r = await store.changePassword(a.value, b.value); if (r.error) { err.textContent = r.error; return; } close(); toast('Паролата е сменена'); } }, 'Смени'),
+      h('button', { class: 'link-btn', style: { alignSelf: 'center', marginTop: '4px' }, onclick: () => { close(); setTimeout(forgotPw, 250); } }, 'Забравих текущата парола'));
+  });
+}
+// Забравена текуща парола, докато си вътре: линк по имейла или код по SMS – като от входа
+async function forgotPw() {
+  const u = store.currentUser(); if (!u) return;
+  const id = u.signup === 'phone' || !u.email ? u.phone : u.email;
+  const r = await store.forgotPassword(id);
+  if (r.error) { toast(r.error, 'err'); return; }
+  openSheet((close) => {
+    if (r.mode === 'sms') {
+      const code = h('input', { class: 'input', inputmode: 'numeric', maxlength: 4, placeholder: '4 цифри', autocomplete: 'one-time-code' });
+      const p1 = h('input', { class: 'input', type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
+      const err = h('p', { class: 'err' });
+      return h('div', { class: 'form' },
+        sheetHead('Нова парола', close, `Пратихме SMS с код на ${u.phone}.`),
+        r.demoCode ? h('p', { class: 'sms-hint small' }, 'Пробен режим – кодът е ', h('b', null, r.demoCode)) : null,
+        field('Код от SMS', code), field('Нова парола', p1, 'Поне 6 символа'), err,
+        h('button', { class: 'btn btn-page btn-lg', onclick: async () => {
+          if (p1.value.length < 6) { err.textContent = 'Паролата трябва да е поне 6 символа'; return; }
+          const x = await store.resetPasswordSms(u.phone, code.value, p1.value);
+          if (x.error) { err.textContent = x.error; return; }
+          close(); store.logout(); location.hash = '/login'; toast('Паролата е сменена. Влез с новата.');
+        } }, 'Смени паролата'));
+    }
+    return h('div', { class: 'form' },
+      sheetHead(r.mode === 'mail' ? 'Провери имейла си' : 'Получихме молбата ти', close),
+      h('p', { class: 'muted' }, r.mode === 'mail'
+        ? `Пратихме линк за нова парола на ${u.email}. Линкът работи 1 час. Не го виждаш? Провери в „Спам“.`
+        : 'Ще ти сменим паролата и ще ти се обадим на телефона от профила – обикновено до няколко часа.'),
+      h('button', { class: 'btn btn-page btn-lg', onclick: close }, 'Добре'));
   });
 }
 

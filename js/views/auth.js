@@ -248,6 +248,7 @@ export function resetView({ go, route }) {
     if (pw.value !== pw2.value) { err.textContent = 'Паролите не съвпадат'; return; }
     const r = await store.resetPassword(route.param, pw.value);
     if (r.error) { err.textContent = r.error; return; }
+    if (store.currentUser()) store.logout();
     toast('Паролата е сменена. Влез с новата.'); go('/login');
   };
   return h('div', { class: 'auth' },

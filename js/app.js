@@ -82,7 +82,7 @@ function render() {
     if (!view) return go('/login', true);
     return mount(app, view({ go, route }), route, false);
   }
-  if (route.name === '/verified') return mount(app, verifiedView({ go, route }), route, false);
+  if (route.name === '/verified' || route.name === '/reset') return mount(app, PUBLIC[route.name]({ go, route }), route, false); // линковете от писмата работят и докато си влязъл
   if (PUBLIC[route.name]) return go('/home', true);
 
   const access = store.accessState(user);

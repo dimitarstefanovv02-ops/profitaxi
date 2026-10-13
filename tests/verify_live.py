@@ -77,6 +77,13 @@ async def main():
         await pg.fill('input[autocomplete=username]', PH); await pg.fill('input[type=password]', 'novaparola'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1500)
         ok('Вход с новата парола (телефон)', '#/login' not in pg.url, pg.url)
 
+        # забравена текуща парола отвътре (Лични данни → Смяна на паролата → „Забравих текущата парола“)
+        await pg.evaluate(f"async () => {{ {S} s.updateProfile({{ onboarded: true }}); }}")
+        await pg.goto(base + '/app#/profile'); await pg.wait_for_timeout(1000)
+        await pg.click('text=Смяна на паролата'); await pg.wait_for_timeout(400)
+        await pg.click('text=Забравих текущата парола'); await pg.wait_for_timeout(1500)
+        st = await pg.locator('body').inner_text()
+        ok('Отвътре: „Забравих текущата парола“ праща SMS код', 'Пратихме SMS' in st or 'Изчакай' in st, st[:100].replace('\n', ' '))
         # ---------- 2) Регистрация с имейл: линк по имейла, без SMS ----------
         pg = await page()
         await reg_form(pg, 'email')
