@@ -1,5 +1,6 @@
 # Код по SMS и потвърждение на имейла през сървъра (Brevo в пробен режим). Сървър: node tools/dev.mjs 8766
-import asyncio, re
+import asyncio, re, random
+N = random.randint(100000, 999999); EM = f'petar{N}@test.bg'; PH = f'0888{N}'; PHI = '359' + PH[1:]
 from playwright.async_api import async_playwright
 base = 'http://localhost:8766'
 R = []
@@ -19,8 +20,8 @@ async def main():
         await ad.goto(base + '/admin.html#/settings?t=verify'); await ad.wait_for_timeout(1200)
         t = await ad.locator('#app').inner_text()
         ok('Админ: „Потвърждения“ показва състоянието', 'Пробен режим' in t and 'Имейл: готов' in t, t[:160].replace('\n', ' '))
-        await ad.click('[aria-label="Код по SMS при регистрация"]'); await ad.wait_for_timeout(300)
-        await ad.click('[aria-label="Потвърждение на имейла"]'); await ad.wait_for_timeout(800)
+        if await ad.get_attribute('[aria-label="Код по SMS при регистрация"]', 'aria-checked') != 'true': await ad.click('[aria-label="Код по SMS при регистрация"]'); await ad.wait_for_timeout(600)
+        if await ad.get_attribute('[aria-label="Потвърждение на имейла"]', 'aria-checked') != 'true': await ad.click('[aria-label="Потвърждение на имейла"]'); await ad.wait_for_timeout(600)
         await ad.evaluate(f"async () => {{ {S} await s.syncNow(); }}"); await ad.wait_for_timeout(500)
         print('LOCAL', await ad.evaluate(f"async () => {{ {S} return s.admin.settings().verify; }}"), await ad.locator('[aria-label="Код по SMS при регистрация"]').count())
         cfg = await ad.evaluate(f"async () => {{ {S} return await sy.call('verifyCfg', {{}}, 'app'); }}")
@@ -29,12 +30,12 @@ async def main():
         pg = await page()
         await pg.goto(base + '/app#/register'); await pg.wait_for_timeout(1200)
         ok('Регистрацията показва „Изпрати код по SMS“', await pg.locator('button:has-text("Изпрати код по SMS")').count() == 1)
-        await pg.fill('input[autocomplete=name]', 'Петър Тестов'); await pg.fill('input[type=email]', 'petar@test.bg'); await pg.fill('input[type=password]', 'parola1')
-        await pg.fill('input[type=tel]', '0888 777 666')
+        await pg.fill('input[autocomplete=name]', 'Петър Тестов'); await pg.fill('input[type=email]', EM); await pg.fill('input[type=password]', 'parola1')
+        await pg.fill('input[type=tel]', PH)
         await pg.click('button:has-text("Изпрати код по SMS")'); await pg.wait_for_timeout(700)
         hint = await pg.locator('.sms-hint b').inner_text()
         ok('SMS-ът е пратен (пробен режим показва кода)', re.fullmatch(r'\d{4}', hint) is not None, hint)
-        again = await pg.evaluate(f"async () => {{ {S} return await s.sendSmsCode('0888777666'); }}")
+        again = await pg.evaluate(f"async () => {{ {S} return await s.sendSmsCode('{PH}'); }}")
         ok('Втори код веднага – „Изчакай … секунди“', 'Изчакай' in (again.get('error') or ''), again)
         await pg.fill('input[autocomplete=one-time-code]', '0000' if hint != '0000' else '1111'); await pg.click('button:has-text("Потвърди")'); await pg.wait_for_timeout(500)
         ok('Грешен код – „Грешен код“', 'Грешен код' in await pg.locator('.err').inner_text())
@@ -43,17 +44,18 @@ async def main():
         await pg.select_option('select >> nth=0', 'Пловдив'); await pg.wait_for_timeout(150); await pg.select_option('select >> nth=1', index=1)
         await pg.click('button.option:has-text("Под наем")'); await pg.click('input[type=checkbox]'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(2000)
         u = await pg.evaluate(f"async () => {{ {S} return s.currentUser(); }}")
-        ok('Регистрацията минава след кода', u and u.get('email') == 'petar@test.bg', pg.url)
+        ok('Регистрацията минава след кода', u and u.get('email') == EM, pg.url)
         ok('Имейлът още не е потвърден', u and u.get('emailVerified') is False, u and u.get('emailVerified'))
         # без потвърден телефон сървърът отказва
         bad = await pg.evaluate(f"async () => {{ {S} return await sy.call('register', {{ user: {{ name: 'X Y', email: 'x@y.bg', phone: '0899111222' }}, password: 'parola1', profile: {{}} }}, 'app'); }}")
         ok('Без код по SMS сървърът не регистрира', 'SMS' in (bad.get('error') or ''), bad)
         # писмото „Потвърди имейла“
         box = (await pg.evaluate(f"async () => {{ {S} return await sy.call('devOutbox', {{}}, 'app'); }}"))['list']
-        mail = [m for m in box if m['kind'] == 'mail' and m['to'] == 'petar@test.bg']
+        mail = [m for m in box if m['kind'] == 'mail' and m['to'] == EM]
         ok('Писмо „Потвърди имейла“ е пратено', mail and 'Потвърди' in mail[-1]['subject'], [m['subject'] for m in mail])
         sms = [m for m in box if m['kind'] == 'sms']
-        ok('SMS-ът е до 359888777666 с кода', sms and sms[-1]['to'] == '359888777666' and hint in sms[-1]['text'], sms[-1] if sms else None)
+        ok('SMS-ът е до 359888777666 с кода', sms and sms[-1]['to'] == PHI and hint in sms[-1]['text'], sms[-1] if sms else None)
+        await pg.evaluate(f"async () => {{ {S} s.updateProfile({{ onboarded: true }}); }}")
         await pg.goto(base + '/app#/home'); await pg.wait_for_timeout(1200)
         ok('На „Днес“ има „Потвърди имейла си“', await pg.locator('.verify-card').count() == 1)
         link = re.search(r'href="([^"]+verify=[^"]+)"', mail[-1]['html']).group(1)
@@ -62,17 +64,18 @@ async def main():
         await pg.evaluate(f"async () => {{ {S} await s.syncNow(); }}"); await pg.goto(base + '/app#/home'); await pg.wait_for_timeout(1200)
         ok('След потвърждение напомнянето го няма', await pg.locator('.verify-card').count() == 0)
         # забравена парола → линк → нова парола
-        await pg.evaluate("async () => { const s = await import('/js/store.js'); s.logout(); }")
-        await pg.goto(base + '/app#/forgot'); await pg.wait_for_timeout(600)
-        await pg.fill('input[type=email]', 'petar@test.bg'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1000)
+        await pg.evaluate("async () => { const s = await import('/js/store.js'); s.logout(); }"); await pg.wait_for_timeout(1500)
+        await pg.goto(base + '/app#/forgot'); await pg.wait_for_timeout(800)
+        await pg.fill('input[type=email]', EM); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1000)
+        await pg.screenshot(path='/tmp/vf.png'); print('FORGOT', pg.url, (await pg.locator('#app').inner_text())[:200])
         ok('„Забравена парола“: „Провери имейла си“', 'Провери имейла си' in await pg.locator('#app').inner_text())
         box = (await pg.evaluate(f"async () => {{ {S} return await sy.call('devOutbox', {{}}, 'app'); }}"))['list']
-        rm = [m for m in box if m['kind'] == 'mail' and 'Нова парола' in m['subject']]
+        rm = [m for m in box if m['kind'] == 'mail' and 'Нова парола' in m['subject'] and m['to'] == EM]
         tok = re.search(r'#/reset/([a-f0-9]+)', rm[-1]['html']).group(1) if rm else ''
         await pg.goto(base + '/app#/reset/' + tok); await pg.wait_for_timeout(700)
         await pg.fill('input[type=password] >> nth=0', 'novaparola'); await pg.fill('input[type=password] >> nth=1', 'novaparola'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1000)
-        ok('Новата парола е запазена → вход', '#/login' in pg.url, pg.url)
-        await pg.fill('input[type=email]', 'petar@test.bg'); await pg.fill('input[type=password]', 'novaparola'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1500)
+        ok('Новата парола е запазена → вход', '#/login' in pg.url, (pg.url, await pg.locator('.err').all_inner_texts()))
+        await pg.fill('input[type=email]', EM); await pg.fill('input[type=password]', 'novaparola'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1500)
         ok('Вход с новата парола', '#/login' not in pg.url, pg.url)
         reuse = await pg.evaluate(f"async () => {{ {S} return await sy.call('resetPw', {{ token: '{tok}', password: 'drugaparola' }}, 'app'); }}")
         ok('Линкът за нова парола работи само веднъж', 'изтекъл' in (reuse.get('error') or ''), reuse)

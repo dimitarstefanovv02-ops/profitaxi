@@ -1856,7 +1856,7 @@ function verifyTab() {
   });
   const tg = (key, label, sub) => h('div', { class: 'row between', style: { padding: '10px 0', borderTop: '1px solid var(--line)' } },
     h('span', null, h('b', null, label), h('br'), h('small', { class: 'muted' }, sub)),
-    h('button', { class: cx('toggle', v[key] && 'on'), role: 'switch', 'aria-checked': String(!!v[key]), 'aria-label': label, onclick: () => { store.admin.saveSettings({ verify: { ...v, [key]: !v[key] } }); toast(!v[key] ? 'Включено' : 'Изключено'); } }));
+    h('button', { class: cx('toggle', v[key] && 'on'), role: 'switch', 'aria-checked': String(!!v[key]), 'aria-label': label, onclick: () => { const cur = store.admin.settings().verify || {}; store.admin.saveSettings({ verify: { ...cur, [key]: !cur[key] } }); toast(!cur[key] ? 'Включено' : 'Изключено'); render(); } }));
   const cap = h('input', { class: 'input', type: 'number', min: 10, value: v.smsCap || 200 });
   const ph = h('input', { class: 'input', type: 'number', min: 1, max: 10, value: v.perHour || 3 });
   const pd = h('input', { class: 'input', type: 'number', min: 1, max: 20, value: v.perDay || 5 });
@@ -1868,7 +1868,7 @@ function verifyTab() {
     ['lim', card('lock', 'Лимити за SMS', h('div', { class: 'form' },
       field('Таван на всички SMS за деня', cap, 'Предпазва бюджета. При достигане ти идва известие.'),
       field('Кодове за един номер на час', ph), field('Кодове за един номер на ден', pd),
-      h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ verify: { ...v, smsCap: Math.max(10, Number(cap.value) || 200), perHour: Math.max(1, Math.min(10, Number(ph.value) || 3)), perDay: Math.max(1, Math.min(20, Number(pd.value) || 5)) } }); toast('Запазено'); } }, 'Запази')),
+      h('button', { class: 'btn btn-page btn-lg', onclick: () => { store.admin.saveSettings({ verify: { ...(store.admin.settings().verify || {}), smsCap: Math.max(10, Number(cap.value) || 200), perHour: Math.max(1, Math.min(10, Number(ph.value) || 3)), perDay: Math.max(1, Math.min(20, Number(pd.value) || 5)) } }); toast('Запазено'); } }, 'Запази')),
       note('Между два кода за един номер има 60 секунди изчакване. Кодът важи 10 минути, 5 грешни опита – нов код.'))],
     store.live() && ['test', card('inbox', 'Пробно изпращане', h('div', { class: 'form' }, field('Имейл', tMail), field('Телефон', tPh),
       h('button', { class: 'btn btn-page btn-lg', onclick: async () => { const r = await apiCall('verifyTest', { email: tMail.value.trim() || null, phone: tPh.value.trim() || null }, 'admin'); toast(r.error || 'Изпратено – провери', r.error ? 'err' : undefined); } }, 'Изпрати проба')))],
