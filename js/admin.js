@@ -1849,7 +1849,7 @@ function verifyTab() {
   if (store.live()) apiCall('verifyStatus', {}, 'admin').then((r) => {
     if (r.error) { status.textContent = r.error; return; }
     fill(status, h('div', { class: 'vs-grid' },
-      h('span', { class: cx('chip', r.mail ? 'good' : 'bad') }, r.mail ? `Имейл: готов (${r.from})` : 'Имейл: липсват BREVO_API_KEY и MAIL_FROM'),
+      h('span', { class: cx('chip', r.mail ? 'good' : 'bad') }, r.mail ? `Имейл: готов (${r.from})` : r.key ? 'Имейл: липсва MAIL_FROM (подателят)' : 'Имейл: липсват BREVO_API_KEY и MAIL_FROM'),
       h('span', { class: cx('chip', r.sms ? 'good' : 'bad') }, r.sms ? 'SMS: готов' : 'SMS: липсва BREVO_API_KEY'),
       r.mock && h('span', { class: 'chip warn' }, 'Пробен режим – нищо не се праща истински'),
       h('span', { class: 'chip' }, `SMS днес: ${r.smsToday} от ${Number(v.smsCap) || 200}`)));

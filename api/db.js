@@ -549,7 +549,7 @@ const ops = {
   // за админа: дали ключовете са сложени, колко SMS днес, пробно изпращане
   async verifyStatus(_, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
-    return { mail: MSG.mailReady(), sms: MSG.smsReady(), mock: MSG.mockMode(), from: MSG.mailFrom(), smsToday: Number(await one(['GET', `pt:smscount:${todayStr()}`]) || 0) };
+    return { key: MSG.hasKey() || MSG.mockMode(), mail: MSG.mailReady(), sms: MSG.smsReady(), mock: MSG.mockMode(), from: MSG.mailFrom(), smsToday: Number(await one(['GET', `pt:smscount:${todayStr()}`]) || 0) };
   },
   async verifyTest({ email, phone }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
