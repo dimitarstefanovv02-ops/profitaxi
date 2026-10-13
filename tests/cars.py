@@ -39,7 +39,7 @@ async def main():
         ok('Двама шофьори – по 50%', shares == [50, 50], shares)
         mine = await pg.evaluate(f"async () => {{ {S} return s.myData().costs.filter(c => c.carId === '{car['id']}'); }}")
         ok('Каското влиза в разходите на Георги с дял 50%', len(mine) == 1 and abs(mine[0]['share'] - 0.5) < 1e-9, mine and mine[0].get('share'))
-        perDay = await pg.evaluate("async () => { const c = await import('/js/calc.js'); const s = await import('/js/store.js'); const d = s.myData(); return c.fixedForDay(d.costs.filter(x => x.carId), d.profile, '2026-10-12', true); }")
+        perDay = await pg.evaluate("async () => { const c = await import('/js/calc.js'); const s = await import('/js/store.js'); const d = s.myData(); return c.fixedForDay(d.costs.filter(x => x.carId), d.profile, (await import('/js/util.js')).todayStr(), true); }")
         ok('Делът му на ден = 1200 / 365 × 50% = 1,64 €', abs(perDay - 1200 / 365 * 0.5) < 0.01, round(perDay, 3))
         ok('Георги не вижда кода за покана в списъка? (локално – само собственикът има бутона)', await pg.locator('.inv-link').count() == 0)
         # Иван сменя дяловете 70/30

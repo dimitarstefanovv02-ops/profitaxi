@@ -927,6 +927,8 @@ function accessCard(u, s, owner) {
     info('Валиден до', `${fmtDate(u.subscription.validUntil, { year: true })}${s.left != null ? ` (${s.left >= 0 ? `още ${s.left} дни` : `изтекъл преди ${-s.left} дни`})` : ''}`),
     u.subscription.paidSince && info('Платен от', fmtDate(u.subscription.paidSince, { year: true })),
     u.promo && info('Промо код', u.promo),
+    (() => { const fl = store.admin.driverData(u.id).profile?.accountType === 'fleet'; return h('div', { class: 'info-row' }, h('span', { class: 'muted' }, 'Вид акаунт'), h('span', null, fl ? 'Собственик на коли' : 'Шофьор',
+      owner && h('button', { class: 'chip page', style: { marginLeft: '8px' }, onclick: () => confirmSheet({ title: fl ? `${u.name} да стане шофьор?` : `${u.name} да стане собственик на коли?`, text: 'Шофьорите и собствениците са отделни акаунти. Сам не могат да си сменят вида – само ти от тук.', okLabel: 'Смени', onOk: () => { store.admin.setAccountType(u.id, fl ? 'driver' : 'fleet'); toast('Видът на акаунта е сменен'); } }) }, 'Смени'))); })(),
     owner && h('div', { class: 'act-label' }, 'Абонамент'),
     owner && acts('driver.sub', [
       ['30', h('button', { class: 'btn btn-page', onclick: () => { store.admin.extend(u.id, 30); toast('Удължен с 30 дни'); } }, '+30 дни')],

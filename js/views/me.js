@@ -18,13 +18,7 @@ function carSub(data) {
   return n ? `${n} ремонта · колко си избил от колата` : 'Ремонти, разходи по колата и колко си избил от нея';
 }
 
-// Шофьор ⇄ собственик на коли (който сам не кара)
-function kindSheet(fleet, go) {
-  openSheet((close) => h('div', { class: 'form' },
-    sheetHead('Вид акаунт', close, 'Можеш да го смениш по всяко време – данните ти остават.'),
-    h('button', { class: cx('option', !fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'driver' }); close(); go('/home'); } }, icon('car', 24), 'Шофьор', h('small', null, 'Карам и следя колко ми остава')),
-    h('button', { class: cx('option', fleet && 'on'), style: { width: '100%' }, onclick: () => { store.updateProfile({ accountType: 'fleet', onboarded: true }); close(); let seen = false; try { seen = localStorage.getItem('profitaxi.fwalk') === '1'; } catch { /* */ } go(seen ? '/home' : '/fguide?walk=1&first=1'); } }, icon('key', 24), 'Собственик на коли', h('small', null, 'Колите ми карат други шофьори – началният екран е автопаркът'))));
-}
+
 export function meView({ go, user, data }) {
   const fleet = store.isFleet(data.profile);
   const row = (k, ic, title, sub, onclick, href) => [k, h(href ? 'a' : 'button', { class: 'big-link', href, onclick },
@@ -39,7 +33,7 @@ export function meView({ go, user, data }) {
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',
       row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile'),
-      row('kind', fleet ? 'key' : 'car', 'Вид акаунт', fleet ? 'Собственик на коли – не караш' : 'Шофьор', () => kindSheet(fleet, go))),
+      row('kind', fleet ? 'key' : 'car', 'Вид акаунт', `${fleet ? 'Собственик на коли' : 'Шофьор'} · избира се при регистрация. За смяна – пиши ни`, null, '#/help')),
     !fleet && group('car', 'Колата',
       data.profile.carType !== 'rent' && row('vehicle', 'tool', 'Колата ми', carSub(data), null, '#/vehicle'),
       row('carset', 'car', 'Настройки на колата', 'Своя или под наем, гориво, данни за колата', null, '#/car'),

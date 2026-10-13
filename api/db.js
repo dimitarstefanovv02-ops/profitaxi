@@ -228,7 +228,11 @@ async function applyPush(s, set = {}, del = []) {
       if (k !== id || !old) { rejected.push(f); continue; }
       v = stripPw(f, v); PROTECTED.forEach((p) => { if (p in old) v[p] = old[p]; else delete v[p]; });
       v.id = id; v.email = old.email;
-    } else if (c === 'profiles' || c === 'dismissed') { if (k !== id) { rejected.push(f); continue; } }
+    } else if (c === 'profiles' || c === 'dismissed') {
+      if (k !== id) { rejected.push(f); continue; }
+      // шофьор и собственик на коли са отделни акаунти: видът не се сменя от приложението
+      if (c === 'profiles' && old) { if (old.accountType) v.accountType = old.accountType; else delete v.accountType; }
+    }
     else if (c === 'cars') { // колата се създава и променя само от собственика
       if (old ? old.ownerId !== id : v.ownerId !== id) { rejected.push(f); continue; }
       v.ownerId = id; v.id = k;

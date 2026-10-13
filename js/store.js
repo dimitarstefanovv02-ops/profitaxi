@@ -733,6 +733,7 @@ export function deleteReminder(rid) { const id = myId(); db.reminders = db.remin
 // разходи, които важат ОТ ДНЕС – старите отчети остават непроменени.
 export function updateProfile(patch, { from } = {}) {
   const id = myId();
+  if (patch && 'accountType' in patch) { patch = { ...patch }; delete patch.accountType; } // видът на акаунта се избира при регистрация; сменя го само админът
   applyProfile(id, patch, from);
   commit();
 }
@@ -856,6 +857,8 @@ export const admin = {
     audit(`Промени данните на ${u.name}`);
     commit();
   },
+  // Шофьор и собственик на коли са отделни акаунти – видът се сменя само от админа
+  setAccountType(id, type) { requireAdmin(); const u = db.users.find((x) => x.id === id); const p = db.profiles[id]; if (!u || !p) return; p.accountType = type === 'fleet' ? 'fleet' : 'driver'; if (type === 'fleet') p.onboarded = true; audit(`Смени вида на акаунта на ${u.name}: ${type === 'fleet' ? 'собственик на коли' : 'шофьор'}`); commit(); },
   deleteDriver(id) { requireAdmin(); audit(`Изтри шофьор ${nameOf(id)}`); wipeUser(id); commit(); },
   setTags(id, tags) { requireAdmin(); const u = db.users.find((x) => x.id === id); if (!u) return; u.tags = [...new Set(tags.map((t) => t.trim()).filter(Boolean))]; audit(`Етикети на ${u.name}: ${u.tags.join(', ') || 'няма'}`); commit(); },
   addTagMany(ids, tag) { requireAdmin(); const t = tag.trim(); if (!t) return; db.users.filter((u) => ids.includes(u.id)).forEach((u) => { u.tags = [...new Set([...(u.tags || []), t])]; }); audit(`Етикет „${t}“ на ${ids.length} шофьори`); commit(); },

@@ -56,6 +56,8 @@ async def main():
         await a.evaluate(S.join(["async () => {", f"s.confirmPay('{pr}'); s.addCarLog({{ carId: '{car['id']}', kind: 'fine', driverId: '{gid}', amount: 50, text: 'скорост' }}); await s.syncNow(); }}"]))
         gl = await g.evaluate(S.join(["async () => {", "await s.syncNow(); return { pay: s.myLogs('pay').map((l) => l.status).sort(), fine: s.myData().costs.filter((c) => c.category === 'fine').map((c) => c.amount) }; }"]))
         ok('При шофьора: потвърдено + глобата е в разходите му', gl['pay'] == ['claimed', 'ok'] and gl['fine'] == [50], gl)
+        at = await g.evaluate(S.join(["async () => {", f"const st = await import('/js/sync.js'); const p = s.getProfile(); await st.call('push', {{ set: {{ 'profiles:{gid}': {{ ...p, accountType: 'fleet' }} }}, del: [] }}); localStorage.removeItem(Object.keys(localStorage).find((k) => k.endsWith('.base')) || 'x'); await s.syncNow(); return (await st.call('pull', {{}})).fields['profiles:{gid}'].accountType || 'driver'; }}"]))
+        ok('Шофьорът не може сам да си смени вида на акаунта', at == 'driver', at)
         ok('Без грешки', not ea and not eg, (ea + eg)[:2])
         await b.close()
     print('\n'.join(R)); print(f"FAILS: {sum(1 for r in R if r.startswith('FAIL'))} / {len(R)}")
