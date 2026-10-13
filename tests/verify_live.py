@@ -5,7 +5,7 @@ from playwright.async_api import async_playwright
 base = 'http://localhost:8766'
 R = []
 def ok(n, c, x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  [' + str(x) + ']' if x != '' else ''}")
-INIT = "try{localStorage.setItem('profitaxi.live','1');sessionStorage.setItem('profitaxi.oneIntro','1');localStorage.setItem('profitaxi.adminTour','done')}catch(e){}"
+INIT = "addEventListener('hashchange', () => console.log('HASH ' + location.hash)); try{localStorage.setItem('profitaxi.live','1');sessionStorage.setItem('profitaxi.oneIntro','1');localStorage.setItem('profitaxi.adminTour','done')}catch(e){}"
 S = "const s = await import('/js/store.js'); const sy = await import('/js/sync.js');"
 
 async def main():
@@ -13,7 +13,7 @@ async def main():
         b = await p.chromium.launch(); errs = []
         async def page():
             ctx = await b.new_context(viewport={'width': 390, 'height': 844}); await ctx.add_init_script(INIT)
-            pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e))); pg.set_default_timeout(10000); return pg
+            pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: print('C', m.text[:120]) if m.text.startswith('HASH') else None); pg.set_default_timeout(10000); return pg
         ad = await page()
         await ad.goto(base + '/admin.html'); await ad.wait_for_timeout(600)
         await ad.fill('input[type=email]', 'admin@profitaxi.bg'); await ad.fill('input[type=password]', 'admin123'); await ad.click('button[type=submit]'); await ad.wait_for_timeout(1500)
@@ -65,7 +65,8 @@ async def main():
         ok('След потвърждение напомнянето го няма', await pg.locator('.verify-card').count() == 0)
         # забравена парола → линк → нова парола
         await pg.evaluate("async () => { const s = await import('/js/store.js'); s.logout(); }"); await pg.wait_for_timeout(1500)
-        await pg.goto(base + '/app#/forgot'); await pg.wait_for_timeout(800)
+        print('BEFORE', pg.url)
+        await pg.goto(base + '/app#/forgot'); await pg.wait_for_timeout(800); print('AFTER', pg.url)
         await pg.fill('input[type=email]', EM); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1000)
         await pg.screenshot(path='/tmp/vf.png'); print('FORGOT', pg.url, (await pg.locator('#app').inner_text())[:200])
         ok('„Забравена парола“: „Провери имейла си“', 'Провери имейла си' in await pg.locator('#app').inner_text())
