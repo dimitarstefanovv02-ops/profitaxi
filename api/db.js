@@ -554,7 +554,7 @@ const ops = {
   async verifyTest({ email, phone }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
     try {
-      if (email) await MSG.sendMail({ to: email, subject: 'Проба от „Чисто“', html: '<p>Имейлите от „Чисто“ работят.</p>', text: 'Имейлите от „Чисто“ работят.' });
+      if (email) await MSG.sendMail({ to: email, ...MSG.testMail() });
       if (phone) await MSG.sendSms({ to: phone, text: 'Чисто: SMS-ите работят.' });
       return { ok: true };
     } catch (e) { return { error: String(e.message || e).slice(0, 200) }; }
