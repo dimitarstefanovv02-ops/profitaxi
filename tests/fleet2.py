@@ -11,7 +11,7 @@ J = "const s = await import('/js/store.js');"
 async def login(pg, email, pw='demo123'):
     await pg.evaluate("async () => { const s = await import('/js/store.js'); s.logout(); }")
     await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(400)
-    await pg.fill('input[type=email]', email); await pg.fill('input[type=password]', pw); await pg.click('button[type=submit]'); await pg.wait_for_timeout(800)
+    await pg.fill('input[autocomplete=username], input[type=email]', email); await pg.fill('input[type=password]', pw); await pg.click('button[type=submit]'); await pg.wait_for_timeout(800)
 
 async def main():
     async with async_playwright() as p:
@@ -124,7 +124,7 @@ async def main():
         ad = pg; await ad.set_viewport_size({'width': 1280, 'height': 900})
         await ad.add_init_script("try { localStorage.setItem('profitaxi.adminTour', 'done') } catch (e) {}")
         await ad.goto(B + '/admin.html'); await ad.wait_for_timeout(500)
-        await ad.fill('input[type=email]', 'admin@profitaxi.bg'); await ad.fill('input[type=password]', 'admin123'); await ad.click('button[type=submit]'); await ad.wait_for_timeout(1200)
+        await ad.fill('input[autocomplete=username], input[type=email]', 'admin@profitaxi.bg'); await ad.fill('input[type=password]', 'admin123'); await ad.click('button[type=submit]'); await ad.wait_for_timeout(1200)
         await ad.goto(B + '/admin.html#/owners'); await ad.wait_for_timeout(800)
         t = await ad.locator('#app').inner_text()
         ok('Админ: „Собственици“ показва Петко, колите и шофьорите му', 'Петко Колев' in t and 'РВ1234АК' in t and 'Георги Димитров' in t and 'Мария' in t, t[:200].replace('\n', ' '))

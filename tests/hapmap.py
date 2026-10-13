@@ -11,7 +11,7 @@ async def main():
       print(('PASS ' if cnd else 'FAIL ')+' '+n+(f'  [{x}]' if x!='' else ''))
       if not cnd: fails.append(n)
     await pg.goto('http://localhost:8765/admin.html'); await pg.wait_for_timeout(400)
-    await pg.fill('input[type=email]','admin@profitaxi.bg'); await pg.fill('input[type=password]','admin123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1200)
+    await pg.fill('input[autocomplete=username], input[type=email]','admin@profitaxi.bg'); await pg.fill('input[type=password]','admin123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1200)
     await pg.goto('http://localhost:8765/admin.html#/overview'); await pg.wait_for_timeout(1000)
     ok('„Карта на деня“ е под „Днес се случи“', await pg.eval_on_selector('[data-zone="overview"]', "z=>[...z.children].map(c=>c.dataset.k).slice(0,2).join()")=='happened,hapmap')
     cols = await pg.evaluate("[...document.querySelectorAll('.hap.hc')].map(e=>getComputedStyle(e).getPropertyValue('--hc').trim())")

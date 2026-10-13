@@ -4,7 +4,7 @@ import { h, fill, icon, cx } from '../util.js';
 import { CAR_TYPES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
-import { toast, field } from '../ui.js';
+import { toast, field, segmented } from '../ui.js';
 import { passkeySupported, loginWithPasskey, faceLabel, passkeyOn, shouldOffer, enablePasskey, markOffered } from '../passkey.js';
 
 export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
@@ -14,7 +14,7 @@ export const brand = () => h('a', { class: 'brand', href: '/', style: { textDeco
 const input = (attrs) => h('input', { class: 'input', ...attrs });
 
 export function loginView({ go }) {
-  const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg', required: true });
+  const email = input({ type: 'text', autocomplete: 'username', inputmode: 'email', autocapitalize: 'off', spellcheck: 'false', placeholder: 'ime@mail.bg или 0888 123 456', required: true });
   const pw = input({ type: 'password', autocomplete: 'current-password', placeholder: '••••••', required: true });
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = async (e) => {
@@ -45,7 +45,7 @@ export function loginView({ go }) {
       h('h1', null, 'Колко изкарваш наистина'),
       h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
     h('form', { class: 'form', onsubmit: submit },
-      field('Имейл', email),
+      field('Имейл или телефон', email),
       field('Парола', pw),
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Вход'),
@@ -82,8 +82,22 @@ export function registerView({ go }) {
       } }, 'Потвърди')));
   // полето за телефон: с код по SMS, ако е включен от админа (настройката идва от сървъра)
   const phoneWrap = h('div');
-  const drawPhone = () => fill(phoneWrap, store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. Един телефон – един акаунт.', true) : field('Телефон', phone, 'Един телефон – един акаунт.', true));
+  // Регистрация с имейл ИЛИ с телефон: избраното е задължително и се потвърждава (линк по имейла / код по SMS),
+  // другото е по желание
+  let by = 'email';
+  const byBox = h('div'), idWrap = h('div'), otherWrap = h('div');
+  const drawPhone = () => {
+    byBox.replaceChildren(segmented({ email: 'С имейл', phone: 'С телефон' }, by, (k) => { by = k; drawPhone(); }, { page: true }));
+    if (by === 'phone') {
+      fill(idWrap, store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. С него влизаш в профила.', true) : field('Телефон', phone, 'С него влизаш в профила.', true));
+      fill(otherWrap, field('Имейл', email, 'По желание'));
+    } else {
+      fill(idWrap, field('Имейл', email, store.emailVerifyOn() ? 'Ще ти пратим линк за потвърждение. С него влизаш в профила.' : 'С него влизаш в профила.', true));
+      fill(otherWrap, field('Телефон', phone, 'По желание – за да могат да ти се обаждат'));
+    }
+  };
   drawPhone(); store.loadVerifyCfg().then(drawPhone);
+  phoneWrap.append(idWrap);
   const pw = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
   const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
@@ -121,13 +135,14 @@ export function registerView({ go }) {
     // проверки в реда на формата
     const checks = [
       [!name.value.trim(), 'Въведи име'],
-      [!/^\S+@\S+\.\S+$/.test(email.value), 'Невалиден имейл'],
+      [by === 'email' && !/^\S+@\S+\.\S+$/.test(email.value), 'Невалиден имейл'],
+      [by === 'phone' && !!email.value.trim() && !/^\S+@\S+\.\S+$/.test(email.value), 'Невалиден имейл'],
       [pw.value.length < 6, 'Паролата трябва да е поне 6 символа'],
       [!v.city, 'Избери град'],
       [!v.company, 'Избери фирма или напиши името ѝ'],
       [kind === 'driver' && !carType, 'Избери каква е колата'],
-      [!phone.value.trim(), 'Въведи телефон'],
-      [store.phoneCodeOn() && !phoneOk, 'Потвърди телефона с кода от SMS'],
+      [by === 'phone' && !phone.value.trim(), 'Въведи телефон'],
+      [by === 'phone' && store.phoneCodeOn() && !phoneOk, 'Потвърди телефона с кода от SMS'],
       [!store.live() && !!promoCode && !!store.checkPromo(promoCode).error, store.checkPromo(promoCode).error],
     ];
     const bad = checks.find(([c]) => c);
@@ -135,7 +150,7 @@ export function registerView({ go }) {
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
     const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
     try { if (joinCode) localStorage.setItem('profitaxi.joinCode', joinCode); else localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } // след първата настройка влизаш в колата
-    const r = await store.register({ name: name.value, email: email.value, password: pw.value, phone: phone.value, city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promoCode });
+    const r = await store.register({ by, name: name.value, email: email.value.trim(), password: pw.value, phone: phone.value.trim(), city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promoCode });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     go(kind === 'fleet' ? '/fguide?walk=1&first=1' : joinCode ? '/home' : '/guide?first=1');
@@ -149,10 +164,11 @@ export function registerView({ go }) {
     h('form', { class: 'form', onsubmit: submit, novalidate: true },
       group('key', 'Аз съм', kindBox),
       group('user', 'Акаунт',
+        h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Регистрирай се'), byBox),
         field('Име', name, null, true),
-        field('Имейл', email, null, true),
-        field('Парола', pw, null, true),
         phoneWrap,
+        field('Парола', pw, null, true),
+        otherWrap,
         field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
         field('Код за кола', carCode, 'По желание – ако собственикът на колата ти е пратил код или линк')),
       group('target', 'Къде караш', cc.el),
@@ -163,29 +179,52 @@ export function registerView({ go }) {
     h('p', { class: 'auth-foot' }, 'Имаш акаунт? ', h('a', { href: '#/login' }, 'Вход')));
 }
 
-export function forgotView() {
-  const email = input({ type: 'email', autocomplete: 'email', inputmode: 'email', placeholder: 'ime@mail.bg' });
+export function forgotView({ go } = {}) {
+  const email = input({ type: 'text', autocomplete: 'username', inputmode: 'email', autocapitalize: 'off', spellcheck: 'false', placeholder: 'ime@mail.bg или 0888 123 456' });
   const box = h('div');
   const submit = async (e) => {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(email.value)) { toast('Въведи валиден имейл', 'err'); return; }
-    const r = await store.forgotPassword(email.value);
+    const v = email.value.trim();
+    if (v.includes('@') ? !/^\S+@\S+\.\S+$/.test(v) : v.replace(/\D/g, '').length < 10) { toast('Въведи имейл или мобилен телефон', 'err'); return; }
+    const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
+    const r = await store.forgotPassword(v);
+    if (btn) btn.disabled = false;
     if (r.error) { toast(r.error, 'err'); return; }
+    if (r.mode === 'sms') return fill(box, smsReset(v, r.demoCode));
     fill(box, r.mode === 'mail'
       ? h('div', { class: 'card' }, h('h2', null, 'Провери имейла си'),
-        h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, пратихме линк за нова парола. Линкът работи 1 час. Не го виждаш? Провери в „Спам“ / „Промоции“.`))
+        h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${v}, пратихме линк за нова парола. Линкът работи 1 час. Не го виждаш? Провери в „Спам“ / „Промоции“.`))
       : h('div', { class: 'card' },
         h('h2', null, 'Получихме молбата ти'),
-        h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${email.value}, ще ти сменим паролата и ще ти се обадим на телефона от профила – обикновено до няколко часа.`)));
+        h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${v}, ще ти сменим паролата и ще ти се обадим на телефона от профила – обикновено до няколко часа.`)));
   };
-  box.appendChild(h('form', { class: 'form', onsubmit: submit },
-    field('Имейл', email),
+  // по телефон: код по SMS + нова парола на същото място
+  const smsReset = (phoneV, demo) => {
+    const code = input({ inputmode: 'numeric', maxlength: 4, placeholder: '4 цифри', autocomplete: 'one-time-code' });
+    const p1 = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' });
+    const p2 = input({ type: 'password', autocomplete: 'new-password', placeholder: 'Още веднъж' });
+    const err = h('p', { class: 'err', role: 'alert' });
+    return h('form', { class: 'form', novalidate: true, onsubmit: async (e) => {
+      e.preventDefault();
+      if (p1.value.length < 6) { err.textContent = 'Паролата трябва да е поне 6 символа'; return; }
+      if (p1.value !== p2.value) { err.textContent = 'Паролите не съвпадат'; return; }
+      const r = await store.resetPasswordSms(phoneV, code.value, p1.value);
+      if (r.error) { err.textContent = r.error; return; }
+      toast('Паролата е сменена. Влез с новата.'); (go || ((x) => { location.hash = x; }))('/login');
+    } },
+      h('div', { class: 'card' }, h('h2', null, 'Пратихме ти SMS'), h('p', { class: 'muted', style: { marginTop: '6px' } }, `Ако има акаунт с ${phoneV}, ще получиш код до минута. Въведи го и новата парола.`),
+        demo ? h('p', { class: 'sms-hint small' }, 'Пробен режим – кодът е ', h('b', null, demo)) : null),
+      field('Код от SMS', code), field('Нова парола', p1), field('Повтори паролата', p2), err,
+      h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Смени паролата'));
+  };
+  box.appendChild(h('form', { class: 'form', onsubmit: submit, novalidate: true },
+    field('Имейл или телефон', email),
     h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Поискай нова парола')));
   return h('div', { class: 'auth' },
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),
     h('div', { class: 'auth-hero', style: { margin: '18px 0 22px' } },
       h('h1', null, 'Забравена парола'),
-      h('p', null, 'Ще ти изпратим линк, с който да зададеш нова.')),
+      h('p', null, 'С имейл – ще ти пратим линк. С телефон – код по SMS.')),
     box);
 }
 

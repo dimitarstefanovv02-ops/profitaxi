@@ -9,10 +9,10 @@ async def main():
         b = await p.chromium.launch(); pg = await b.new_page(viewport={'width': 390, 'height': 844}); pg.set_default_timeout(8000); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(600)
-        await pg.fill('input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
+        await pg.fill('input[autocomplete=username], input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
         car = await pg.evaluate("async () => { const s = await import('/js/store.js'); const c = s.createCar({ type: 'rent', name: 'Toyota Corolla', plate: 'PB1829AE' }); s.logout(); return c; }")
         await pg.goto(B + '/app#/register'); await pg.wait_for_timeout(500)
-        await pg.fill('input[autocomplete=name]', 'Нов Шофьор'); await pg.fill('input[type=email]', 'nov@test.bg'); await pg.fill('input[type=password]', '123456')
+        await pg.fill('input[autocomplete=name]', 'Нов Шофьор'); await pg.fill('input[autocomplete=username], input[type=email]', 'nov@test.bg'); await pg.fill('input[type=password]', '123456')
         await pg.fill('input[type=tel]', '0877555666')
         await pg.fill('input[placeholder="напр. START2"]', car['invite'])  # кодът – по грешка в промо кода
         await pg.select_option('select >> nth=0', 'Пловдив'); await pg.wait_for_timeout(150); await pg.select_option('select >> nth=1', index=1)

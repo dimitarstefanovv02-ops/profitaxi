@@ -12,7 +12,7 @@ async def main():
     await c.add_init_script("try{localStorage.setItem('profitaxi.tour','done');localStorage.setItem('profitaxi.installed','1');localStorage.setItem('profitaxi.paidMode','1')}catch(e){}")
     pg = await c.new_page(); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
     await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(300)
-    await pg.fill('input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(800)
+    await pg.fill('input[autocomplete=username], input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(800)
     await pg.goto(B + '/app#/shift/new'); await pg.wait_for_timeout(600)
     await pg.evaluate("document.querySelectorAll('.sheet-wrap').forEach(e=>e.remove())")
     ok('Системните полета са скрити, вместо тях има бутони', await pg.locator('input[type=datetime-local]:visible').count() == 0 and await pg.locator('.pk-field').count() == 2)

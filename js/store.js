@@ -104,11 +104,13 @@ export function currentUser() {
   const u = db.users.find((x) => x.id === id && x.role === 'driver');
   return u ? clone(u) : null;
 }
-export function login(email, password, { company } = {}) {
+// Вход с имейл или с телефон
+export function login(loginId, password, { company } = {}) {
   load();
-  if (LIVE) return liveAuth('login', { email, password, company }, 'app', SESSION_KEY);
-  const u = db.users.find((x) => norm(x.email) === norm(email) && x.role === 'driver');
-  if (!u || u.password !== password) return { error: 'Грешен имейл или парола' };
+  if (LIVE) return liveAuth('login', { login: loginId, email: loginId, password, company }, 'app', SESSION_KEY);
+  const v = String(loginId || '').trim();
+  const u = db.users.find((x) => x.role === 'driver' && (v.includes('@') ? norm(x.email) === norm(v) : digits(v).length >= 9 && digits(x.phone) === digits(v)));
+  if (!u || u.password !== password) return { error: 'Грешни данни за вход – провери имейла/телефона и паролата' };
   localStorage.setItem(SESSION_KEY, u.id);
   u.lastLoginAt = new Date().toISOString();
   commit();
@@ -134,14 +136,16 @@ export function setOffDay(day, on = true) {
 }
 export function logout() { if (PREVIEW) endPreview(); else { localStorage.removeItem(SESSION_KEY); if (LIVE) dropLive('app'); } listeners.forEach((fn) => fn()); }
 
-function validateAccount({ name, email, password, city, company, carType }, { skipPassword } = {}) {
+function validateAccount({ name, email, password, city, company, carType, by }, { skipPassword } = {}) {
   if (!name?.trim()) return 'Въведи име';
-  if (!/^\S+@\S+\.\S+$/.test(email || '')) return 'Невалиден имейл';
+  // регистрация с телефон – без имейл
+  if (by !== 'phone' && !/^\S+@\S+\.\S+$/.test(email || '')) return 'Невалиден имейл';
+  if (by === 'phone' && email && !/^\S+@\S+\.\S+$/.test(email)) return 'Невалиден имейл';
   if (!skipPassword && (password || '').length < 6) return 'Паролата трябва да е поне 6 символа';
   if (!city?.trim()) return 'Избери град';
   if (!company?.trim()) return 'Избери фирма';
   if (!CAR_TYPES[carType]) return 'Избери каква е колата';
-  if (db.users.some((x) => norm(x.email) === norm(email))) return 'Има акаунт с този имейл';
+  if (email && db.users.some((x) => x.email && norm(x.email) === norm(email))) return 'Има акаунт с този имейл';
   return null;
 }
 function validatePhone(phone) {
@@ -198,13 +202,13 @@ export function register(f) {
   const code = (f.refCode || '').trim().toUpperCase();
   const referrer = code ? db.users.find((x) => x.refCode === code && x.role === 'driver') : null;
   if (code && !referrer) return { error: 'Няма такъв код за покана. Провери го или остави полето празно.' };
-  const perr = validatePhone(f.phone); if (perr) return { error: perr };
-  if (!phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
+  if (f.by === 'phone' || f.phone) { const perr = validatePhone(f.phone); if (perr) return { error: perr }; }
+  if (f.by === 'phone' && !phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
   let accessCode = null, promo = null;
   if (f.accessCode != null) { const r = checkAccessCode(f.accessCode, f.company); if (r.error) return { error: r.error }; accessCode = r.code.code; }
   if (f.promo && String(f.promo).trim()) { const r = checkPromo(f.promo); if (r.error) return { error: r.error }; promo = r.promo; }
   const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: fleetProfile(f) });
-  u.phoneVerified = true;
+  u.phoneVerified = f.by === 'phone'; u.signup = f.by === 'phone' ? 'phone' : 'email';
   u.source = accessCode ? 'code' : promo ? 'promo' : referrer ? 'invite' : (f.source || 'site');
   if (accessCode) { u.accessCode = accessCode; db.codes.find((x) => x.code === accessCode).uses++; }
   if (promo) {
@@ -229,7 +233,7 @@ export function checkPromo(code) {
 function newDriver({ name, email, password, phone = '', city, company, trialDays = 14, plan = 'trial', profile = {} }) {
   const today = todayStr();
   const u = {
-    id: uid(), role: 'driver', name: name.trim(), email: email.trim(), password, phone, city: city.trim(), company: company.trim(),
+    id: uid(), role: 'driver', name: name.trim(), email: String(email || '').trim(), password, phone, city: city.trim(), company: company.trim(),
     status: 'active', createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(),
     subscription: { plan, validUntil: addDays(today, trialDays) },
     refCode: makeRefCode(name), referredBy: null, refMonths: 0, tags: [], source: 'site',
@@ -819,7 +823,8 @@ export async function wipeAllDrivers() {
   return r;
 }
 // Забравена парола: в облака стига до админа като въпрос
-export async function forgotPassword(email) { if (!LIVE) return { ok: true }; return call('forgot', { email }, 'app'); }
+export async function forgotPassword(loginId) { if (!LIVE) return { ok: true, mode: String(loginId).includes('@') ? 'admin' : 'admin' }; return call('forgot', { login: loginId, email: loginId }, 'app'); }
+export async function resetPasswordSms(phone, code, password) { if (!LIVE) return { error: 'Само в облака' }; return call('resetPwSms', { phone, code, password }, 'app'); }
 // Известия на телефона на админа (само в облака)
 export async function adminPush(op, body = {}) { if (!LIVE) return { error: 'Известията работят само на живия сайт' }; return call(op, body, 'admin'); }
 export function adminLogout() { localStorage.removeItem(ADMIN_SESSION_KEY); if (LIVE) dropLive('admin'); }
@@ -1127,13 +1132,12 @@ async function liveAuth(op, body, sc, sessionKey) {
   return { user: clone(r.user) };
 }
 async function registerLive(f) {
-  const perr = validatePhone(f.phone); if (perr) return { error: perr };
-  if (!phoneVerified(f.phone)) return { error: 'Потвърди телефона с кода от SMS' };
+  if (f.by === 'phone' || f.phone) { const perr = validatePhone(f.phone); if (perr) return { error: perr }; }
   const u = newDriver({ ...f, trialDays: db.settings.trialDays, profile: fleetProfile(f) });
   const profile = db.profiles[u.id];
   db.users = db.users.filter((x) => x.id !== u.id); delete db.profiles[u.id];
-  const { password, ...user } = u;
-  const r = await call('register', { user, profile, password: f.password, accessCode: f.accessCode ?? null, promo: f.promo || '', refCode: f.refCode || '' }, 'app');
+  const { password, ...user } = u; if (f.by === 'phone') user.email = '';
+  const r = await call('register', { by: f.by || (f.email ? 'email' : 'phone'), user, profile, password: f.password, accessCode: f.accessCode ?? null, promo: f.promo || '', refCode: f.refCode || '' }, 'app');
   if (r.error) return { error: r.error };
   setToken('app', r.token);
   localStorage.setItem(SESSION_KEY, r.user.id);

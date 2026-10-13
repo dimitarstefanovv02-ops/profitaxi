@@ -8,7 +8,7 @@ B = 'http://localhost:8765'
 async def login(pg, email):
     await pg.evaluate("async () => { const s = await import('/js/store.js'); s.logout(); }")
     await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(500)
-    await pg.fill('input[type=email]', email); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
+    await pg.fill('input[autocomplete=username], input[type=email]', email); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
 
 async def main():
     async with async_playwright() as p:
@@ -16,7 +16,7 @@ async def main():
         pg = await ctx.new_page(); errs = []; pg.set_default_timeout(8000)
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(600)
-        await pg.fill('input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1000)
+        await pg.fill('input[autocomplete=username], input[type=email]', 'ivan@demo.bg'); await pg.fill('input[type=password]', 'demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1000)
         S = "const s = await import('/js/store.js');"
 
         # --- Лична кола: Иван създава, Георги се присъединява с линк ---

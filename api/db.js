@@ -123,7 +123,28 @@ async function whoIs(token) {
   if (!s || Date.now() - s.at > TOKEN_DAYS * 864e5) return null;
   return s;
 }
-const authCmds = (id, email, role, pw) => { const salt = newSalt(); return [['HSET', 'pt:auth', id, JSON.stringify({ email: norm(email), role, salt, hash: hashPw(pw, salt) })], ['HSET', 'pt:email', norm(email), id]]; };
+const phoneKey = (p) => String(p || '').replace(/\D/g, '').replace(/^359/, '0');
+// Вход с имейл или с телефон: pt:email и pt:phone сочат към акаунта
+const authCmds = (id, email, role, pw, phone) => {
+  const salt = newSalt(); const e = email ? norm(email) : ''; const ph = phoneKey(phone);
+  const c = [['HSET', 'pt:auth', id, JSON.stringify({ email: e, phone: ph, role, salt, hash: hashPw(pw, salt) })]];
+  if (e) c.push(['HSET', 'pt:email', e, id]);
+  if (ph) c.push(['HSET', 'pt:phone', ph, id]);
+  return c;
+};
+// Намира акаунта по имейл или телефон (старите акаунти без индекс по телефон – по профила, и го добавя)
+async function idByLogin(login) {
+  const v = String(login || '').trim();
+  if (v.includes('@')) return one(['HGET', 'pt:email', norm(v)]);
+  const ph = phoneKey(v); if (!/^0\d{9}$/.test(ph)) return null;
+  let id = await one(['HGET', 'pt:phone', ph]);
+  if (!id) {
+    const all = await allFields();
+    const hit = Object.values(all).find((x) => x && x.role === 'driver' && x.id && phoneKey(x.phone) === ph);
+    if (hit) { id = hit.id; await one(['HSET', 'pt:phone', ph, id]); }
+  }
+  return id;
+}
 
 // ---------- данни ----------
 const stripPw = (f, v) => (fieldColl(f) === 'users' && v && typeof v === 'object' && 'password' in v) ? (({ password, ...rest }) => rest)(v) : v;
@@ -207,16 +228,17 @@ async function applyPush(s, set = {}, del = []) {
     const vs = await one(['HMGET', 'pt:db', ...keys]); keys.forEach((k2, i) => { const v2 = parse(vs[i]); if (k2.startsWith('cars:')) cars[k2.slice(5)] = v2; else all2[k2] = v2; });
   }
   const newTickets = [], toDrivers = [];
-  const hset = [], hdel = [], extra = [], rejected = [];
+  const hset = [], hdel = [], extra = [], rejected = []; const authPatch = {};
   for (const [f, raw] of Object.entries(set)) {
     const c = fieldColl(f), k = fieldKey(f), old = cur[f];
     let v = raw;
     if (v == null || typeof v !== 'object') { rejected.push(f); continue; }
     if (isAdmin) {
       if (c === 'users' && v.password) { // нова парола, зададена от админа
-        if (String(v.password).length >= 6 && v.email) extra.push(...authCmds(k, v.email, v.role === 'admin' ? 'admin' : 'driver', v.password));
+        if (String(v.password).length >= 6 && (v.email || v.phone)) extra.push(...authCmds(k, v.email, v.role === 'admin' ? 'admin' : 'driver', v.password, v.role === 'admin' ? '' : v.phone));
         v = stripPw(f, v);
       }
+      if (c === 'users' && old && v.role !== 'admin' && phoneKey(v.phone) !== phoneKey(old.phone)) { if (old.phone) extra.push(['HDEL', 'pt:phone', phoneKey(old.phone)]); if (v.phone) extra.push(['HSET', 'pt:phone', phoneKey(v.phone), k]); }
       if (c === 'tickets' && old) v = { ...v, thread: unionThread(old.thread, v.thread) };
       if (c === 'messages' && old) v = { ...v, readBy: [...new Set([...(old.readBy || []), ...(v.readBy || [])])] };
       // ново съобщение (без насрочване за по-късно) → известие на шофьорите, за които е
@@ -229,7 +251,16 @@ async function applyPush(s, set = {}, del = []) {
     if (c === 'users') {
       if (k !== id || !old) { rejected.push(f); continue; }
       v = stripPw(f, v); PROTECTED.forEach((p) => { if (p in old) v[p] = old[p]; else delete v[p]; });
-      v.id = id; v.email = old.email;
+      v.id = id;
+      // входът е с имейл или телефон: нов имейл (ако досега няма) и нов телефон обновяват индексите за вход
+      const ne = norm(v.email || ''), oe = norm(old.email || '');
+      if (!oe && ne && /^\S+@\S+\.\S+$/.test(ne) && !(await one(['HGET', 'pt:email', ne])) && ne !== ADMIN_EMAIL) { extra.push(['HSET', 'pt:email', ne, id]); authPatch.email = ne; } else v.email = old.email;
+      const np = phoneKey(v.phone), op = phoneKey(old.phone);
+      if (np !== op) {
+        const taken = np && await one(['HGET', 'pt:phone', np]);
+        if (np && (!/^0\d{9}$/.test(np) || (taken && taken !== id))) v.phone = old.phone;
+        else { if (op) extra.push(['HDEL', 'pt:phone', op]); if (np) extra.push(['HSET', 'pt:phone', np, id]); authPatch.phone = np; }
+      }
     } else if (c === 'profiles' || c === 'dismissed') {
       if (k !== id) { rejected.push(f); continue; }
       // шофьор и собственик на коли са отделни акаунти: видът не се сменя от приложението
@@ -285,7 +316,7 @@ async function applyPush(s, set = {}, del = []) {
     if (!old) continue;
     if (isAdmin) {
       hdel.push(f);
-      if (c === 'users') extra.push(['HDEL', 'pt:auth', k], ['HDEL', 'pt:email', norm(old.email)]);
+      if (c === 'users') { extra.push(['HDEL', 'pt:auth', k]); if (old.email) extra.push(['HDEL', 'pt:email', norm(old.email)]); if (old.phone) extra.push(['HDEL', 'pt:phone', phoneKey(old.phone)]); }
       continue;
     }
     if (OWN.includes(c) && c !== 'payments' && old.userId === id) hdel.push(f);
@@ -293,6 +324,7 @@ async function applyPush(s, set = {}, del = []) {
     else if (c === 'carlog' && ((cars[old.carId] && cars[old.carId].ownerId === id) || (old.by === id && old.status !== 'ok'))) hdel.push(f);
     else rejected.push(f);
   }
+  if (!isAdmin && Object.keys(authPatch).length) { const rec = parse(await one(['HGET', 'pt:auth', id])); if (rec) extra.push(['HSET', 'pt:auth', id, JSON.stringify({ ...rec, ...authPatch })]); }
   const cmds = [];
   if (hset.length) cmds.push(['HSET', 'pt:db', ...hset]);
   if (hdel.length) cmds.push(['HDEL', 'pt:db', ...hdel]);
@@ -316,38 +348,42 @@ async function pull(s, rev) {
 const ops = {
   async ping() { return { ok: true, live: true }; },
 
-  async login({ email, password, company }) {
-    const id = await one(['HGET', 'pt:email', norm(email)]);
+  async login({ email, login, password, company }) {
+    const id = await idByLogin(login ?? email);
     const rec = id && parse(await one(['HGET', 'pt:auth', id]));
-    if (!rec || rec.role !== 'driver' || !checkPw(rec, password)) { await sleep(400); return { error: 'Грешен имейл или парола' }; }
+    if (!rec || rec.role !== 'driver' || !checkPw(rec, password)) { await sleep(400); return { error: 'Грешни данни за вход – провери имейла/телефона и паролата' }; }
     const all = await allFields(); const u = all[`users:${id}`];
-    if (!u) return { error: 'Грешен имейл или парола' };
+    if (!u) return { error: 'Грешни данни за вход – провери имейла/телефона и паролата' };
     const token = await issueToken(id, 'driver');
     const rev = await one(['GET', 'pt:rev']);
     return { token, user: u, fields: driverView(all, id), rev: Number(rev || 0) };
   },
 
-  async register({ user, profile, password, accessCode, promo, refCode }) {
-    if (!user || typeof user !== 'object' || !user.email || !user.name) return { error: 'Липсват данни' };
+  async register({ user, profile, password, accessCode, promo, refCode, by }) {
+    if (!user || typeof user !== 'object' || !user.name || (!user.email && !user.phone)) return { error: 'Липсват данни' };
     if (String(password || '').length < 6) return { error: 'Паролата трябва да е поне 6 символа' };
-    const email = norm(user.email);
-    if (await one(['HGET', 'pt:email', email]) || email === ADMIN_EMAIL) return { error: 'Вече има акаунт с този имейл' };
+    const email = user.email ? norm(user.email) : '';
+    if (email && (await one(['HGET', 'pt:email', email]) || email === ADMIN_EMAIL)) return { error: 'Вече има акаунт с този имейл' };
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) return { error: 'Невалиден имейл' };
+    const method = by === 'phone' || !email ? 'phone' : 'email'; // с какво се регистрира: то се потвърждава
+    if (method === 'phone' && !/^0[89]\d{8}$/.test(phoneKey(user.phone))) return { error: 'Въведи мобилен телефон, например 0888 123 456' };
     const all = await allFields();
     const ph = String(user.phone || '').replace(/\D/g, '').replace(/^359/, '0');
     if (ph && Object.entries(all).some(([f, x]) => f.startsWith('users:') && x?.role === 'driver' && String(x.phone || '').replace(/\D/g, '').replace(/^359/, '0') === ph)) return { error: 'Има акаунт с този телефон. Влез в него или се свържи с нас.' };
     const settings = all.settings || {};
     const ver = verifyCfg(settings);
     // код по SMS: телефонът трябва да е потвърден в последните 30 минути
-    if (ver.sms) { const ok = parse(await one(['HGET', 'pt:smsok', ph])); if (!ok || Date.now() - ok.at > 30 * 60e3) return { error: 'Потвърди телефона с кода от SMS' }; }
+    // с телефон → код по SMS; с имейл → линк по имейла
+    if (ver.sms && method === 'phone') { const ok = parse(await one(['HGET', 'pt:smsok', ph])); if (!ok || Date.now() - ok.at > 30 * 60e3) return { error: 'Потвърди телефона с кода от SMS' }; }
     const id = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
     const today = new Date().toISOString().slice(0, 10);
     const u = {
-      ...stripPw('users:x', user), id, role: 'driver', status: 'active', email: String(user.email).trim(),
+      ...stripPw('users:x', user), id, role: 'driver', status: 'active', email: email ? String(user.email).trim() : '', phone: user.phone || '', signup: method,
       createdAt: new Date().toISOString(), lastLoginAt: new Date().toISOString(), tags: [], refMonths: 0, referredBy: null,
       subscription: { plan: 'trial', validUntil: addDays(today, Number(settings.trialDays) || 14) },
-      phoneVerified: true, source: 'site',
+      phoneVerified: method === 'phone' && ver.sms, source: 'site',
     };
-    if (ver.email) u.emailVerified = false;
+    if (ver.email && method === 'email') u.emailVerified = false;
     const set = {};
     if (accessCode != null) {
       const code = String(accessCode).trim().toUpperCase(); const c = all[`codes:${code}`];
@@ -372,9 +408,9 @@ const ops = {
     set[`users:${id}`] = u;
     set[`profiles:${id}`] = { ...(profile && typeof profile === 'object' ? profile : {}), tour: 'pending' };
     const hs = []; Object.entries(set).forEach(([f, v]) => hs.push(f, JSON.stringify(v)));
-    await redis([['HSET', 'pt:db', ...hs], ...authCmds(id, email, 'driver', password), ['INCR', 'pt:rev']]);
+    await redis([['HSET', 'pt:db', ...hs], ...authCmds(id, email, 'driver', password, ph), ['INCR', 'pt:rev']]);
     const token = await issueToken(id, 'driver');
-    if (ver.email) { try { await mailVerify(u, hostOf(arguments[0])); } catch (e) { console.error('mail', e); } }
+    if (ver.email && method === 'email') { try { await mailVerify(u, hostOf(arguments[0])); } catch (e) { console.error('mail', e); } }
     const all2 = { ...all, ...set }; const rev = await one(['GET', 'pt:rev']);
     const n = Object.values(all2).filter((x) => x && x.role === 'driver').length;
     await notifyAdmins('reg', { title: 'Нов шофьор 🚕', body: `${u.name} · ${[u.city, u.company].filter(Boolean).join(', ')} – общо ${n}`, url: '/admin#/drivers?f=new', tag: 'reg-' + id });
@@ -412,7 +448,7 @@ const ops = {
     if (String(password || '').length < 6) return { error: 'Паролата трябва да е поне 6 символа' };
     const rec = parse(await one(['HGET', 'pt:auth', s.id]));
     if (!checkPw(rec, old)) return { error: 'Грешна текуща парола' };
-    await redis(authCmds(s.id, rec.email, rec.role, password));
+    await redis(authCmds(s.id, rec.email, rec.role, password, rec.phone));
     return { ok: true };
   },
 
@@ -430,7 +466,8 @@ const ops = {
     if (pks.length) cmds.push(['HDEL', 'pt:pk', ...pks]);
     if (subs.length) cmds.push(['HDEL', 'pt:push', ...subs]);
     if (mine.length) cmds.push(['HDEL', 'pt:db', ...mine]);
-    if (rec) cmds.push(['HDEL', 'pt:email', rec.email]);
+    if (rec?.email) cmds.push(['HDEL', 'pt:email', rec.email]);
+    if (rec?.phone) cmds.push(['HDEL', 'pt:phone', rec.phone]);
     cmds.push(['INCR', 'pt:rev']);
     await redis(cmds);
     return { ok: true };
@@ -467,20 +504,27 @@ const ops = {
     if (dropAuth.length) cmds.push(['HDEL', 'pt:auth', ...dropAuth]);
     if (dropTok.length) cmds.push(['HDEL', 'pt:tok', ...dropTok]);
     if (dropEmail.length) cmds.push(['HDEL', 'pt:email', ...dropEmail]);
+    { const ph = pairs(await one(['HGETALL', 'pt:phone'])); const dp = Object.keys(ph).filter((k) => dropAuth.includes(ph[k])); if (dp.length) cmds.push(['HDEL', 'pt:phone', ...dp]); }
     cmds.push(['INCR', 'pt:rev']);
     await redis(cmds);
     return { ok: true, drivers };
   },
 
   // „Забравена парола“: стига до админа като въпрос; админът сменя паролата и се обажда на шофьора
-  async forgot({ email }) {
-    const e = norm(email);
-    if (!/^\S+@\S+\.\S+$/.test(e)) return { error: 'Невалиден имейл' };
-    const id = await one(['HGET', 'pt:email', e]);
+  async forgot({ email, login }) {
+    const raw = String(login ?? email ?? '').trim();
+    const byPhone = !raw.includes('@');
+    if (byPhone ? !/^0\d{9}$/.test(phoneKey(raw)) : !/^\S+@\S+\.\S+$/.test(norm(raw))) return { error: byPhone ? 'Въведи имейл или мобилен телефон' : 'Невалиден имейл' };
+    const id = await idByLogin(raw);
     const ver = verifyCfg(parse(await one(['HGET', 'pt:db', 'settings'])) || {});
-    if (ver.email) {
+    // по телефон: код по SMS, с него – нова парола
+    if (byPhone && MSG.smsReady() && ver.smsOn !== false) {
+      if (id) { const r = await sendCodeTo(phoneKey(raw), ver, 'reset'); if (r.error) return r; if (r.demoCode) { await sleep(200); return { ok: true, mode: 'sms', demoCode: r.demoCode }; } }
+      await sleep(300); return { ok: true, mode: 'sms' };
+    }
+    if (!byPhone && ver.email) {
       // линк за нова парола по имейла (не казваме дали има такъв акаунт)
-      if (id) { const u = parse(await one(['HGET', 'pt:db', `users:${id}`])); if (u && u.role === 'driver' && await limit(`reset:${id}`, 3, 3600)) { const t = await newMailToken(id, 'reset'); const m = MSG.resetMail(u.name, `${hostOf(arguments[0])}/app#/reset/${t}`); try { await MSG.sendMail({ to: u.email, name: u.name, ...m }); } catch (er) { console.error('mail', er); } } }
+      if (id) { const u = parse(await one(['HGET', 'pt:db', `users:${id}`])); if (u && u.role === 'driver' && u.email && await limit(`reset:${id}`, 3, 3600)) { const t = await newMailToken(id, 'reset'); const m = MSG.resetMail(u.name, `${hostOf(arguments[0])}/app#/reset/${t}`); try { await MSG.sendMail({ to: u.email, name: u.name, ...m }); } catch (er) { console.error('mail', er); } } }
       await sleep(300); return { ok: true, mode: 'mail' };
     }
     if (id) {
@@ -500,33 +544,29 @@ const ops = {
   // ---------- Потвърждения: код по SMS, имейл, нова парола ----------
   async verifyCfg() { const v = verifyCfg(parse(await one(['HGET', 'pt:db', 'settings'])) || {}); return { sms: v.sms, email: v.email }; },
   async sendCode({ phone }) {
-    const ph = String(phone || '').replace(/\D/g, '').replace(/^359/, '0');
+    const ph = phoneKey(phone);
     if (!/^0[89]\d{8}$/.test(ph)) return { error: 'Невалиден мобилен номер' };
     const st = parse(await one(['HGET', 'pt:db', 'settings'])) || {}; const v = verifyCfg(st);
     if (!v.sms) return { error: 'Кодът по SMS не е включен' };
-    const rec = parse(await one(['HGET', 'pt:sms', ph])) || { sent: [] };
-    const now = Date.now(); const sent = (rec.sent || []).filter((t) => now - t < 864e5);
-    if (sent.length && now - sent[sent.length - 1] < 60e3) return { error: `Изчакай ${Math.ceil((60e3 - (now - sent[sent.length - 1])) / 1000)} секунди и опитай пак`, wait: Math.ceil((60e3 - (now - sent[sent.length - 1])) / 1000) };
-    if (sent.filter((t) => now - t < 36e5).length >= v.perHour) return { error: 'Много опити за този номер. Опитай пак след час.' };
-    if (sent.length >= v.perDay) return { error: 'Много опити за този номер днес. Опитай утре или ни пиши.' };
-    const day = todayStr(); const n = Number(await one(['INCR', `pt:smscount:${day}`])); await one(['EXPIRE', `pt:smscount:${day}`, 3 * 864e2]);
-    if (n > v.cap) {
-      if (n === v.cap + 1) await notifyAdmins('ticket', { title: 'Дневният таван за SMS е достигнат', body: `${v.cap} SMS днес. Вдигни тавана от Настройки → Потвърждения, ако трябва.`, url: '/admin#/settings?t=verify', tag: 'smscap-' + day });
-      return { error: 'В момента не можем да пратим SMS. Опитай след малко или ни пиши.' };
-    }
-    const code = String(crypto.randomInt(1000, 10000));
-    await one(['HSET', 'pt:sms', ph, JSON.stringify({ h: hashPw(code, 'sms:' + ph), at: now, tries: 0, sent: [...sent, now] })]);
-    try { await MSG.sendSms({ to: ph, text: MSG.smsText(code) }); }
-    catch (e) { console.error('sms', e); return { error: 'SMS-ът не можа да се изпрати. Провери номера или опитай пак.' }; }
-    return { ok: true, ...(MSG.mockMode() ? { demoCode: code } : {}) };
+    // при регистрация номерът трябва да е свободен
+    if (await idByLogin(ph)) return { error: 'Има акаунт с този телефон. Влез в него или натисни „Забравена парола“.' };
+    return sendCodeTo(ph, v, 'reg');
+  },
+  // нова парола с кода от SMS
+  async resetPwSms({ phone, code, password }) {
+    if (String(password || '').length < 6) return { error: 'Паролата трябва да е поне 6 символа' };
+    const ph = phoneKey(phone);
+    const ok = await checkCode(ph, code, 'reset'); if (ok.error) return ok;
+    const id = await idByLogin(ph); const u = id && parse(await one(['HGET', 'pt:db', `users:${id}`]));
+    if (!u) return { error: 'Няма акаунт с този телефон' };
+    const toks = pairs(await one(['HGETALL', 'pt:tok'])); const old = Object.entries(toks).filter(([, v]) => v?.id === id).map(([k]) => k);
+    await redis([...authCmds(id, u.email, 'driver', password, ph), ...(old.length ? [['HDEL', 'pt:tok', ...old]] : [])]);
+    return { ok: true };
   },
   async verifyCode({ phone, code }) {
-    const ph = String(phone || '').replace(/\D/g, '').replace(/^359/, '0');
-    const rec = parse(await one(['HGET', 'pt:sms', ph]));
-    if (!rec || !rec.h || Date.now() - rec.at > 10 * 60e3) return { error: 'Кодът е изтекъл. Изпрати нов.' };
-    if ((rec.tries || 0) >= 5) return { error: 'Много грешни опити. Изпрати нов код.' };
-    if (!safeEq(hashPw(String(code || '').trim(), 'sms:' + ph), rec.h)) { rec.tries = (rec.tries || 0) + 1; await one(['HSET', 'pt:sms', ph, JSON.stringify(rec)]); await sleep(300); return { error: 'Грешен код' }; }
-    await redis([['HSET', 'pt:sms', ph, JSON.stringify({ sent: rec.sent || [] })], ['HSET', 'pt:smsok', ph, JSON.stringify({ at: Date.now() })]]);
+    const ph = phoneKey(phone);
+    const r = await checkCode(ph, code); if (r.error) return r;
+    await one(['HSET', 'pt:smsok', ph, JSON.stringify({ at: Date.now() })]);
     return { ok: true };
   },
   async resendVerify(body, s) {
@@ -542,7 +582,7 @@ const ops = {
     if (!t || t.kind !== 'reset' || Date.now() - t.at > 36e5) return { error: 'Линкът е изтекъл. Поискай нов от „Забравена парола“.' };
     const u = parse(await one(['HGET', 'pt:db', `users:${t.id}`])); if (!u) return { error: 'Няма такъв акаунт' };
     const toks = pairs(await one(['HGETALL', 'pt:tok'])); const old = Object.entries(toks).filter(([, v]) => v?.id === t.id).map(([k]) => k); // изход от всички устройства
-    await redis([...authCmds(t.id, u.email, 'driver', password), ['HDEL', 'pt:mailtok', String(token)], ...(old.length ? [['HDEL', 'pt:tok', ...old]] : []),
+    await redis([...authCmds(t.id, u.email, 'driver', password, u.phone), ['HDEL', 'pt:mailtok', String(token)], ...(old.length ? [['HDEL', 'pt:tok', ...old]] : []),
       ...(u.emailVerified === false ? [['HSET', 'pt:db', `users:${t.id}`, JSON.stringify({ ...u, emailVerified: true, emailVerifiedAt: new Date().toISOString() })], ['INCR', 'pt:rev']] : [])]);
     return { ok: true };
   },
@@ -714,6 +754,35 @@ const ops = {
 };
 const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// SMS код: регистрация (ключ = телефона) или нова парола (отделен ключ), с лимитите от админа
+const smsKey = (ph, purpose) => (purpose === 'reset' ? ph + ':r' : ph);
+async function sendCodeTo(ph, v, purpose = 'reg') {
+  const key = smsKey(ph, purpose);
+  const rec = parse(await one(['HGET', 'pt:sms', key])) || { sent: [] };
+  const now = Date.now(); const sent = (rec.sent || []).filter((t) => now - t < 864e5);
+  if (sent.length && now - sent[sent.length - 1] < 60e3) { const w = Math.ceil((60e3 - (now - sent[sent.length - 1])) / 1000); return { error: `Изчакай ${w} секунди и опитай пак`, wait: w }; }
+  if (sent.filter((t) => now - t < 36e5).length >= v.perHour) return { error: 'Много опити за този номер. Опитай пак след час.' };
+  if (sent.length >= v.perDay) return { error: 'Много опити за този номер днес. Опитай утре или ни пиши.' };
+  const day = todayStr(); const n = Number(await one(['INCR', `pt:smscount:${day}`])); await one(['EXPIRE', `pt:smscount:${day}`, 3 * 864e2]);
+  if (n > v.cap) {
+    if (n === v.cap + 1) await notifyAdmins('ticket', { title: 'Дневният таван за SMS е достигнат', body: `${v.cap} SMS днес. Вдигни тавана от Настройки → Потвърждения, ако трябва.`, url: '/admin#/settings?t=verify', tag: 'smscap-' + day });
+    return { error: 'В момента не можем да пратим SMS. Опитай след малко или ни пиши.' };
+  }
+  const code = String(crypto.randomInt(1000, 10000));
+  await one(['HSET', 'pt:sms', key, JSON.stringify({ h: hashPw(code, 'sms:' + ph), at: now, tries: 0, sent: [...sent, now] })]);
+  try { await MSG.sendSms({ to: ph, text: purpose === 'reset' ? `Чисто: код за нова парола ${code}. Валиден 10 минути.` : MSG.smsText(code) }); }
+  catch (e) { console.error('sms', e); return { error: 'SMS-ът не можа да се изпрати. Провери номера или опитай пак.' }; }
+  return { ok: true, ...(MSG.mockMode() ? { demoCode: code } : {}) };
+}
+async function checkCode(ph, code, purpose = 'reg') {
+  const key = smsKey(ph, purpose);
+  const rec = parse(await one(['HGET', 'pt:sms', key]));
+  if (!rec || !rec.h || Date.now() - rec.at > 10 * 60e3) return { error: 'Кодът е изтекъл. Изпрати нов.' };
+  if ((rec.tries || 0) >= 5) return { error: 'Много грешни опити. Изпрати нов код.' };
+  if (!safeEq(hashPw(String(code || '').trim(), 'sms:' + ph), rec.h)) { rec.tries = (rec.tries || 0) + 1; await one(['HSET', 'pt:sms', key, JSON.stringify(rec)]); await sleep(300); return { error: 'Грешен код' }; }
+  await one(['HSET', 'pt:sms', key, JSON.stringify({ sent: rec.sent || [] })]);
+  return { ok: true };
+}
 // Потвърждения: включени ли са (от админа) и има ли ключ (във Vercel)
 function verifyCfg(st) {
   const v = st?.verify || {};

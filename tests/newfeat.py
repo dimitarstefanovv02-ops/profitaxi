@@ -62,7 +62,7 @@ async def main():
         # админ пуска сутрешното напомняне веднага
         ca = await b.new_context(viewport={'width': 1280, 'height': 900}); await ca.add_init_script(INIT); a = await ca.new_page()
         await a.goto(B + '/admin'); await a.wait_for_timeout(400)
-        await a.fill('input[type=email]', 'admin@profitaxi.bg'); await a.fill('input[type=password]', 'admin123'); await a.click('button[type=submit]'); await a.wait_for_timeout(900)
+        await a.fill('input[autocomplete=username], input[type=email]', 'admin@profitaxi.bg'); await a.fill('input[type=password]', 'admin123'); await a.click('button[type=submit]'); await a.wait_for_timeout(900)
         r = await a.evaluate(JS("return await s.adminPush('cronRun', { slot: 'am' }); "))
         ok('Сутрешното пускане минава', r.get('ok'), r)
         got = json.loads(await (await d.request.get(B + '/mock/push')).text())[start:]

@@ -11,7 +11,7 @@ async def main():
         await pg.goto(B+'/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B+'/app#/register'); await pg.wait_for_timeout(500)
         await pg.click('button.option:has-text("Собственик на коли")'); await pg.wait_for_timeout(150)
         ok('При собственик полето „Колата е“ се скрива', not await pg.locator('h3:has-text("Колата е")').is_visible())
-        await pg.fill('input[autocomplete=name]','Петър Собственик'); await pg.fill('input[type=email]','owner@test.bg'); await pg.fill('input[type=password]','123456')
+        await pg.fill('input[autocomplete=name]','Петър Собственик'); await pg.fill('input[autocomplete=username], input[type=email]','owner@test.bg'); await pg.fill('input[type=password]','123456')
         await pg.fill('input[type=tel]','0877333444')
         await pg.select_option('select >> nth=0','Пловдив'); await pg.wait_for_timeout(150); await pg.select_option('select >> nth=1', index=1)
         if await pg.locator('.sms-box button, button:has-text("Изпрати код")').count():

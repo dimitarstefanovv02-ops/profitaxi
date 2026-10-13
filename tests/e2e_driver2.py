@@ -11,7 +11,7 @@ async def main():
         await ctx.add_init_script("try{localStorage.setItem('profitaxi.dueShown',(d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'))(new Date()))}catch(e){}")
         pg = await ctx.new_page(); errs=[]; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(B); await pg.evaluate('localStorage.clear()'); await pg.goto(B+'#/login'); await pg.wait_for_timeout(400)
-        await pg.fill('input[type=email]','ivan@demo.bg'); await pg.fill('input[type=password]','demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
+        await pg.fill('input[autocomplete=username], input[type=email]','ivan@demo.bg'); await pg.fill('input[type=password]','demo123'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(900)
         await pg.keyboard.press('Escape'); await pg.evaluate("document.querySelectorAll('.sheet-wrap').forEach(e=>e.remove())")
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(600)
         # разходите до днес: чистото досега = приход − разходи от смените − постоянни до днес

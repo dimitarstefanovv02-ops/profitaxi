@@ -57,13 +57,13 @@ async def main():
 
         # същият шофьор на друг телефон
         await d1b.goto(base + '/app#/login'); await d1b.wait_for_timeout(400)
-        await d1b.fill('input[type=email]', 'ivan.t@mail.bg'); await d1b.fill('input[type=password]', 'parola1')
+        await d1b.fill('input[autocomplete=username], input[type=email]', 'ivan.t@mail.bg'); await d1b.fill('input[type=password]', 'parola1')
         await d1b.click('button[type=submit]'); await d1b.wait_for_timeout(1000)
         n = await d1b.evaluate(S.join(["async () => {", "const d = s.myData(); return [d.shifts.length, d.costs.length, d.user.name]; }"]))
         check(n[0] == 1 and n[1] >= 1 and n[2] == 'Иван Тестов', 'Вход от втори телефон: смяната и разходът са там', n)
         check(await d1b.locator('.demo-box').count() == 0, 'Без демо полето за вход в режим на живо')
         bad = await d1b.evaluate(S.join(["async () => {", "s.logout(); return (await s.login('ivan.t@mail.bg','greshna')).error; }"]))
-        check(bad == 'Грешен имейл или парола', 'Грешна парола се отказва', bad)
+        check(bad.startswith('Грешни данни за вход'), 'Грешна парола се отказва', bad)
 
         # шофьор 2 не вижда данните на шофьор 1
         await d2.evaluate(S.join(["async () => {", "await s.syncNow(); }"]))
@@ -91,7 +91,7 @@ async def main():
         ca, a, ea = await device(b, 1280)
         await a.goto(base + '/admin'); await a.wait_for_timeout(500)
         check(await a.locator('.demo-box').count() == 0, 'Админ: без демо пароли на входа')
-        await a.fill('input[type=email]', 'admin@profitaxi.bg'); await a.fill('input[type=password]', 'admin123')
+        await a.fill('input[autocomplete=username], input[type=email]', 'admin@profitaxi.bg'); await a.fill('input[type=password]', 'admin123')
         await a.click('button[type=submit]'); await a.wait_for_timeout(1200)
         drivers = await a.evaluate(S.join(["async () => {", "return s.admin.drivers().map(u => u.name).sort(); }"]))
         check(drivers == ['Иван Тестов', 'Мария Тестова'], 'Админът вижда двамата тестови шофьори (без демо)', drivers)
@@ -144,7 +144,7 @@ async def main():
         check(7 in d, 'Без интернет: разходът се качва, щом връзката се върне', d)
         # забравена парола → въпрос при админа
         await d1b.goto(base + '/app#/forgot'); await d1b.wait_for_timeout(300)
-        await d1b.fill('input[type=email]', 'ivan.t@mail.bg'); await d1b.click('button[type=submit]'); await d1b.wait_for_timeout(800)
+        await d1b.fill('input[autocomplete=username], input[type=email]', 'ivan.t@mail.bg'); await d1b.click('button[type=submit]'); await d1b.wait_for_timeout(800)
         check('Получихме' in await d1b.inner_text('#app'), 'Забравена парола: шофьорът вижда потвърждение')
         await a.evaluate(S.join(["async () => {", "await s.syncNow(); }"]))
         t = await a.evaluate(S.join(["async () => {", "return s.admin.tickets().filter(t => t.thread[0].text.includes('Забравих')).map(t => t.name); }"]))
@@ -157,7 +157,7 @@ async def main():
         u = await d1.evaluate(S.join(["async () => {", "return s.currentUser(); }"]))
         check(u is None, 'Изтритият шофьор е изкаран от приложението', u)
         r = await d1.evaluate(S.join(["async () => {", "return (await s.login('ivan.t@mail.bg', 'parola1')).error; }"]))
-        check(r == 'Грешен имейл или парола', 'Старият акаунт вече не съществува', r)
+        check(r.startswith('Грешни данни за вход'), 'Старият акаунт вече не съществува', r)
         id3 = await register(d1, 'Иван Тестов', 'ivan.t@mail.bg', '0888111222')
         check(len(id3) > 5 and ' ' not in id3, 'Същият имейл и телефон могат да се регистрират наново', id3)
         check(not (e1 + e2 + e3 + ea + eb), 'Без грешки в JS', e1 + e2 + e3 + ea + eb)

@@ -12,7 +12,7 @@ async def main():
         await pg.goto(base+'/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(base+'/app#/register'); await pg.wait_for_timeout(400)
         T = lambda s: pg.locator(s)
         # --- Регистрация: валидации ---
-        await pg.fill('input[autocomplete=name]','Тест Шофьор'); await pg.fill('input[type=email]','test@test.bg'); await pg.fill('input[type=password]','123456')
+        await pg.fill('input[autocomplete=name]','Тест Шофьор'); await pg.fill('input[autocomplete=username], input[type=email]','test@test.bg'); await pg.fill('input[type=password]','123456')
         await pg.fill('input[type=tel]','0877111222'); await pg.wait_for_timeout(100)
         await pg.click('button[type=submit]'); await pg.wait_for_timeout(200)
         ok('Регистрация без град дава грешка', 'град' in (await T('.err').inner_text()).lower() or 'кола' in (await T('.err').inner_text()).lower(), await T('.err').inner_text())
@@ -164,8 +164,8 @@ async def main():
         ok('Грешна текуща парола се отказва', 'Грешна' in await T('.sheet .err').inner_text())
         await pg.fill('.sheet input >> nth=0','123456'); await pg.click('.sheet .btn-page'); await pg.wait_for_timeout(400)
         await pg.click('text=Изход'); await pg.wait_for_timeout(300)
-        await pg.fill('input[type=email]','test@test.bg'); await pg.fill('input[type=password]','123456'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(300)
-        ok('Старата парола вече не работи', 'Грешен' in await T('.err').inner_text())
+        await pg.fill('input[autocomplete=username], input[type=email]','test@test.bg'); await pg.fill('input[type=password]','123456'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(300)
+        ok('Старата парола вече не работи', 'Грешни' in await T('.err').inner_text())
         await pg.fill('input[type=password]','654321'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(400)
         ok('Вход с новата парола', '#/home' in pg.url)
         # --- Ширина и грешки ---
