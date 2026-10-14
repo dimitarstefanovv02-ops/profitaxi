@@ -586,11 +586,11 @@ body.menu-open { overflow: hidden; }
 :root, :root[data-theme="light"] {
   --muted: #443E3F; --line: #CCC3C4; --line-2: #C2B9BA; --sec: #E9E3E3;
   --tile-a: #E2DBDB; --tile-a-fg: #1A1617; --tile-a-mute: #3F393A;
-  --tile-b: #1A1617; --tile-b-fg: #FFFFFF; --tile-b-mute: #D2CACB; --tile-ic: #52C46A;
+  --tile-b: var(--ink-bg); --tile-b-fg: #FFFFFF; --tile-b-mute: #D2CACB; --tile-ic: #52C46A;
 }
 :root[data-theme="dark"] {
   --muted: #BCB4B5; --line: #403B3B; --line-2: #464141;
-  --tile-a: #2A2727; --tile-a-fg: #F4EFEF; --tile-a-mute: #BDB5B6;
+  --tile-a: #231F20; --tile-a-fg: #F4EFEF; --tile-a-mute: #BDB5B6;
   --tile-b: #E9E4E4; --tile-b-fg: #141313; --tile-b-mute: #4A4445; --tile-ic: #2F6B39;
 }
 .label { color: var(--green); }
