@@ -590,11 +590,11 @@ body.menu-open { overflow: hidden; }
 }
 :root[data-theme="dark"] {
   --muted: #BCB4B5; --line: #403B3B; --line-2: #464141;
-  --tile-a: #CFC8C8; --tile-a-fg: #141313; --tile-a-mute: #3A3434;
-  --tile-b: #FFFFFF; --tile-b-fg: #141313; --tile-b-mute: #4A4445; --tile-ic: #2F6B39;
+  --tile-a: #2A2727; --tile-a-fg: #F4EFEF; --tile-a-mute: #BDB5B6;
+  --tile-b: #E9E4E4; --tile-b-fg: #141313; --tile-b-mute: #4A4445; --tile-ic: #2F6B39;
 }
 .label { color: var(--green); }
-.blk-ink .label, .blk-ink .kicker { color: var(--tag-bg); }
+.blk-ink .label, .blk-ink .kicker { color: #8FD18E; }
 
 /* Полета „на шахмат“: светло сиво / черно (на тъмна тема – светло сиво / бяло).
    Тъмните полета са различни според броя колони, затова правилата са по ширини. */
