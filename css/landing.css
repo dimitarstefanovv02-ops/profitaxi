@@ -640,3 +640,19 @@ body.menu-open { overflow: hidden; }
   .faq-toc a[aria-current="true"] { background: none; color: var(--text); padding-left: 14px; border-radius: 0; box-shadow: inset 3px 0 0 var(--green); }
 }
 :root:not([data-theme="dark"]) .blk-grey { --tile-a: #D8D0D1; }
+
+/* Блоковете се редуват: тъмно сиво – бяло – тъмно сиво. Без светлосиви блокове.
+   В тъмните блокове картите, линиите и бутоните минават на тъмни цветове. */
+:root:not([data-theme="dark"]) .blk-ink {
+  --text: #FFFFFF; --muted: #C9C1C2; --line: #4A4344; --line-2: #4A4344; --strong: #FFFFFF;
+  --card: #2E292A; --card-2: #2E292A; --sec: #2E292A;
+  --btn-bg: #FFFFFF; --btn-fg: #231F20; --btn-hover: #EDE7E7;
+  --green: #8FD18E; --red: #FF8A80; --focus: #8FD18E; --bezel: #4A4344; --shadow: none;
+  --tile-a: #E9E4E4; --tile-a-fg: #141313; --tile-a-mute: #4A4445;
+  --tile-b: #343031; --tile-b-fg: #FFFFFF; --tile-b-mute: #D2CACB; --tile-ic: #8FD18E;
+}
+.blk-ink .checker > * { --i: var(--tile-a-fg); }
+.blk-next { margin-top: 64px; }
+@media (min-width: 1024px) { .blk-next { margin-top: 96px; } }
+.av-more { margin-top: 64px; }
+@media (min-width: 1024px) { .av-more { margin-top: 96px; } }
