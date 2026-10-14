@@ -159,7 +159,9 @@ export function profileCover(user, d) {
       opt('camera', d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', 'Изрязваш я с пръст', () => photo('carPhoto')),
       opt('user', d.photo ? 'Смени профилната снимка' : 'Добави профилна снимка', 'Показва се върху колата', () => photo('photo')));
   });
-  return h('section', { class: 'cover5' },
+  // всеки ред се събира на един ред: ако е дълъг, буквите леко се смаляват (без „…“); ако пак не стига – пренася се
+  const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth + 1 && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap'); });
+  const sec = h('section', { class: 'cover5' },
     h('div', { class: cx('c5-photo', !d.carPhoto && 'empty') },
       d.carPhoto && h('img', { src: d.carPhoto, alt: 'Колата' }),
       h('button', { class: 'c5-cam', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', onclick: () => photo('carPhoto') }, icon('camera', 18), !d.carPhoto && h('span', null, 'Снимка на колата')),
@@ -171,6 +173,8 @@ export function profileCover(user, d) {
           who && h('span', null, who),
           h('span', { class: 'c5-car' }, carLine || 'Добави кода, номера и модела на колата')))),
     h('button', { class: 'c5-edit', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'));
+  setTimeout(() => sec.querySelectorAll('.c5-txt > *').forEach(fit), 0);
+  return sec;
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)
