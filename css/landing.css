@@ -701,3 +701,15 @@ html:has(.subnav) { scroll-padding-top: calc(var(--hd) + 70px); }
 /* Тъмна тема: по-ясна разлика между „белите“ и тъмните блокове */
 :root[data-theme="dark"] { --bg: #1E1B1B; --card: #282525; --card-2: #282525; --sec: #282525; --line: #3D3939; --line-2: #464141; --ink-bg: #0B0A0A; --tile-a: #2E2A2A; }
 :root[data-theme="dark"] .blk-ink { --tile-a: #1E1B1B; --card: #1A1818; --line: #2E2A2A; --line-2: #353131; }
+
+/* Бутони към Google Play / App Store (ДКП) */
+.store-btns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.store-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 56px; padding: 8px 18px 8px 14px; border-radius: 14px; background: var(--btn-bg); color: var(--btn-fg); text-decoration: none; }
+.store-btn:hover { background: var(--btn-hover); }
+.store-btn svg { width: 26px; height: 26px; flex: none; }
+.store-btn span { display: grid; line-height: 1.1; }
+.store-btn small { font-size: 12px; opacity: .8; }
+.store-btn b { font-size: 18px; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+.blk-ink .store-btn { background: var(--ink-btn-bg); color: var(--ink-btn-fg); }
+.blk-ink .store-btn:hover { background: var(--ink-btn-hover); }
+@media (max-width: 599px) { .feat-txt > .store-btns { grid-column: 1 / -1; } .store-btn { flex: 1 1 0; padding: 8px 12px; } .store-btn b { font-size: 16px; } }
