@@ -40,6 +40,24 @@
   addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
   matchMedia('(min-width: 1024px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
 
+  // ---------- Въпроси по менюта: показва се само избраната тема ----------
+  {
+    const toc = document.querySelector('.faq-toc'), faq = document.querySelector('.faq');
+    if (toc && faq) {
+      const links = [...toc.querySelectorAll('a[href^="#"]')];
+      const groups = [...faq.querySelectorAll('.faq-group')];
+      const pick = (id, scroll) => {
+        const g = groups.find((x) => x.id === id) || groups[0];
+        groups.forEach((x) => x.classList.toggle('on', x === g));
+        links.forEach((a) => a.setAttribute('aria-current', String(a.getAttribute('href') === '#' + g.id)));
+        if (scroll && matchMedia('(max-width: 1023px)').matches) faq.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      faq.classList.add('tabbed');
+      links.forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); const id = a.getAttribute('href').slice(1); history.replaceState(null, '', '#' + id); pick(id, true); }));
+      pick(location.hash.slice(1));
+    }
+  }
+
   // ---------- Витрина: бутоните сменят снимката и описанието ----------
   document.querySelectorAll('[data-show]').forEach((box) => {
     const tabs = [...box.querySelectorAll('[data-shot]')];

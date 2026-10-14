@@ -581,3 +581,62 @@ body.menu-open { overflow: hidden; }
   #avtopark .show-vis:has(.phone) { grid-row: 1 / span 4 !important; }
   #avtopark .show-cta { width: 100%; }
 }
+
+/* ---------- Малко повече контраст: сиво / черно / бяло / зелено ---------- */
+:root, :root[data-theme="light"] {
+  --muted: #443E3F; --line: #CCC3C4; --line-2: #C2B9BA; --sec: #E9E3E3;
+  --tile-a: #E2DBDB; --tile-a-fg: #1A1617; --tile-a-mute: #3F393A;
+  --tile-b: #1A1617; --tile-b-fg: #FFFFFF; --tile-b-mute: #D2CACB; --tile-ic: #52C46A;
+}
+:root[data-theme="dark"] {
+  --muted: #BCB4B5; --line: #403B3B; --line-2: #464141;
+  --tile-a: #CFC8C8; --tile-a-fg: #141313; --tile-a-mute: #3A3434;
+  --tile-b: #FFFFFF; --tile-b-fg: #141313; --tile-b-mute: #4A4445; --tile-ic: #2F6B39;
+}
+.label { color: var(--green); }
+.blk-ink .label, .blk-ink .kicker { color: var(--tag-bg); }
+
+/* Полета „на шахмат“: светло сиво / черно (на тъмна тема – светло сиво / бяло).
+   Тъмните полета са различни според броя колони, затова правилата са по ширини. */
+.checker { border-top: 0 !important; gap: 10px !important; }
+.checker > * { background: var(--tile-a); color: var(--tile-a-fg); border: 0 !important; border-radius: 18px; padding: 20px 18px 22px !important; --m: var(--tile-a-mute); --i: var(--tile-a-fg); }
+.checker > * p, .checker > * span { color: var(--m); }
+.checker > * .ic { color: var(--i); }
+.checker > .dk { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); --i: var(--tile-ic); }
+.checker.tl li { grid-template-columns: 96px 1fr; align-items: baseline; }
+.checker.nums b { font-size: 30px; }
+/* една колона (или нечетен брой колони): през едно */
+.checker.own:not(.own-4) > :nth-child(even), .checker.tl > :nth-child(even) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); --i: var(--tile-ic); }
+/* 2 колони: 2-ро и 3-то от всяка четворка */
+.checker.nums > :is(:nth-child(4n+2), :nth-child(4n+3)) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); }
+@media (max-width: 719px) {
+  .checker.grid > :is(:nth-child(4n+2), :nth-child(4n+3)) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); --i: var(--tile-ic); }
+  .checker.own-4 > :nth-child(even) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); }
+}
+@media (min-width: 720px) and (max-width: 1023px) {
+  .checker.grid > :nth-child(even) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); --i: var(--tile-ic); }
+  .checker.own-4 > :is(:nth-child(4n+2), :nth-child(4n+3)) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); }
+}
+@media (min-width: 720px) { .checker.tl li { grid-template-columns: 130px 1fr; } .checker.nums b { font-size: 36px; } }
+@media (min-width: 1024px) {
+  .checker.grid > :is(:nth-child(8n+2), :nth-child(8n+4), :nth-child(8n+5), :nth-child(8n+7)),
+  .checker.own-4 > :is(:nth-child(8n+2), :nth-child(8n+4), :nth-child(8n+5), :nth-child(8n+7)) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); --i: var(--tile-ic); }
+  .checker.nums b { font-size: 40px; }
+}
+
+/* Долна част: по-големи надписи */
+.ft .logo { font-size: 34px; }
+.ft-brand p { font-size: 18px; line-height: 1.5; color: var(--on-ink-2); }
+.ft nav { font-size: 18px; gap: 14px; }
+.ft nav b { font-size: 19px; }
+@media (min-width: 1024px) { .ft-brand p { font-size: 19px; } .ft nav { font-size: 19px; } .ft nav b { font-size: 20px; } }
+
+/* Въпроси – по менюта: виждаш само избраната тема */
+.faq.tabbed .faq-group { display: none; }
+.faq.tabbed .faq-group.on { display: block; }
+.faq.tabbed .faq-group + .faq-group { margin-top: 0; }
+.faq-toc a[aria-current="true"] { background: var(--btn-bg); color: var(--btn-fg); box-shadow: none; }
+@media (min-width: 1024px) {
+  .faq-toc a[aria-current="true"] { background: none; color: var(--text); padding-left: 14px; border-radius: 0; box-shadow: inset 3px 0 0 var(--green); }
+}
+:root:not([data-theme="dark"]) .blk-grey { --tile-a: #D8D0D1; }
