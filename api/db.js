@@ -922,9 +922,11 @@ async function groqChat(messages) {
   return String((await r.json()).choices?.[0]?.message?.content || '').trim();
 }
 
-const TALON_PROMPT = `Това е снимка на българско свидетелство за регистрация на МПС (талон), част I. Прочети полетата и върни САМО JSON без друг текст:
-{"make": "марката от поле D.1", "model": "търговското наименование от поле D.3", "year": годината от поле B (дата на първа регистрация) като число, "plate": "регистрационният номер от поле A", "fuel": "горивото от поле P.3 или null"}
-Пиши марката и модела с латински букви, както са на талона (напр. "HYUNDAI", "ELANTRA"). Моделът е търговското наименование (D.3) – не типа или кода от D.2. Ако D.3 е празно, но моделът ясно личи от друг текст на талона, върни го. Ако поле не се чете, сложи null. Не измисляй.`;
+const TALON_PROMPT = `Това е снимка на българско свидетелство за регистрация на МПС (талон), част I. Полетата са с етикети в скоби:
+(A) регистрационен номер; (D.1) марка (модел) – на два реда, на кирилица и на латиница, напр. „МЕРЦЕДЕС Е 220 Д“ / „MERCEDES E 220 D“; (B) дата на първа регистрация. (D.3) и (O.1) НЕ ни трябват.
+Върни САМО JSON без друг текст:
+{"make": "марката от D.1, латинския ред, напр. MERCEDES", "model": "остатъкът от D.1 след марката, латинския ред, напр. E 220 D", "year": годината от (B) като число, "plate": "номерът от (A), напр. PB8092PE"}
+Ако поле не се чете, сложи null. Не измисляй.`;
 async function groqTalon(img) {
   const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${GROQ}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model: process.env.GROQ_VISION_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct', temperature: 0, max_tokens: 200, response_format: { type: 'json_object' },
