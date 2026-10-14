@@ -1544,3 +1544,47 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .verify-card { border: 1.5px solid #F59E0B !important; }
 .vc-ic { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #FEF3C7; color: #B45309; flex: none; }
 .vs-grid { display: flex; flex-wrap: wrap; gap: 8px; } .chip.warn { background: #FEF3C7; color: #92400E; }
+
+/* ---------- При ПТП (двустранен протокол с ДКП) ---------- */
+.ptp-hero { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px; display: grid; gap: 14px; }
+.ptp-hero > p { font-size: 1.02rem; line-height: 1.5; margin: 0; }
+.ptp-ic { width: 52px; height: 52px; border-radius: 16px; background: var(--surface-2); display: grid; place-items: center; }
+.store-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.store-btn { display: flex; align-items: center; gap: 10px; min-height: 60px; padding: 8px 14px; border-radius: 14px; background: #111; color: #fff; text-decoration: none; }
+.store-btn svg { flex: none; }
+.store-btn span { display: grid; line-height: 1.1; }
+.store-btn small { font-size: .72rem; opacity: .8; }
+.store-btn b { font-size: 1.08rem; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+:root[data-theme="dark"] .store-btn { background: #fff; color: #111; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="sun"]) .store-btn { background: #fff; color: #111; } }
+.ptp-112 { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 14px 16px; border-radius: var(--r-md); background: var(--neg-soft); color: var(--text); text-decoration: none; }
+.ptp-112 > .ic:first-child { color: var(--neg); flex: none; }
+.ptp-112 > span { flex: 1; display: grid; gap: 2px; }
+.ptp-112 > span span { color: var(--muted); font-size: .92rem; }
+.ptp-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ptp-steps li { display: flex; gap: 14px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
+.ptp-steps i { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--text); color: var(--surface); font-style: normal; font-weight: 800; display: grid; place-items: center; }
+.ptp-steps div { display: grid; gap: 2px; }
+.ptp-steps span { color: var(--muted); font-size: .94rem; line-height: 1.4; }
+.ptp-note { margin: 16px 4px 0; }
+
+/* ---------- Профил: компактна корица (снимка на колата + профилна снимка и текст върху нея) ---------- */
+.cover5 { margin: 0 0 8px; }
+.c5-photo { position: relative; height: 176px; border-radius: 24px; overflow: hidden; background: #231F20; }
+.c5-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.c5-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.72) 100%); pointer-events: none; }
+.c5-photo.empty { background: linear-gradient(135deg, #3A3536, #231F20); }
+.c5-photo.empty::after { display: none; }
+.c5-cam { position: absolute; z-index: 2; right: 10px; top: 10px; height: 36px; min-width: 36px; padding: 0 9px; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(20,19,19,.5); color: #fff; border: 1px solid rgba(255,255,255,.3); font: 600 .82rem/1 var(--font); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.c5-info { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 12px; color: #fff; }
+.c5-ava { flex: none; width: 60px; height: 60px; padding: 0; border-radius: 18px; overflow: hidden; border: 2px solid #fff; background: #BFF0BE; color: #0F3A18; font: 800 1.2rem/1 var(--font); display: grid; place-items: center; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); }
+.c5-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.c5-txt { min-width: 0; display: grid; gap: 1px; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
+.c5-txt b { font-size: 1.12rem; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c5-txt span { font-size: .84rem; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c5-txt .c5-car { font-weight: 600; opacity: 1; }
+.c5-edit { margin-top: 8px; width: 100%; height: 48px; border-radius: 16px; border: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 .98rem/1 var(--font);
+  background: var(--ch-low, var(--surface-2)); color: var(--ch-on, var(--text)); cursor: pointer; }
+.talon-btn { margin-bottom: 12px; }
+.grid-mm { grid-template-columns: minmax(0, 1fr) 96px !important; }

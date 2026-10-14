@@ -645,6 +645,18 @@ const ops = {
     catch (e) { console.error('voice', e); return { error: 'Не успях да разпозная записа. Опитай пак.' }; }
   },
 
+  // ---------- снимка на талона → марка, модел, година, номер (AI със зрение през Groq) ----------
+  // Снимката не се пази. Без ключ или при грешка → { fallback: true } и телефонът чете талона сам (Tesseract).
+  async talon({ img, mock }, s) {
+    if (!img || typeof img !== 'string' || !img.startsWith('data:image/')) return { error: 'Няма снимка' };
+    if (img.length > 4_000_000) return { error: 'Снимката е твърде голяма' };
+    if (!(await quota(s.id, 'talon', 15))) return { fallback: true };
+    if (groqMock()) return mock || { fallback: true };
+    if (!GROQ) return { fallback: true };
+    try { return await groqTalon(img); }
+    catch (e) { console.error('talon', e); return { fallback: true }; }
+  },
+
   // ---------- AI отговори в търсачката ----------
   async ask({ q, mockAnswer }, s) {
     const text = String(q || '').trim().slice(0, 300);
@@ -752,7 +764,7 @@ const ops = {
 
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
+const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'talon', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // SMS код: регистрация (ключ = телефона) или нова парола (отделен ключ), с лимитите от админа
 const smsKey = (ph, purpose) => (purpose === 'reset' ? ph + ':r' : ph);
@@ -908,6 +920,22 @@ async function groqChat(messages) {
     body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, temperature: 0.2, max_tokens: 350 }) });
   if (!r.ok) throw new Error('groq ' + r.status + ' ' + (await r.text()).slice(0, 200));
   return String((await r.json()).choices?.[0]?.message?.content || '').trim();
+}
+
+const TALON_PROMPT = `Това е снимка на българско свидетелство за регистрация на МПС (талон), част I. Прочети полетата и върни САМО JSON без друг текст:
+{"make": "марката от поле D.1", "model": "търговското наименование от поле D.3", "year": годината от поле B (дата на първа регистрация) като число, "plate": "регистрационният номер от поле A", "fuel": "горивото от поле P.3 или null"}
+Пиши марката и модела с латински букви, както са на талона. Ако поле не се чете, сложи null. Не измисляй.`;
+async function groqTalon(img) {
+  const r = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { Authorization: `Bearer ${GROQ}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: process.env.GROQ_VISION_MODEL || 'meta-llama/llama-4-scout-17b-16e-instruct', temperature: 0, max_tokens: 200, response_format: { type: 'json_object' },
+      messages: [{ role: 'user', content: [{ type: 'text', text: TALON_PROMPT }, { type: 'image_url', image_url: { url: img } }] }] }) });
+  if (!r.ok) throw new Error('groq ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  const txt = String((await r.json()).choices?.[0]?.message?.content || '');
+  let j; try { j = JSON.parse(txt.slice(txt.indexOf('{'), txt.lastIndexOf('}') + 1)); } catch { return { fallback: true }; }
+  const str = (v) => (typeof v === 'string' && v.trim() && v.trim().toLowerCase() !== 'null' ? v.trim().slice(0, 40) : null);
+  const year = Number(j.year); const now = new Date().getFullYear();
+  const out = { make: str(j.make), model: str(j.model), year: year >= 1950 && year <= now + 1 ? year : null, plate: str(j.plate), fuel: str(j.fuel) };
+  return out.make || out.model || out.year || out.plate ? out : { fallback: true };
 }
 
 function rpFrom(body) {

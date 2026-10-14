@@ -20,6 +20,7 @@ import { meView } from './views/me.js';
 import { ideasView } from './views/ideas.js';
 import { helpView } from './views/help.js';
 import { guideView } from './views/guide.js';
+import { ptpView } from './views/ptp.js';
 import { initArrange, onRender as arrangeRendered, resetZones, zonesOnPage } from './arrange.js';
 import { vehicleView } from './views/vehicle.js';
 import { carsView, joinView, fleetHomeView } from './views/cars.js';
@@ -36,7 +37,7 @@ const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
   '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/calendar': calendarView, '/search': searchView,
-  '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/vehicle': vehicleView,
+  '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/ptp': ptpView, '/vehicle': vehicleView,
   '/cars': carsView, '/join': joinView, '/fguide': fleetGuideView,
 };
 // Долното меню: само 3 бутона. Подробните страници се отварят от тях и светят под „своя“ бутон.
@@ -51,7 +52,7 @@ const FLEET_TABS = [
   ['/me', 'user', 'Профил'],
 ];
 let TABS = DRIVER_TABS;
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me', '/fguide': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/ptp': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me', '/fguide': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
 export const go = (path, replace) => {

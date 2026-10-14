@@ -14,6 +14,7 @@ import { cityCompanyPicker } from './cityPicker.js';
 import { openCategories, pickImage } from './categories.js';
 import { upcomingReservations } from './reservations.js';
 import { exportCsv } from './stats.js';
+import { scanTalon } from '../talon.js';
 import { emailQueue, EMAIL_DEFAULTS, EMAIL_PAY_OPTIONS, EMAIL_RES_OPTIONS } from '../calc.js';
 
 export function profileView({ go, user, data, route }) {
@@ -74,7 +75,7 @@ export async function setPhoto(key, redraw) {
 export function carView({ go, user, data }) {
   const root = h('div', { class: 'screen', 'data-page': 'car' });
   const d = store.getProfile();
-  d.car = { code: '', plate: '', model: '', ...(d.car || {}) };
+  d.car = { code: '', plate: '', model: '', year: '', ...(d.car || {}) };
   const orig = JSON.stringify(d);
   const carInput = (key, ph, upper) => h('input', { class: 'input', value: d.car[key] || '', placeholder: ph, style: upper ? { textTransform: 'uppercase' } : null,
     oninput: (e) => { d.car = { ...d.car, [key]: upper ? e.target.value.toUpperCase() : e.target.value }; refreshBar(); } });
@@ -98,8 +99,14 @@ export function carView({ go, user, data }) {
       h('section', { class: 'card' }, cardTitle('car', 'Колата е'), carBlock(d, draw),
         d.carType === 'rent' && h('p', { class: 'auto-note' }, icon('key', 15), 'При кола под наем застраховки, винетка, преглед и сервиз не се смятат. Плаща ги собственикът.')),
       h('section', { class: 'card' }, cardTitle('doc', 'Данни за колата'),
+        h('button', { class: 'btn btn-ghost btn-block talon-btn', type: 'button', onclick: () => scanTalon((r) => {
+          const mm = [r.make, r.model].filter(Boolean).join(' ');
+          d.car = { ...d.car, ...(mm && { model: mm }), ...(r.year && { year: String(r.year) }), ...(r.plate && { plate: r.plate.toUpperCase() }) };
+          draw();
+        }) }, icon('camera', 18), 'Снимай талона'),
+        h('p', { class: 'muted small', style: { margin: '-6px 0 14px' } }, 'Марката, моделът, годината и номерът се попълват сами. Снимката не се пази.'),
         h('div', { class: 'grid2' }, field('Код на колата', carInput('code', 'напр. 214'), 'Номерът ти във фирмата'), field('Рег. номер', carInput('plate', 'СВ 1234 АВ', true))),
-        field('Модел', carInput('model', 'напр. Toyota Corolla Hybrid'))),
+        h('div', { class: 'grid2 grid-mm' }, field('Марка и модел', carInput('model', 'напр. Toyota Corolla')), field('Година', carInput('year', '2019')))),
       h('section', { class: 'card' }, cardTitle('fuel', 'Гориво'), fuelBlock(d, draw)),
       h('section', { class: 'card' }, shareBlock(d, draw)));
     refreshBar();
@@ -130,34 +137,40 @@ export function askFrom(onPick) {
 const upcomingCount = (data) => upcomingReservations(data.reservations || []).length;
 const refLabel = () => { const r = store.myReferrals(); return r ? `${r.count} поканени` : ''; };
 
-// Горната част: снимка на колата като корица, профилна снимка, име и данни за колата
+// Горната част: компактна корица – снимката на колата, върху нея профилната снимка, името и колата.
+// Отдолу един бутон „Промени данните“ (лични данни, колата, снимките).
 export function profileCover(user, d) {
   const car = d.car || {};
   const initials = user.name.split(' ').map((x) => x[0]).slice(0, 2).join('');
-  const sub = user.subscription;
-  const daysLeft = Math.round((new Date(sub.validUntil) - new Date(todayStr())) / 86400000);
-  const setPhoto = async (key) => {
+  const photo = async (key) => {
     const img = await pickImage({ max: key === 'carPhoto' ? 1200 : 400, aspect: key === 'carPhoto' ? 16 / 10 : 1, title: key === 'carPhoto' ? 'Изрежи снимката на колата' : 'Изрежи профилната снимка' });
     if (!img) return;
     try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); }
     catch { toast('Снимката е твърде голяма', 'err'); }
   };
-  // Тънка лента горе (име, град и фирма), снимката на колата в средата с профилната снимка в ъгъла,
-  // тънка лента долу (код, номер, модел)
-  const facts = [car.code && `Код ${car.code}`, car.plate, car.model].filter(Boolean);
-  // Снимката на колата от край до край на екрана, без рамки; един ред текст горе и един долу
   const who = [user.city, user.company].filter(Boolean).join(' · ');
-  // Всеки ред се събира на един ред – ако е дълъг, буквите леко се смаляват (не се реже с „…“)
-  const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } });
-  const sec = h('section', { class: 'cover4' },
-    h('a', { class: 'c4-line c4-top', href: '#/profile' }, h('b', null, user.name), who && h('span', null, ' · ' + who)),
-    h('div', { class: cx('c4-photo', !d.carPhoto && 'empty') },
-      d.carPhoto ? h('img', { src: d.carPhoto, alt: 'Колата' })
-        : h('button', { class: 'c4-addcar', type: 'button', onclick: () => setPhoto('carPhoto') }, icon('camera', 18), 'Добави снимка на колата'),
-      d.carPhoto && h('button', { class: 'c4-cam', type: 'button', 'aria-label': 'Смени снимката на колата', onclick: () => setPhoto('carPhoto') }, icon('camera', 18))),
-    h('a', { class: 'c4-line c4-bot', href: '#/car' }, facts.length ? facts.join(' · ') : 'Добави код, номер и модел на колата'));
-  setTimeout(() => sec.querySelectorAll('.c4-line').forEach(fit), 0);
-  return sec;
+  const carLine = [car.code && `Код ${car.code}`, car.plate, [car.model, car.year].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+  const edit = () => openSheet((close) => {
+    const opt = (ic, title, sub, fn) => h('button', { class: 'list-btn', onclick: () => { close(); fn(); } },
+      h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, title, h('small', { class: 'muted', style: { display: 'block', fontWeight: 500 } }, sub)), icon('right', 18));
+    return h('div', { class: 'form' }, sheetHead('Промени данните', close),
+      opt('user', 'Лични данни', 'Име, телефон, град и фирма', () => editAccount(store.currentUser() || user)),
+      opt('car', 'Колата', 'Код, номер, марка, модел, година – или снимай талона', () => { location.hash = '#/car'; }),
+      opt('camera', d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', 'Изрязваш я с пръст', () => photo('carPhoto')),
+      opt('user', d.photo ? 'Смени профилната снимка' : 'Добави профилна снимка', 'Показва се върху колата', () => photo('photo')));
+  });
+  return h('section', { class: 'cover5' },
+    h('div', { class: cx('c5-photo', !d.carPhoto && 'empty') },
+      d.carPhoto && h('img', { src: d.carPhoto, alt: 'Колата' }),
+      h('button', { class: 'c5-cam', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', onclick: () => photo('carPhoto') }, icon('camera', 18), !d.carPhoto && h('span', null, 'Снимка на колата')),
+      h('div', { class: 'c5-info' },
+        h('button', { class: 'c5-ava', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => photo('photo') },
+          d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
+        h('div', { class: 'c5-txt' },
+          h('b', null, user.name),
+          who && h('span', null, who),
+          h('span', { class: 'c5-car' }, carLine || 'Добави кода, номера и модела на колата')))),
+    h('button', { class: 'c5-edit', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'));
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)
