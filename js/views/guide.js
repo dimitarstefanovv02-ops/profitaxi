@@ -2,7 +2,7 @@
 // След регистрацията се показва веднъж (?first=1), после е винаги в Профил → „Презентация“.
 import { h, icon } from '../util.js';
 
-export const GUIDE_PAGES = 16;
+export const GUIDE_PAGES = 19;
 export const GUIDE_PDF = '/guide/Chisto-vavedenie.pdf';
 const page = (n) => `/guide/p${String(n).padStart(2, '0')}.webp`;
 
