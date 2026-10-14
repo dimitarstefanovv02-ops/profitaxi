@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="/css/landing.css?v=d37032ab">
+  <link rel="stylesheet" href="/css/landing.css?v=a0098b58">
   <script>
     (function () {
       // Стари линкове (/#/…) и инсталираното приложение отиват в /app
@@ -29,7 +29,7 @@
       document.querySelector('meta[name=theme-color]').setAttribute('content', t === 'dark' ? '#0D0C0C' : '#231F20');
     })();
   </script>
-  <script defer src="/js/landing.js?v=743c2b84"></script>
+  <script defer src="/js/landing.js?v=5faf24e0"></script>
 </head>
 <body>
 <a class="skip" href="#main">Към съдържанието</a>
@@ -75,7 +75,7 @@
       <p class="kicker">За таксиметрови шофьори в България</p>
       <h1>Знаеш колко изкарваш, <span class="h1-2">но колко ти остава?</span></h1>
       <p class="hero-sub">Изкарването на пари е само половината.</p>
-      <p class="lead">„Чисто“ е личният финансов помощник на таксиметровия шофьор. Записваш смените и разходите си за секунди и винаги знаеш колко реално печелиш.</p>
+      <p class="lead">Записваш смените и разходите за секунди и виждаш колко реално печелиш.</p>
       <div class="cta">
         <a class="btn btn-light btn-lg" href="/app#/register">Регистрирай се безплатно</a>
         <a class="btn btn-line-light btn-lg" href="/app#/login">Вход</a>
@@ -93,9 +93,8 @@
   <div class="wrap split">
     <div class="split-txt">
       <h2>Оборотът не е заплата.</h2>
-      <p class="lead">Гориво, ефир, наем или лизинг, автомивка, винетка, застраховка, данъци. „Чисто“ вади всичко от оборота и ти казва колко реално остава – за деня, за месеца, на час и на километър.</p>
-      <p class="lead">Годишните такси се разпределят ден по ден, така че един ден не изглежда на загуба само защото си платил винетката.</p>
-      <a class="arrow-link" href="/how">Как се смята чистата печалба <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13.5 6l6 6-6 6"/></svg></a>
+      <p class="lead">„Чисто“ вади горивото, наема, застраховките и данъците от оборота и показва колко реално остава – за деня, на час и на км.</p>
+      <a class="arrow-link" href="/how">Как се смята <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13.5 6l6 6-6 6"/></svg></a>
     </div>
     <div class="bill" aria-label="Примерен месец">
       <div class="bill-head"><b>Септември</b><span>примерен месец</span></div>
@@ -121,9 +120,9 @@
       <ol class="steps">
         <li><span class="n">1</span><div><h3>Настрой веднъж</h3><p>Колата, наемът, застраховките. Около 3 минути.</p></div></li>
         <li><span class="n">2</span><div><h3>Запиши смяната</h3><p>Кеш, карта, бакшиш и гориво – с бутони или на глас.</p></div></li>
-        <li><span class="n">3</span><div><h3>Виж колко остава</h3><p>Чисто за деня, на час и на км и колко часа до целта.</p></div></li>
+        <li><span class="n">3</span><div><h3>Виж колко остава</h3><p>Чисто за деня, на час и на км.</p></div></li>
       </ol>
-      <a class="btn btn-light" href="/app#/register">Регистрирай се безплатно</a>
+      <a class="btn btn-light btn-lg" href="/app#/register">Регистрирай се безплатно</a>
     </div>
     <div class="steps-vis">
       <div class="phone"><img src="/img/screen-numpad-light.jpg" data-light="/img/screen-numpad-light.jpg" data-dark="/img/screen-numpad-dark.jpg" alt="Въвеждане на сума с голяма цифрова клавиатура" width="390" height="844" loading="lazy"></div>
@@ -131,73 +130,36 @@
   </div>
 </section>
 
-<!-- Функции: стегната мрежа -->
+<!-- За шофьора: екрани + най-важните функции -->
 <section class="blk">
-  <div class="wrap">
+  <div class="wrap show" data-show>
+    <div class="show-txt">
+      <h2>Всичко важно е на един екран.</h2>
+      <div class="show-tabs" role="tablist" aria-label="Екрани от приложението">
+        <button type="button" role="tab" aria-selected="true" data-shot="shifts" data-cap="Всяка смяна с оборот, разходи, часове, километри и чиста печалба.">Смени</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="stats" data-cap="Ден, седмица, месец, година – на час и на километър.">Статистика</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="costs" data-cap="Постоянните разходи с падежите им. „Платено“ с едно докосване.">Разходи</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="reservations" data-cap="Личните резервации с час, адрес, клиент и цена.">Резервации</button>
+      </div>
+      <p class="show-cap" aria-live="polite">Всяка смяна с оборот, разходи, часове, километри и чиста печалба.</p>
+    </div>
+    <div class="show-vis">
+      <div class="phone"><img src="/img/screen-shifts-light.jpg" data-light="/img/screen-shifts-light.jpg" data-dark="/img/screen-shifts-dark.jpg" alt="Екран „Смени“ от приложението" width="390" height="844" loading="lazy"></div>
+    </div>
+  </div>
+  <div class="wrap blk-next">
     <div class="head-row">
       <h2>Всичко за парите.<br>Нищо излишно.</h2>
       <a class="arrow-link" href="/features">Всички функции <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13.5 6l6 6-6 6"/></svg></a>
     </div>
-    <ul class="grid checker">
+    <ul class="grid checker g6">
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg><h3>Смяна с глас</h3><p>Казваш сумите, полетата се попълват сами.</p></li>
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><h3>Чисто на час и на км</h3><p>Знаеш дали смяната си е струвала.</p></li>
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></svg><h3>Цел за месеца</h3><p>Колко остава и колко часа и смени още трябват.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><h3>Падежи</h3><p>Застраховка, винетка, преглед, данъци, телефон.</p></li>
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><h3>Напомняния</h3><p>За плащанията и ако вчерашната смяна липсва.</p></li>
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg><h3>Статистика</h3><p>Най-добрите часове и дни, рекорди, месеци в %.</p></li>
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-6.1-6.5-11a6.5 6.5 0 0 1 13 0c0 4.9-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><h3>Резервации</h3><p>Лични курсове с клиент, час, адрес и цена.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16.5V12l1.8-4.6A2 2 0 0 1 8.7 6h6.6a2 2 0 0 1 1.9 1.4L19 12v4.5"/><path d="M3.5 12h17v4.5h-17z"/><path d="M6.5 16.5V19M17.5 16.5V19"/></svg><h3>Колата ми</h3><p>Колко от колата си избил и колко дни остават.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3.5H7A1.5 1.5 0 0 0 5.5 5v14A1.5 1.5 0 0 0 7 20.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3.5V8h4.5M9 12.5l4 4M13 12.5l-4 4"/></svg><h3>Excel</h3><p>Всички смени за счетоводителя с едно докосване.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18"/><path d="M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 4-2.4M19 13a10 10 0 0 0-3.2-2.1M2 9.5a14.5 14.5 0 0 1 4.4-2.9M22 9.5A14.5 14.5 0 0 0 11 5.6"/><circle cx="12" cy="19.5" r=".9" fill="currentColor"/></svg><h3>Без интернет</h3><p>Записва на телефона и качва, щом има връзка.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16"/><path d="M9 9.5v1M15 9.5v1M12 9.5V13h-1M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg><h3>Вход с Face ID</h3><p>Без парола всеки път.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/></svg><h3>Светла и тъмна тема</h3><p>Тъмната пази очите в нощната смяна.</p></li>
     </ul>
-  </div>
-</section>
-
-<!-- Какво виждаш: снимки от приложението -->
-<section class="blk blk-ink">
-  <div class="wrap show" data-show>
-    <div class="show-txt">
-      <h2>Всичко важно е на един екран.</h2>
-      <p class="show-hint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-.5a1.5 1.5 0 0 1 3 0v1m0-.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.8a5 5 0 0 1-3.9-1.9L4.6 15.8a1.5 1.5 0 0 1 2.3-1.9L9 16"/></svg>Докосни бутоните, за да разгледаш екраните</p>
-      <div class="show-tabs" role="tablist" aria-label="Екрани от приложението">
-        <button type="button" role="tab" aria-selected="true" data-shot="home" data-cap="Колко си изкарал чисто този месец, колко остава до целта и колко ти трябва днес.">Днес</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="shifts" data-cap="Всяка смяна с оборот, разходи, часове, километри и чиста печалба.">Смени</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="stats" data-cap="Ден, седмица, месец, година. Сравнение по месеци в %, на час и на километър.">Статистика</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="costs" data-cap="Постоянните разходи с падежите им. „Платено“ с едно докосване.">Разходи</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="reservations" data-cap="Лични резервации с час, адреси, клиент и цена. Обаждане и маршрут с едно докосване.">Резервации</button>
-      </div>
-      <p class="show-cap" aria-live="polite">Колко си изкарал чисто този месец, колко остава до целта и колко ти трябва днес.</p>
-    </div>
-    <div class="show-vis">
-      <div class="phone"><img src="/img/screen-home-light.jpg" data-light="/img/screen-home-light.jpg" data-dark="/img/screen-home-dark.jpg" alt="Екран „Днес“ от приложението" width="390" height="844" loading="lazy"></div>
-    </div>
-  </div>
-</section>
-
-<!-- Цена -->
-<section class="blk">
-  <div class="wrap">
-    <h2 class="sec-title">Цена</h2>
-    <div class="price">
-  <div class="price-main">
-    <span class="tag">Тестов период</span>
-    <div class="price-num"><b>0,00 €</b><span>/ месец</span></div>
-    <p class="price-sub">Безплатно по време на теста. Без срок и без карта.</p>
-    <a class="btn btn-dark btn-lg" href="/app#/register">Регистрирай се безплатно</a>
-    <p class="price-note">Без карта. Без обвързване. Ще те предупредим, преди нещо да се промени.</p>
-  </div>
-  <ul class="ticks">
-    <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>Неограничени смени, разходи и резервации</li>
-    <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>Чиста печалба на смяна, час и километър</li>
-    <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>Напомняния за всички плащания</li>
-    <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>Статистика, рекорди, Excel и PDF</li>
-    <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg>Календар и лични резервации</li>
-  </ul>
-</div>
-
-    <a class="arrow-link" href="/pricing">Цена и абонамент <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13.5 6l6 6-6 6"/></svg></a>
   </div>
 </section>
 
@@ -207,17 +169,16 @@
     <div class="show-txt">
       <p class="kicker">Ново · за собственици</p>
       <h2>Даваш коли под наем?</h2>
-      <p class="lead">Автопарк в „Чисто“: наемът, плащанията, шофьорите, сроковете и глобите – на един екран. Без тетрадка и Excel.</p>
+      <p class="lead">Наемът, плащанията, шофьорите и сроковете – на един екран.</p>
       <div class="show-tabs" role="tablist" aria-label="Екрани за собственика">
-        <button type="button" role="tab" aria-selected="true" data-shot="fleet-home" data-cap="Печалбата за месеца, колко коли карат днес и лента „Днес“: кой дължи, кой е платил, какво изтича.">Автопарк</button>
+        <button type="button" role="tab" aria-selected="true" data-shot="fleet-home" data-cap="Печалбата за месеца и лента „Днес“: кой дължи, кой е платил, какво изтича.">Автопарк</button>
         <button type="button" role="tab" aria-selected="false" data-shot="fleet-cars" data-cap="Всяка кола със статус. Плъзгаш наляво: Платено, В сервиз, Свободна.">Колите</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="fleet-car" data-cap="Печалба по месец и година, кога се изплаща колата, срокове и всички разходи.">Колата</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="fleet-driver" data-cap="Наемът по седмици – неплатените светят в червено. Депозит, глоби, документи и оценка на шофьора.">Шофьорът</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="fleet-fine" data-cap="Въвеждаш часа на глобата – приложението само намира кой е карал и я прехвърля на него.">Глоба</button>
-        <button type="button" role="tab" aria-selected="false" data-shot="fleet-drv" data-cap="При шофьора наемът излиза сам. Натиска „Платих“ – ти потвърждаваш с едно докосване.">При шофьора</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="fleet-car" data-cap="Печалба по месец и година, срокове и всички разходи на колата.">Колата</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="fleet-driver" data-cap="Наемът по седмици – неплатените светят в червено.">Шофьорът</button>
+        <button type="button" role="tab" aria-selected="false" data-shot="fleet-fine" data-cap="Въвеждаш часа на глобата – приложението намира кой е карал.">Глоба</button>
       </div>
-      <p class="show-cap" aria-live="polite">Печалбата за месеца, колко коли карат днес и лента „Днес“: кой дължи, кой е платил, какво изтича.</p>
-      <a class="btn btn-light btn-lg show-cta" href="/app#/register">Регистрирай се като собственик</a>
+      <p class="show-cap" aria-live="polite">Печалбата за месеца и лента „Днес“: кой дължи, кой е платил, какво изтича.</p>
+      <a class="btn btn-line-light btn-lg show-cta" href="/app#/register">Регистрирай се като собственик</a>
     </div>
     <div class="show-vis">
       <div class="phone"><img src="/img/screen-fleet-home-light.jpg" data-light="/img/screen-fleet-home-light.jpg" data-dark="/img/screen-fleet-home-dark.jpg" alt="Екран „Автопарк“ от приложението" width="390" height="844" loading="lazy"></div>
@@ -227,19 +188,13 @@
     <div class="head-row">
       <h2>Автопаркът под контрол.<br>Парите на шофьорите – техни.</h2>
     </div>
-    <ul class="grid checker">
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><h3>Наем по седмици</h3><p>На ден, седмица, месец или за няколко дни. Неплатените светят в червено.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg><h3>„Платих“ → потвърди</h3><p>Шофьорът отбелязва плащането, ти потвърждаваш с едно докосване.</p></li>
+    <ul class="grid checker g6">
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><h3>Наем по седмици</h3><p>На ден, седмица или месец. Неплатените светят в червено.</p></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg><h3>„Платих“ → потвърди</h3><p>Шофьорът отбелязва плащането, ти потвърждаваш.</p></li>
       <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg><h3>Напомни на всички</h3><p>Едно натискане – известие до всеки, който дължи.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg><h3>Дълг, аванс, депозит</h3><p>Кой колко дължи, кой е платил напред, какво е удържано.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg><h3>Печалба по кола</h3><p>Наем минус разходите – коя кола носи най-много и коя губи.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></svg><h3>Кога се изплаща колата</h3><p>Покупната цена срещу печалбата досега и след колко месеца.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.3v.2"/></svg><h3>Срокове</h3><p>ГО, каско, винетка, преглед, лиценз, тахограф – известие 14 и 3 дни преди.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h12v17l-2-1.3-2 1.3-2-1.3-2 1.3-2-1.3-2 1.3z"/><path d="M9 8h6M9 11.5h6M9 15h3.5"/></svg><h3>Глоба → кой е карал</h3><p>По часа на нарушението. Влиза в разходите на шофьора.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3L9.5 4.5h5L16.2 7h2.3A1.5 1.5 0 0 1 20 8.5v10a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 18.5z"/><circle cx="12" cy="13" r="3.5"/></svg><h3>Щети със снимки</h3><p>При поемане и връщане – ясно в чия смяна е драскотината.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3.5 4 20.5M16 3.5l4 17M12 4v2.5M12 10v3M12 16.5v3.5"/></svg><h3>Без изтървани км</h3><p>Километраж при предаване, задължителен краен км, лично каране.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21M8.5 21h7"/></svg><h3>С глас</h3><p>„200 евро гуми“, „платен наем“, „глоба 50 за скорост“.</p></li>
-      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3.5"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M15.5 5.2a3.5 3.5 0 0 1 0 6.6M17.5 14.4A6 6 0 0 1 21 20"/></svg><h3>Без приходите им</h3><p>Виждаш км, часове и дни на шофьорите – парите им остават лични.</p></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg><h3>Дълг, аванс, депозит</h3><p>Кой колко дължи и кой е платил напред.</p></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16"/><path d="M8 16v-4M12 16V8M16 16v-6"/></svg><h3>Печалба по кола</h3><p>Коя кола носи най-много и коя губи.</p></li>
+      <li><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17.3v.2"/></svg><h3>Срокове</h3><p>ГО, каско, винетка, преглед – известие 14 и 3 дни преди.</p></li>
     </ul>
   </div>
 </section>
@@ -252,11 +207,9 @@
       <a class="arrow-link" href="/faq">Всички въпроси <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13.5 6l6 6-6 6"/></svg></a>
     </div>
     <div class="faq">
-      <details><summary>Трябва ли карта, за да пробвам?</summary><p>Не. Регистрираш се с имейл и ползваш всичко безплатно, докато тестваме.</p></details>
-      <details><summary>Фирмата ми или колегите виждат ли колко изкарвам?</summary><p>Не. Данните ти не се виждат от таксиметровата ти фирма или от други шофьори. Достъп има само екипът на „Чисто“ за поддръжка и обобщена статистика, както е описано в <a href="/privacy">политиката за поверителност</a>.</p></details>
-      <details><summary>Карам кола под наем. Подходящо ли е за мен?</summary><p>Да. Избираш „Под наем“, въвеждаш наема на ден, седмица или месец и той се смята сам. Застраховки, винетка и преглед не се показват, защото са грижа на собственика.</p></details>
-      <details><summary>Работи ли на iPhone и Android?</summary><p>Да. Отваряш го в браузъра на телефона и го добавяш към началния екран. После се отваря като обикновено приложение и работи и без интернет.</p></details>
       <details><summary>Колко струва?</summary><p>Сега – 0,00 €. „Чисто“ е в тестов период и е безплатно, без срок и без карта.</p></details>
+      <details><summary>Фирмата ми или колегите виждат ли колко изкарвам?</summary><p>Не. Данните ти не се виждат от таксиметровата ти фирма или от други шофьори. Достъп има само екипът на „Чисто“ за поддръжка и обобщена статистика, както е описано в <a href="/privacy">политиката за поверителност</a>.</p></details>
+      <details><summary>Работи ли на iPhone и Android?</summary><p>Да. Отваряш го в браузъра на телефона и го добавяш към началния екран. После се отваря като обикновено приложение и работи и без интернет.</p></details>
     </div>
   </div>
 </section>

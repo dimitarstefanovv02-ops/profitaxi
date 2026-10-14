@@ -62,9 +62,9 @@ with sync_playwright() as p:
     check(pg.locator('.hero a[href="/app#/login"]').count() == 1, 'hero login')
     check(pg.locator('.hero img[src*="screen-home-light"]').count() == 1, 'hero screenshot')
     check(pg.locator('.steps li').count() == 3, 'home: 3 steps')
-    check(pg.locator('.grid li').count() >= 8, 'home: feature grid')
-    check(pg.locator('.faq details').count() == 5, 'home: 5 questions')
-    check(pg.locator('.price-num b').first.inner_text() == '0,00 €', 'home: 0,00 € (тестов период)')
+    check(pg.locator('.grid li').count() == 12, 'home: 2 мрежи по 6 плочки')
+    check(pg.locator('.faq details').count() == 3, 'home: 3 questions')
+    check('0,00 €' in pg.locator('.hero-note').inner_text(), 'home: 0,00 € (тестов период)')
     check(pg.locator('#reviews, .rev, .reviews').count() == 0, 'no reviews section')
     for u in ['/about', '/features', '/how', '/pricing', '/faq', '/privacy', '/terms']:
         check(pg.locator(f'a[href="{u}"]').count() >= 1, f'home links to {u}')

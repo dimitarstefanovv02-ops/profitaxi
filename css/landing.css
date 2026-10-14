@@ -572,7 +572,7 @@ body.menu-open { overflow: hidden; }
   .hero-vis .phone { width: 230px; }
   .hero h1 { font-size: clamp(36px, 5.6vw, 46px); }
 }
-.show-cta { margin-top: 20px; }
+.show-cta { margin-top: 24px; }
 #avtopark .lead { margin: 8px 0 18px; }
 @media (max-width: 599px) {
   #avtopark .show-txt > .kicker, #avtopark .show-txt > .lead { grid-column: 1; }
@@ -656,3 +656,48 @@ body.menu-open { overflow: hidden; }
 @media (min-width: 1024px) { .blk-next { margin-top: 96px; } }
 .av-more { margin-top: 64px; }
 @media (min-width: 1024px) { .av-more { margin-top: 96px; } }
+
+/* ---------- Изчистване (10.2026) ---------- */
+/* Табовете с екраните – ясни бутони-хапчета на всички ширини, на бял и на тъмен блок */
+.show-tabs { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.show-tabs button { font: 600 15px/1 var(--font); letter-spacing: 0; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; cursor: pointer;
+  color: var(--text); background: transparent; box-shadow: inset 0 0 0 1.5px var(--line-2); transition: background-color .15s, color .15s; }
+.show-tabs button:hover { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.show-tabs button[aria-selected="true"] { background: var(--btn-bg); color: var(--btn-fg); box-shadow: none; }
+.blk-ink .show-tabs button { color: var(--on-ink); box-shadow: inset 0 0 0 1.5px var(--ink-line); }
+.blk-ink .show-tabs button:hover { box-shadow: inset 0 0 0 1.5px var(--on-ink-muted); }
+.blk-ink .show-tabs button[aria-selected="true"] { background: var(--ink-btn-bg); color: var(--ink-btn-fg); box-shadow: none; }
+.show-cap { color: var(--muted); min-height: 3em; }
+.blk-ink .show-cap { color: var(--on-ink-2); }
+@media (min-width: 1024px) { .show-tabs button { font-size: 16px; min-height: 44px; padding: 0 18px; } .show-cap { font-size: 18px; margin-top: 22px; } }
+@media (max-width: 599px) {
+  .show-txt > .show-tabs { gap: 6px; }
+  .show-txt > .show-tabs button { font-size: 13px; padding: 0 11px; min-height: 34px; }
+}
+
+/* Плочките на телефон: само иконка и заглавие */
+@media (max-width: 719px) {
+  .checker.grid > * { padding: 16px 14px 18px !important; }
+  .checker.grid p { display: none; }
+  .checker.grid h3 { font-size: 16px; margin-bottom: 0; }
+}
+/* 6 плочки: 3 колони на компютър, през едно */
+@media (min-width: 1024px) {
+  .grid.g6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .checker.grid.g6 > * { background: var(--tile-a); color: var(--tile-a-fg); --m: var(--tile-a-mute); --i: var(--tile-a-fg); }
+  .checker.grid.g6 > :nth-child(even) { background: var(--tile-b); color: var(--tile-b-fg); --m: var(--tile-b-mute); --i: var(--tile-ic); }
+}
+
+/* Функции: лента с бързи линкове, която остава горе */
+.subnav { position: sticky; top: var(--hd); z-index: 40; background: var(--bg); border-bottom: 1px solid var(--line); }
+.subnav .wrap { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-top: 10px; padding-bottom: 10px; }
+.subnav .wrap::-webkit-scrollbar { display: none; }
+.subnav a { flex: none; font-weight: 600; font-size: 14px; text-decoration: none; color: var(--text); padding: 9px 14px; border-radius: 999px; box-shadow: inset 0 0 0 1.5px var(--line-2); white-space: nowrap; }
+.subnav a:hover { box-shadow: inset 0 0 0 1.5px var(--muted); }
+.subnav a[aria-current="true"] { background: var(--btn-bg); color: var(--btn-fg); box-shadow: none; }
+@media (min-width: 1024px) { .subnav a { font-size: 15px; } .subnav .wrap { justify-content: center; } }
+html:has(.subnav) { scroll-padding-top: calc(var(--hd) + 70px); }
+
+/* Тъмна тема: по-ясна разлика между „белите“ и тъмните блокове */
+:root[data-theme="dark"] { --bg: #1E1B1B; --card: #282525; --card-2: #282525; --sec: #282525; --line: #3D3939; --line-2: #464141; --ink-bg: #0B0A0A; --tile-a: #2E2A2A; }
+:root[data-theme="dark"] .blk-ink { --tile-a: #1E1B1B; --card: #1A1818; --line: #2E2A2A; --line-2: #353131; }

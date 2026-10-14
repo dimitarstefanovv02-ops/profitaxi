@@ -58,6 +58,30 @@
     }
   }
 
+  // ---------- Функции: лентата отгоре свети на раздела, който гледаш ----------
+  {
+    const nav = document.querySelector('.subnav');
+    if (nav) {
+      const links = [...nav.querySelectorAll('a[href^="#"]')];
+      const secs = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+      let cur = null;
+      const mark = () => {
+        const y = innerHeight * 0.35;
+        let s = null;
+        for (const x of secs) if (x.getBoundingClientRect().top <= y) s = x;
+        if (s === cur) return;
+        cur = s;
+        links.forEach((a) => {
+          const on = !!s && a.getAttribute('href') === '#' + s.id;
+          a.setAttribute('aria-current', String(on));
+          if (on) { const w = a.parentElement; w.scrollLeft = a.offsetLeft - w.offsetLeft - (w.clientWidth - a.offsetWidth) / 2; }
+        });
+      };
+      addEventListener('scroll', mark, { passive: true });
+      mark();
+    }
+  }
+
   // ---------- Витрина: бутоните сменят снимката и описанието ----------
   document.querySelectorAll('[data-show]').forEach((box) => {
     const tabs = [...box.querySelectorAll('[data-shot]')];
