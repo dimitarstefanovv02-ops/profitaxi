@@ -8,8 +8,8 @@ import { toast, field, segmented, APP_ICONS, setAppIcon } from '../ui.js';
 import { passkeySupported, loginWithPasskey, faceLabel, passkeyOn, shouldOffer, enablePasskey, markOffered } from '../passkey.js';
 
 export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
-  h('img', { class: 'brand-logo', src: '/icons/icon-192.png', alt: '' }),
-  h('span', { class: 'brand-name' }, 'Чисто'));
+  h('img', { class: 'brand-logo', src: store.isFleetPath() ? '/icons/fleet-192.png' : '/icons/icon-192.png', alt: '' }),
+  h('span', { class: 'brand-name' }, store.isFleetPath() ? 'Чисто Автопарк' : 'Чисто'));
 
 const input = (attrs) => h('input', { class: 'input', ...attrs });
 
@@ -39,19 +39,11 @@ export function loginView({ go }) {
     } }, icon('faceid', 22), `Вход с ${faceLabel()}`));
   });
   const fill = () => { email.value = 'ivan@demo.bg'; pw.value = 'demo123'; };
-  // Акаунтите, които вече са влезли на този телефон – с едно натискане
-  const saved = store.savedAccounts();
-  const savedBox = saved.length > 0 && h('div', { class: 'acct-saved' },
-    h('small', { class: 'muted' }, 'Влезли на този телефон'),
-    saved.map((a) => h('button', { type: 'button', class: 'acct-row', onclick: async () => {
-      const r = await store.switchAccount(a.id); if (r.error) { err.textContent = r.error; return; } go('/home');
-    } }, h('img', { src: APP_ICONS[a.fleet ? 'fleet' : 'driver'], alt: '' }), h('span', { class: 'grow' }, h('b', null, a.name), h('small', null, a.fleet ? 'Собственик на коли' : 'Шофьор')), icon('right', 18))));
   return h('div', { class: 'auth' },
     brand(),
-    savedBox,
-    h('div', { class: 'auth-hero' },
-      h('h1', null, saved.length ? 'Добави акаунт' : 'Колко изкарваш наистина'),
-      h('p', null, saved.length ? 'Влез в друг акаунт – шофьорски или на собственик. Горните остават влезли.' : 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
+    store.isFleetPath()
+      ? h('div', { class: 'auth-hero' }, h('h1', null, 'Автопаркът под контрол'), h('p', null, 'Наем, срокове, разходи и печалба по коли. Вход за собственици на коли.'))
+      : h('div', { class: 'auth-hero' }, h('h1', null, 'Колко изкарваш наистина'), h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
     h('form', { class: 'form', onsubmit: submit },
       field('Имейл или телефон', email),
       field('Парола', pw),
@@ -62,7 +54,8 @@ export function loginView({ go }) {
     !store.live() && h('div', { class: 'demo-box' },
       h('b', null, 'Демо версия. '), `Пробвай с готов профил: ivan@demo.bg / demo123. `,
       h('button', { type: 'button', onclick: fill }, 'Попълни')),
-    h('p', { class: 'auth-foot' }, 'Нямаш акаунт? ', h('a', { href: '#/register' }, 'Регистрирай се')));
+    h('p', { class: 'auth-foot' }, 'Нямаш акаунт? ', h('a', { href: '#/register' }, 'Регистрирай се')),
+    h('p', { class: 'auth-foot auth-other' }, store.isFleetPath() ? h('a', { href: '/app' }, 'Шофьор ли си? Вход за шофьори') : h('a', { href: store.FLEET_PATH }, 'Даваш коли под наем? Вход за собственици')));
 }
 
 export function registerView({ go }) {
@@ -117,7 +110,7 @@ export function registerView({ go }) {
   const cc = cityCompanyPicker({ hint: false, short: true });
   let carType = '';
   // Вид акаунт: шофьор или собственик на коли – всеки със своята иконка на приложението
-  let kind = 'driver';
+  let kind = store.isFleetPath() ? 'fleet' : 'driver';
   const kindBox = h('div');
   const carGroup = h('div', { class: 'reg-car' });
   const whereTitle = h('h3');

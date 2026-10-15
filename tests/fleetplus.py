@@ -29,7 +29,7 @@ async def main():
         r = await pg.evaluate("fetch('/manifest-fleet.webmanifest').then(r => r.json()).then(j => [j.short_name, j.icons.length])")
         ok('Манифест на собственика', r == ['Чисто Автопарк', 3], r)
         # собственик с кола и шофьор
-        await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(300)
+        await pg.goto(B + '/avtopark#/login'); await pg.wait_for_timeout(300)
         car = await pg.evaluate(f"""async () => {{ {J}
           const c = s.sendSmsCode('0888111222'); s.verifySmsCode('0888111222', c.demoCode);
           const r = await s.register({{ name: 'Петко Колев', email: 'petko@fleet.bg', password: 'parola1', phone: '0888111222', city: 'Пловдив', company: 'Еко Такси 6155', carType: 'own', accountType: 'fleet' }});
@@ -51,7 +51,7 @@ async def main():
         await pg.evaluate(f"""async () => {{ {J} s.setMemberRent('{a['id']}', '{gid}', {{ amount: 140, period: 'week', from: u.addDays(t, -14) }}); s.setHandover('{a['id']}', '{gid}', 120000, u.addDays(t, -14));
           s.addCarLog({{ carId: '{a['id']}', kind: 'pay', driverId: '{gid}', amount: 140, date: u.addDays(t, -14) }}); s.addCarLog({{ carId: '{a['id']}', kind: 'deposit', driverId: '{gid}', amount: 300, date: u.addDays(t, -14) }});
           s.updateCar('{a['id']}', {{ serviceEvery: 10000, serviceAtKm: 120000 }}); }}""")
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(900)
+        await pg.goto(B + '/avtopark#/home'); await pg.wait_for_timeout(900)
         # 1) цел
         await pg.click('.fs-goal-btn'); await pg.wait_for_timeout(300)
         for k in '500': await pg.click(f'.np-key[aria-label="{k}"]')
@@ -64,7 +64,7 @@ async def main():
         # 3) обслужване по км: 129 400 от 130 000 → в „Днес“
         td = await pg.locator('.today-strip').inner_text()
         ok('Обслужване по км излиза в „Днес“ (след 600 км)', 'обслужване след 600 км' in td, td[:200])
-        await pg.goto(B + '/app#/cars/' + a['id']); await pg.wait_for_timeout(800)
+        await pg.goto(B + '/avtopark#/cars/' + a['id']); await pg.wait_for_timeout(800)
         ok('Обслужване в „Срокове“ на колата', 'след 600 км' in await pg.locator('.svc-row').inner_text())
         await pg.click('.svc-row'); await pg.wait_for_timeout(300)
         await pg.fill('.svc-done input', '120'); await pg.click('.svc-done button'); await pg.wait_for_timeout(500)
@@ -78,7 +78,7 @@ async def main():
         ok('Договор: име, номер, наем и депозит', 'ДОГОВОР ЗА НАЕМ' in txt and 'РВ1234АК' in txt and '140' in txt and '300' in txt and 'Георги' in txt, txt[:120])
         await doc.close(); await pg.keyboard.press('Escape'); await pg.wait_for_timeout(300)
         # 5) Excel за счетоводителя
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(800)
+        await pg.goto(B + '/avtopark#/home'); await pg.wait_for_timeout(800)
         await pg.click('.rep-row:has-text("Excel")'); await pg.wait_for_timeout(300)
         await pg.click('.sheet .seg-btn >> nth=0')
         async with pg.expect_download() as di:
@@ -86,12 +86,12 @@ async def main():
         d = await di.value; path = await d.path(); csv = open(path, encoding='utf-8-sig').read()
         ok('Excel: колите, наемът и разходите', 'РВ1234АК' in csv and 'Наем' in csv and 'Печалба' in csv and 'Постоянни разходи' in csv, csv[:160].replace('\n', ' | '))
         # 6) обява за свободната кола
-        await pg.goto(B + '/app#/cars/' + free['id']); await pg.wait_for_timeout(700)
+        await pg.goto(B + '/avtopark#/cars/' + free['id']); await pg.wait_for_timeout(700)
         await pg.click('.car-acts button:has-text("Обява")'); await pg.wait_for_timeout(300)
         ad = await pg.input_value('.sheet textarea')
         ok('Обява: колата, номерът и телефонът', 'Dacia Logan' in ad and 'РВ3456МК' in ad and '0888111222' in ad, ad.replace('\n', ' | '))
         await pg.keyboard.press('Escape')
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(700)
+        await pg.goto(B + '/avtopark#/home'); await pg.wait_for_timeout(700)
         ok('Свободна кола в „Днес“ има „Обява“', await pg.locator('.td-row:has-text("Dacia Logan") button:has-text("Обява")').count() == 1)
         h = await pg.evaluate("document.documentElement.scrollWidth")
         ok('Без хоризонтално превъртане', h <= 390, h)

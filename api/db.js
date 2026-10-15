@@ -927,7 +927,7 @@ async function runCron(slot, { force = false } = {}) {
   let sent = 0; const dead = []; const jobs = [];
   for (const [id, list] of byUser) {
     const u = all[`users:${id}`]; if (!u || (u.status && u.status !== 'active')) continue;
-    const d = userData(all, id); const base = '/app';
+    const d = userData(all, id); const base = d.profile?.accountType === 'fleet' ? '/avtopark' : '/app';
     const msgs = slot === 'am' ? fleetMsgs(all, id, d.profile || {}, today, now) : [];
     if (d.profile?.accountType === 'fleet') { pushAll(list, msgs, '/icons/fleet-192.png'); continue; } // собственик на автопарк – не кара, без напомняния за смени
     const created = new Date(u.createdAt || 0); const createdDay = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
@@ -968,19 +968,19 @@ function fleetMsgs(all, id, profile, today, now) {
     const costs = vals.filter((v) => v && v.carId === car.id && v.amount != null && v.period);
     const logs = vals.filter((v) => v && v.carId === car.id && v.kind && v.by);
     const ms = (car.members || []).filter((m) => m.userId !== car.ownerId);
-    for (const x of deadlines(car, costs, today)) if ([...dlDays(profile), 0].includes(x.left)) out.push({ kind: 'fleet', title: `${nm(car)}: ${x.title}`, body: x.left === 0 ? `Изтича днес (${fmtDay(x.date)}).` : `Изтича след ${x.left} дни – ${fmtDay(x.date)}.${x.amount ? ` Сума ${eur(x.amount)}.` : ''}`, url: `/app#/cars/${car.id}`, tag: `dl-${x.key}-${x.date}-${x.left}` });
+    for (const x of deadlines(car, costs, today)) if ([...dlDays(profile), 0].includes(x.left)) out.push({ kind: 'fleet', title: `${nm(car)}: ${x.title}`, body: x.left === 0 ? `Изтича днес (${fmtDay(x.date)}).` : `Изтича след ${x.left} дни – ${fmtDay(x.date)}.${x.amount ? ` Сума ${eur(x.amount)}.` : ''}`, url: `/avtopark#/cars/${car.id}`, tag: `dl-${x.key}-${x.date}-${x.left}` });
     for (const m of ms) {
       const r = rentState(m, logs, today);
-      if (r.late && [1, 3, 7, 14].includes(r.lateDays)) out.push({ kind: 'fleet', title: `${(all[`users:${m.userId}`]?.name || m.name || 'Шофьор').split(' ')[0]} не е платил наема`, body: `${nm(car)}: дължи ${eur(r.debt)}, просрочено ${r.lateDays} ${r.lateDays === 1 ? 'ден' : 'дни'}.`, url: '/app#/home', tag: `late-${car.id}-${m.userId}-${today}` });
+      if (r.late && [1, 3, 7, 14].includes(r.lateDays)) out.push({ kind: 'fleet', title: `${(all[`users:${m.userId}`]?.name || m.name || 'Шофьор').split(' ')[0]} не е платил наема`, body: `${nm(car)}: дължи ${eur(r.debt)}, просрочено ${r.lateDays} ${r.lateDays === 1 ? 'ден' : 'дни'}.`, url: '/avtopark#/home', tag: `late-${car.id}-${m.userId}-${today}` });
     }
     const shifts = vals.filter((v) => v && v.start && v.userId && ms.some((m) => m.userId === v.userId) && (!v.carId || v.carId === car.id));
     const last = shifts.filter((x) => x.end).map((x) => x.end).sort().pop() || null;
     const idle = idleDays(last, today);
-    if (car.status !== 'service' && car.status !== 'free' && ms.length && [2, 3, 5].includes(idle)) out.push({ kind: 'fleet', title: `${nm(car)} стои ${idle} дни`, body: 'Няма смяна от няколко дни. Може да я дадеш на друг шофьор.', url: `/app#/cars/${car.id}`, tag: `idle-${car.id}-${today}` });
+    if (car.status !== 'service' && car.status !== 'free' && ms.length && [2, 3, 5].includes(idle)) out.push({ kind: 'fleet', title: `${nm(car)} стои ${idle} дни`, body: 'Няма смяна от няколко дни. Може да я дадеш на друг шофьор.', url: `/avtopark#/cars/${car.id}`, tag: `idle-${car.id}-${today}` });
     const wk = shifts.filter((x) => x.end && shiftDate(x) >= addDays(today, -7) && shiftDate(x) < today);
     report.push(`${nm(car)} ${Math.round(wk.reduce((a, x) => a + Math.max(0, (x.kmEnd || 0) - (x.kmStart || 0)), 0))} км, ${new Set(wk.map(shiftDate)).size} дни`);
   }
-  if (now.getDay() === (profile.reportDay ?? 1)) out.push({ kind: 'fleet', title: 'Седмичен отчет за колите', body: report.join(' · '), url: '/app#/home', tag: `fleetweek-${today}` });
+  if (now.getDay() === (profile.reportDay ?? 1)) out.push({ kind: 'fleet', title: 'Седмичен отчет за колите', body: report.join(' · '), url: '/avtopark#/home', tag: `fleetweek-${today}` });
   return out.slice(0, 6);
 }
 // Без тайна: извикването е безопасно – праща само в 10:00/20:00 софийско време и само веднъж на ден.

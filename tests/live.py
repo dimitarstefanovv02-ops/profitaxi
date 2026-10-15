@@ -71,12 +71,12 @@ async def main():
         check(seen == [1, 0, 0, 1], 'Шофьор 2 вижда само своите данни', seen)
         # шофьор 2 се опитва да запише смяна на шофьор 1 – сървърът отказва
         r = await d2.evaluate(S.join(["async () => {", f"""
-          const tok = localStorage.getItem('profitaxi.tok.app');
+          const tok = localStorage.getItem('profitaxi.tok.app.' + localStorage.getItem('profitaxi.session'));
           const res = await fetch('/api/db', {{ method:'POST', body: JSON.stringify({{ op:'push', token: tok, set: {{ 'shifts:xx': {{ id:'xx', userId:'{id1}', income:{{cash:999}} }}, 'users:{id1}': {{ id:'{id1}', name:'Хакер' }} }}, del: [] }}) }});
           return await res.json(); }}"""]))
         check(sorted(r.get('rejected', [])) == sorted(['shifts:xx', f'users:{id1}']), 'Чужди записи се отказват от сървъра', r)
         r = await d2.evaluate(S.join(["async () => {", """
-          const tok = localStorage.getItem('profitaxi.tok.app');
+          const tok = localStorage.getItem('profitaxi.tok.app.' + localStorage.getItem('profitaxi.session'));
           const me = s.currentUser(); const res = await fetch('/api/db', { method:'POST', body: JSON.stringify({ op:'push', token: tok, set: { ['users:' + me.id]: { ...me, status: 'active', subscription: { plan: 'paid', validUntil: '2099-01-01' }, role: 'admin' } }, del: [] }) });
           await res.json(); await s.syncNow(); const u = s.currentUser(); return [u?.role, u?.subscription?.validUntil]; }"""]))
         check(r[0] == 'driver' and r[1] != '2099-01-01', 'Шофьорът не може да си смени ролята и абонамента', r)

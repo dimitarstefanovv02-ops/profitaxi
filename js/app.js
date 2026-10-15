@@ -72,17 +72,20 @@ let lastRaw = null;
 function render() {
   const app = document.getElementById('app');
   const route = parse();
-  // Известие за другия акаунт на телефона (…?as=<id>) – минаваме на него
+  // Известие за конкретен акаунт (…?as=<id>)
   const as = route.query.get('as');
   if (as) {
     const clean = route.raw.replace(/([?&])as=[^&]*&?/, '$1').replace(/[?&]$/, '');
-    if (store.currentUser()?.id !== as && store.savedAccounts().some((a) => a.id === as)) { store.switchAccount(as).then(() => go(clean, true)); return; }
+    // известието е за акаунта, влязъл на другия адрес (/app ↔ /avtopark) – отваряме него
+    if (store.currentUser()?.id !== as && store.otherPathSession() === as) { location.replace((store.isFleetPath() ? '/app' : store.FLEET_PATH) + '#' + clean); return; }
     return go(clean, true);
   }
   const user = store.currentUser();
   document.documentElement.dataset.page = route.name.slice(1);
 
   if (!user) {
+    const mv = store.takeMove(); if (mv) { location.replace(mv + location.hash); return; } // току-що влязъл на другия адрес
+    setAppIcon(store.isFleetPath());
     if (tourOpen()) abortTour(); // разходката не продължава след изход (иначе връща към „Днес“)
     // Линк за покана към обща кола: запомняме кода и след входа/регистрацията отиваме там
     if (route.name === '/join' && route.param) { try { localStorage.setItem('profitaxi.joinCode', route.param); } catch { /* */ } return go('/register', true); }
@@ -99,8 +102,9 @@ function render() {
   const profile = store.getProfile();
   if (!profile.onboarded && route.name !== '/onboarding' && route.name !== '/guide') return go('/onboarding', true);
   const fleet = store.isFleet(profile);
+  // /app е за шофьори, /avtopark – за собственици: акаунт на грешния адрес минава на правилния
+  if (store.moveToRightPath(fleet)) return;
   setAppIcon(fleet);
-  store.rememberAccount();
   TABS = fleet ? FLEET_TABS : DRIVER_TABS;
   PARENT['/cars'] = fleet ? '/home' : '/me'; PARENT['/join'] = PARENT['/cars']; PARENT_LABEL['/home'] = fleet ? 'Автопарк' : 'Днес';
   // Собственикът на автопарк не кара: „Днес“ е автопаркът, смените и парите на шофьора ги няма

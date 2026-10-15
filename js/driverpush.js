@@ -57,10 +57,3 @@ async function disable() {
   try { localStorage.setItem(ukey(), '[]'); } catch { /* */ }
 }
 
-// След смяна на акаунт: ако телефонът вече има разрешени известия, а този акаунт още не е избирал – включваме ги и за него
-export async function autoPushForAccount() {
-  try {
-    if (rawTypes() != null || pushBlocker() || Notification.permission !== 'granted') return;
-    await setPushTypes(Object.keys(PUSH_TYPES));
-  } catch { /* */ }
-}

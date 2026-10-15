@@ -17,7 +17,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); pg = await b.new_page(viewport={'width': 390, 'height': 844}, device_scale_factor=2); errs = []; pg.set_default_timeout(8000)
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(500)
+        await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B + '/avtopark#/login'); await pg.wait_for_timeout(500)
         # собственик на автопарк
         await pg.evaluate("""async () => { const s = await import('/js/store.js');
           const c = s.sendSmsCode('0888111222'); s.verifySmsCode('0888111222', c.demoCode);
@@ -73,7 +73,7 @@ async def main():
         ok('Личното каране мести километража (245 640)', km2 == 245640, km2)
         # собственикът: потвърждава, вижда дълг на Мария, пропуснати км, глоба
         await login(pg, 'petko@fleet.bg', 'parola1')
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(700)
+        await pg.goto(B + '/avtopark#/home'); await pg.wait_for_timeout(700)
         if await pg.locator('.td-more').count(): await pg.click('.td-more'); await pg.wait_for_timeout(200)
         t = await pg.locator('#app').inner_text()
         ok('„Днес“: „Платих 280“ за потвърждение', 'Платих 280' in t, '')
@@ -84,7 +84,7 @@ async def main():
         ok('Голямата цифра и заетостта', 'карат днес' in t and 'от дните на път' in t)
         await pg.screenshot(path=S + 'fl2_home.png', full_page=True)
         await pg.click('.td-row:has-text("Платих 280") .chip'); await pg.wait_for_timeout(400)
-        await pg.goto(B + '/app#/cars/' + a['id']); await pg.wait_for_timeout(600)
+        await pg.goto(B + '/avtopark#/cars/' + a['id']); await pg.wait_for_timeout(600)
         t = await pg.locator('#app').inner_text()
         ok('Колата: печалба за месеца и изплащане', 'Печалба' in t and 'Изплащане на колата' in t)
         await pg.screenshot(path=S + 'fl2_car.png', full_page=True)
@@ -109,7 +109,7 @@ async def main():
         ok('Глас: ремонт 180', v[5][:2] == ['cost', 180] and v[5][2] == 'repair', v[5])
         await pg.evaluate(f"async () => {{ {J} s.addCarLog({{ carId: '{a['id']}', kind: 'fine', driverId: '{gid}', amount: 50, text: 'превишена скорост' }}); s.setCarStatus('{bcar['id']}', 'service'); }}")
         # напомняне към Мария
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(500)
+        await pg.goto(B + '/avtopark#/home'); await pg.wait_for_timeout(500)
         await pg.click('.td-row:has-text("Мария") .chip:has-text("Напомни")'); await pg.wait_for_timeout(300)
         # Георги: потвърдено, глобата е в разходите му
         await login(pg, 'georgi@demo.bg')

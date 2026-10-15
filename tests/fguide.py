@@ -10,7 +10,7 @@ async def main():
         await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()')
         await pg.evaluate("""async () => { const s = await import('/js/store.js'); const c = s.sendSmsCode('0888222333'); s.verifySmsCode('0888222333', c.demoCode);
           await s.register({ name: 'Тест Собственик', email: 'own@t.bg', password: 'parola1', phone: '0888222333', city: 'Пловдив', company: 'Еко Такси 6155', carType: 'own', accountType: 'fleet' }); }""")
-        await pg.goto(B + '/app#/fguide?walk=1&first=1'); await pg.wait_for_timeout(700)
+        await pg.goto(B + '/avtopark#/fguide?walk=1&first=1'); await pg.wait_for_timeout(700)
         ok('Разходката: първа стъпка със снимка', await pg.locator('.fw-body .fg-shot').count() == 1)
         n = int((await pg.locator('.fw-step').inner_text()).split(' от ')[1])
         for _ in range(n - 1): await pg.click('.fw-btns .btn-primary'); await pg.wait_for_timeout(120)
@@ -18,7 +18,7 @@ async def main():
         ok('Последната стъпка казва къде е ръководството', 'Профил → „Автопарк“ → „Ръководство за собственика“' in t and '9 менюта' in t, t[:120])
         await pg.click('.fw-btns .btn-primary'); await pg.wait_for_timeout(500)
         ok('„Към автопарка“ води към началния екран', '#/home' in pg.url, pg.url)
-        await pg.goto(B + '/app#/me'); await pg.wait_for_timeout(500)
+        await pg.goto(B + '/avtopark#/me'); await pg.wait_for_timeout(500)
         await pg.click('.big-link:has-text("Автопарк")'); await pg.wait_for_timeout(400); await pg.click('.sheet .big-link:has-text("Ръководство за собственика")'); await pg.wait_for_timeout(500)
         ok('Ръководството има 9 теми', await pg.locator('.fg-tile').count() == 9)
         imgs = set()

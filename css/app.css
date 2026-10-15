@@ -1877,14 +1877,3 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 :root[data-skin] [data-page="fleet"] .td-list > .td-row:nth-child(n+2) { border-top: 1px solid var(--line) !important; }
 :root[data-skin] [data-page="cars"] .car-head { display: flex !important; flex-wrap: wrap; gap: 4px 10px; }
 
-/* ---------- Няколко акаунта на един телефон ---------- */
-.acct-list, .acct-saved { display: flex; flex-direction: column; gap: 8px; }
-.acct-saved { margin: 18px 0 4px; }
-.acct-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 16px; border: 2px solid transparent; background: var(--surface-2); color: inherit; font: inherit; text-align: left; cursor: pointer; }
-.acct-row.on { border-color: var(--text); background: var(--surface); }
-.acct-row img { width: 42px; height: 42px; border-radius: 11px; flex: none; }
-.acct-row .grow { display: flex; flex-direction: column; min-width: 0; }
-.acct-row b { font-size: .96rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.acct-row small { color: var(--muted); font-size: .8rem; }
-.acct-row.add { background: none; border: 1.5px dashed var(--line-strong, var(--line)); }
-.acct-plus { width: 42px; height: 42px; border-radius: 11px; display: grid; place-items: center; background: var(--surface-2); flex: none; }

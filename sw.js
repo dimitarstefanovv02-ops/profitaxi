@@ -1,7 +1,7 @@
 // Чисто – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v153';
+const VERSION = 'profitaxi-v155';
 const SHELL = [
-  '/app', '/app.html', '/css/app.css?v=153', '/css/skins.css?v=153', '/js/skin.js', '/manifest.webmanifest', '/manifest-fleet.webmanifest', '/icons/icon-192.png', '/icons/fleet-192.png', '/icons/favicon-64.png',
+  '/app', '/app.html', '/avtopark', '/avtopark.html', '/css/app.css?v=155', '/css/skins.css?v=155', '/js/skin.js', '/manifest.webmanifest', '/manifest-fleet.webmanifest', '/icons/icon-192.png', '/icons/fleet-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/sync.js', '/js/schema.js', '/js/config.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',
   '/js/views/auth.js', '/js/views/onboarding.js', '/js/views/home.js', '/js/views/shift.js', '/js/views/shifts.js',
   '/js/views/stats.js', '/js/views/costs.js', '/js/views/profile.js', '/js/views/carSettings.js', '/js/views/cityPicker.js',
@@ -22,7 +22,7 @@ self.addEventListener('fetch', (e) => {
       const copy = res.clone(); caches.open(VERSION).then((c) => c.put(req, copy));
     }
     return res;
-  }).catch(() => caches.match(req).then((r) => r || caches.match((p => p.startsWith('/admin') ? '/admin.html' : '/app.html')(new URL(req.url).pathname)))));
+  }).catch(() => caches.match(req).then((r) => r || caches.match((p => p.startsWith('/admin') ? '/admin.html' : p.startsWith('/avtopark') ? '/avtopark.html' : '/app.html')(new URL(req.url).pathname)))));
 });
 
 // Известие от сървъра (админ: нов шофьор, въпрос)

@@ -5,12 +5,48 @@
 
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
 import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats, companyKey, COMPANY_SITES, CITY_SITES, siteKey } from './constants.js';
-import { LIVE, call, getToken, setToken, setOnAuthLost } from './sync.js';
+import { LIVE, call, getToken, setToken, setOnAuthLost, setAppUid, migrateToken } from './sync.js';
 import { PHONE_CODE } from './config.js';
 import { encode, decode } from './schema.js';
 
 const KEY = 'profitaxi.v5'; // нов ключ за всяка несъвместима версия на данните
 const SESSION_KEY = 'profitaxi.session';
+// Два адреса, два отделни входа: /app – шофьори, /avtopark – собственици на коли.
+// Влизаш като шофьор в /app и като собственик в /avtopark – единият вход не изкарва другия.
+export const FLEET_PATH = '/avtopark';
+export const isFleetPath = () => { try { return location.pathname.startsWith(FLEET_PATH); } catch { return false; } };
+const PATH_KEY = isFleetPath() ? 'profitaxi.session.fleet' : SESSION_KEY;
+function sessionId() { try { return localStorage.getItem(PATH_KEY); } catch { return null; } }
+function setSession(id) { try { localStorage.setItem(PATH_KEY, id); } catch { /* */ } setAppUid(id); }
+function clearSession() { try { localStorage.removeItem(PATH_KEY); } catch { /* */ } setAppUid(null); }
+// След вход/регистрация: собственик, влязъл в /app (или шофьор в /avtopark), се записва на правилния адрес,
+// а приложението отива там (takeMove в app.js)
+function fixPath(uid) {
+  const fleet = isFleet(db.profiles?.[uid]);
+  if (!uid || fleet === isFleetPath()) return;
+  try { localStorage.setItem(fleet ? 'profitaxi.session.fleet' : SESSION_KEY, uid); localStorage.removeItem(PATH_KEY); sessionStorage.setItem('profitaxi.move', fleet ? FLEET_PATH : '/app'); } catch { /* */ }
+}
+export function takeMove() { try { const m = sessionStorage.getItem('profitaxi.move'); if (m) sessionStorage.removeItem('profitaxi.move'); return m; } catch { return null; } }
+// Акаунтът, влязъл на другия адрес (за известие към него)
+export function otherPathSession() { try { return localStorage.getItem(isFleetPath() ? SESSION_KEY : 'profitaxi.session.fleet'); } catch { return null; } }
+// Акаунтът е отворен на грешния адрес (собственик в /app или шофьор в /avtopark) → прехвърля входа на правилния
+export function moveToRightPath(fleet) {
+  if (PREVIEW || fleet === isFleetPath()) return false;
+  const id = sessionId(); if (!id) return false;
+  if (LIVE && diff().n) flush();
+  try { localStorage.setItem(fleet ? 'profitaxi.session.fleet' : SESSION_KEY, id); } catch { /* */ }
+  clearSession();
+  location.replace((fleet ? FLEET_PATH : '/app') + location.hash);
+  return true;
+}
+
+// При зареждане: акаунтът на този адрес; старите общи ключове (отпреди) отиват при него
+(() => {
+  const id = sessionId(); setAppUid(id);
+  if (!id || !LIVE) return;
+  migrateToken(id);
+  try { for (const x of ['', '.base']) { const old = localStorage.getItem('profitaxi.live.app' + x); if (old != null) { if (localStorage.getItem(`profitaxi.live.app.${id}${x}`) == null) localStorage.setItem(`profitaxi.live.app.${id}${x}`, old); localStorage.removeItem('profitaxi.live.app' + x); } } } catch { /* */ }
+})();
 const ADMIN_SESSION_KEY = 'profitaxi.asession';
 const VERSION = 11;
 const listeners = new Set();
@@ -63,7 +99,7 @@ function commit() { persist(); listeners.forEach((fn) => fn()); }
 export const onChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
 export const live = () => LIVE;
 export function resetDemo() {
-  if (LIVE) return; localStorage.removeItem(KEY); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
+  if (LIVE) return; localStorage.removeItem(KEY); clearSession(); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(ADMIN_SESSION_KEY); db = null; load(); }
 ['profitaxi.v1', 'profitaxi.v2', 'profitaxi.v4'].forEach((k) => localStorage.removeItem(k)); // стари демо данни
 
 // Синхронизация между отворени раздели
@@ -100,7 +136,7 @@ export function trialDaysLeft(user) {
 // ================= Вход на шофьор =================
 export function currentUser() {
   load();
-  const id = PREVIEW || localStorage.getItem(SESSION_KEY);
+  const id = PREVIEW || sessionId();
   const u = db.users.find((x) => x.id === id && x.role === 'driver');
   return u ? clone(u) : null;
 }
@@ -111,9 +147,9 @@ export function login(loginId, password, { company } = {}) {
   const v = String(loginId || '').trim();
   const u = db.users.find((x) => x.role === 'driver' && (v.includes('@') ? norm(x.email) === norm(v) : digits(v).length >= 9 && digits(x.phone) === digits(v)));
   if (!u || u.password !== password) return { error: 'Грешни данни за вход – провери имейла/телефона и паролата' };
-  localStorage.setItem(SESSION_KEY, u.id);
+  setSession(u.id);
   u.lastLoginAt = new Date().toISOString();
-  commit(); rememberAccount();
+  commit(); fixPath(u.id);
   return { user: clone(u) };
 }
 // Вход с Face ID / пръст (само на живия сайт): credential е отговорът на navigator.credentials.get
@@ -136,82 +172,8 @@ export function setOffDay(day, on = true) {
 }
 export function logout() {
   if (PREVIEW) { endPreview(); listeners.forEach((fn) => fn()); return; }
-  const id = localStorage.getItem(SESSION_KEY);
-  forgetAccount(id);
-  localStorage.removeItem(SESSION_KEY); if (LIVE) dropLive('app');
-  listeners.forEach((fn) => fn());
-}
-// „Изход“ от менюто: ако на телефона има и друг акаунт – минаваме на него, вместо на входа
-export async function logoutAndSwitch() {
-  const id = localStorage.getItem(SESSION_KEY);
-  const next = readAccounts().find((a) => a.id !== id && (!LIVE || a.token));
-  logout();
-  if (next) await switchAccount(next.id);
-}
-
-// ================= Няколко акаунта на едно устройство =================
-// Шофьорски и собственически акаунт (или два шофьорски) остават влезли едновременно;
-// сменят се с едно натискане, без парола – като в Instagram.
-const ACCOUNTS_KEY = 'profitaxi.accounts';
-const readAccounts = () => { try { const a = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
-const writeAccounts = (a) => { try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a.slice(0, 5))); } catch { /* */ } };
-const cacheKey = (id) => `profitaxi.live.app.u.${id}`;
-// Записва текущия акаунт в списъка (с ключа за вход на живия сайт)
-export function rememberAccount() {
-  if (PREVIEW) return;
-  const u = currentUser(); if (!u) return;
-  const p = db.profiles[u.id] || {};
-  const list = readAccounts();
-  const prev = list.find((a) => a.id === u.id);
-  const entry = { id: u.id, name: u.name, fleet: isFleet(p), photo: p.photo ? 1 : 0, login: u.email || u.phone || '', token: LIVE ? getToken('app') : null, at: prev?.at || Date.now() };
-  if (prev && prev.name === entry.name && prev.fleet === entry.fleet && prev.token === entry.token && prev.login === entry.login) return;
-  writeAccounts([entry, ...list.filter((a) => a.id !== u.id)]);
-}
-export function savedAccounts() {
-  return readAccounts().filter((a) => !LIVE || a.token).map(({ token, ...a }) => a);
-}
-export function forgetAccount(id) {
-  writeAccounts(readAccounts().filter((a) => a.id !== id));
-  try { localStorage.removeItem(cacheKey(id)); localStorage.removeItem(cacheKey(id) + '.base'); } catch { /* */ }
-}
-// Прибира текущия акаунт настрана (остава влязъл) – за „Добави акаунт“ и смяна
-async function parkCurrent() {
-  rememberAccount();
-  const id = localStorage.getItem(SESSION_KEY);
-  if (LIVE && id) {
-    if (diff().n) await flush();
-    try { localStorage.setItem(cacheKey(id), JSON.stringify(db)); localStorage.setItem(cacheKey(id) + '.base', JSON.stringify({ f: base, rev })); } catch { /* */ }
-  }
-}
-export async function switchAccount(id) {
-  const a = readAccounts().find((x) => x.id === id); if (!a) return { error: 'Няма такъв акаунт на телефона' };
-  if (id === localStorage.getItem(SESSION_KEY)) return { ok: true };
-  await parkCurrent();
-  if (LIVE) {
-    setToken('app', a.token);
-    let cached = null, b = null;
-    try { cached = JSON.parse(localStorage.getItem(cacheKey(id))); b = JSON.parse(localStorage.getItem(cacheKey(id) + '.base')); } catch { /* */ }
-    db = cached && typeof cached === 'object' ? cached : emptyDb(); db.settings ||= defaultSettings();
-    base = b?.f || {}; rev = b?.rev ?? null;
-    if (!cached) { base = {}; rev = null; }
-    ensureExt(); registerAllCustom(); saveLive(); saveBase();
-    localStorage.setItem(SESSION_KEY, id);
-    listeners.forEach((fn) => fn());
-    await syncNow();
-    if (!currentUser()) { forgetAccount(id); localStorage.removeItem(SESSION_KEY); listeners.forEach((fn) => fn()); return { error: 'Входът в този акаунт е изтекъл – влез отново' }; }
-  } else {
-    if (!db.users.some((u) => u.id === id && u.role === 'driver')) { forgetAccount(id); return { error: 'Акаунтът го няма' }; }
-    localStorage.setItem(SESSION_KEY, id);
-    listeners.forEach((fn) => fn());
-  }
-  rememberAccount();
-  return { ok: true };
-}
-// „Добави акаунт“: текущият остава влязъл, отваря се входът / регистрацията за втори
-export async function addAccount() {
-  await parkCurrent();
-  localStorage.removeItem(SESSION_KEY);
-  if (LIVE) { setToken('app', null); db = emptyDb(); base = {}; rev = null; ensureExt(); saveLive(); saveBase(); }
+  if (LIVE) dropLive('app');
+  clearSession();
   listeners.forEach((fn) => fn());
 }
 
@@ -297,8 +259,8 @@ export function register(f) {
   }
   if (referrer) u.referredBy = referrer.id; // наградата идва, когато новият шофьор плати
   db.profiles[u.id].tour = f.accountType === 'fleet' ? 'done' : 'pending'; // кратка разходка при първото влизане (само за шофьори)
-  localStorage.setItem(SESSION_KEY, u.id);
-  commit(); rememberAccount();
+  setSession(u.id);
+  commit(); fixPath(u.id);
   return { user: clone(u) };
 }
 // Промо кодове: „2 месеца безплатно“ или „-50% първия месец“, с лимит и срок
@@ -344,9 +306,9 @@ export function updateAccount({ name, phone, city, company }) {
 }
 export function deleteMyAccount() {
   const u = me(); if (!u) return;
-  if (LIVE) return call('deleteMe', {}, 'app').then((r) => { if (!r.error) { localStorage.removeItem(SESSION_KEY); dropLive('app'); } return r; });
+  if (LIVE) return call('deleteMe', {}, 'app').then((r) => { if (!r.error) { dropLive('app'); clearSession(); } return r; });
   wipeUser(u.id);
-  localStorage.removeItem(SESSION_KEY);
+  clearSession();
   commit();
 }
 function wipeUser(id) {
@@ -362,7 +324,7 @@ function wipeUser(id) {
   if (db.payments) db.payments = db.payments.filter((x) => x.userId !== id);
   if (db.churn) db.churn = db.churn.filter((x) => x.userId !== id);
 }
-function me() { load(); const id = PREVIEW || localStorage.getItem(SESSION_KEY); return db.users.find((x) => x.id === id && x.role === 'driver'); }
+function me() { load(); const id = PREVIEW || sessionId(); return db.users.find((x) => x.id === id && x.role === 'driver'); }
 function myId() { const u = me(); if (!u) throw new Error('not signed in'); return u.id; }
 
 // ================= Съобщения, анкета, предложения, функции, използване (шофьор) =================
@@ -1117,7 +1079,7 @@ const LAT = { 'Иван': 'ivan', 'Георги': 'georgi', 'Мария': 'maria
 // промените се качват веднага щом има връзка.
 const IS_ADMIN_PAGE = /^\/admin/.test(location.pathname);
 const scope = () => (IS_ADMIN_PAGE || PREVIEW ? 'admin' : 'app');
-const liveKey = () => `profitaxi.live.${scope()}`;
+const liveKey = () => (scope() === 'admin' ? 'profitaxi.live.admin' : sessionId() ? `profitaxi.live.app.${sessionId()}` : 'profitaxi.live.app');
 const defaultSettings = () => ({ trialDays: 14, price: 0, freeMode: true });
 const emptyDb = () => ({ version: VERSION, users: [], profiles: {}, shifts: [], costs: [], reminders: [], reservations: [], settings: defaultSettings() });
 let base = {}, rev = null, pushTimer = null, pushing = false, pushAgain = false, syncStarted = false;
@@ -1125,21 +1087,25 @@ export const syncState = { last: null, pending: false, offline: false };
 
 function loadLive() {
   try { localStorage.removeItem(KEY); } catch { /* старите демо данни не трябват */ }
+  loadLiveFor();
+  startSync();
+  return db;
+}
+// Копието на данните на акаунта в този прозорец
+function loadLiveFor() {
   try { db = JSON.parse(localStorage.getItem(liveKey())); } catch { db = null; }
   if (!db || typeof db !== 'object') db = emptyDb();
   db.settings ||= defaultSettings();
   try { const b = JSON.parse(localStorage.getItem(liveKey() + '.base')); base = b?.f || {}; rev = b?.rev ?? null; } catch { base = {}; rev = null; }
   ensureExt();
   registerAllCustom();
-  startSync();
-  return db;
 }
 function saveLive() { try { localStorage.setItem(liveKey(), JSON.stringify(db)); } catch { /* препълнено – пак работим от паметта */ } }
 function saveBase() { try { localStorage.setItem(liveKey() + '.base', JSON.stringify({ f: base, rev })); } catch { /* */ } }
 function dropLive(sc) {
   const t = getToken(sc); if (t) call('logout', { token: t }, sc);
   setToken(sc, null);
-  ['', '.base'].forEach((x) => localStorage.removeItem(`profitaxi.live.${sc}${x}`));
+  ['', '.base'].forEach((x) => localStorage.removeItem(liveKey() + x));
   if (sc === scope()) { db = emptyDb(); base = {}; rev = null; ensureExt(); }
 }
 function applyFields(fields, newRev) {
@@ -1207,9 +1173,9 @@ function startSync() {
   if (syncStarted) return; syncStarted = true;
   setOnAuthLost((sc) => {
     if (sc !== scope()) return;
-    if (sc === 'app') forgetAccount(localStorage.getItem(SESSION_KEY));
-    localStorage.removeItem(sc === 'admin' ? ADMIN_SESSION_KEY : SESSION_KEY);
-    dropLive(sc); listeners.forEach((fn) => fn());
+    dropLive(sc);
+    if (sc === 'admin') localStorage.removeItem(ADMIN_SESSION_KEY); else clearSession();
+    listeners.forEach((fn) => fn());
   });
   const every = IS_ADMIN_PAGE ? 20000 : 45000;
   setInterval(() => { if (document.visibilityState === 'visible') syncNow(); }, every);
@@ -1228,10 +1194,10 @@ function liveStorageEvent(e) {
 async function liveAuth(op, body, sc, sessionKey) {
   const r = await call(op, body, sc);
   if (r.error) return { error: r.error };
+  if (sc === 'app') { if (LIVE && diff().n && sessionId()) await flush(); setSession(r.user.id); } else localStorage.setItem(sessionKey, r.user.id);
   setToken(sc, r.token);
-  localStorage.setItem(sessionKey, r.user.id);
   applyFields(r.fields, r.rev);
-  if (sc === 'app') rememberAccount();
+  if (sc === 'app') fixPath(r.user.id);
   return { user: clone(r.user) };
 }
 async function registerLive(f) {
@@ -1242,10 +1208,10 @@ async function registerLive(f) {
   const { password, ...user } = u; if (f.by === 'phone') user.email = '';
   const r = await call('register', { by: f.by || (f.email ? 'email' : 'phone'), user, profile, password: f.password, accessCode: f.accessCode ?? null, promo: f.promo || '', refCode: f.refCode || '' }, 'app');
   if (r.error) return { error: r.error };
+  setSession(r.user.id);
   setToken('app', r.token);
-  localStorage.setItem(SESSION_KEY, r.user.id);
   applyFields(r.fields, r.rev);
-  rememberAccount();
+  fixPath(r.user.id);
   return { user: clone(r.user) };
 }
 

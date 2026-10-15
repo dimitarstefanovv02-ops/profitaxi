@@ -1,69 +1,71 @@
-# Два акаунта на един телефон (шофьор + собственик): остават влезли, смяна с едно натискане, „Изход“ минава на другия.
+# Два адреса: /app – шофьори, /avtopark – собственици. Всеки помни своя акаунт:
+# може да си влязъл и в двата едновременно; входът/изходът в единия не пипа другия.
 import asyncio, sys
 from playwright.async_api import async_playwright
 B = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8765'
 LIVE = len(sys.argv) > 2 and sys.argv[2] == 'live'
 R = []
 def ok(n, c, x=''): R.append(f"{'PASS' if c else 'FAIL'}  {n}{'  [' + str(x) + ']' if x != '' else ''}")
+WHO = "async () => { const s = await import('/js/store.js'); return s.currentUser()?.name || null; }"
+
+def reg(name, email, phone, kind):
+    return f"""async () => {{ const s = await import('/js/store.js'); const c = await s.sendSmsCode('{phone}'); if (c && c.demoCode) await s.verifySmsCode('{phone}', c.demoCode);
+      const r = await s.register({{ name: '{name}', email: '{email}', password: 'parola1', phone: '{phone}', city: 'Пловдив', company: 'Еко Такси 6155', carType: 'rent', accountType: '{kind}' }});
+      if (!r.error) s.updateProfile({{ onboarded: true, tour: 'done' }}); return r.error || null; }}"""
 
 async def main():
     async with async_playwright() as p:
-        b = await p.chromium.launch(); pg = await b.new_page(viewport={'width': 390, 'height': 844}); errs = []; pg.set_default_timeout(8000)
-        pg.on('pageerror', lambda e: errs.append(str(e)))
-        await pg.goto(B + '/app'); await pg.evaluate(f"localStorage.clear(); localStorage.setItem('profitaxi.installed','1'); localStorage.setItem('profitaxi.fwalk','1'); {'localStorage.setItem(`profitaxi.live`,`1`);' if LIVE else ''}")
-        await pg.goto(B + '/app#/login'); await pg.wait_for_timeout(500)
-        ok('Без влезли акаунти – обикновен вход', await pg.locator('.acct-saved').count() == 0)
-        # 1) шофьор
-        reg = lambda name, email, phone, kind: f"""async () => {{ const s = await import('/js/store.js'); const c = await s.sendSmsCode('{phone}'); if (c && c.demoCode) await s.verifySmsCode('{phone}', c.demoCode);
-          const r = await s.register({{ name: '{name}', email: '{email}', password: 'parola1', phone: '{phone}', city: 'Пловдив', company: 'Еко Такси 6155', carType: 'rent', accountType: '{kind}' }}); return r.error || null; }}"""
-        e = await pg.evaluate(reg('Иво Шофьоров', 'ivo.drv@t.bg', '0888700001', 'driver'))
-        ok('Регистрация шофьор', e is None, e)
-        await pg.evaluate("async () => { const s = await import('/js/store.js'); s.updateProfile({ onboarded: true, tour: 'done' }); }")
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(900)
-        await pg.evaluate("async () => { const s = await import('/js/store.js'); const st = s.startShift(100000); s.saveShift({ ...st, note: 'смяна-на-иво' }); }")
-        # 2) „Добави акаунт“ от Профил
-        await pg.goto(B + '/app#/me'); await pg.wait_for_timeout(700)
-        ok('Профил: ред „Добави акаунт“', await pg.locator('.big-link:has-text("Добави акаунт")').count() == 1)
-        await pg.click('.big-link:has-text("Добави акаунт")'); await pg.wait_for_timeout(300)
-        await pg.click('.acct-row.add'); await pg.wait_for_timeout(900)
-        ok('Отваря входа с влезлия акаунт отгоре', 'login' in pg.url and await pg.locator('.acct-saved .acct-row:has-text("Иво Шофьоров")').count() == 1, pg.url)
-        await pg.goto(B + '/app#/register'); await pg.wait_for_timeout(500)
-        e = await pg.evaluate(reg('Петко Собственик', 'petko.own@t.bg', '0888700002', 'fleet'))
-        ok('Регистрация собственик (вторият акаунт)', e is None, e)
-        await pg.goto(B + '/app#/home'); await pg.wait_for_timeout(1000)
-        ok('Собственикът вижда „Автопарк“ и зелената иконка', await pg.locator('h1:has-text("Автопарк")').count() == 1 and await pg.evaluate("document.documentElement.dataset.appIcon") == 'fleet')
-        # 3) смяна с едно натискане
-        await pg.goto(B + '/app#/me'); await pg.wait_for_timeout(700)
-        ok('Профил: „Смени акаунт“ с името на другия', 'Иво · шофьор' in await pg.locator('.big-link:has-text("Смени акаунт")').inner_text())
-        await pg.click('.big-link:has-text("Смени акаунт")'); await pg.wait_for_timeout(300)
-        n = await pg.locator('.sheet .acct-row:not(.add)').count()
-        ok('Листът показва и двата акаунта с иконките им', n == 2 and await pg.locator('.sheet .acct-row img[src="/icons/fleet-192.png"]').count() == 1, n)
-        await pg.click('.sheet .acct-row:has-text("Иво Шофьоров")'); await pg.wait_for_timeout(1500)
-        u = await pg.evaluate("async () => { const s = await import('/js/store.js'); return [s.currentUser()?.name, s.myData().shifts.some((x) => x.note === 'смяна-на-иво')]; }")
-        ok('Смяна към шофьора без парола – данните му са там', u == ['Иво Шофьоров', True], u)
-        ok('Шофьорът е на „Днес“ с тъмната иконка', await pg.evaluate("document.documentElement.dataset.appIcon") == 'driver' and await pg.locator('.nav').count() == 1)
-        await pg.goto(B + '/app#/me'); await pg.wait_for_timeout(600)
-        await pg.click('.big-link:has-text("Смени акаунт")'); await pg.wait_for_timeout(300)
-        await pg.click('.sheet .acct-row:has-text("Петко Собственик")'); await pg.wait_for_timeout(1500)
-        u = await pg.evaluate("async () => { const s = await import('/js/store.js'); return [s.currentUser()?.name, s.myData().shifts.length]; }")
-        ok('Обратно към собственика – без смените на шофьора', u[0] == 'Петко Собственик' and u[1] == 0, u)
-        # 4) известие за другия акаунт (?as=)
-        did = await pg.evaluate("async () => { const s = await import('/js/store.js'); return s.savedAccounts().find((a) => !a.fleet).id; }")
-        await pg.goto(B + f'/app#/home?as={did}'); await pg.wait_for_timeout(1500)
-        u = await pg.evaluate("async () => { const s = await import('/js/store.js'); return s.currentUser()?.name; }")
-        ok('Известие за шофьорския акаунт (?as=) минава на него', u == 'Иво Шофьоров' and 'as=' not in pg.url, [u, pg.url])
-        # 5) „Изход“ минава на другия акаунт; после остава само един
-        await pg.goto(B + '/app#/settings'); await pg.wait_for_timeout(600)
-        await pg.click('text=Изход'); await pg.wait_for_timeout(1500)
-        u = await pg.evaluate("async () => { const s = await import('/js/store.js'); return [s.currentUser()?.name, s.savedAccounts().map((a) => a.name)]; }")
-        ok('„Изход“ от шофьора → минава на собственика', u == ['Петко Собственик', ['Петко Собственик']], u)
-        await pg.goto(B + '/app#/settings'); await pg.wait_for_timeout(600)
-        await pg.click('text=Изход'); await pg.wait_for_timeout(900)
-        ok('Последният „Изход“ → входът, без запомнени акаунти', 'login' in pg.url and await pg.locator('.acct-saved').count() == 0, pg.url)
-        # 6) влизане отново като шофьор
-        await pg.fill('input[autocomplete=username]', 'ivo.drv@t.bg'); await pg.fill('input[type=password]', 'parola1'); await pg.click('button[type=submit]'); await pg.wait_for_timeout(1500)
-        ok('Вход с парола работи както преди', await pg.evaluate("async () => { const s = await import('/js/store.js'); return s.currentUser()?.name; }") == 'Иво Шофьоров')
-        ok('Без хоризонтално превъртане', await pg.evaluate("document.documentElement.scrollWidth") <= 390)
+        b = await p.chromium.launch(); ctx = await b.new_context(viewport={'width': 390, 'height': 844}); errs = []
+        ctx.set_default_timeout(8000)
+        d = await ctx.new_page(); d.on('pageerror', lambda e: errs.append(str(e)))
+        await d.goto(B + '/app'); await d.evaluate(f"localStorage.clear(); localStorage.setItem('profitaxi.installed','1'); localStorage.setItem('profitaxi.fwalk','1'); {'localStorage.setItem(`profitaxi.live`,`1`);' if LIVE else ''}"); await d.reload()
+        # входът за собственици има своя вид
+        o = await ctx.new_page(); o.on('pageerror', lambda e: errs.append(str(e)))
+        await o.goto(B + '/avtopark#/login'); await o.wait_for_timeout(700)
+        ok('/avtopark: вход за собственици със зелената иконка', 'Автопаркът' in await o.locator('.auth-hero h1').inner_text() and await o.evaluate("document.querySelector('link[rel=manifest]').getAttribute('href')") == '/manifest-fleet.webmanifest')
+        ok('/avtopark: заглавие „Чисто Автопарк“', await o.title() == 'Чисто Автопарк')
+        await o.goto(B + '/avtopark#/register'); await o.wait_for_timeout(500)
+        ok('/avtopark: регистрацията е избрана за собственик', await o.locator('.acct-opt.on:has-text("Собственик")').count() == 1)
+        await d.goto(B + '/app#/login'); await d.wait_for_timeout(500)
+        ok('/app: линк към входа за собственици', await d.locator('a[href="/avtopark"]').count() == 1)
+        # шофьор в /app
+        e = await d.evaluate(reg('Иво Шофьоров', 'ivo.drv@t.bg', '0888700001', 'driver')); ok('/app: регистрация шофьор', e is None, e)
+        await d.goto(B + '/app#/home'); await d.wait_for_timeout(900)
+        await d.evaluate("async () => { const s = await import('/js/store.js'); const st = s.startShift(100000); s.saveShift({ ...st, note: 'смяна-на-иво' }); }"); await d.wait_for_timeout(600)
+        # собственик в /avtopark
+        await o.goto(B + '/avtopark#/login'); await o.wait_for_timeout(600)
+        ok('/avtopark не е влязъл с шофьора', await o.evaluate(WHO) is None)
+        e = await o.evaluate(reg('Петко Собственик', 'petko.own@t.bg', '0888700002', 'fleet')); ok('/avtopark: регистрация собственик', e is None, e)
+        await o.goto(B + '/avtopark#/home'); await o.wait_for_timeout(1000)
+        ok('/avtopark: „Автопарк“', await o.locator('h1:has-text("Автопарк")').count() == 1)
+        # двата едновременно
+        await d.reload(); await d.wait_for_timeout(1300)
+        u = await d.evaluate("async () => { const s = await import('/js/store.js'); return [s.currentUser()?.name, s.myData().shifts.some((x) => x.note === 'смяна-на-иво')]; }")
+        ok('/app остава шофьорът, със смените си', u == ['Иво Шофьоров', True], u)
+        await o.reload(); await o.wait_for_timeout(1300)
+        u = await o.evaluate("async () => { const s = await import('/js/store.js'); return [s.currentUser()?.name, s.myData().shifts.length]; }")
+        ok('/avtopark остава собственикът, без смените на шофьора', u == ['Петко Собственик', 0], u)
+        # изход от /app не пипа /avtopark
+        await d.goto(B + '/app#/settings'); await d.wait_for_timeout(500); await d.click('text=Изход'); await d.wait_for_timeout(900)
+        await o.reload(); await o.wait_for_timeout(1200)
+        ok('Изход в /app – /avtopark пак е влязъл', await o.evaluate(WHO) == 'Петко Собственик')
+        # собственик, влязъл в /app → минава сам на /avtopark
+        await d.goto(B + '/app#/login'); await d.wait_for_timeout(500)
+        await d.fill('input[autocomplete=username]', 'petko.own@t.bg'); await d.fill('input[type=password]', 'parola1'); await d.click('button[type=submit]'); await d.wait_for_timeout(2000)
+        ok('Собственик, влязъл в /app → отваря се /avtopark', '/avtopark' in d.url and await d.evaluate(WHO) == 'Петко Собственик', d.url)
+        await d.goto(B + '/app#/home'); await d.wait_for_timeout(800)
+        ok('…а /app остава на входа', await d.evaluate(WHO) is None and 'login' in d.url, d.url)
+        await d.fill('input[autocomplete=username]', 'ivo.drv@t.bg'); await d.fill('input[type=password]', 'parola1'); await d.click('button[type=submit]'); await d.wait_for_timeout(1500)
+        ok('Шофьорът влиза в /app', await d.evaluate(WHO) == 'Иво Шофьоров' and '/app' in d.url)
+        await o.reload(); await o.wait_for_timeout(1200)
+        ok('…и собственикът в /avtopark пак е влязъл', await o.evaluate(WHO) == 'Петко Собственик')
+        # известие за собственика, отворено в /app (?as=)
+        oid = await o.evaluate("async () => { const s = await import('/js/store.js'); return s.currentUser().id; }")
+        await d.goto(B + f'/app#/home?as={oid}'); await d.wait_for_timeout(1800)
+        ok('Известие за собственика в /app → отваря /avtopark', '/avtopark' in d.url and await d.evaluate(WHO) == 'Петко Собственик', d.url)
+        await d.goto(B + '/app#/home'); await d.wait_for_timeout(900)
+        ok('…и шофьорът в /app не е изкаран', await d.evaluate(WHO) == 'Иво Шофьоров')
+        ok('Няма бутон за смяна на акаунт', await d.locator('.big-link:has-text("Смени акаунт")').count() == 0)
         ok('Без грешки в JS', not errs, errs[:3])
         await b.close()
     print('\n'.join(R)); print('FAILS:', sum(1 for r in R if r.startswith('FAIL')), '/', len(R))

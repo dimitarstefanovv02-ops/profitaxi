@@ -12,9 +12,17 @@ export const LIVE = (() => {
   return LIVE_DEFAULT && !/^(localhost|127\.|0\.0\.0\.0)/.test(location.hostname);
 })();
 
-const tokKey = (scope) => `profitaxi.tok.${scope}`;
-export const getToken = (scope) => { try { return localStorage.getItem(tokKey(scope)); } catch { return null; } };
-export const setToken = (scope, t) => { try { if (t) localStorage.setItem(tokKey(scope), t); else localStorage.removeItem(tokKey(scope)); } catch { /* */ } };
+// Ключът за вход е отделен за всеки акаунт: в приложението може да си влязъл като шофьор,
+// а в браузъра – като собственик, без единият вход да изкарва другия.
+let appUid = null;
+export const setAppUid = (id) => { appUid = id || null; };
+const tokKey = (scope, uid = appUid) => (scope === 'app' && uid ? `profitaxi.tok.app.${uid}` : `profitaxi.tok.${scope}`);
+export const getToken = (scope, uid) => { try { return localStorage.getItem(tokKey(scope, uid)); } catch { return null; } };
+export const setToken = (scope, t, uid) => { try { if (t) localStorage.setItem(tokKey(scope, uid), t); else localStorage.removeItem(tokKey(scope, uid)); } catch { /* */ } };
+// Старият общ ключ (отпреди) – прехвърля се на акаунта, с който е бил влязъл
+export function migrateToken(uid) {
+  try { const old = localStorage.getItem('profitaxi.tok.app'); if (old && uid && !localStorage.getItem(tokKey('app', uid))) { localStorage.setItem(tokKey('app', uid), old); } if (old && uid) localStorage.removeItem('profitaxi.tok.app'); } catch { /* */ }
+}
 
 let onAuthLost = () => {};
 export const setOnAuthLost = (fn) => { onAuthLost = fn; };

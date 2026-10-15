@@ -62,7 +62,7 @@ export function profileView({ go, user, data, route, settings }) {
         h('a', { class: 'list-btn', href: '/privacy.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('shield', 18)), h('span', { class: 'grow' }, 'Поверителност'), icon('right', 18)),
         h('a', { class: 'list-btn', href: '/terms.html', target: '_blank' }, h('span', { class: 'l-ic' }, icon('doc', 18)), h('span', { class: 'grow' }, 'Общи условия'), icon('right', 18))))],
       ['exit', h('section', { class: 'card', style: { padding: '8px 18px' } },
-        listBtn('logout', 'Изход', async () => { await store.logoutAndSwitch(); go(store.currentUser() ? '/home' : '/login'); }),
+        listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
         h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта')))],
       ].filter(([k]) => (settings ? !PERSONAL.includes(k) : PERSONAL.includes(k)))),
       settings && h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, store.live() ? 'Данните се пазят в облака – влез от всеки телефон и ги виждаш.' : 'Демо версия. Данните се пазят на това устройство.'));

@@ -4,7 +4,7 @@
   "description": "Приходи, разходи и чиста печалба за таксиметрови шофьори.",
   "lang": "bg",
   "start_url": "/app#/home",
-  "scope": "/",
+  "scope": "/app",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FDF8F8",
@@ -52,5 +52,6 @@
         }
       ]
     }
-  ]
+  ],
+  "id": "/app"
 }

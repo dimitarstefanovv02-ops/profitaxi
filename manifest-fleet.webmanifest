@@ -3,8 +3,8 @@
   "short_name": "Чисто Автопарк",
   "description": "Коли под наем: наем, срокове, разходи и печалба по коли.",
   "lang": "bg",
-  "start_url": "/app#/home",
-  "scope": "/",
+  "start_url": "/avtopark#/home",
+  "scope": "/avtopark",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FDF8F8",
@@ -31,7 +31,7 @@
     {
       "name": "Колите",
       "short_name": "Колите",
-      "url": "/app#/cars",
+      "url": "/avtopark#/cars",
       "icons": [
         {
           "src": "/icons/fleet-192.png",
@@ -41,5 +41,5 @@
       ]
     }
   ],
-  "id": "/app?fleet"
+  "id": "/avtopark"
 }
