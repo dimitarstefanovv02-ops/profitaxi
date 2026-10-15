@@ -238,7 +238,7 @@ export function enhance(input) {
   const b = btn(`${input.className || 'input'} pk-field`, '', (e) => { e.preventDefault(); e.stopPropagation(); if (!input.disabled) openPicker(input); });
   const upd = () => {
     const t = fmtValue(kind, input.value);
-    b.innerHTML = `<span class="pk-fi">${kind === 'time' ? ICON.time : ICON.cal}</span><span class="pk-fv${t ? '' : ' empty'}">${t || (kind === 'time' ? 'Избери час' : 'Избери дата')}</span>`;
+    b.innerHTML = `<span class="pk-fi">${kind === 'time' ? ICON.time : ICON.cal}</span><span class="pk-fv${t ? '' : ' pk-empty'}">${t || (kind === 'time' ? 'Избери час' : 'Избери дата')}</span>`;
     b.disabled = input.disabled;
   };
   Object.defineProperty(input, 'value', { configurable: true, get() { return desc.get.call(this); }, set(v) { desc.set.call(this, v); upd(); } });
