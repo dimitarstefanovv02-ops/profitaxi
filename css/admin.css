@@ -622,3 +622,44 @@ body.admin .btn.arr-toggle.on { background: var(--violet, #7C3AED); color: #fff;
 .lg-res { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; cursor: pointer; }
 .lg-res img { width: 48px; height: 48px; border-radius: 12px; }
 .lg-res span { display: grid; gap: 2px; } .lg-res small { color: var(--muted); }
+
+/* Страниците в една група: бутони най-горе */
+.adm-sub { display: flex; gap: 6px; flex-wrap: wrap; margin: 2px 0 14px; }
+.adm-sub a { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 18px; text-decoration: none; font-weight: 600; font-size: .92rem; color: var(--text); background: var(--surface-2); }
+.adm-sub a.on { background: var(--text); color: var(--bg); }
+.adm-sub a .count { font-size: .72rem; }
+
+/* Плътност: по-малко скролване в админ панела */
+body.admin .adm-main { padding-top: 14px !important; }
+body.admin .adm-head { margin-bottom: 10px !important; }
+body.admin .adm-head h1 { font-size: 1.4rem !important; }
+body.admin .adm-head p { margin-top: 2px !important; font-size: .88rem; }
+body.admin .adm-main .card { padding: 12px 14px !important; margin-bottom: 10px !important; }
+body.admin .adm-main .card-title { margin-bottom: 8px !important; }
+body.admin .kpi { padding: 10px 12px !important; gap: 3px !important; }
+body.admin .kpi-value { font-size: 1.45rem !important; }
+body.admin .tbl td { padding-top: 7px !important; padding-bottom: 7px !important; }
+body.admin .tbl th { padding-top: 6px !important; padding-bottom: 6px !important; }
+body.admin .lmap { height: clamp(240px, 36vw, 340px) !important; }
+body.admin .adm-tabs { margin-bottom: 10px !important; }
+body.admin .scope-bar { padding: 8px 12px !important; margin-bottom: 10px !important; }
+body.admin .lg-row, body.admin .lg-req { padding: 6px 0 !important; }
+body.admin .lg-row .btn, body.admin .lg-req .btn { min-height: 34px !important; height: 34px !important; padding: 0 12px !important; font-size: .85rem !important; }
+@media (max-width: 720px) {
+  body.admin .lg-row .btn span, body.admin .lg-row .btn:not([aria-label]) { font-size: .8rem !important; }
+}
+
+/* Плътност: по-малко скролване в админ панела */
+body.admin .adm-main { padding-top: 14px !important; }
+body.admin .adm-head { margin-bottom: 10px !important; }
+body.admin .adm-head h1 { font-size: 1.4rem !important; }
+body.admin .adm-head p { margin-top: 2px !important; font-size: .88rem; }
+body.admin .adm-main .card { padding: 12px 14px !important; margin-bottom: 10px !important; }
+body.admin .adm-main .card-title { margin-bottom: 8px !important; }
+body.admin .kpi { padding: 10px 12px !important; gap: 3px !important; }
+body.admin .tbl td { padding-top: 7px !important; padding-bottom: 7px !important; }
+body.admin .tbl th { padding-top: 6px !important; padding-bottom: 6px !important; }
+body.admin .lmap { height: clamp(240px, 36vw, 340px) !important; }
+body.admin .adm-tabs { margin-bottom: 10px !important; }
+body.admin .lg-row, body.admin .lg-req { padding: 6px 0 !important; }
+body.admin .lg-row .btn, body.admin .lg-req .btn { min-height: 34px !important; height: 34px !important; padding: 0 12px !important; font-size: .85rem !important; }

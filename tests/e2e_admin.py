@@ -95,13 +95,13 @@ async def main():
         days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")
         ok('Пробният период от настройките (30 дни) важи при регистрация', days==30, days)
         # Всички страници без грешки, при всички периоди
-        ok('Менюто има 12 страници', await a.locator('.adm-nav a').count()== 12)
+        ok('Менюто има 7 групи', await a.locator('.adm-nav a').count()== 7)
         await a.click('.adm-nav >> text=Статистика'); await a.wait_for_timeout(500)
         ok('„Статистика“ има табове: градове, сезонност, коли, ефир, графики', await a.locator('.adm-tabs a').count()==5)
         await a.click('.adm-tabs >> text=Графики'); await a.wait_for_timeout(600)
         ok('„Графики“ е таб в „Статистика“', 'Статистика' in await a.inner_text('.adm-nav a.on') and await a.locator('.kpis-lg').count()==1)
         for nav, txt in [('Контрол','Дубликати'),('Съобщения','Ново съобщение'),('Партньори','Кодове за достъп'),('Растеж','Този месец'),('Развитие','Какво се ползва'),('Пари','Промо кодове')]:
-            await a.click(f'.adm-nav >> text={nav}'); await a.wait_for_timeout(500)
+            await a.evaluate("(n)=>{const m={'Контрол':'/control','Съобщения':'/messages','Партньори':'/partners','Растеж':'/growth','Развитие':'/dev','Пари':'/money'}; location.hash='#'+m[n]}", nav); await a.wait_for_timeout(500)
             if txt not in await a.inner_text('main'): ok(f'{nav} показва {txt}', False)
         ok('Страниците (Контрол, Съобщения, Партньори, Растеж, Развитие, Пари) се отварят', not any('показва' in r and r.startswith('FAIL') for r in R))
         await a.evaluate("location.hash='#/control?t=dups'"); await a.wait_for_timeout(400)

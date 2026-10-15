@@ -4,7 +4,7 @@
 // се заменя с истинска база (напр. Supabase) без промени по интерфейса.
 
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
-import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats, companyKey } from './constants.js';
+import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats, companyKey, COMPANY_SITES } from './constants.js';
 import { LIVE, call, getToken, setToken, setOnAuthLost } from './sync.js';
 import { PHONE_CODE } from './config.js';
 import { encode, decode } from './schema.js';
@@ -965,6 +965,8 @@ export const admin = {
   usage() { requireAdmin(); return clone(db.usage); },
   nps() { requireAdmin(); return clone(db.nps); },
   logos() { requireAdmin(); return clone(db.logos || []); },
+  companySite(company) { const k = companyKey(company); return (db.settings.companySites || {})[k] || COMPANY_SITES[company] || ''; },
+  setCompanySite(company, site) { requireAdmin(); const k = companyKey(company); db.settings.companySites = { ...(db.settings.companySites || {}), [k]: String(site || '').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '') }; commit(); },
   logoReqs() { requireAdmin(); return clone((db.logoreq || []).filter((x) => x.status === 'new')).sort((a, b) => String(b.at).localeCompare(String(a.at))); },
   setLogo(company, img, source = 'admin') {
     requireAdmin(); const k = companyKey(company); db.logos = (db.logos || []).filter((x) => x.id !== k);
@@ -972,8 +974,8 @@ export const admin = {
     audit(img ? `Лого: ${company}` : `Махнато лого: ${company}`); commit();
   },
   // автоматично намерено лого – чака одобрение като предложение
-  addAutoLogo(company, img, from) { requireAdmin(); const k = companyKey(company); db.logoreq = (db.logoreq || []).filter((x) => !(x.key === k && x.source === 'auto' && x.status === 'new')); db.logoreq.push({ id: uid(), userId: adminUser()?.id || '', name: 'App Store', company, key: k, img, note: from || '', status: 'new', source: 'auto', at: new Date().toISOString() }); commit(); },
-  approveLogo(id) { requireAdmin(); const r = (db.logoreq || []).find((x) => x.id === id); if (!r) return; r.status = 'ok'; this.setLogo(r.company, r.img, r.source === 'auto' ? 'appstore' : 'user'); (db.logoreq || []).forEach((x) => { if (x.key === r.key && x.status === 'new' && x.source === 'auto') x.status = 'no'; }); commit(); },
+  addAutoLogo(company, img, from) { requireAdmin(); const k = companyKey(company); db.logoreq = (db.logoreq || []).filter((x) => !(x.key === k && x.source === 'auto' && x.status === 'new')); db.logoreq.push({ id: uid(), userId: adminUser()?.id || '', name: 'Сайт', company, key: k, img, note: from || '', status: 'new', source: 'auto', at: new Date().toISOString() }); commit(); },
+  approveLogo(id) { requireAdmin(); const r = (db.logoreq || []).find((x) => x.id === id); if (!r) return; r.status = 'ok'; this.setLogo(r.company, r.img, r.source === 'auto' ? 'site' : 'user'); (db.logoreq || []).forEach((x) => { if (x.key === r.key && x.status === 'new' && x.source === 'auto') x.status = 'no'; }); commit(); },
   rejectLogo(id) { requireAdmin(); const r = (db.logoreq || []).find((x) => x.id === id); if (r) { r.status = 'no'; commit(); } },
   ideas() { requireAdmin(); return clone(db.ideas).sort((a, b) => b.votes.length - a.votes.length); },
   setIdea(id, status) { requireAdmin(); const i = db.ideas.find((x) => x.id === id); if (i) { const was = i.status; i.status = status; if (status === 'done' && was !== 'done') ideaDone(i); commit(); } },

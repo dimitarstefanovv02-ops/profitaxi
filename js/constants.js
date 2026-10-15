@@ -150,3 +150,5 @@ export const splitCompany = (c) => { const [name, ...rest] = String(c || '').spl
 export const companyKey = (c) => splitCompany(c).name.toLowerCase().replace(/[^a-zа-я0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
 // Всички фирми от списъка, с града
 export const allCompanies = () => Object.entries(COMPANIES).flatMap(([city, list]) => list.map((company) => ({ company, city })));
+// Известни сайтове на фирмите (за логото); останалите се търсят автоматично или админът ги пише
+export const COMPANY_SITES = { 'OK Supertrans': 'oktaxi.net' };

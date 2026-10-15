@@ -659,30 +659,59 @@ const ops = {
     catch (e) { console.error('talon', e); return { fallback: true }; }
   },
 
-  // ---------- логата на фирмите (само админ): търсене в App Store и теглене на иконата ----------
-  async logoSearch({ term }, s) {
+  // ---------- логата на фирмите (само админ): от сайта на фирмата ----------
+  // 1) siteFind – намира сайта на фирмата (търсачка); 2) siteLogo – отваря сайта и взима логото му.
+  async siteFind({ name, city }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
-    const q = String(term || '').trim().slice(0, 80); if (q.length < 2) return { results: [] };
-    if (MEMORY && !process.env.LOGO_LIVE) return { results: [{ id: 'mock1', name: q + ' Taxi', seller: q + ' EOOD', icon: 'mock' }] };
+    const q = `${String(name || '').slice(0, 60)} такси ${String(city || '').slice(0, 30)}`.trim();
+    if (MEMORY && !process.env.LOGO_LIVE) return { sites: ['example-taxi.bg'] };
     try {
-      const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&country=bg&entity=software&limit=10`);
-      const j = await r.json();
-      return { results: (j.results || []).map((x) => ({ id: String(x.trackId), name: x.trackName, seller: x.sellerName || x.artistName || '', icon: x.artworkUrl512 || x.artworkUrl100 })).filter((x) => x.icon) };
-    } catch (e) { console.error('logoSearch', e); return { error: 'App Store не отговаря. Опитай пак.' }; }
+      const r = await fetch('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q), { headers: { 'User-Agent': UA, 'Accept-Language': 'bg,en' } });
+      const html = await r.text();
+      const hosts = [];
+      for (const m of html.matchAll(/class="result__a"[^>]*href="([^"]+)"/g)) {
+        let u = m[1].replace(/&amp;/g, '&'); const enc = u.match(/uddg=([^&]+)/); if (enc) u = decodeURIComponent(enc[1]);
+        let host; try { host = new URL(u.startsWith('//') ? 'https:' + u : u).hostname.replace(/^www\./, ''); } catch { continue; }
+        if (BAD_HOSTS.some((b) => host === b || host.endsWith('.' + b)) || hosts.includes(host)) continue;
+        hosts.push(host); if (hosts.length >= 4) break;
+      }
+      return { sites: hosts };
+    } catch (e) { console.error('siteFind', e); return { error: 'Търсачката не отговаря. Напиши сайта сам.' }; }
   },
-  async logoFetch({ url }, s) {
+  async siteLogo({ site }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
-    if (url === 'mock') return { img: 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#FFC21A"/></svg>').toString('base64') };
-    let u; try { u = new URL(String(url)); } catch { return { error: 'Невалиден адрес' }; }
-    if (u.protocol !== 'https:') return { error: 'Само https' };
-    const src = u.href.replace(/\/\d+x\d+bb\.(jpg|png|webp)$/, '/192x192bb.png'); // иконите от App Store – по-малки, но остри
-    try {
-      const r = await fetch(src); const type = r.headers.get('content-type') || '';
-      if (!r.ok || !type.startsWith('image/')) return { error: 'Не е картинка' };
-      const buf = Buffer.from(await r.arrayBuffer());
-      if (buf.length > 300000) return { error: 'Картинката е твърде голяма' };
-      return { img: `data:${type.split(';')[0]};base64,${buf.toString('base64')}` };
-    } catch (e) { console.error('logoFetch', e); return { error: 'Не успях да изтегля картинката' }; }
+    if (MEMORY && !process.env.LOGO_LIVE) return { site: 'example-taxi.bg', logos: [{ from: 'иконата на сайта', img: 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#E31E24"/></svg>').toString('base64') }] };
+    let base; try { base = new URL(/^https?:\/\//.test(site) ? site : 'https://' + String(site).trim()); } catch { return { error: 'Невалиден сайт' }; }
+    let html = '', final = base.href;
+    try { const r = await fetch(base.href, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' }); final = r.url || final; html = (await r.text()).slice(0, 400000); }
+    catch (e) { return { error: 'Сайтът не се отваря' }; }
+    const abs = (u) => { try { return new URL(u.replace(/&amp;/g, '&'), final).href; } catch { return null; } };
+    const attr = (tag, n) => (tag.match(new RegExp(`${n}\\s*=\\s*["']([^"']+)["']`, 'i')) || [])[1] || '';
+    const cands = [];
+    const add = (u, from, score) => { const x = u && abs(u); if (x && !cands.some((c) => c.url === x)) cands.push({ url: x, from, score }); };
+    for (const t of html.match(/<link[^>]+>/gi) || []) {
+      const rel = attr(t, 'rel').toLowerCase(), href = attr(t, 'href'); if (!href) continue;
+      const size = Math.max(0, ...(attr(t, 'sizes').match(/\d+/g) || ['0']).map(Number));
+      if (rel.includes('apple-touch-icon')) add(href, 'иконата на сайта', 90 + Math.min(size, 512) / 100);
+      else if (rel.includes('icon')) add(href, 'иконата на сайта', (/\.svg/i.test(href) ? 85 : 40) + Math.min(size, 512) / 10);
+    }
+    for (const t of html.match(/<img[^>]+>/gi) || []) {
+      const src = attr(t, 'src') || attr(t, 'data-src'); const hay = `${src} ${attr(t, 'class')} ${attr(t, 'id')} ${attr(t, 'alt')}`.toLowerCase();
+      if (src && /logo/.test(hay)) add(src, 'логото на сайта', /\.svg/i.test(src) ? 95 : 80);
+    }
+    for (const t of html.match(/<meta[^>]+>/gi) || []) { const pr = (attr(t, 'property') || attr(t, 'name')).toLowerCase(); if (pr === 'og:logo') add(attr(t, 'content'), 'логото на сайта', 88); if (pr === 'og:image') add(attr(t, 'content'), 'картинката за споделяне', 30); }
+    add('/favicon.ico', 'иконата на сайта', 10);
+    cands.sort((x, y) => y.score - x.score);
+    const logos = [];
+    for (const c of cands.slice(0, 6)) {
+      try {
+        const r = await fetch(c.url, { headers: { 'User-Agent': UA } }); const type = (r.headers.get('content-type') || '').split(';')[0];
+        if (!r.ok || !type.startsWith('image/')) continue;
+        const buf = Buffer.from(await r.arrayBuffer()); if (buf.length < 120 || buf.length > 350000) continue;
+        logos.push({ from: c.from, img: `data:${type};base64,${buf.toString('base64')}` }); if (logos.length >= 4) break;
+      } catch { /* следващата */ }
+    }
+    return logos.length ? { site: new URL(final).hostname.replace(/^www\./, ''), logos } : { error: 'Не намерих лого на сайта' };
   },
 
   // ---------- AI отговори в търсачката ----------
@@ -792,7 +821,7 @@ const ops = {
 
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'talon', 'logoSearch', 'logoFetch', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
+const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'talon', 'siteFind', 'siteLogo', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // SMS код: регистрация (ключ = телефона) или нова парола (отделен ключ), с лимитите от админа
 const smsKey = (ph, purpose) => (purpose === 'reset' ? ph + ':r' : ph);
@@ -924,6 +953,9 @@ function fleetMsgs(all, id, profile, today, now) {
 const cronAllowed = (req) => { const sec = process.env.CRON_SECRET; return !sec || req.headers.authorization === `Bearer ${sec}`; };
 
 const GROQ = process.env.GROQ_API_KEY;
+const UA = 'Mozilla/5.0 (compatible; ChistoBot/1.0; +https://chistoapp.vercel.app)';
+// сайтове, които не са на фирмата (каталози, социални мрежи, магазини за приложения)
+const BAD_HOSTS = ['facebook.com', 'instagram.com', 'apps.apple.com', 'apple.com', 'play.google.com', 'google.com', 'youtube.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com', 'inyourpocket.com', 'tripadvisor.com', 'bgtaxi.net', 'taxi-bg.com', 'goldenpages.bg', 'zlatnistranici.bg', 'papagal.bg', 'bgtop.net', 'rome2rio.com', 'gobytaxi.com', 'trustpilot.com', 'wikipedia.org', 'capital.bg', 'dnevnik.bg', 'apkpure.com', 'mwm.ai', 'city-airport-taxis.com', 'welcomepickups.com', 'lostinplovdiv.com', 'skyscanner.com', 'booking.com', 'duckduckgo.com'];
 const groqMock = () => process.env.GROQ_MOCK === '1' || (MEMORY && !GROQ);
 async function quota(id, kind, max) { return (await one(['HINCRBY', 'pt:quota', `${id}:${todayStr()}:${kind}`, 1])) <= max; }
 async function groqTranscribe(buf, mime) {
