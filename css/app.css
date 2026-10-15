@@ -1595,3 +1595,6 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .talon-btn { margin-bottom: 12px; }
 .grid-mm { grid-template-columns: minmax(0, 1fr) 96px !important; }
 .c5-line .ic-fill { display: none; }
+/* по-малко празно място между данните под снимката и „Акаунт“ */
+.screen > .cover6 + .dz { margin-top: 0 !important; }
+.cover6 + .dz > :first-child .section-title, .cover6 + .dz .me-group:first-of-type .section-title { margin-top: 10px !important; }
