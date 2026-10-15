@@ -741,17 +741,20 @@ function logosPage() {
   // всички без лого: намира сайта, взима най-доброто лого от него и го праща за одобрение
   const auto = async (btn) => {
     if (!live) { toast('Работи само с облака (на живия сайт)', 'err'); return; }
-    btn.disabled = true; let found = 0;
+    btn.disabled = true; let found = 0; const noSite = [], noLogo = [];
     for (const [i, x] of missing.entries()) {
       const nm = splitCompany(x.company).name;
       status.textContent = `${i + 1} от ${missing.length}: ${nm}…`;
       let site = store.admin.companySite(x.company);
       if (!site) { const f = await apiCall('siteFind', { name: logoTerm(x.company), city: x.city }, 'admin').catch(() => ({})); site = f.sites?.[0] || ''; }
-      if (!site) continue;
+      if (!site) { noSite.push(nm); continue; }
       const r = await apiCall('siteLogo', { site }, 'admin').catch(() => ({}));
       if (r.logos?.length) { store.admin.setCompanySite(x.company, r.site); store.admin.addAutoLogo(x.company, r.logos[0].img, `${r.site} – ${r.logos[0].from}`); found++; }
+      else noLogo.push(`${nm} (${site})`);
     }
-    status.textContent = `Готово: намерени ${found} от ${missing.length}. Прегледай ги в „Чакат одобрение“ – провери и сайта до всяко.`;
+    status.textContent = [`Готово: намерени ${found} от ${missing.length} – прегледай ги в „Чакат одобрение“.`,
+      noSite.length && `Без сайт (${noSite.length}): ${noSite.join(', ')}. Ако знаеш сайта – „От сайта“; иначе – „Качи“.`,
+      noLogo.length && `Сайтът не дава лого: ${noLogo.join(', ')}.`].filter(Boolean).join(' ');
     btn.disabled = false; render();
   };
   return h('div', null,

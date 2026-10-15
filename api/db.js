@@ -665,18 +665,22 @@ const ops = {
     if (s.role !== 'admin') return { error: 'Само за админ' };
     const q = `${String(name || '').slice(0, 60)} такси ${String(city || '').slice(0, 30)}`.trim();
     if (MEMORY && !process.env.LOGO_LIVE) return { sites: ['example-taxi.bg'] };
-    try {
-      const r = await fetch('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q), { headers: { 'User-Agent': UA, 'Accept-Language': 'bg,en' } });
-      const html = await r.text();
-      const hosts = [];
-      for (const m of html.matchAll(/class="result__a"[^>]*href="([^"]+)"/g)) {
-        let u = m[1].replace(/&amp;/g, '&'); const enc = u.match(/uddg=([^&]+)/); if (enc) u = decodeURIComponent(enc[1]);
-        let host; try { host = new URL(u.startsWith('//') ? 'https:' + u : u).hostname.replace(/^www\./, ''); } catch { continue; }
-        if (BAD_HOSTS.some((b) => host === b || host.endsWith('.' + b)) || hosts.includes(host)) continue;
-        hosts.push(host); if (hosts.length >= 4) break;
-      }
-      return { sites: hosts };
-    } catch (e) { console.error('siteFind', e); return { error: 'Търсачката не отговаря. Напиши сайта сам.' }; }
+    const hosts = [];
+    const add = (u) => {
+      let host; try { host = new URL(u.startsWith('//') ? 'https:' + u : u).hostname.replace(/^www\./, ''); } catch { return; }
+      if (BAD_HOSTS.some((x) => host === x || host.endsWith('.' + x)) || hosts.includes(host) || hosts.length >= 4) return;
+      hosts.push(host);
+    };
+    const get = async (url) => { try { const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'bg,en' } }); return r.ok ? await r.text() : ''; } catch { return ''; } };
+    // 1) DuckDuckGo; често блокира сървъри, затова 2) Bing
+    const ddg = await get('https://html.duckduckgo.com/html/?q=' + encodeURIComponent(q));
+    for (const m of ddg.matchAll(/class="result__a"[^>]*href="([^"]+)"/g)) { let u = m[1].replace(/&amp;/g, '&'); const enc = u.match(/uddg=([^&]+)/); if (enc) u = decodeURIComponent(enc[1]); add(u); }
+    if (!hosts.length) {
+      const bing = await get('https://www.bing.com/search?setlang=bg&cc=BG&q=' + encodeURIComponent(q));
+      for (const m of bing.matchAll(/<li class="b_algo"[\s\S]*?<h2[^>]*>\s*<a[^>]*href="(https?:[^"]+)"/g)) add(m[1].replace(/&amp;/g, '&'));
+      if (!ddg && !bing) return { error: 'Търсачките не отговарят. Напиши сайта сам.' };
+    }
+    return { sites: hosts };
   },
   async siteLogo({ site }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
@@ -955,7 +959,7 @@ const cronAllowed = (req) => { const sec = process.env.CRON_SECRET; return !sec 
 const GROQ = process.env.GROQ_API_KEY;
 const UA = 'Mozilla/5.0 (compatible; ChistoBot/1.0; +https://chistoapp.vercel.app)';
 // сайтове, които не са на фирмата (каталози, социални мрежи, магазини за приложения)
-const BAD_HOSTS = ['facebook.com', 'instagram.com', 'apps.apple.com', 'apple.com', 'play.google.com', 'google.com', 'youtube.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com', 'inyourpocket.com', 'tripadvisor.com', 'bgtaxi.net', 'taxi-bg.com', 'goldenpages.bg', 'zlatnistranici.bg', 'papagal.bg', 'bgtop.net', 'rome2rio.com', 'gobytaxi.com', 'trustpilot.com', 'wikipedia.org', 'capital.bg', 'dnevnik.bg', 'apkpure.com', 'mwm.ai', 'city-airport-taxis.com', 'welcomepickups.com', 'lostinplovdiv.com', 'skyscanner.com', 'booking.com', 'duckduckgo.com'];
+const BAD_HOSTS = ['facebook.com', 'instagram.com', 'apps.apple.com', 'apple.com', 'play.google.com', 'google.com', 'youtube.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com', 'inyourpocket.com', 'tripadvisor.com', 'bgtaxi.net', 'taxi-bg.com', 'goldenpages.bg', 'zlatnistranici.bg', 'papagal.bg', 'bgtop.net', 'rome2rio.com', 'gobytaxi.com', 'trustpilot.com', 'wikipedia.org', 'capital.bg', 'dnevnik.bg', 'apkpure.com', 'mwm.ai', 'city-airport-taxis.com', 'welcomepickups.com', 'lostinplovdiv.com', 'skyscanner.com', 'booking.com', 'duckduckgo.com', 'bing.com', 'microsoft.com', 'bento.travel', 'kiwitaxi.com', 'jamtransfer.com', 'novinite.com', 'expat.com', 'guidebg.com', 'pitchbook.com', 'dealroom.co', 'apkmirror.com', 'dnb.com', 'mypos.com'];
 const groqMock = () => process.env.GROQ_MOCK === '1' || (MEMORY && !GROQ);
 async function quota(id, kind, max) { return (await one(['HINCRBY', 'pt:quota', `${id}:${todayStr()}:${kind}`, 1])) <= max; }
 async function groqTranscribe(buf, mime) {
