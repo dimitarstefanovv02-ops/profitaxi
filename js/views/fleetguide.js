@@ -49,7 +49,7 @@ function walkView(go, first) {
           h('span', { class: 'fw-ic' }, icon('doc', 30)),
           h('h1', null, 'Това е разходката'),
           h('p', null, 'Има и подробно ръководство за всички функции на собственика, подредено в ', h('b', null, `${GROUPS.length} менюта`), ' – за да не търсиш кое къде е.'),
-          h('div', { class: 'fw-where' }, icon('user', 18), h('span', null, 'Стои винаги в ', h('b', null, 'Профил → „Ръководство за собственика“'))),
+          h('div', { class: 'fw-where' }, icon('user', 18), h('span', null, 'Стои винаги в ', h('b', null, 'Профил → „Автопарк“ → „Ръководство за собственика“'))),
           h('div', { class: 'fg-grid small' }, GROUPS.map((x) => h('a', { class: 'fg-tile', href: `#/fguide?g=${x.key}`, onclick: done }, h('span', { class: 'fg-ic' }, icon(x.icon, 18)), h('b', null, x.title)))))
         : h('div', { class: 'fw-body' },
           h('p', { class: 'fw-group' }, s.group.title),

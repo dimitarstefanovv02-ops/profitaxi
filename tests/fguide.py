@@ -15,11 +15,11 @@ async def main():
         n = int((await pg.locator('.fw-step').inner_text()).split(' от ')[1])
         for _ in range(n - 1): await pg.click('.fw-btns .btn-primary'); await pg.wait_for_timeout(120)
         t = await pg.locator('#app').inner_text()
-        ok('Последната стъпка казва къде е ръководството', 'Профил → „Ръководство за собственика“' in t and '9 менюта' in t, t[:120])
+        ok('Последната стъпка казва къде е ръководството', 'Профил → „Автопарк“ → „Ръководство за собственика“' in t and '9 менюта' in t, t[:120])
         await pg.click('.fw-btns .btn-primary'); await pg.wait_for_timeout(500)
         ok('„Към автопарка“ води към началния екран', '#/home' in pg.url, pg.url)
         await pg.goto(B + '/app#/me'); await pg.wait_for_timeout(500)
-        await pg.click('text=Ръководство за собственика'); await pg.wait_for_timeout(500)
+        await pg.click('.big-link:has-text("Автопарк")'); await pg.wait_for_timeout(400); await pg.click('.sheet .big-link:has-text("Ръководство за собственика")'); await pg.wait_for_timeout(500)
         ok('Ръководството има 9 теми', await pg.locator('.fg-tile').count() == 9)
         imgs = set()
         for i in range(9):

@@ -1769,3 +1769,7 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 :root[data-skin] [data-page="shift"] .card { padding-top: 10px !important; padding-bottom: 10px !important; }
 :root[data-skin] .screen .home-link .grow, :root[data-skin] .screen .home-link > span:not(.hl-ic) { min-width: 0; }
 :root[data-skin] .screen .home-link small, :root[data-skin] .screen .home-link span span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+.sub-menu .big-link { width: 100%; text-align: left; border: 0; }
+.sub-menu .big-link { padding: 10px 12px !important; gap: 12px !important; }
+.sub-menu .big-link .grow > span { display: block; font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sub-menu .big-link .grow { min-width: 0; }

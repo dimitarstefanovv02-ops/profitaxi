@@ -84,7 +84,7 @@ async def main():
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(500)
         if wk <= 2: ok('Седмичен отчет в началото на седмицата', await pg.locator('.week-sum').count()==1)
         # размер на текста
-        await pg.goto(B+'#/profile'); await pg.wait_for_timeout(400); await pg.click('.seg-btn:has-text("Много голям")'); await pg.wait_for_timeout(200)
+        await pg.goto(B+'#/settings'); await pg.wait_for_timeout(400); await pg.click('.seg-btn:has-text("Много голям")'); await pg.wait_for_timeout(200)
         await pg.goto(B+'#/home'); await pg.wait_for_timeout(400)
         ok('„Много голям“ текст: без хоризонтално превъртане', await pg.evaluate('document.documentElement.scrollWidth')<=390, await pg.evaluate('document.documentElement.scrollWidth'))
         ok('Без грешки в JS', not errs, errs[:3])

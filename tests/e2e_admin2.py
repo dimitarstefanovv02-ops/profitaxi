@@ -64,7 +64,7 @@ async def main():
         ok('Камбанката показва известия', await a.locator('.bell-pop.open .alert-row').count() > 0)
         await a.keyboard.press('Escape'); await a.mouse.click(700, 500)
         # Промо код при регистрация
-        await d.goto(base+'/app#/profile'); await d.wait_for_timeout(400); await d.click('text=Изход'); await d.wait_for_timeout(300)
+        await d.goto(base+'/app#/settings'); await d.wait_for_timeout(400); await d.click('text=Изход'); await d.wait_for_timeout(300)
         await d.goto(base+'/app#/register?promo=START2'); await d.wait_for_timeout(400)
         await d.fill('input[autocomplete=name]','Промо Тест'); await d.fill('input[autocomplete=username], input[type=email]','promo@test.bg'); await d.fill('input[type=password]','123456')
         await d.fill('input[type=tel]','0877555666'); await d.wait_for_timeout(100)

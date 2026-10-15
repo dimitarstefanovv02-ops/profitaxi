@@ -79,7 +79,7 @@ async def main():
 
         # забравена текуща парола отвътре (Лични данни → Смяна на паролата → „Забравих текущата парола“)
         await pg.evaluate(f"async () => {{ {S} s.updateProfile({{ onboarded: true }}); }}")
-        await pg.goto(base + '/app#/profile'); await pg.wait_for_timeout(1000)
+        await pg.goto(base + '/app#/settings'); await pg.wait_for_timeout(1000)
         await pg.click('text=Смяна на паролата'); await pg.wait_for_timeout(400)
         await pg.click('text=Забравих текущата парола'); await pg.wait_for_timeout(1500)
         st = await pg.locator('body').inner_text()

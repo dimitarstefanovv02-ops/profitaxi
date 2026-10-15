@@ -12,7 +12,7 @@ import { shiftsView } from './views/shifts.js';
 import { shiftEditorView } from './views/shift.js';
 import { statsView } from './views/stats.js';
 import { costsView } from './views/costs.js';
-import { profileView, carView } from './views/profile.js';
+import { profileView, settingsView, carView } from './views/profile.js';
 import { reservationsView } from './views/reservations.js';
 import { searchView } from './views/search.js';
 import { moneyView } from './views/money.js';
@@ -35,7 +35,7 @@ applyTheme();
 const PUBLIC = { '/login': loginView, '/register': registerView, '/forgot': forgotView, '/reset': resetView, '/verified': verifiedView };
 const PRIVATE = {
   '/home': homeView, '/shifts': shiftsView, '/shift': shiftEditorView, '/stats': statsView,
-  '/costs': costsView, '/profile': profileView, '/car': carView, '/onboarding': onboardingView,
+  '/costs': costsView, '/profile': profileView, '/settings': settingsView, '/car': carView, '/onboarding': onboardingView,
   '/reservations': reservationsView, '/calendar': calendarView, '/search': searchView,
   '/money': moneyView, '/me': meView, '/ideas': ideasView, '/help': helpView, '/guide': guideView, '/ptp': ptpView, '/vehicle': vehicleView,
   '/cars': carsView, '/join': joinView, '/fguide': fleetGuideView,
@@ -52,7 +52,7 @@ const FLEET_TABS = [
   ['/me', 'user', 'Профил'],
 ];
 let TABS = DRIVER_TABS;
-const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/ptp': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me', '/fguide': '/me' };
+const PARENT = { '/shifts': '/money', '/stats': '/money', '/costs': '/money', '/profile': '/me', '/settings': '/me', '/car': '/me', '/ideas': '/me', '/help': '/me', '/calendar': '/home', '/reservations': '/home', '/invite': '/me', '/guide': '/me', '/ptp': '/me', '/vehicle': '/me', '/cars': '/me', '/join': '/me', '/fguide': '/me' };
 const PARENT_LABEL = { '/home': 'Днес', '/money': 'Пари', '/me': 'Профил', '/profile': 'Лични данни' };
 
 export const go = (path, replace) => {

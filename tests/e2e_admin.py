@@ -64,7 +64,7 @@ async def main():
         ok('След „Пусни достъпа“ шофьорът влиза нормално', 'Започни смяна' in await d.inner_text('#app') or 'Приключи смяната' in await d.inner_text('#app'))
         # Изтекъл пробен период
         await d.wait_for_timeout(900); await d.keyboard.press('Escape'); await d.wait_for_timeout(400)
-        await d.goto(base+'/app#/profile'); await d.wait_for_timeout(500); await d.click('text=Изход'); await d.wait_for_timeout(300)
+        await d.goto(base+'/app#/settings'); await d.wait_for_timeout(500); await d.click('text=Изход'); await d.wait_for_timeout(300)
         await d.fill('input[autocomplete=username], input[type=email]','stoyan@demo.bg'); await d.fill('input[type=password]','demo123'); await d.click('button[type=submit]'); await d.wait_for_timeout(500)
         ok('Изтекъл абонамент вижда „Абонаментът изтече“', 'Абонаментът изтече' in await d.inner_text('#app'))
         # Нова парола от админа

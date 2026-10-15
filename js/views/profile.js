@@ -1,4 +1,4 @@
-// „Лични данни“ – личното: данни, снимки, известия, отчети, парола, помощ, изход.
+// „Лични данни“ – името, телефонът, снимките, видът акаунт. „Настройки“ – известия, изглед, сигурност, изход.
 // „Колата и ефирът“ – работата: вид кола, гориво, ефир, споделяне, цел.
 
 import { pushTypes, pushBlocker, setPushTypes } from '../driverpush.js';
@@ -17,13 +17,18 @@ import { exportCsv } from './stats.js';
 import { scanTalon } from '../talon.js';
 import { emailQueue, EMAIL_DEFAULTS, EMAIL_PAY_OPTIONS, EMAIL_RES_OPTIONS } from '../calc.js';
 
-export function profileView({ go, user, data, route }) {
-  const root = h('div', { class: 'screen', 'data-page': 'profile' });
+// „Настройки“ – известия, изглед, сигурност, изход (отделени от личните данни)
+export const settingsView = (args) => profileView({ ...args, settings: true });
+
+export function profileView({ go, user, data, route, settings }) {
+  const root = h('div', { class: 'screen', 'data-page': settings ? 'settings' : 'profile' });
+  const fleet = store.isFleet(data?.profile || store.getProfile());
   const draw = () => {
     const d = store.getProfile();
+    const PERSONAL = ['data', 'photos', 'kind'];
     fill(root,
-      h('div', { class: 'page-title' }, h('h1', null, 'Лични данни')),
-      zone('drv.profile', { class: 'dz' }, [
+      h('div', { class: 'page-title' }, h('h1', null, settings ? 'Настройки' : 'Лични данни')),
+      zone(settings ? 'drv.settings' : 'drv.profile', { class: 'dz' }, [
       ['data', h('div', null, h('h2', { class: 'section-title' }, 'Лични данни'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         infoRow('user', 'Име', user.name),
@@ -36,6 +41,11 @@ export function profileView({ go, user, data, route }) {
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('user', d.photo ? 'Смени профилната снимка' : 'Качи профилна снимка', () => setPhoto('photo', draw), true),
         listBtn('camera', d.carPhoto ? 'Смени снимката на колата' : 'Качи снимка на колата', () => setPhoto('carPhoto', draw), true)))],
+
+      ['kind', h('div', null, h('h2', { class: 'section-title' }, 'Вид акаунт'),
+      h('section', { class: 'card', style: { padding: '8px 18px' } },
+        h('a', { class: 'list-btn', href: '#/help' }, h('span', { class: 'l-ic' }, icon(fleet ? 'key' : 'car', 18)),
+          h('span', { class: 'grow' }, fleet ? 'Собственик на коли' : 'Шофьор', h('small', { class: 'muted', style: { display: 'block', fontWeight: 500 } }, 'Избира се при регистрация. За смяна – пиши ни')), icon('right', 18))))],
 
       ['notify', h('div', null, h('h2', { class: 'section-title' }, 'Известия'),
       h('section', { class: 'card', id: 'notify' }, cardTitle('bell', 'Известия'), pushRows(draw), notifyRow(d), emailBlock(user, draw)))],
@@ -54,8 +64,8 @@ export function profileView({ go, user, data, route }) {
       ['exit', h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
         h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта')))],
-      ]),
-      h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, store.live() ? 'Данните се пазят в облака – влез от всеки телефон и ги виждаш.' : 'Демо версия. Данните се пазят на това устройство.'));
+      ].filter(([k]) => (settings ? !PERSONAL.includes(k) : PERSONAL.includes(k)))),
+      settings && h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, store.live() ? 'Данните се пазят в облака – влез от всеки телефон и ги виждаш.' : 'Демо версия. Данните се пазят на това устройство.'));
   };
   draw();
   if (route?.query?.get('s') === 'notify') setTimeout(() => root.querySelector('#notify')?.scrollIntoView({ block: 'start' }), 80);
