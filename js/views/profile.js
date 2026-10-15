@@ -170,7 +170,7 @@ export function profileCover(user, d) {
         user.company && h('div', { class: 'c6-firm' },
           h('button', { class: cx('c6-logo', !logo && 'none'), type: 'button', 'aria-label': 'Логото на фирмата', onclick: () => logoSheet(user, logo, pending) },
             logo ? h('img', { src: logo, alt: firm }) : h('span', null, initialsOf(firm))),
-          h('div', { class: 'c6-firm-t' }, h('b', null, firm), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, icon('call', 13), firmPhone)),
+          h('div', { class: 'c6-firm-t one' }, h('b', null, firm), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, firmPhone)),
           user.city && h('div', { class: 'c6-town' }, h('b', null, user.city))),
         h('a', { class: 'c6-facts', href: '#/car' },
           h('span', { class: 'c6-chip' }, h('small', null, 'Код'), h('b', null, car.code || '—')),

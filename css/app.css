@@ -1656,3 +1656,7 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .cover6 .c6-chip.car { flex: none; overflow: visible; }
 .cover6 .c6-chip b { overflow: visible; text-overflow: clip; }
 .cover6 .c6-name { font-size: 1.5rem !important; margin-top: 8px !important; }
+/* телефонът – след името на фирмата, на същия ред */
+.cover6 .c6-firm-t.one { display: flex; align-items: baseline; gap: 0; white-space: nowrap; }
+.cover6 .c6-firm-t.one a { font-size: .94rem; font-weight: 400; color: var(--ch-on-v, var(--muted)); }
+.cover6 .c6-firm-t.one a::before { content: '·'; margin: 0 6px; }
