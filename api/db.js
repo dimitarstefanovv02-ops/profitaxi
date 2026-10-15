@@ -686,9 +686,12 @@ const ops = {
     if (s.role !== 'admin') return { error: 'Само за админ' };
     if (MEMORY && !process.env.LOGO_LIVE) return { site: 'example-taxi.bg', logos: [{ from: 'иконата на сайта', img: 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#E31E24"/></svg>').toString('base64') }] };
     let base; try { base = new URL(/^https?:\/\//.test(site) ? site : 'https://' + String(site).trim()); } catch { return { error: 'Невалиден сайт' }; }
+    const fb = /(^|\.)facebook\.com$/i.test(base.hostname);
+    const ua = fb ? FB_UA : UA;
     let html = '', final = base.href;
-    try { const r = await fetch(base.href, { headers: { 'User-Agent': UA, Accept: 'text/html' }, redirect: 'follow' }); final = r.url || final; html = (await r.text()).slice(0, 400000); }
-    catch (e) { return { error: 'Сайтът не се отваря' }; }
+    const open = async (u) => { const r = await fetch(u, { headers: { 'User-Agent': ua, Accept: 'text/html', 'Accept-Language': 'bg,en' }, redirect: 'follow' }); final = r.url || u; html = (await r.text()).slice(0, 400000); };
+    try { await open(base.href); }
+    catch { try { await open(base.href.replace(/^https:/, 'http:')); } catch { return { error: 'Сайтът не се отваря' }; } }
     const abs = (u) => { try { return new URL(u.replace(/&amp;/g, '&'), final).href; } catch { return null; } };
     const attr = (tag, n) => (tag.match(new RegExp(`${n}\\s*=\\s*["']([^"']+)["']`, 'i')) || [])[1] || '';
     const cands = [];
@@ -703,19 +706,21 @@ const ops = {
       const src = attr(t, 'src') || attr(t, 'data-src'); const hay = `${src} ${attr(t, 'class')} ${attr(t, 'id')} ${attr(t, 'alt')}`.toLowerCase();
       if (src && /logo/.test(hay)) add(src, 'логото на сайта', /\.svg/i.test(src) ? 95 : 80);
     }
-    for (const t of html.match(/<meta[^>]+>/gi) || []) { const pr = (attr(t, 'property') || attr(t, 'name')).toLowerCase(); if (pr === 'og:logo') add(attr(t, 'content'), 'логото на сайта', 88); if (pr === 'og:image') add(attr(t, 'content'), 'картинката за споделяне', 30); }
-    add('/favicon.ico', 'иконата на сайта', 10);
+    for (const t of html.match(/<meta[^>]+>/gi) || []) { const pr = (attr(t, 'property') || attr(t, 'name')).toLowerCase(); if (pr === 'og:logo') add(attr(t, 'content'), 'логото на сайта', 88); if (pr === 'og:image') add(attr(t, 'content'), fb ? 'снимката на страницата във Facebook' : 'картинката за споделяне', fb ? 99 : 30); }
+    if (fb) cands.splice(0, cands.length, ...cands.filter((c) => c.score === 99));
+    else add('/favicon.ico', 'иконата на сайта', 10);
     cands.sort((x, y) => y.score - x.score);
     const logos = [];
     for (const c of cands.slice(0, 6)) {
       try {
-        const r = await fetch(c.url, { headers: { 'User-Agent': UA } }); const type = (r.headers.get('content-type') || '').split(';')[0];
+        const r = await fetch(c.url, { headers: { 'User-Agent': ua } }); const type = (r.headers.get('content-type') || '').split(';')[0];
         if (!r.ok || !type.startsWith('image/')) continue;
-        const buf = Buffer.from(await r.arrayBuffer()); if (buf.length < 120 || buf.length > 350000) continue;
+        const buf = Buffer.from(await r.arrayBuffer()); if (buf.length < 120 || buf.length > 600000) continue;
         logos.push({ from: c.from, img: `data:${type};base64,${buf.toString('base64')}` }); if (logos.length >= 4) break;
       } catch { /* следващата */ }
     }
-    return logos.length ? { site: new URL(final).hostname.replace(/^www\./, ''), logos } : { error: 'Не намерих лого на сайта' };
+    const host = new URL(final).hostname.replace(/^www\./, '');
+    return logos.length ? { site: fb ? 'facebook.com' + base.pathname.replace(/\/$/, '') : host, logos } : { error: fb ? 'Facebook не даде снимката на страницата' : 'Не намерих лого на сайта' };
   },
 
   // ---------- AI отговори в търсачката ----------
@@ -957,7 +962,10 @@ function fleetMsgs(all, id, profile, today, now) {
 const cronAllowed = (req) => { const sec = process.env.CRON_SECRET; return !sec || req.headers.authorization === `Bearer ${sec}`; };
 
 const GROQ = process.env.GROQ_API_KEY;
-const UA = 'Mozilla/5.0 (compatible; ChistoBot/1.0; +https://chistoapp.vercel.app)';
+// Като обикновен браузър – много сайтове връщат празно на непознати ботове
+const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36';
+// Facebook дава снимката на страницата (og:image) само на своя бот за прегледи
+const FB_UA = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
 // сайтове, които не са на фирмата (каталози, социални мрежи, магазини за приложения)
 const BAD_HOSTS = ['facebook.com', 'instagram.com', 'apps.apple.com', 'apple.com', 'play.google.com', 'google.com', 'youtube.com', 'tiktok.com', 'linkedin.com', 'twitter.com', 'x.com', 'inyourpocket.com', 'tripadvisor.com', 'bgtaxi.net', 'taxi-bg.com', 'goldenpages.bg', 'zlatnistranici.bg', 'papagal.bg', 'bgtop.net', 'rome2rio.com', 'gobytaxi.com', 'trustpilot.com', 'wikipedia.org', 'capital.bg', 'dnevnik.bg', 'apkpure.com', 'mwm.ai', 'city-airport-taxis.com', 'welcomepickups.com', 'lostinplovdiv.com', 'skyscanner.com', 'booking.com', 'duckduckgo.com', 'bing.com', 'microsoft.com', 'bento.travel', 'kiwitaxi.com', 'jamtransfer.com', 'novinite.com', 'expat.com', 'guidebg.com', 'pitchbook.com', 'dealroom.co', 'apkmirror.com', 'dnb.com', 'mypos.com'];
 const groqMock = () => process.env.GROQ_MOCK === '1' || (MEMORY && !GROQ);

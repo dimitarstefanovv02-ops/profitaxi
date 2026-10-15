@@ -151,4 +151,19 @@ export const companyKey = (c) => splitCompany(c).name.toLowerCase().replace(/[^a
 // Всички фирми от списъка, с града
 export const allCompanies = () => Object.entries(COMPANIES).flatMap(([city, list]) => list.map((company) => ({ company, city })));
 // Известни сайтове на фирмите (за логото); останалите се търсят автоматично или админът ги пише
-export const COMPANY_SITES = { 'OK Supertrans': 'oktaxi.net', 'Yellow!': 'yellow333.com', 'Volt Premium Taxi': 'taxivolt.bg' };
+// Сайтът без https://, www. и пътя; за Facebook страница пазим и пътя
+export const siteKey = (u) => { const x = String(u || '').trim().replace(/^https?:\/\//i, '').replace(/^(www|web|m)\./i, '').replace(/[?#].*$/, '').replace(/\/$/, ''); return /^facebook\.com\//i.test(x) ? x : x.replace(/\/.*$/, ''); };
+// Сайтовете на фирмите (проверени в интернет); за фирми само с Facebook – страницата им
+export const COMPANY_SITES = {
+  'Yellow!': 'yellow333.com', 'TaxiMe': 'taxime.to', 'OK Supertrans': 'oktaxi.net', 'Radio SV Taxi': 'radiocbtaxi.net', 'Volt Premium Taxi': 'taxivolt.bg', 'Mega Taxi 91999': '91999mega.taxi',
+  'ONE Такси – 032 22 22': 'taxi1.bg', 'Еко Такси 6155': 'ekotaxi.bg', 'Виайлет Такси': 'viailettaxi.com', 'Зелени Такси': 'zelenitaxi.bg', 'Елма Такси': 'elmataxi.bg',
+  'ЕН Такси': 'facebook.com/p/%D0%95%D0%9D-%D0%A2%D0%B0%D0%BA%D1%81%D0%B8-6106-100042174406710',
+  'Триумф Такси / Транстриумф': 'triumftaxi.com', 'Yellow! Taxi': 'yellow333.com', 'Hippo Taxi': 'hippotaxi.bg', 'JoyTaxi': 'joytaxi.bg',
+  'Omega Trans': 'facebook.com/p/%D0%9E%D0%BC%D0%B5%D0%B3%D0%B0-%D0%A2%D1%80%D0%B0%D0%BD%D1%81-%D0%A2%D0%B0%D0%BA%D1%81%D0%B8-%D0%92%D0%B0%D1%80%D0%BD%D0%B0-61581639236609',
+  'Indicar Taxi': 'facebook.com/IndicarTaxiBurgas', 'Еко Такси Бургас': 'ekotaxiburgas.com', 'Taxi Burgas': 'taxiburgas.com', 'Supertrans Taxi 1280': 'taxisupertrans.com', 'Yellow Taxi 1515': 'yellow333.com',
+  'Точните 2222': 'taxiruse-to4nite2222.com', 'Орион': 'oriontaxi.com', 'Демар Такси': 'taxi-dm.com',
+  'ЕС-СИ / ESI Taxi': 'essitaxi.com', 'Elite Taxi': 'elitetaxi.bg', 'Perfect Taxi': 'facebook.com/people/%D0%93%D1%80%D1%83%D0%BF-%D0%9F%D0%B5%D1%80%D1%84%D0%B5%D0%BA%D1%82-%D0%A2%D0%B0%D0%BA%D1%81%D0%B8/100067856910176',
+  'Виктория Такси': 'facebook.com/p/%D0%92%D0%B8%D0%BA%D1%82%D0%BE%D1%80%D0%B8%D1%8F-%D0%A2%D0%B0%D0%BA%D1%81%D0%B8-%D0%B3%D1%80-%D0%9D%D0%BE%D0%B2%D0%B0-%D0%97%D0%B0%D0%B3%D0%BE%D1%80%D0%B0-100093606619914',
+};
+// Green Taxi има два различни – в Бургас и в Русе
+export const CITY_SITES = { 'Бургас|Green Taxi': 'greentaxiburgas.bg', 'Русе|Green Taxi': 'greentaxiruse.com' };

@@ -714,7 +714,7 @@ function logosPage() {
   const live = store.live();
   // От сайта: намира сайта (или го пишеш) и показва логата от него – натискаш правилното
   const fromSite = (x) => openSheet((close) => {
-    const site = h('input', { class: 'input', value: store.admin.companySite(x.company), placeholder: 'напр. oktaxi.net', inputmode: 'url' });
+    const site = h('input', { class: 'input', value: store.admin.companySite(x.company, x.city), placeholder: 'напр. oktaxi.net', inputmode: 'url' });
     const found = h('div', { class: 'chip-row' });
     const out = h('div', { class: 'lg-results' });
     const take = async () => {
@@ -745,7 +745,7 @@ function logosPage() {
     for (const [i, x] of missing.entries()) {
       const nm = splitCompany(x.company).name;
       status.textContent = `${i + 1} от ${missing.length}: ${nm}…`;
-      let site = store.admin.companySite(x.company);
+      let site = store.admin.companySite(x.company, x.city);
       if (!site) { const f = await apiCall('siteFind', { name: logoTerm(x.company), city: x.city }, 'admin').catch(() => ({})); site = f.sites?.[0] || ''; }
       if (!site) { noSite.push(nm); continue; }
       const r = await apiCall('siteLogo', { site }, 'admin').catch(() => ({}));
@@ -770,9 +770,9 @@ function logosPage() {
         h('button', { class: 'btn btn-ghost', onclick: () => { store.admin.rejectLogo(r.id); render(); } }, 'Откажи'))))
         : h('p', { class: 'muted small' }, 'Няма предложения.')),
     h('section', { class: 'card' }, cardTitle('car', 'Фирми'),
-      h('div', { class: 'lg-list' }, list.map((x) => { const l = logos[companyKey(x.company)]; const site = store.admin.companySite(x.company); return h('div', { class: 'lg-row' },
+      h('div', { class: 'lg-list' }, list.map((x) => { const l = logos[companyKey(x.company)]; const site = store.admin.companySite(x.company, x.city); return h('div', { class: 'lg-row' },
         box(l?.img, x.company),
-        h('div', { class: 'grow' }, h('b', null, x.company), h('small', null, [x.city, `${drivers(x.company)} шофьори`, site || 'без сайт', l ? ({ site: 'от сайта', appstore: 'от App Store', user: 'от шофьор', admin: 'качено' })[l.source] || '' : 'без лого'].filter(Boolean).join(' · '))),
+        h('div', { class: 'grow' }, h('b', null, x.company), h('small', null, [x.city, `${drivers(x.company)} шофьори`, site ? (site.startsWith('facebook.com') ? 'Facebook' : site) : 'без сайт', l ? ({ site: 'от сайта', appstore: 'от App Store', user: 'от шофьор', admin: 'качено' })[l.source] || '' : 'без лого'].filter(Boolean).join(' · '))),
         h('button', { class: 'btn btn-ghost', disabled: !live, title: live ? '' : 'Само на живия сайт', onclick: () => fromSite(x) }, icon('download', 16), 'От сайта'),
         h('button', { class: 'btn btn-ghost', onclick: () => upload(x) }, icon('upload', 16), 'Качи'),
         l && h('button', { class: 'btn btn-ghost', 'aria-label': 'Махни логото', onclick: () => { store.admin.setLogo(x.company, null); render(); } }, icon('trash', 16))); }))));

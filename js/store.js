@@ -4,7 +4,7 @@
 // се заменя с истинска база (напр. Supabase) без промени по интерфейса.
 
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
-import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats, companyKey, COMPANY_SITES } from './constants.js';
+import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats, companyKey, COMPANY_SITES, CITY_SITES, siteKey } from './constants.js';
 import { LIVE, call, getToken, setToken, setOnAuthLost } from './sync.js';
 import { PHONE_CODE } from './config.js';
 import { encode, decode } from './schema.js';
@@ -965,8 +965,9 @@ export const admin = {
   usage() { requireAdmin(); return clone(db.usage); },
   nps() { requireAdmin(); return clone(db.nps); },
   logos() { requireAdmin(); return clone(db.logos || []); },
-  companySite(company) { const k = companyKey(company); return (db.settings.companySites || {})[k] || COMPANY_SITES[company] || ''; },
-  setCompanySite(company, site) { requireAdmin(); const k = companyKey(company); db.settings.companySites = { ...(db.settings.companySites || {}), [k]: String(site || '').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '') }; commit(); },
+  // сайтът без https:// и пътя; за Facebook страница пазим и пътя
+  companySite(company, city) { const k = companyKey(company); return (db.settings.companySites || {})[k] || (city && CITY_SITES[`${city}|${company}`]) || COMPANY_SITES[company] || ''; },
+  setCompanySite(company, site) { requireAdmin(); const k = companyKey(company); db.settings.companySites = { ...(db.settings.companySites || {}), [k]: siteKey(site) }; commit(); },
   logoReqs() { requireAdmin(); return clone((db.logoreq || []).filter((x) => x.status === 'new')).sort((a, b) => String(b.at).localeCompare(String(a.at))); },
   setLogo(company, img, source = 'admin') {
     requireAdmin(); const k = companyKey(company); db.logos = (db.logos || []).filter((x) => x.id !== k);
