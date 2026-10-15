@@ -1283,7 +1283,7 @@ function seedMore(today, drivers, r, ago) {
   const tk = (n, topic, text, d, reply, status = 'open') => { const u = drivers[n]; if (!u) return; const t = { id: uid(), userId: u.id, name: u.name, city: u.city, company: u.company, topic, at: ago(d), status, adminUnread: !reply, driverUnread: !!reply, thread: [{ by: 'driver', text, at: ago(d) }] }; if (reply) t.thread.push({ by: 'admin', name: 'Администратор', text: reply, at: ago(d - 0.2) }); db.tickets.push(t); };
   tk(4, 'pay', 'Платих, но още пише, че абонаментът изтича. Може ли да проверите?', 0.3);
   tk(7, 'shift', 'Как да въведа смяна, която е минала през полунощ?', 1.2);
-  tk(12, 'login', 'Забравих си паролата и не идва имейл.', 2.5, 'Изпратих ви нова парола по SMS. Сменете я от „Профил → Лични данни“.', 'closed');
+  tk(12, 'login', 'Забравих си паролата и не идва имейл.', 2.5, 'Изпратих ви нова парола по SMS. Сменете я от „Профил → Настройки“.', 'closed');
   tk(15, 'reports', 'Може ли отчетът да излиза и по седмици?', 4, 'Да – в „Пари“ избери „Седмица“ горе.', 'closed');
   tk(19, 'pay', 'Искам фактура на фирма за абонамента.', 0.8);
   tk(22, 'shift', 'Не мога да добавя бакшиш след като приключа смяната.', 3);
