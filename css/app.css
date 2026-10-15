@@ -1621,3 +1621,16 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .logo-prev { width: 120px; height: 120px; margin: 4px auto 8px; border-radius: 24px; overflow: hidden; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; font: 800 2rem/1 var(--font); color: #999; }
 .logo-prev img { width: 100%; height: 100%; object-fit: contain; }
 .c6-who { margin-top: 4px !important; }
+/* по-компактно: една карта – фирмата горе, код · номер · колата на един ред */
+.c6-scheme { display: block; margin-top: 12px; background: var(--ch-low, var(--surface-2)); border-radius: 18px; overflow: hidden; }
+.c6-scheme .c6-firm { background: none; border-radius: 0; padding: 10px 12px; gap: 10px; }
+.c6-scheme .c6-logo { width: 40px; height: 40px; border-radius: 11px; font-size: .8rem; }
+.c6-scheme .c6-firm-t { gap: 1px; }
+.c6-scheme .c6-firm-t b { font-size: 1rem; }
+.c6-scheme .c6-firm-t a { font-size: .84rem; }
+.c6-facts { display: grid; grid-template-columns: auto auto minmax(0, 1fr); border-top: 1px solid var(--ch-outline-v, var(--line)); color: var(--ch-on, var(--text)); text-decoration: none; }
+.c6-facts > span { display: grid; gap: 1px; padding: 8px 12px; min-width: 0; }
+.c6-facts > span + span { border-left: 1px solid var(--ch-outline-v, var(--line)); }
+.c6-facts small { font-size: .72rem; font-weight: 600; color: var(--ch-on-v, var(--muted)); }
+.c6-facts b { font-size: .95rem; font-weight: 700; white-space: nowrap; overflow: hidden; }
+.c6-facts b.wrap { white-space: normal; line-height: 1.2; }
