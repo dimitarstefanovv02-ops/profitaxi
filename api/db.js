@@ -661,14 +661,24 @@ const ops = {
 
   // ---------- логата на фирмите (само админ): от сайта на фирмата ----------
   // 1) siteFind – намира сайта на фирмата (търсачка); 2) siteLogo – отваря сайта и взима логото му.
-  async siteFind({ name, city }, s) {
+  // fb: true – търси само Facebook страницата на фирмата (за фирми без сайт)
+  async siteFind({ name, city, fb }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
-    const q = `${String(name || '').slice(0, 60)} такси ${String(city || '').slice(0, 30)}`.trim();
-    if (MEMORY && !process.env.LOGO_LIVE) return { sites: ['example-taxi.bg'] };
+    const q = `${String(name || '').slice(0, 60)} такси ${String(city || '').slice(0, 30)}${fb ? ' facebook' : ''}`.trim();
+    if (MEMORY && !process.env.LOGO_LIVE) return { sites: [fb ? 'facebook.com/example.taxi' : 'example-taxi.bg'] };
     const hosts = [];
     const add = (u) => {
-      let host; try { host = new URL(u.startsWith('//') ? 'https:' + u : u).hostname.replace(/^www\./, ''); } catch { return; }
-      if (BAD_HOSTS.some((x) => host === x || host.endsWith('.' + x)) || hosts.includes(host) || hosts.length >= 4) return;
+      let url; try { url = new URL(u.startsWith('//') ? 'https:' + u : u); } catch { return; }
+      const host = url.hostname.replace(/^(www|web|m|bg-bg)\./, '');
+      if (hosts.length >= 4) return;
+      if (fb) {
+        // само страница на фирма: facebook.com/<име> или /p/<име-id>, /people/<име>/<id>
+        if (host !== 'facebook.com') return;
+        const path = url.pathname.replace(/\/$/, '');
+        if (!/^\/(p\/[^/]+|people\/[^/]+\/\d+|[A-Za-z0-9.\-]{3,})$/.test(path) || /^\/(groups|events|watch|share|photo|login|reel|marketplace|public)/i.test(path)) return;
+        const key = 'facebook.com' + path; if (!hosts.includes(key)) hosts.push(key); return;
+      }
+      if (BAD_HOSTS.some((x) => host === x || host.endsWith('.' + x)) || hosts.includes(host)) return;
       hosts.push(host);
     };
     const get = async (url) => { try { const r = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'bg,en' } }); return r.ok ? await r.text() : ''; } catch { return ''; } };
@@ -686,7 +696,18 @@ const ops = {
     if (s.role !== 'admin') return { error: 'Само за админ' };
     if (MEMORY && !process.env.LOGO_LIVE) return { site: 'example-taxi.bg', logos: [{ from: 'иконата на сайта', img: 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#E31E24"/></svg>').toString('base64') }] };
     let base; try { base = new URL(/^https?:\/\//.test(site) ? site : 'https://' + String(site).trim()); } catch { return { error: 'Невалиден сайт' }; }
+    // Приложение в App Store: иконата от iTunes (512 px)
+    const appId = /apps\.apple\.com$/i.test(base.hostname) && (base.pathname.match(/id(\d{6,})/) || [])[1];
+    if (appId) {
+      try {
+        const j = await (await fetch(`https://itunes.apple.com/lookup?id=${appId}&country=bg`)).json(); const a = j.results?.[0];
+        const u = a?.artworkUrl512 || a?.artworkUrl100; if (!u) return { error: 'Приложението не е намерено' };
+        const r = await fetch(u); const type = (r.headers.get('content-type') || 'image/jpeg').split(';')[0];
+        return { site: 'apps.apple.com/app/id' + appId, logos: [{ from: `иконата на приложението „${a.trackName}“`, img: `data:${type};base64,${Buffer.from(await r.arrayBuffer()).toString('base64')}` }] };
+      } catch { return { error: 'App Store не отговаря' }; }
+    }
     const fb = /(^|\.)facebook\.com$/i.test(base.hostname);
+    const play = /play\.google\.com$/i.test(base.hostname);
     const ua = fb ? FB_UA : UA;
     let html = '', final = base.href;
     const open = async (u) => { const r = await fetch(u, { headers: { 'User-Agent': ua, Accept: 'text/html', 'Accept-Language': 'bg,en' }, redirect: 'follow' }); final = r.url || u; html = (await r.text()).slice(0, 400000); };
@@ -706,8 +727,8 @@ const ops = {
       const src = attr(t, 'src') || attr(t, 'data-src'); const hay = `${src} ${attr(t, 'class')} ${attr(t, 'id')} ${attr(t, 'alt')}`.toLowerCase();
       if (src && /logo/.test(hay)) add(src, 'логото на сайта', /\.svg/i.test(src) ? 95 : 80);
     }
-    for (const t of html.match(/<meta[^>]+>/gi) || []) { const pr = (attr(t, 'property') || attr(t, 'name')).toLowerCase(); if (pr === 'og:logo') add(attr(t, 'content'), 'логото на сайта', 88); if (pr === 'og:image') add(attr(t, 'content'), fb ? 'снимката на страницата във Facebook' : 'картинката за споделяне', fb ? 99 : 30); }
-    if (fb) cands.splice(0, cands.length, ...cands.filter((c) => c.score === 99));
+    for (const t of html.match(/<meta[^>]+>/gi) || []) { const pr = (attr(t, 'property') || attr(t, 'name')).toLowerCase(); if (pr === 'og:logo') add(attr(t, 'content'), 'логото на сайта', 88); if (pr === 'og:image') add(attr(t, 'content'), fb ? 'снимката на страницата във Facebook' : play ? 'иконата на приложението в Google Play' : 'картинката за споделяне', fb || play ? 99 : 30); }
+    if (fb || play) cands.splice(0, cands.length, ...cands.filter((c) => c.score === 99));
     else add('/favicon.ico', 'иконата на сайта', 10);
     cands.sort((x, y) => y.score - x.score);
     const logos = [];
@@ -720,7 +741,8 @@ const ops = {
       } catch { /* следващата */ }
     }
     const host = new URL(final).hostname.replace(/^www\./, '');
-    return logos.length ? { site: fb ? 'facebook.com' + base.pathname.replace(/\/$/, '') : host, logos } : { error: fb ? 'Facebook не даде снимката на страницата' : 'Не намерих лого на сайта' };
+    const keep = fb ? 'facebook.com' + base.pathname.replace(/\/$/, '') : play ? 'play.google.com/store/apps/details?id=' + base.searchParams.get('id') : host;
+    return logos.length ? { site: keep, logos } : { error: fb ? 'Facebook не даде снимката на страницата' : 'Не намерих лого на сайта' };
   },
 
   // ---------- AI отговори в търсачката ----------

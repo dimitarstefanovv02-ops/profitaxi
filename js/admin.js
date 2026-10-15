@@ -714,7 +714,7 @@ function logosPage() {
   const live = store.live();
   // От сайта: намира сайта (или го пишеш) и показва логата от него – натискаш правилното
   const fromSite = (x) => openSheet((close) => {
-    const site = h('input', { class: 'input', value: store.admin.companySite(x.company, x.city), placeholder: 'напр. oktaxi.net', inputmode: 'url' });
+    const site = h('input', { class: 'input', value: store.admin.companySite(x.company, x.city), placeholder: 'oktaxi.net или facebook.com/страница', inputmode: 'url' });
     const found = h('div', { class: 'chip-row' });
     const out = h('div', { class: 'lg-results' });
     const take = async () => {
@@ -726,16 +726,17 @@ function logosPage() {
         store.admin.setCompanySite(x.company, r.site); store.admin.setLogo(x.company, it.img, 'site'); close(); toast('Логото е сложено'); render();
       } }, h('img', { src: it.img, alt: '' }), h('span', null, h('b', null, r.site), h('small', null, it.from)))));
     };
-    const find = async () => {
+    const find = async (fb) => {
       found.replaceChildren(h('span', { class: 'muted small' }, 'Търся…'));
-      const r = await apiCall('siteFind', { name: logoTerm(x.company), city: x.city }, 'admin');
-      if (r.error || !r.sites?.length) { found.replaceChildren(h('span', { class: 'muted small' }, r.error || 'Не намерих – напиши сайта.')); return; }
-      found.replaceChildren(...r.sites.map((d) => h('button', { class: 'chip-btn', type: 'button', onclick: () => { site.value = d; take(); } }, d)));
+      const r = await apiCall('siteFind', { name: logoTerm(x.company), city: x.city, fb }, 'admin');
+      if (r.error || !r.sites?.length) { found.replaceChildren(h('span', { class: 'muted small' }, r.error || (fb ? 'Не намерих страница – напиши я.' : 'Не намерих – пробвай Facebook или напиши сайта.'))); return; }
+      found.replaceChildren(...r.sites.map((d) => h('button', { class: 'chip-btn', type: 'button', onclick: () => { site.value = d; take(); } }, d.replace(/^facebook\.com\//, 'Facebook: ').replace(/%[0-9A-F]{2}/gi, (c) => { try { return decodeURIComponent(c); } catch { return c; } }))));
     };
-    if (site.value) setTimeout(take, 0); else setTimeout(find, 0);
-    return h('div', { class: 'form' }, sheetHead('Лого на ' + splitCompany(x.company).name, close, 'От сайта на фирмата – натисни правилното лого'),
+    if (site.value) setTimeout(take, 0); else setTimeout(() => find(false), 0);
+    return h('div', { class: 'form' }, sheetHead('Лого на ' + splitCompany(x.company).name, close, 'От сайта или Facebook страницата на фирмата – натисни правилното лого'),
       h('div', { class: 'row gap' }, site, h('button', { class: 'btn btn-page', onclick: take }, icon('download', 18), 'Вземи')),
-      h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: find }, icon('search', 16), 'Намери сайта'), found, out);
+      h('div', { class: 'row gap' }, h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => find(false) }, icon('search', 16), 'Намери сайта'),
+        h('button', { class: 'btn btn-ghost btn-sm', type: 'button', onclick: () => find(true) }, icon('search', 16), 'Намери във Facebook')), found, out);
   }, { tall: true });
   const upload = async (x) => { const img = await pickImage({ max: 256, aspect: 1, title: 'Изрежи логото' }); if (img) { store.admin.setLogo(x.company, img, 'admin'); toast('Логото е сложено'); render(); } };
   // всички без лого: намира сайта, взима най-доброто лого от него и го праща за одобрение
@@ -747,20 +748,25 @@ function logosPage() {
       status.textContent = `${i + 1} от ${missing.length}: ${nm}…`;
       let site = store.admin.companySite(x.company, x.city);
       if (!site) { const f = await apiCall('siteFind', { name: logoTerm(x.company), city: x.city }, 'admin').catch(() => ({})); site = f.sites?.[0] || ''; }
-      if (!site) { noSite.push(nm); continue; }
-      const r = await apiCall('siteLogo', { site }, 'admin').catch(() => ({}));
-      if (r.logos?.length) { store.admin.setCompanySite(x.company, r.site); store.admin.addAutoLogo(x.company, r.logos[0].img, `${r.site} – ${r.logos[0].from}`); found++; }
-      else noLogo.push(`${nm} (${site})`);
+      let r = site ? await apiCall('siteLogo', { site }, 'admin').catch(() => ({})) : {};
+      // няма сайт или сайтът не дава лого → Facebook страницата на фирмата
+      if (!r.logos?.length && !String(site).startsWith('facebook.com')) {
+        const f = await apiCall('siteFind', { name: logoTerm(x.company), city: x.city, fb: true }, 'admin').catch(() => ({}));
+        if (f.sites?.[0]) { const r2 = await apiCall('siteLogo', { site: f.sites[0] }, 'admin').catch(() => ({})); if (r2.logos?.length) r = r2; }
+      }
+      if (r.logos?.length) { store.admin.setCompanySite(x.company, r.site); store.admin.addAutoLogo(x.company, r.logos[0].img, `${r.site.startsWith('facebook.com') ? 'Facebook' : r.site} – ${r.logos[0].from}`); found++; }
+      else if (!site) noSite.push(nm);
+      else noLogo.push(`${nm} (${site.startsWith('facebook.com') ? 'Facebook' : site})`);
     }
     status.textContent = [`Готово: намерени ${found} от ${missing.length} – прегледай ги в „Чакат одобрение“.`,
-      noSite.length && `Без сайт (${noSite.length}): ${noSite.join(', ')}. Ако знаеш сайта – „От сайта“; иначе – „Качи“.`,
+      noSite.length && `Без сайт и без Facebook (${noSite.length}): ${noSite.join(', ')}. Ако знаеш сайта или страницата – „От сайта“; иначе – „Качи“.`,
       noLogo.length && `Сайтът не дава лого: ${noLogo.join(', ')}.`].filter(Boolean).join(' ');
     btn.disabled = false; render();
   };
   return h('div', null,
     pageHead('Логата на фирмите', `${list.length - missing.length} от ${list.length} фирми имат лого. Шофьорите го виждат в профила си и могат да предложат друго.`),
     h('section', { class: 'card' }, cardTitle('sparkle', 'Намери автоматично'),
-      h('p', { class: 'muted small' }, 'За всяка фирма без лого: намира сайта ѝ и взима логото от него. Намереното идва за одобрение – нищо не се сменя само.'),
+      h('p', { class: 'muted small' }, 'За всяка фирма без лого: взима логото от сайта ѝ, а ако няма сайт – от Facebook страницата. Намереното идва за одобрение – нищо не се сменя само.'),
       h('button', { class: 'btn btn-page', disabled: !missing.length, onclick: (e) => auto(e.currentTarget) }, icon('search', 18), `Намери за ${missing.length} фирми`), status),
     h('section', { class: 'card' }, cardTitle('inbox', `Чакат одобрение (${reqs.length})`),
       reqs.length ? h('div', { class: 'lg-reqs' }, reqs.map((r) => h('div', { class: 'lg-req' },
@@ -772,7 +778,7 @@ function logosPage() {
     h('section', { class: 'card' }, cardTitle('car', 'Фирми'),
       h('div', { class: 'lg-list' }, list.map((x) => { const l = logos[companyKey(x.company)]; const site = store.admin.companySite(x.company, x.city); return h('div', { class: 'lg-row' },
         box(l?.img, x.company),
-        h('div', { class: 'grow' }, h('b', null, x.company), h('small', null, [x.city, `${drivers(x.company)} шофьори`, site ? (site.startsWith('facebook.com') ? 'Facebook' : site) : 'без сайт', l ? ({ site: 'от сайта', appstore: 'от App Store', user: 'от шофьор', admin: 'качено' })[l.source] || '' : 'без лого'].filter(Boolean).join(' · '))),
+        h('div', { class: 'grow' }, h('b', null, x.company), h('small', null, [x.city, `${drivers(x.company)} шофьори`, site ? (site.startsWith('facebook.com') ? 'Facebook' : site.startsWith('apps.apple.com') ? 'App Store' : site.startsWith('play.google.com') ? 'Google Play' : site) : 'без сайт', l ? ({ site: 'от сайта', appstore: 'от App Store', user: 'от шофьор', admin: 'качено' })[l.source] || '' : 'без лого'].filter(Boolean).join(' · '))),
         h('button', { class: 'btn btn-ghost', disabled: !live, title: live ? '' : 'Само на живия сайт', onclick: () => fromSite(x) }, icon('download', 16), 'От сайта'),
         h('button', { class: 'btn btn-ghost', onclick: () => upload(x) }, icon('upload', 16), 'Качи'),
         l && h('button', { class: 'btn btn-ghost', 'aria-label': 'Махни логото', onclick: () => { store.admin.setLogo(x.company, null); render(); } }, icon('trash', 16))); }))));
