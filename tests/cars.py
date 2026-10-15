@@ -23,7 +23,7 @@ async def main():
         await pg.goto(B + '/app#/cars'); await pg.wait_for_timeout(500)
         ok('Екранът „Обща кола“ се отваря', await pg.locator('button:has-text("Добави кола")').count() == 1)
         await pg.click('button:has-text("Добави кола")'); await pg.wait_for_timeout(300)
-        await pg.fill('.sheet input >> nth=0', 'Hyundai Elantra'); await pg.fill('.sheet input >> nth=1', 'РВ1827ХЕ')
+        await pg.fill('.sheet input[placeholder^="напр. Hyundai"]', 'Hyundai Elantra'); await pg.fill('.sheet input[placeholder^="напр. РВ"]', 'РВ1827ХЕ')
         await pg.click('.sheet >> text=Добави'); await pg.wait_for_timeout(500)
         car = await pg.evaluate(f"async () => {{ {S} return s.myCars()[0]; }}")
         ok('Колата е създадена: лична, Иван е собственик и шофьор със 100%', car and car['type'] == 'own' and len(car['members']) == 1 and car['members'][0]['share'] == 100, car and car['members'])

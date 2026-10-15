@@ -513,7 +513,7 @@ function activityFeed(all) {
   const ev = [];
   all.forEach((d) => {
     const u = d.user;
-    if (u.createdAt) ev.push({ at: u.createdAt, ic: 'plus', text: h('span', null, h('b', null, u.name), ' се регистрира', u.city ? ` · ${u.city}` : ''), href: '#/driver/' + u.id });
+    if (u.createdAt) { const fl = d.profile?.accountType === 'fleet'; ev.push({ at: u.createdAt, ic: fl ? 'key' : 'plus', text: h('span', null, h('b', null, u.name), fl ? ' се регистрира като собственик на коли' : ' се регистрира', u.city ? ` · ${u.city}` : ''), href: fl ? '#/owners' : '#/driver/' + u.id }); }
     d.shifts.filter((s) => s.end).slice(0, 3).forEach((s) => ev.push({ at: s.end, ic: 'check', text: h('span', null, h('b', null, u.name), ` записа смяна · чисто ${money(shiftIncome(s) - shiftExpenses(s))}`), href: '#/driver/' + u.id }));
   });
   if (role() !== 'partner') {
@@ -1188,6 +1188,11 @@ function allAlerts() {
     oddShifts(all).forEach((x) => out.push({ uid: x.d.user.id, key: `odd:${x.s.id}`, ic: 'alert', cls: 'warn', title: `Странна смяна: ${x.why.join(', ')}`, text: `${x.d.user.name}, ${fmtDate(shiftDate(x.s))}`, href: '#/control?t=odd' }));
     if (isOwner()) payments().filter((p) => p.status === 'failed').forEach((p) => out.push({ uid: p.userId, key: `fail:${p.id}`, ic: 'card', cls: 'bad', title: 'Неуспешно плащане', text: `${all.find((d) => d.user.id === p.userId)?.user.name || '—'} – ${p.reason || ''}`, href: '#/money?t=payments' }));
     all.forEach((d) => {
+      // нов собственик на коли под наем (последните 3 дни) – новите шофьори са в „Днес се случи“, не като сигнал
+      if (d.profile?.accountType === 'fleet' && d.user.createdAt && (Date.now() - new Date(d.user.createdAt)) / 864e5 < 3) {
+        const fl = true;
+        out.push({ uid: d.user.id, key: `reg:${d.user.id}`, ic: fl ? 'key' : 'plus', cls: 'good', title: fl ? 'Нов собственик на коли под наем' : 'Нов шофьор', text: [d.user.name, d.user.city, fl ? null : d.user.company].filter(Boolean).join(' · '), href: fl ? '#/owners' : `#/driver/${d.user.id}` });
+      }
       const s = subState(d.user);
       if (isOwner() && s.key === 'trial' && s.left <= 3 && s.left >= 0) out.push({ uid: d.user.id, key: `trial:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'clock', cls: 'warn', title: 'Пробният период изтича', text: `${d.user.name} – ${s.left === 0 ? 'днес' : s.left === 1 ? 'утре' : `след ${s.left} дни`}`, href: `#/driver/${d.user.id}` });
       if (isOwner() && s.key === 'expired' && s.left >= -7) out.push({ uid: d.user.id, key: `exp:${d.user.id}:${d.user.subscription.validUntil}`, ic: 'alert', cls: 'bad', title: 'Абонаментът изтече', text: d.user.name, href: `#/driver/${d.user.id}` });
@@ -1196,7 +1201,8 @@ function allAlerts() {
     store.admin.nps().filter((n) => n.score <= 6 && (Date.now() - new Date(n.at)) / 86400000 < 30).forEach((n) => out.push({ uid: n.userId, key: `nps:${n.id}`, ic: 'heart', cls: 'warn', title: `Недоволен шофьор (оценка ${n.score})`, text: n.comment || 'без коментар', href: '#/dev?t=opinions' }));
     store.admin.ideas().filter((i) => i.status === 'new').forEach((i) => out.push({ uid: i.userId, key: `idea:${i.id}`, ic: 'sparkle', cls: 'good', title: 'Ново предложение', text: i.text, href: '#/dev?t=opinions' }));
     store.admin.errors().slice(0, 20).forEach((e) => out.push({ uid: e.userId, key: `err:${e.id}`, ic: 'bolt', cls: 'warn', title: 'Грешка в приложението', text: `${e.msg} · ${e.device}, ${e.browser}`, href: '#/control?t=errors' }));
-    return out;
+    // новите регистрации – най-отгоре
+    return [...out.filter((a) => a.key.startsWith('reg:')), ...out.filter((a) => !a.key.startsWith('reg:'))];
   });
 }
 function newAlerts() { const seen = new Set(store.admin.alertsSeen()); return allAlerts().filter((a) => !seen.has(a.key)); }
@@ -2128,7 +2134,7 @@ function notifyTab() {
     note('Телефонът ти звъни и показва известие, когато се случи нещо важно – дори приложението да е затворено.'),
     steps && h('div', { class: 'inst-warn', style: { margin: '10px 0' } }, icon('alert', 18), h('span', null, 'На iPhone: отвори админа от иконката на началния екран (Safari → „Сподели“ → „Добави към началния екран“) и включи известията оттам.')),
     h('div', { style: { margin: '10px 0' } },
-      box('reg', 'Нов шофьор се регистрира', 'Име, град и фирма – натискаш и отиваш в „Шофьори“'),
+      box('reg', 'Нова регистрация', 'Нов шофьор или нов собственик на коли под наем – натискаш и отиваш при него'),
       box('ticket', 'Въпрос от шофьор', 'Включително „Забравена парола“ – натискаш и отиваш във „Входящи“')),
     h('div', { class: 'row gap wrap' },
       on ? h('span', { class: 'chip good' }, icon('check', 14), 'Включени на това устройство') : null,

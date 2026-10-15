@@ -126,11 +126,24 @@ const KINDS = {
 };
 const COST_KINDS = { tires: 'Гуми', repair: 'Ремонт', service: 'Обслужване', wash: 'Автомивка', insurance: 'Застраховка', casco: 'Каско', vignette: 'Винетка', inspection: 'Преглед', cartax: 'Данък', other: 'Друго' };
 export function quickAdd(info, redraw) {
-  openSheet((close) => h('div', null, sheetHead('Запиши', close, carName(info.car)),
-    h('div', { class: 'quick' }, ['pay', 'cost', 'fine', 'damage', 'deposit', 'km'].map((k) => h('button', { onclick: () => { close(); recordSheet(info, k, {}, redraw); } }, h('span', { class: 'q-ic' }, icon(KINDS[k].ic, 21)), KINDS[k].t))),
-    h('button', { class: 'btn btn-ghost btn-block voice-btn', style: { marginTop: '10px' }, onclick: () => { close(); carVoice(info, redraw); } }, icon('mic', 18), 'Кажи го на глас')));
+  const rent = info.car.type === 'rent';
+  openSheet((close) => {
+    const go = (fn) => () => { close(); fn(); };
+    const t = (k, sub) => h('button', { type: 'button', onclick: go(() => recordSheet(info, k, {}, redraw)) }, h('span', { class: 'q-ic' }, icon(KINDS[k].ic, 22)), h('b', null, KINDS[k].t), sub && h('small', null, sub));
+    return h('div', null, sheetHead('Запиши', close, carName(info.car)),
+      h('button', { class: 'voice-big', type: 'button', onclick: go(() => carVoice(info, redraw)) }, h('span', { class: 'vb-ic' }, icon('mic', 26)),
+        h('span', { class: 'grow' }, h('b', null, 'Кажи го с глас'), h('small', null, '„200 евро гуми“, „платен наем“, „глоба 50“, „депозит 300“'))),
+      h('div', { class: 'quick big' },
+        t('pay', 'от шофьора'),
+        t('cost', 'ремонт, гуми, мивка'),
+        rent && h('button', { type: 'button', onclick: go(async () => { const { fixedCostSheet } = await import('./fleetcosts.js'); fixedCostSheet(info.car, null, redraw); }) }, h('span', { class: 'q-ic' }, icon('calendar', 22)), h('b', null, 'Постоянен разход'), h('small', null, 'застраховка, винетка…')),
+        t('fine', 'намира кой е карал'),
+        t('damage', 'със снимки'),
+        t('deposit'),
+        t('km'),
+        rent && h('button', { type: 'button', onclick: go(async () => { const { setupCostSheet } = await import('./fleetcosts.js'); setupCostSheet(info.car, null, redraw); }) }, h('span', { class: 'q-ic' }, icon('flag', 22)), h('b', null, 'Първоначален'), h('small', null, 'апарат, боядисване…'))));
+  });
 }
-
 export function recordSheet(info, kind, pre = {}, redraw) {
   const K = KINDS[kind]; const car = info.car;
   const drivers = info.rents.map((x) => ({ userId: x.m.userId, name: x.d.name || x.m.name, r: x.r }));
@@ -275,25 +288,43 @@ export function docsSheet(car, m, d, redraw) {
     Object.entries(DRIVER_DOCS).map(([k, l]) => { ins[k] = h('input', { class: 'input', type: 'date', value: m.docs?.[k] || '' }); return field(`${l} – валидно до`, ins[k]); }),
     h('button', { class: 'btn btn-primary btn-lg', onclick: () => { store.setMemberDocs(car.id, m.userId, Object.fromEntries(Object.entries(ins).map(([k, i]) => [k, i.value || null]))); close(); toast('Запазено'); redraw(); } }, icon('check', 18), 'Запази')));
 }
+// Данните на колата: снимка, талон (марка, модел, година, номер се попълват сами), покупка.
+// Сроковете вече идват от постоянните разходи – тук ги няма.
 export function carDocsSheet(car, redraw) {
-  const ins = {};
-  const name = h('input', { class: 'input', value: car.name || '' });
-  const plate = h('input', { class: 'input', value: car.plate || '', autocapitalize: 'characters' });
+  let photo = car.photo || null;
+  const name = h('input', { class: 'input', value: car.name || '', placeholder: 'напр. Skoda Octavia' });
+  const year = h('input', { class: 'input', inputmode: 'numeric', value: car.year || '', placeholder: '2019' });
+  const plate = h('input', { class: 'input', value: car.plate || '', autocapitalize: 'characters', placeholder: 'РВ 1234 АК' });
   const price = h('input', { class: 'input', type: 'number', inputmode: 'decimal', value: car.price || '', placeholder: 'напр. 14 000' });
   const bought = h('input', { class: 'input', type: 'date', value: car.boughtAt || (car.createdAt || '').slice(0, 10) });
   const err = h('p', { class: 'err' });
-  openSheet((close) => h('div', { class: 'form' },
-    sheetHead('Данни и срокове', close, carName(car)),
-    field('Марка и модел', name), field('Рег. номер', plate, null, true),
-    field('Покупна цена', price, 'За сметката „Кога се изплаща колата“'), field('Купена на', bought),
-    h('h3', { class: 'form-sub' }, 'Валидни до'),
-    Object.entries(CAR_DOCS).map(([k, l]) => { ins[k] = h('input', { class: 'input', type: 'date', value: car.docs?.[k] || '' }); return field(l, ins[k]); }),
-    err,
-    h('button', { class: 'btn btn-primary btn-lg', onclick: () => {
-      if (!plate.value.trim()) { err.textContent = 'Регистрационният номер е задължителен'; return; }
-      store.updateCar(car.id, { name: name.value.trim(), plate: plate.value.trim().toUpperCase(), price: Number(price.value) || null, boughtAt: bought.value || null, docs: Object.fromEntries(Object.entries(ins).map(([k, i]) => [k, i.value || null])) });
-      close(); toast('Запазено'); redraw();
-    } }, icon('check', 18), 'Запази')), { tall: true });
+  openSheet((close) => {
+    const ph = h('div');
+    const drawPh = () => ph.replaceChildren(h('button', { type: 'button', class: cx('car-photo-pick', photo && 'has'), onclick: async () => {
+      const { pickImage } = await import('./categories.js');
+      const img = await pickImage({ max: 1200, aspect: 16 / 10, title: 'Изрежи снимката на колата' }); if (img) { photo = img; drawPh(); }
+    } }, photo ? h('img', { src: photo, alt: '' }) : [icon('camera', 22), h('span', null, 'Снимка на колата')]));
+    drawPh();
+    return h('div', { class: 'form' },
+      sheetHead('Данни на колата', close, carName(car)),
+      ph,
+      h('button', { class: 'btn btn-ghost btn-block talon-btn', type: 'button', onclick: async () => {
+        const { scanTalon } = await import('../talon.js');
+        scanTalon((r) => { const mm = [r.make, r.model].filter(Boolean).join(' '); if (mm) name.value = mm; if (r.year) year.value = String(r.year); if (r.plate) plate.value = r.plate.toUpperCase(); });
+      } }, icon('camera', 18), 'Снимай талона'),
+      h('p', { class: 'muted small talon-note' }, 'Марката, моделът, годината и номерът се попълват сами. Снимката на талона не се пази.'),
+      h('div', { class: 'grid2 grid-mm' }, field('Марка и модел', name), field('Година', year)),
+      field('Рег. номер', plate, null, true),
+      h('div', { class: 'grid2' }, field('Покупна цена', price), field('Купена на', bought)),
+      h('p', { class: 'faint small' }, 'За „Кога се изплаща колата“. Апарат, боядисване и др. – в „Първоначални разходи“.'),
+      err,
+      h('button', { class: 'btn btn-primary btn-lg', onclick: () => {
+        if (!plate.value.trim()) { err.textContent = 'Регистрационният номер е задължителен'; return; }
+        try { store.updateCar(car.id, { name: name.value.trim(), year: year.value.trim() || null, plate: plate.value.trim().toUpperCase(), price: Number(price.value) || null, boughtAt: bought.value || null, photo: photo || null }); }
+        catch { err.textContent = 'Снимката е твърде голяма'; return; }
+        close(); toast('Запазено'); redraw();
+      } }, icon('check', 18), 'Запази'));
+  }, { tall: true });
 }
 export function slotSheet(car, m, d, redraw) {
   const opts = { day: 'Дневна', night: 'Нощна', all: 'Цял ден' };

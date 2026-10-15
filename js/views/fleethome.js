@@ -127,10 +127,11 @@ export function fleetHomeView({ go, user, rerender }) {
     // Чакащи шофьори
     h('section', { class: 'card', style: { marginTop: '14px' } },
       cardTitle('users', 'Чакащи шофьори', h('button', { class: 'chip page', onclick: () => waitSheet(redraw) }, icon('plus', 14), 'Добави')),
-      wait.length ? wait.map((w, n) => h('div', { class: 'cc-row' },
+      wait.length ? wait.map((w, n) => h('div', { class: 'cc-row wait-row' },
         h('span', { class: 'rk' }, String(n + 1)),
-        h('span', { class: 'grow' }, h('b', null, w.name), h('small', null, [`чака от ${fmtDate(w.at.slice(0, 10))}`, w.note].filter(Boolean).join(' · '))),
-        w.phone && h('a', { class: 'icon-btn plain', href: 'tel:' + w.phone, 'aria-label': 'Обади се' }, icon('phone', 18)),
+        h('span', { class: 'grow' }, h('span', { class: 'wr-top' }, h('b', null, w.name),
+          w.phone && h('a', { class: 'c6-call wr-call', href: 'tel:' + w.phone.replace(/\s/g, ''), 'aria-label': 'Обади се на ' + w.name }, icon('call', 14), 'Обади се')),
+          h('small', null, [w.phone, `чака от ${fmtDate(w.at.slice(0, 10))}`, w.note].filter(Boolean).join(' · '))),
         h('button', { class: 'icon-btn plain', 'aria-label': 'Махни', onclick: () => { store.updateProfile({ waitlist: (profile.waitlist || []).filter((x) => x.id !== w.id) }); redraw(); } }, icon('x', 18))))
         : h('p', { class: 'muted' }, 'Шофьори, които искат кола. Когато някоя се освободи, виждаш кой е чакал пръв.')),
 
@@ -161,7 +162,7 @@ function waitSheet(redraw) {
   const note = h('input', { class: 'input', placeholder: 'напр. иска кола на газ, нощна смяна' });
   openSheet((close) => h('div', { class: 'form' },
     sheetHead('Чакащ шофьор', close),
-    field('Име', name, null, true), field('Телефон', phone), field('Бележка', note),
+    field('Име', name, null, true), field('Телефон', phone, 'За да му звъннеш с едно натискане'), field('Бележка', note),
     h('button', { class: 'btn btn-primary btn-lg', onclick: () => { if (!name.value.trim()) return; const p = store.getProfile() || {}; store.updateProfile({ waitlist: [...(p.waitlist || []), { id: Math.random().toString(36).slice(2, 9), name: name.value.trim(), phone: phone.value.trim(), note: note.value.trim(), at: new Date().toISOString() }] }); close(); toast('Добавен'); redraw(); } }, icon('check', 18), 'Добави')));
 }
 function daySheet(profile, redraw) {

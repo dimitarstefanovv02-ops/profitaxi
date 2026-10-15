@@ -7,7 +7,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(); pg = await b.new_page(viewport={'width': 390, 'height': 844}); errs = []; bad = []
         pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('response', lambda r: bad.append(r.url) if r.status >= 400 else None)
-        await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()')
+        await pg.goto(B + '/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B + '/avtopark#/login'); await pg.wait_for_timeout(500)
         await pg.evaluate("""async () => { const s = await import('/js/store.js'); const c = s.sendSmsCode('0888222333'); s.verifySmsCode('0888222333', c.demoCode);
           await s.register({ name: 'Тест Собственик', email: 'own@t.bg', password: 'parola1', phone: '0888222333', city: 'Пловдив', company: 'Еко Такси 6155', carType: 'own', accountType: 'fleet' }); }""")
         await pg.goto(B + '/avtopark#/fguide?walk=1&first=1'); await pg.wait_for_timeout(700)

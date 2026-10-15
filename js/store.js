@@ -583,6 +583,8 @@ export function drivingCar(uidArg) {
   const list = (db.cars || []).filter((c) => memberOf(c, id) && (c.ownerId !== id || c.type === 'own') && (c.members || []).length > (c.ownerId === id ? 1 : 0));
   return clone(list.find((c) => c.ownerId !== id) || list[0] || null);
 }
+// Километрите са задължителни само за шофьор, поканен с линка в кола ПОД НАЕМ (не на собственика и не на обща кола)
+export function kmRequired() { const c = drivingCar(); return !!c && c.type === 'rent' && c.ownerId !== myId(); }
 // Всички смени по колата (на всички шофьори) – за собственика: км, часове, гориво
 export function carShifts(carId) {
   const c = db.cars.find((x) => x.id === carId); if (!c) return [];
@@ -676,13 +678,13 @@ export function saveCarEntry(e) {
 }
 export function deleteCarEntry(cid) { const id = myId(); db.costs = db.costs.filter((x) => !(x.id === cid && x.userId === id && x.carLog)); commit(); }
 // Следваща дата на плащане според периода
-export function nextDue(date, period, anchorDay) {
+export function nextDue(date, period, anchorDay, months) {
   const d = parseDate(date);
   if (period === 'day') d.setDate(d.getDate() + 1);
   else if (period === 'week') d.setDate(d.getDate() + 7);
   else {
     // месеци без препълване: 31 яну + 1 месец = 28/29 фев, не 3 март
-    const add = period === 'month' ? 1 : period === 'quarter' ? 3 : 12;
+    const add = period === 'months' ? Math.max(1, Number(months) || 1) : period === 'month' ? 1 : period === 'quarter' ? 3 : 12;
     const day = anchorDay || d.getDate();
     d.setDate(1); d.setMonth(d.getMonth() + add);
     d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
@@ -698,7 +700,7 @@ export function markCostPaid(cid) {
   c.payments.push({ date: todayStr(), amount: c.amount, due: c.dueDate });
   if (c.dueDate) {
     c.dueDay = c.dueDay || Number(c.dueDate.slice(8, 10)); // помни деня на падежа (31-во остава 31-во)
-    const n = nextDue(c.dueDate, c.period, c.dueDay);
+    const n = nextDue(c.dueDate, c.period, c.dueDay, c.months);
     c.dueDate = c.endDate && n > c.endDate ? null : n;
   }
   commit();

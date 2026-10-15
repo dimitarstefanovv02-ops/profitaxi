@@ -190,6 +190,33 @@ export function profileCover(user, d) {
   return sec;
 }
 
+// Профилът на собственика – като този на шофьора, но без снимка на колата, фирма и наем:
+// корица, кръгла снимка, име и схема – собственик, градът, колко коли и шофьори
+export function fleetCover(user, d) {
+  const initials = user.name.split(' ').map((x) => x[0]).slice(0, 2).join('');
+  const photo = async () => {
+    const img = await pickImage({ max: 400, aspect: 1, title: 'Изрежи профилната снимка' });
+    if (!img) return;
+    try { store.updateProfile({ photo: img }); toast('Профилната снимка е сменена'); } catch { toast('Снимката е твърде голяма', 'err'); }
+  };
+  const cars = store.myCars().filter((c) => c.ownerId === user.id);
+  const drivers = new Set(cars.flatMap((c) => (c.members || []).filter((m) => m.userId !== user.id).map((m) => m.userId))).size;
+  return h('section', { class: 'cover6 fleet-cover' },
+    h('div', { class: 'c6-cover empty f6' }, h('img', { class: 'f6-mark', src: '/icons/fleet.svg', alt: '' })),
+    h('div', { class: 'c6-sheet' },
+      h('button', { class: 'c6-ava', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: photo },
+        d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials), h('i', null, icon('camera', 16))),
+      h('div', { class: 'c6-name', role: 'heading', 'aria-level': '1' }, user.name),
+      h('div', { class: 'c6-scheme' },
+        h('div', { class: 'c6-firm' },
+          h('span', { class: 'c6-logo f6-logo' }, icon('key', 18)),
+          h('div', { class: 'c6-firm-t one' }, h('b', null, 'Собственик на коли'), user.city && h('span', { class: 'c6-town-in' }, user.city))),
+        h('a', { class: 'c6-facts', href: '#/home' },
+          h('span', { class: 'c6-chip' }, h('b', null, String(cars.length)), h('small', null, cars.length === 1 ? 'кола' : 'коли')),
+          h('span', { class: 'c6-chip' }, h('b', null, String(drivers)), h('small', null, drivers === 1 ? 'шофьор' : 'шофьори')),
+          h('span', { class: 'c6-chip car' }, h('b', null, 'Автопарк →'))))));
+}
+
 // Логото на фирмата: показва го и дава да се предложи друго (отива при админа за одобрение)
 function logoSheet(user, logo, pending) {
   openSheet((close) => {

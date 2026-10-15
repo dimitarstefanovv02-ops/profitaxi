@@ -48,7 +48,10 @@ export function homeView({ go, user, data, rerender, route }) {
   const startShift = () => openNumpad({
     title: 'Започваш смяна', sub: 'Километраж от таблото',
     fields: [{ key: 'km', label: 'Начален километраж', value: store.lastKm() || '', unit: 'км', decimals: 0 }],
-    actions: [{ label: 'Старт', primary: true, run: ({ km }) => { store.startShift(km); toast('Смяната започна. Успешен път!'); } }],
+    actions: [{ label: 'Старт', primary: true, run: ({ km }) => {
+      if (store.kmRequired() && !(km > 0)) { toast('Въведи началния километраж – задължително е за колата под наем', 'err'); return false; }
+      store.startShift(km); toast('Смяната започна. Успешен път!');
+    } }],
   });
 
   const togglePanel = (k, scroll) => {
@@ -373,6 +376,7 @@ function finishLive(s, go) {
     actions: [{ label: 'Приключи', primary: true, run: ({ km }) => {
       const a = store.getActiveShift(); if (!a) return;
       if (km && a.kmStart && km < a.kmStart) { toast('Крайният км е по-малък от началния', 'err'); return false; }
+      if (store.kmRequired() && !(km > (a.kmStart || 0))) { toast('Въведи крайния километраж – без него смяната не се приключва (колата е под наем)', 'err'); return false; }
       if (km) a.kmEnd = Math.round(km);
       a.end = new Date().toISOString();
       const saved = store.saveShift(a);

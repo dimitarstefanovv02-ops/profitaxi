@@ -32,6 +32,7 @@ export function fixedForDay(costs, profile, day, worked, withOnce = true) {
     else if (c.period === 'month') v = c.amount / daysInMonth(d.getFullYear(), d.getMonth());
     else if (c.period === 'quarter') v = (c.amount * 4) / dy;
     else if (c.period === 'year') v = c.amount / dy;
+    else if (c.period === 'months') v = (c.amount * 12 / Math.max(1, Number(c.months) || 1)) / dy; // на всеки N месеца (1–12)
     sum += v * shareFor(c, profile);
   }
   return sum;
@@ -51,6 +52,7 @@ export function monthlyFixed(costs, profile, workDaysPerMonth = 24) {
   for (const c of activeCosts(costs)) {
     const s = shareFor(c, profile);
     if (c.period === 'day') m += c.amount * (c.perWorkDay ? workDaysPerMonth : 30.44) * s;
+    else if (c.period === 'months') m += (c.amount / Math.max(1, Number(c.months) || 1)) * s;
     else m += ((c.amount * PER_YEAR[c.period]) / 12) * s;
   }
   return m;
@@ -302,12 +304,12 @@ export function weekStrip(data, anchor = todayStr()) {
 export const weekdayOf = weekdayIdx;
 
 // ---------- Календар: резервации, падежи на плащания, напомняния и смени за период ----------
-function addPeriodDue(date, period, anchorDay) {
+function addPeriodDue(date, period, anchorDay, months) {
   const d = parseDate(date);
   if (period === 'day') d.setDate(d.getDate() + 1);
   else if (period === 'week') d.setDate(d.getDate() + 7);
   else {
-    const add = period === 'month' ? 1 : period === 'quarter' ? 3 : 12;
+    const add = period === 'months' ? Math.max(1, Number(months) || 1) : period === 'month' ? 1 : period === 'quarter' ? 3 : 12;
     const day = anchorDay || d.getDate();
     d.setDate(1); d.setMonth(d.getMonth() + add);
     d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
@@ -327,7 +329,7 @@ export function calendarEvents(data, from, to) {
       if (c.endDate && d > c.endDate) break;
       if (d >= from) out.push({ kind: 'pay', id: `pay-${c.id}-${d}`, date: d, time: '', title: c.name, amount: c.amount, late: d < today, first: d === c.dueDate, ref: c });
       if (!c.period || c.period === 'once') break;
-      d = addPeriodDue(d, c.period, c.dueDay);
+      d = addPeriodDue(d, c.period, c.dueDay, c.months);
     }
   }
   for (const r of data.reminders || []) {

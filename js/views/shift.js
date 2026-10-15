@@ -51,7 +51,7 @@ export function shiftEditorView(ctx) {
   const fuelTypes = FUELS[profile.fuel]?.types || ['petrol'];
   const isNew = !draft.id;
   const wasActive = !isNew && !store.getShift(draft.id)?.end;
-  const mustKm = !!store.drivingCar(); // колата е на собственик или обща – км са задължителни
+  const mustKm = store.kmRequired(); // кола под наем, поканен с линк – км са задължителни
 
   function draw() {
     if (!draft) return;
@@ -82,7 +82,7 @@ export function shiftEditorView(ctx) {
         cardTitle('gauge', 'Данни', h('b', { class: 'num' }, [shiftKm(draft) ? `${shiftKm(draft)} км` : '', shiftHours(draft) ? fmtDuration(shiftHours(draft)) : ''].filter(Boolean).join(' · '))),
         h('div', { class: 'f-list' },
           fRow({ ic: 'road', color: 'var(--c-teal)', label: 'Начален км', value: draft.kmStart ? `${draft.kmStart.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmStart') }),
-          fRow({ ic: 'flag', color: 'var(--c-teal)', label: 'Краен км', sub: mustKm && !draft.kmEnd && draft.end ? 'Задължително – колата е на собственик' : null, value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad || (mustKm && !draft.kmEnd && !!draft.end && root.querySelector('.need')) }),
+          fRow({ ic: 'flag', color: 'var(--c-teal)', label: 'Краен км', sub: mustKm && !draft.kmEnd && draft.end ? 'Задължително – колата е под наем' : null, value: draft.kmEnd ? `${draft.kmEnd.toLocaleString('bg-BG')} км` : '', onTap: () => editKm('kmEnd'), bad: kmBad || (mustKm && !draft.kmEnd && !!draft.end && root.querySelector('.need')) }),
           kmBad && h('p', { class: 'err' }, 'Крайният километраж е по-малък от началния'),
           timeRow('Тръгване', draft.start, (v) => { draft.start = v; draw(); }),
           draft.end ? timeRow('Прибиране', draft.end, (v) => { draft.end = v; draw(); }, timeBad, 'home')

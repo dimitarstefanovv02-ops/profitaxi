@@ -415,7 +415,10 @@ const ops = {
     if (ver.email && method === 'email') { try { await mailVerify(u, hostOf(arguments[0])); } catch (e) { console.error('mail', e); } }
     const all2 = { ...all, ...set }; const rev = await one(['GET', 'pt:rev']);
     const n = Object.values(all2).filter((x) => x && x.role === 'driver').length;
-    await notifyAdmins('reg', { title: 'Нов шофьор 🚕', body: `${u.name} · ${[u.city, u.company].filter(Boolean).join(', ')} – общо ${n}`, url: '/admin#/drivers?f=new', tag: 'reg-' + id });
+    const fleet = profile?.accountType === 'fleet';
+    await notifyAdmins('reg', fleet
+      ? { title: 'Нов собственик на коли под наем 🔑', body: `${u.name}${u.city ? ' · ' + u.city : ''} – собствениците са общо ${Object.keys(all2).filter((k) => k.startsWith('profiles:') && all2[k]?.accountType === 'fleet').length}`, url: '/admin#/owners', tag: 'reg-' + id }
+      : { title: 'Нов шофьор 🚕', body: `${u.name} · ${[u.city, u.company].filter(Boolean).join(', ')} – общо ${n}`, url: '/admin#/drivers?f=new', tag: 'reg-' + id });
     return { token, user: u, fields: driverView(all2, id), rev: Number(rev || 0) };
   },
 

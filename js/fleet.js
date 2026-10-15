@@ -16,7 +16,7 @@ export const STATUS = {
   late: { label: 'Просрочен наем', cls: 'bad', ic: 'alert' },
 };
 // Документи на колата и на шофьора – със срок на валидност
-export const CAR_DOCS = { insurance: 'Гражданска отговорност', casco: 'Каско', vignette: 'Винетка', inspection: 'Технически преглед', license: 'Лиценз / разрешително', tacho: 'Тахограф', cartax: 'Данък МПС' };
+export const CAR_DOCS = { insurance: 'Гражданска отговорност', casco: 'Каско', vignette: 'Винетка', inspection: 'Технически преглед', license: 'Лиценз / разрешително', cartax: 'Данък МПС' };
 export const DRIVER_DOCS = { dl: 'Шофьорска книжка', cert: 'Удостоверение за таксиметров шофьор', medical: 'Медицинско' };
 
 const addMonths = (s, n, dom) => { const d = parseDate(s); const y = d.getFullYear(), m = d.getMonth() + n; const day = Math.min(dom || d.getDate(), daysInMonth(new Date(y, m, 1).getFullYear(), new Date(y, m, 1).getMonth())); return dateStr(new Date(y, m, day)); };
@@ -72,7 +72,8 @@ export function depositState(driverId, logs) {
 
 // Разходите по колата за дните от–до (с пълната сума – собственикът ги плаща сам)
 export function carCostSum(costs, from, to) {
-  const full = costs.map((c) => ({ ...c, share: 1 }));
+  // първоначалните (апарат, боядисване, окабеляване…) са вложение – влизат в изплащането на колата, не в месеца
+  const full = costs.filter((c) => !c.initial).map((c) => ({ ...c, share: 1 }));
   return round2(eachDay(from, to).reduce((a, d) => a + fixedForDay(full, {}, d, true), 0));
 }
 // Събраният наем (потвърдените плащания) за дните от–до
@@ -83,9 +84,12 @@ export function carProfit(costs, logs, from, to) {
   const expense = carCostSum(costs, from, to);
   return { income, expense, net: round2(income - expense) };
 }
-// Кога се изплаща колата: покупна цена срещу печалбата от покупката досега
+// Първоначални разходи по колата (вложение)
+export const initialSum = (costs) => round2(costs.filter((c) => c.initial).reduce((a, c) => a + (Number(c.amount) || 0), 0));
+// Кога се изплаща колата: покупна цена + първоначалните разходи срещу печалбата от покупката досега
 export function payback(car, costs, logs, today = todayStr()) {
-  const price = Number(car.price) || 0; if (!price) return null;
+  const setup = initialSum(costs);
+  const price = (Number(car.price) || 0) + setup; if (!price) return null;
   const from = car.boughtAt || (car.createdAt || today).slice(0, 10);
   const done = carProfit(costs, logs, from, today).net;
   // средно на месец за последните 90 дни (или от покупката, ако е по-скоро)
@@ -93,7 +97,7 @@ export function payback(car, costs, logs, today = todayStr()) {
   const days = Math.max(1, Math.round((parseDate(today) - parseDate(f90)) / 864e5) + 1);
   const perMonth = carProfit(costs, logs, f90, today).net / days * 30.44;
   const left = Math.max(0, price - done);
-  return { price, done: round2(done), pct: Math.max(0, Math.min(100, done / price * 100)), left: round2(left), perMonth: round2(perMonth), months: left <= 0 ? 0 : perMonth > 0 ? Math.ceil(left / perMonth) : null };
+  return { price, setup, buy: Number(car.price) || 0, done: round2(done), pct: Math.max(0, Math.min(100, done / price * 100)), left: round2(left), perMonth: round2(perMonth), months: left <= 0 ? 0 : perMonth > 0 ? Math.ceil(left / perMonth) : null };
 }
 
 // Километрите на колата: смените и личното каране на шофьорите, подредени по време.
@@ -138,8 +142,10 @@ export function driverScore({ rent, logs, driverId }) {
 // Срокове: документите на колата + падежите на разходите ѝ
 export function deadlines(car, costs, today = todayStr()) {
   const out = [];
-  for (const [k, until] of Object.entries(car.docs || {})) if (until) out.push({ key: 'doc:' + k, title: CAR_DOCS[k] || k, date: until, kind: 'doc' });
-  for (const c of costs) if (c.dueDate && c.period !== 'once' && (!c.endDate || c.endDate >= today)) {
+  // срокове, добавени на ръка (и старите „Валидни до“); тахографът вече го няма
+  for (const [k, until] of Object.entries(car.docs || {})) if (until && k !== 'tacho') out.push({ key: 'doc:' + k, title: car.docNames?.[k] || CAR_DOCS[k] || k, date: until, kind: 'doc', docKey: k });
+  // сроковете идват сами от постоянните разходи (следващото плащане); махнатите от списъка са с noDl
+  for (const c of costs) if (c.dueDate && c.period !== 'once' && !c.noDl && (!c.endDate || c.endDate >= today)) {
     if (car.docs?.[c.category] && car.docs[c.category] === c.dueDate) continue;
     out.push({ key: 'cost:' + c.id, title: c.name, date: c.dueDate, kind: 'cost', amount: c.amount, costId: c.id });
   }
