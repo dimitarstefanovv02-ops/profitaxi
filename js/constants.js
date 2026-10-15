@@ -144,3 +144,9 @@ export const CITIES = [
 ];
 export const OTHER_CITY = 'Друг град';
 export const companiesFor = (city) => [...(COMPANIES[city] || []), OTHER];
+
+// Фирма → ключ за логото („ONE Такси – 032 22 22“ → „one-такси“) и име/телефон отделно
+export const splitCompany = (c) => { const [name, ...rest] = String(c || '').split(/\s+[–-]\s+/); const phone = rest.join(' – ').trim(); return { name: name.trim(), phone: /\d/.test(phone) ? phone : '' }; };
+export const companyKey = (c) => splitCompany(c).name.toLowerCase().replace(/[^a-zа-я0-9]+/g, '-').replace(/^-|-$/g, '') || 'x';
+// Всички фирми от списъка, с града
+export const allCompanies = () => Object.entries(COMPANIES).flatMap(([city, list]) => list.map((company) => ({ company, city })));

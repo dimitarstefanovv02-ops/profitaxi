@@ -95,7 +95,7 @@ async def main():
         days = await d2.evaluate("(()=>{const db=JSON.parse(localStorage.getItem('profitaxi.v5'));const u=db.users.find(x=>x.email==='proba@test.bg');return Math.round((new Date(u.subscription.validUntil)-(()=>{const n=new Date();return new Date(n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0'))})())/864e5)})()")
         ok('Пробният период от настройките (30 дни) важи при регистрация', days==30, days)
         # Всички страници без грешки, при всички периоди
-        ok('Менюто има 11 страници', await a.locator('.adm-nav a').count()== 11)
+        ok('Менюто има 12 страници', await a.locator('.adm-nav a').count()== 12)
         await a.click('.adm-nav >> text=Статистика'); await a.wait_for_timeout(500)
         ok('„Статистика“ има табове: градове, сезонност, коли, ефир, графики', await a.locator('.adm-tabs a').count()==5)
         await a.click('.adm-tabs >> text=Графики'); await a.wait_for_timeout(600)

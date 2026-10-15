@@ -4,7 +4,7 @@
 // се заменя с истинска база (напр. Supabase) без промени по интерфейса.
 
 import { todayStr, addDays, uid, rng, round2, dateStr, parseDate } from './util.js';
-import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats } from './constants.js';
+import { CAR_TYPES, COST_CATS, COMPANIES, OTHER, registerCustomCats, companyKey } from './constants.js';
 import { LIVE, call, getToken, setToken, setOnAuthLost } from './sync.js';
 import { PHONE_CODE } from './config.js';
 import { encode, decode } from './schema.js';
@@ -34,7 +34,7 @@ function ensureExt() {
   db.messages ||= []; db.codes ||= []; db.notes ||= {}; db.usage ||= {}; db.nps ||= []; db.ideas ||= [];
   db.flags ||= []; db.accessLog ||= []; db.alertsSeen ||= []; db.sms ||= {}; db.dismissed ||= {};
   db.tickets ||= []; db.payments ||= []; db.promos ||= []; db.errors ||= []; db.asks ||= []; db.churn ||= []; db.audit ||= [];
-  db.notDup ||= []; db.reviewed ||= []; db.cars ||= []; db.carlog ||= [];
+  db.notDup ||= []; db.reviewed ||= []; db.cars ||= []; db.carlog ||= []; db.logos ||= []; db.logoreq ||= [];
   // Лизингът вече не е вид кола: колата е „Собствена“, а вноската е обикновен месечен разход
   for (const [, p] of Object.entries(db.profiles || {})) { if (p && p.carType === 'leasing') p.carType = 'own'; if (p && p.fuel === 'cng') p.fuel = 'petrol_cng'; } // само метан – няма такива коли
   for (const c of db.costs || []) if (c && c.system === 'leasing') { delete c.system; c.name = c.name === 'Лизингова вноска' ? 'Лизинг' : c.name; }
@@ -303,6 +303,14 @@ export function skipNps() { const u = me(); if (!u) return; db.dismissed[u.id] =
 // „Добре дошъл“ на „Днес“ – показва се само при първото влизане
 export function introSeen() { const u = me(); return !u || !!db.dismissed[u.id]?.intro; }
 export function markIntroSeen() { const u = me(); if (!u || db.dismissed[u.id]?.intro) return; db.dismissed[u.id] = { ...(db.dismissed[u.id] || {}), intro: Date.now() }; commit(); }
+// Логата на фирмите: одобрените са общи за всички; шофьорът може да предложи друго (отива при админа)
+export function companyLogo(company) { load(); const k = companyKey(company); return (db.logos || []).find((x) => x.id === k)?.img || null; }
+export function myLogoReq(company) { const u = me(); if (!u) return null; const k = companyKey(company); return clone((db.logoreq || []).filter((x) => x.userId === u.id && x.key === k && x.status === 'new').pop() || null); }
+export function suggestLogo(company, img, note) {
+  const u = me(); if (!u || !img) return;
+  db.logoreq.push({ id: uid(), userId: u.id, name: u.name, city: u.city || '', company, key: companyKey(company), img, note: String(note || '').slice(0, 200), status: 'new', source: 'user', at: new Date().toISOString() });
+  commit();
+}
 export function ideas() { load(); return clone(db.ideas.filter((x) => x.status !== 'hidden')).sort((a, b) => b.votes.length - a.votes.length); }
 export function submitIdea(text) { const u = me(); if (!u || !text.trim()) return; db.ideas.push({ id: uid(), userId: u.id, text: text.trim(), votes: [u.id], status: 'new', at: new Date().toISOString() }); commit(); }
 export function voteIdea(id) { const u = me(); const i = db.ideas.find((x) => x.id === id); if (!u || !i) return; i.votes = i.votes.includes(u.id) ? i.votes.filter((x) => x !== u.id) : [...i.votes, u.id]; commit(); }
@@ -956,6 +964,17 @@ export const admin = {
   // развитие
   usage() { requireAdmin(); return clone(db.usage); },
   nps() { requireAdmin(); return clone(db.nps); },
+  logos() { requireAdmin(); return clone(db.logos || []); },
+  logoReqs() { requireAdmin(); return clone((db.logoreq || []).filter((x) => x.status === 'new')).sort((a, b) => String(b.at).localeCompare(String(a.at))); },
+  setLogo(company, img, source = 'admin') {
+    requireAdmin(); const k = companyKey(company); db.logos = (db.logos || []).filter((x) => x.id !== k);
+    if (img) db.logos.push({ id: k, company, img, source, at: new Date().toISOString() });
+    audit(img ? `Лого: ${company}` : `Махнато лого: ${company}`); commit();
+  },
+  // автоматично намерено лого – чака одобрение като предложение
+  addAutoLogo(company, img, from) { requireAdmin(); const k = companyKey(company); db.logoreq = (db.logoreq || []).filter((x) => !(x.key === k && x.source === 'auto' && x.status === 'new')); db.logoreq.push({ id: uid(), userId: adminUser()?.id || '', name: 'App Store', company, key: k, img, note: from || '', status: 'new', source: 'auto', at: new Date().toISOString() }); commit(); },
+  approveLogo(id) { requireAdmin(); const r = (db.logoreq || []).find((x) => x.id === id); if (!r) return; r.status = 'ok'; this.setLogo(r.company, r.img, r.source === 'auto' ? 'appstore' : 'user'); (db.logoreq || []).forEach((x) => { if (x.key === r.key && x.status === 'new' && x.source === 'auto') x.status = 'no'; }); commit(); },
+  rejectLogo(id) { requireAdmin(); const r = (db.logoreq || []).find((x) => x.id === id); if (r) { r.status = 'no'; commit(); } },
   ideas() { requireAdmin(); return clone(db.ideas).sort((a, b) => b.votes.length - a.votes.length); },
   setIdea(id, status) { requireAdmin(); const i = db.ideas.find((x) => x.id === id); if (i) { const was = i.status; i.status = status; if (status === 'done' && was !== 'done') ideaDone(i); commit(); } },
   flags() { requireAdmin(); return clone(db.flags); },

@@ -151,8 +151,8 @@ const stripPw = (f, v) => (fieldColl(f) === 'users' && v && typeof v === 'object
 async function allFields() { return pairs(await one(['HGETALL', 'pt:db'])); }
 const isOut = (m) => !m.sendAt || m.sendAt <= new Date().toISOString();
 const forUser = (t, u) => !t || ((!t.city || t.city === u.city) && (!t.company || t.company === u.company) && (!t.userIds || t.userIds.includes(u.id)) && (!t.tag || (u.tags || []).includes(t.tag)));
-const OWN = ['shifts', 'costs', 'reminders', 'reservations', 'tickets', 'nps', 'churn', 'errors', 'payments'];
-const PUBLIC = ['settings', 'flags', 'ideas'];
+const OWN = ['shifts', 'costs', 'reminders', 'reservations', 'tickets', 'nps', 'churn', 'errors', 'payments', 'logoreq'];
+const PUBLIC = ['settings', 'flags', 'ideas', 'logos'];
 
 // Какво вижда един шофьор: само своето + общите неща
 // Обща кола: собственикът вижда на шофьорите си само км, часове, дни и смени (без пари);
@@ -298,6 +298,8 @@ async function applyPush(s, set = {}, del = []) {
     }
     else if (OWN.includes(c) && c !== 'payments') {
       if (v.userId !== id || (old && old.userId !== id)) { rejected.push(f); continue; }
+      // предложено лого: само ново, до ~300 KB, без самоодобрение
+      if (c === 'logoreq') { if (old || JSON.stringify(v).length > 400000 || !String(v.img || '').startsWith('data:image/')) { rejected.push(f); continue; } v = { ...v, status: 'new', source: 'user' }; }
       if (c === 'tickets' && old) v = { ...v, thread: unionThread(old.thread, v.thread) };
       if (c === 'tickets') { const was = old?.thread?.length || 0, now = v.thread?.length || 0; if (now > was) newTickets.push(v); }
     } else if (c === 'messages') {
@@ -657,6 +659,32 @@ const ops = {
     catch (e) { console.error('talon', e); return { fallback: true }; }
   },
 
+  // ---------- логата на фирмите (само админ): търсене в App Store и теглене на иконата ----------
+  async logoSearch({ term }, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    const q = String(term || '').trim().slice(0, 80); if (q.length < 2) return { results: [] };
+    if (MEMORY && !process.env.LOGO_LIVE) return { results: [{ id: 'mock1', name: q + ' Taxi', seller: q + ' EOOD', icon: 'mock' }] };
+    try {
+      const r = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(q)}&country=bg&entity=software&limit=10`);
+      const j = await r.json();
+      return { results: (j.results || []).map((x) => ({ id: String(x.trackId), name: x.trackName, seller: x.sellerName || x.artistName || '', icon: x.artworkUrl512 || x.artworkUrl100 })).filter((x) => x.icon) };
+    } catch (e) { console.error('logoSearch', e); return { error: 'App Store не отговаря. Опитай пак.' }; }
+  },
+  async logoFetch({ url }, s) {
+    if (s.role !== 'admin') return { error: 'Само за админ' };
+    if (url === 'mock') return { img: 'data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#FFC21A"/></svg>').toString('base64') };
+    let u; try { u = new URL(String(url)); } catch { return { error: 'Невалиден адрес' }; }
+    if (u.protocol !== 'https:') return { error: 'Само https' };
+    const src = u.href.replace(/\/\d+x\d+bb\.(jpg|png|webp)$/, '/192x192bb.png'); // иконите от App Store – по-малки, но остри
+    try {
+      const r = await fetch(src); const type = r.headers.get('content-type') || '';
+      if (!r.ok || !type.startsWith('image/')) return { error: 'Не е картинка' };
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length > 300000) return { error: 'Картинката е твърде голяма' };
+      return { img: `data:${type.split(';')[0]};base64,${buf.toString('base64')}` };
+    } catch (e) { console.error('logoFetch', e); return { error: 'Не успях да изтегля картинката' }; }
+  },
+
   // ---------- AI отговори в търсачката ----------
   async ask({ q, mockAnswer }, s) {
     const text = String(q || '').trim().slice(0, 300);
@@ -764,7 +792,7 @@ const ops = {
 
   async logout({ token }) { if (token) await one(['HDEL', 'pt:tok', token]); return { ok: true }; },
 };
-const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'talon', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
+const NEEDS_LOGIN = new Set(['resendVerify', 'verifyStatus', 'verifyTest', 'joinCar', 'leaveCar', 'pull', 'push', 'passwd', 'deleteMe', 'wipeAll', 'pushSub', 'pushUnsub', 'pushTest', 'drvPushSub', 'drvPushUnsub', 'cronRun', 'voice', 'ask', 'talon', 'logoSearch', 'logoFetch', 'pkStatus', 'pkRegOptions', 'pkRegister', 'pkRemove']);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // SMS код: регистрация (ключ = телефона) или нова парола (отделен ключ), с лимитите от админа
 const smsKey = (ph, purpose) => (purpose === 'reset' ? ph + ':r' : ph);

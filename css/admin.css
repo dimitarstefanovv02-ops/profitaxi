@@ -607,3 +607,18 @@ body.admin .btn.arr-toggle.on { background: var(--violet, #7C3AED); color: #fff;
 .adm-drv-photos { display: flex; align-items: flex-end; gap: 14px; margin: 6px 0 14px; flex-wrap: wrap; }
 .adm-drv-photos .adm-car { display: block; width: 240px; max-width: 100%; aspect-ratio: 16 / 10; border-radius: 18px; overflow: hidden; background: #111; }
 .adm-drv-photos .adm-car img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Логата на фирмите */
+.lg-box { flex: none; width: 44px; height: 44px; border-radius: 12px; overflow: hidden; background: #fff; border: 1px solid var(--line); display: grid; place-items: center; font: 800 .8rem/1 var(--font); color: #777; }
+.lg-box img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.lg-box.none { background: var(--surface-2); border-style: dashed; }
+.lg-list, .lg-reqs { display: grid; gap: 2px; }
+.lg-row, .lg-req { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.lg-row:first-child, .lg-req:first-child { border-top: 0; }
+.lg-row .grow, .lg-req .grow { min-width: 160px; display: grid; gap: 2px; }
+.lg-row small, .lg-req small { color: var(--muted); }
+.lg-pair { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+.lg-results { display: grid; gap: 8px; margin-top: 12px; }
+.lg-res { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; cursor: pointer; }
+.lg-res img { width: 48px; height: 48px; border-radius: 12px; }
+.lg-res span { display: grid; gap: 2px; } .lg-res small { color: var(--muted); }

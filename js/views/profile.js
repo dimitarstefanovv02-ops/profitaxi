@@ -6,7 +6,7 @@ import { passkeySupported, passkeyOn, enablePasskey, disablePasskey, faceLabel }
 import { h, fill, icon, cx, money, todayStr, fmtDate, MONTHS, startOfMonth, parseDate } from '../util.js';
 import * as store from '../store.js';
 import { zone } from '../arrange.js';
-import { CAR_TYPES, FUELS } from '../constants.js';
+import { CAR_TYPES, FUELS, splitCompany } from '../constants.js';
 import { carBlock, fuelBlock, shareBlock } from './carSettings.js';
 import { openSheet, sheetHead, confirmSheet, toast, field, segmented, getTheme, setTheme, cardTitle, hero, THEMES, TEXT_SIZES, getTextSize, setTextSize } from '../ui.js';
 import { notifyPermission, notifySupported, requestNotify, checkNotifications } from '../notify.js';
@@ -147,12 +147,16 @@ export function profileCover(user, d) {
     try { store.updateProfile({ [key]: img }); toast(key === 'carPhoto' ? 'Снимката на колата е сменена' : 'Профилната снимка е сменена'); }
     catch { toast('Снимката е твърде голяма', 'err'); }
   };
-  const who = [user.city, user.company].filter(Boolean).join(' · ');
-  const carLine = [car.code && `Код ${car.code}`, car.plate, [car.model, car.year].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
+  const { name: firm, phone: firmPhone } = splitCompany(user.company);
+  const logo = user.company ? store.companyLogo(user.company) : null;
+  const pending = user.company ? store.myLogoReq(user.company) : null;
+  const carName = [car.model, car.year].filter(Boolean).join(' · ');
+  const initialsOf = (t) => { const ws = t.replace(/[^A-Za-zА-Яа-я0-9 ]/g, ' ').split(/\s+/).filter((w) => w && !/^такси$|^taxi$/i.test(w)); return (ws.length === 1 ? ws[0].slice(0, 3) : ws.map((w) => w[0]).slice(0, 2).join('')).toUpperCase() || 'T'; };
+  const plateFmt = (p) => { const m = String(p).toUpperCase().replace(/\s/g, '').match(/^([A-ZА-Я]{1,2})(\d{4})([A-ZА-Я]{1,2})$/); return m ? `${m[1]} ${m[2]} ${m[3]}` : p; };
   // всеки ред се събира на един ред: ако е дълъг, буквите леко се смаляват (без „…“); ако пак не стига – пренася се
   const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth + 1 && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap'); });
   // Като профил във Facebook: снимката на колата е корица от край до край, отдолу заоблен лист,
-  // кръглата профилна снимка застъпва корицата в средата, отдолу името, колата, градът и фирмата.
+  // кръглата профилна снимка застъпва корицата в средата; под името – схема: фирмата с логото, код, номер, колата.
   const sec = h('section', { class: 'cover6' },
     h('div', { class: cx('c6-cover', !d.carPhoto && 'empty') },
       d.carPhoto && h('img', { src: d.carPhoto, alt: 'Колата' }),
@@ -162,10 +166,38 @@ export function profileCover(user, d) {
         d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials),
         h('i', null, icon('camera', 16))),
       h('div', { class: 'c6-name', role: 'heading', 'aria-level': '1' }, user.name),
-      h('p', { class: 'c6-car' }, h('span', null, carLine || 'Добави кода, номера и модела на колата')),
-      who && h('p', { class: 'c6-who' }, icon('pin', 16), h('span', null, who))));
-  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-car > span, .c6-who > span').forEach(fit), 0);
+      user.city && h('p', { class: 'c6-who' }, icon('pin', 15), h('span', null, user.city)),
+      h('div', { class: 'c6-scheme' },
+        user.company && h('div', { class: 'c6-firm' },
+          h('button', { class: cx('c6-logo', !logo && 'none'), type: 'button', 'aria-label': 'Логото на фирмата', onclick: () => logoSheet(user, logo, pending) },
+            logo ? h('img', { src: logo, alt: firm }) : h('span', null, initialsOf(firm))),
+          h('div', { class: 'c6-firm-t' }, h('b', null, firm), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, icon('call', 13), firmPhone))),
+        h('a', { class: 'c6-cell', href: '#/car' }, h('small', null, 'Код'), h('b', null, car.code || '—')),
+        h('a', { class: 'c6-cell', href: '#/car' }, h('small', null, 'Номер'), car.plate ? h('span', { class: 'plate' }, h('i', null, 'BG'), h('b', null, plateFmt(car.plate))) : h('b', null, '—')),
+        h('a', { class: 'c6-cell wide', href: '#/car' }, h('small', null, 'Колата'), h('b', null, carName || 'Добави марка и модел')))));
+  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-cell.wide > b').forEach(fit), 0);
   return sec;
+}
+
+// Логото на фирмата: показва го и дава да се предложи друго (отива при админа за одобрение)
+function logoSheet(user, logo, pending) {
+  openSheet((close) => {
+    const { name } = splitCompany(user.company);
+    let img = null;
+    const prev = h('div', { class: 'logo-prev' }, logo ? h('img', { src: logo, alt: '' }) : h('span', null, '?'));
+    const note = h('input', { class: 'input', placeholder: 'Бележка – по желание' });
+    const send = h('button', { class: 'btn btn-page btn-lg btn-block', disabled: true, onclick: () => { store.suggestLogo(user.company, img, note.value); close(); toast('Изпратено – ще го прегледаме и одобрим'); } }, icon('check', 20), 'Изпрати за одобрение');
+    return h('div', { class: 'form' },
+      sheetHead('Логото на ' + name, close, logo ? 'Не е точното? Предложи друго.' : 'Още нямаме лого на фирмата. Предложи го.'),
+      prev,
+      pending ? h('p', { class: 'auto-note' }, icon('clock', 15), 'Вече си предложил лого – чака одобрение.') : null,
+      h('button', { class: 'btn btn-ghost btn-lg btn-block', type: 'button', onclick: async () => {
+        const r = await pickImage({ max: 256, aspect: 1, title: 'Изрежи логото' }); if (!r) return;
+        img = r; prev.replaceChildren(h('img', { src: r, alt: '' })); send.disabled = false;
+      } }, icon('camera', 18), 'Избери снимка на логото'),
+      note, send,
+      h('p', { class: 'muted small' }, 'Админът го преглежда. След одобрение логото се сменя за всички шофьори от фирмата.'));
+  });
 }
 
 // Вход с Face ID / пръст на този телефон (показва се само ако телефонът може)

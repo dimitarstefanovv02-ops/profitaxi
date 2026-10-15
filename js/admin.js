@@ -1,5 +1,5 @@
 // Чисто – админ панел. Отделен вход на /admin. Шофьорите нямат връзка към него.
-// 10 менюта, всяко с табове: всичко за една тема е на едно място.
+// 12 менюта, всяко с табове: всичко за една тема е на едно място.
 // Всяка карта, число и бутон може да се мести и скрива („Подреди“ горе вдясно).
 
 import { h, fill, icon, cx, money, money2, moneyFull, todayStr, addDays, fmtDate, fmtNum, fmtNum1, fmtDuration, isoToDateStr, parseDate, MONTHS, MONTHS_SHORT, WD_SHORT, startOfMonth, endOfMonth, dateStr, startOfWeek } from './util.js';
@@ -9,7 +9,8 @@ import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart,
 import { startTour, ADMIN_TOUR } from './tour.js';
 import { rentState as rentStateA } from './fleet.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
-import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costCat } from './constants.js';
+import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costCat, allCompanies, companyKey, splitCompany } from './constants.js';
+import { pickImage } from './views/categories.js';
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
 import { cityCompanyPicker } from './views/cityPicker.js';
 import { VAPID_PUBLIC } from './config.js';
@@ -25,6 +26,7 @@ const NAV = [
   ['/overview', 'home', 'Днес', 'owner support partner'],
   ['/drivers', 'users', 'Шофьори', 'owner support partner'],
   ['/owners', 'car', 'Собственици', 'owner support'],
+  ['/logos', 'star', 'Логата', 'owner support'],
   ['/control', 'shield', 'Контрол', 'owner support'],
   ['/messages', 'inbox', 'Съобщения', 'owner support'],
   ['/partners', 'key', 'Партньори', 'owner partner'],
@@ -68,7 +70,7 @@ function render() {
   const r = parse();
   if (!store.adminUser()) { document.body.classList.remove('arranging'); return fill(app, loginView()); }
   if (ALIAS[r.name]) { location.replace('#' + ALIAS[r.name]); return; }
-  const views = { '/overview': overview, '/drivers': drivers, '/driver': driverDetail, '/new': newDriver, '/owners': owners, '/control': control, '/messages': messagesPage,
+  const views = { '/overview': overview, '/drivers': drivers, '/driver': driverDetail, '/new': newDriver, '/owners': owners, '/logos': logosPage, '/control': control, '/messages': messagesPage,
     '/partners': partners, '/growth': growth, '/stats': statsPage, '/dev': devPage, '/money': moneyPage, '/settings': settings };
   const base = PARENT[r.name] || r.name;
   if (!views[r.name] || !navFor().some((n) => n[0] === base)) { location.replace('#/overview'); return; }
@@ -674,6 +676,88 @@ function alertsLine() {
 // Собственици: акаунти „Собственик на коли“ и шофьори, чиито коли карат и други. Под всеки – колите и шофьорите им.
 // Коли: филтър за колите с няколко шофьори / под наем; търсене по рег. номер (задължителен за тях).
 const ownState = { q: '', kind: 'multi', plate: '' };
+// ---------- Логата на фирмите ----------
+// Предложения от шофьорите и автоматично намерени в App Store – чакат одобрение. Одобреното лого го виждат всички шофьори от фирмата.
+const logoTerm = (company) => splitCompany(company).name.split(/\s*\/\s*/)[0].replace(/\d+/g, ' ').replace(/\s+/g, ' ').trim();
+const TR = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sht', ъ: 'a', ь: 'y', ю: 'yu', я: 'ya' };
+const latin = (t) => String(t || '').toLowerCase().replace(/[а-я]/g, (c) => TR[c] || '');
+const words = (t) => latin(t).split(/[^a-z0-9]+/).filter((w) => w.length >= 3 && !['taxi', 'taksi', 'eood', 'ood', 'ltd', 'the', 'app'].includes(w));
+// колко добре резултат от App Store отговаря на фирмата (0..1)
+function logoScore(company, city, r) {
+  const want = words(logoTerm(company)); if (!want.length) return 0;
+  const have = words(`${r.name} ${r.seller}`).join(' ');
+  const hit = want.filter((w) => have.includes(w)).length / want.length;
+  const taxi = /taxi|такси|taksi/i.test(`${r.name} ${r.seller}`) ? 0.15 : 0;
+  const town = city && have.includes(words(city)[0] || '§') ? 0.1 : 0;
+  return Math.min(1, hit + taxi + town);
+}
+function logosPage() {
+  const all = store.admin.allData();
+  const known = allCompanies();
+  const extra = [...new Set(all.map((d) => d.user.company).filter((c) => c && !known.some((k) => k.company === c)))].map((company) => ({ company, city: all.find((d) => d.user.company === company)?.user.city || '' }));
+  const list = [...known, ...extra];
+  const logos = Object.fromEntries(store.admin.logos().map((l) => [l.id, l]));
+  const reqs = store.admin.logoReqs();
+  const drivers = (c) => all.filter((d) => d.user.company === c).length;
+  const missing = list.filter((x) => !logos[companyKey(x.company)]);
+  const box = (img, name) => h('span', { class: cx('lg-box', !img && 'none') }, img ? h('img', { src: img, alt: '' }) : (splitCompany(name).name.slice(0, 3) || '?').toUpperCase());
+  const status = h('p', { class: 'muted small' });
+  const live = store.live();
+  // App Store: търсене за една фирма
+  const search = (x) => openSheet((close) => {
+    const q = h('input', { class: 'input', value: logoTerm(x.company) });
+    const out = h('div', { class: 'lg-results' });
+    const run = async () => {
+      out.replaceChildren(h('p', { class: 'muted' }, 'Търся…'));
+      const r = await apiCall('logoSearch', { term: q.value }, 'admin');
+      if (r.error) { out.replaceChildren(h('p', { class: 'err' }, r.error)); return; }
+      if (!r.results.length) { out.replaceChildren(h('p', { class: 'muted' }, 'Нищо. Опитай с друго име или качи логото.')); return; }
+      out.replaceChildren(...r.results.map((it) => h('button', { class: 'lg-res', type: 'button', onclick: async () => {
+        const f = await apiCall('logoFetch', { url: it.icon }, 'admin'); if (f.error) { toast(f.error, 'err'); return; }
+        store.admin.setLogo(x.company, f.img, 'appstore'); close(); toast('Логото е сложено'); render();
+      } }, h('img', { src: it.icon, alt: '' }), h('span', null, h('b', null, it.name), h('small', null, it.seller)))));
+    };
+    setTimeout(run, 0);
+    return h('div', { class: 'form' }, sheetHead('Лого на ' + splitCompany(x.company).name, close, 'Резултати от App Store – натисни правилното'),
+      h('div', { class: 'row gap' }, q, h('button', { class: 'btn btn-page', onclick: run }, icon('search', 18), 'Търси')), out);
+  }, { tall: true });
+  const upload = async (x) => { const img = await pickImage({ max: 256, aspect: 1, title: 'Изрежи логото' }); if (img) { store.admin.setLogo(x.company, img, 'admin'); toast('Логото е сложено'); render(); } };
+  // всички без лого: търси, избира най-подходящия резултат и го праща за одобрение
+  const auto = async (btn) => {
+    if (!live) { toast('Работи само с облака (на живия сайт)', 'err'); return; }
+    btn.disabled = true; let found = 0;
+    for (const [i, x] of missing.entries()) {
+      status.textContent = `Търся ${i + 1} от ${missing.length}: ${splitCompany(x.company).name}…`;
+      const r = await apiCall('logoSearch', { term: logoTerm(x.company) + ' такси' }, 'admin').catch(() => ({ results: [] }));
+      let best = null; for (const it of r.results || []) { const sc = logoScore(x.company, x.city, it); if (sc >= 0.6 && (!best || sc > best.sc)) best = { ...it, sc }; }
+      if (!best) continue;
+      const f = await apiCall('logoFetch', { url: best.icon }, 'admin').catch(() => ({}));
+      if (f.img) { store.admin.addAutoLogo(x.company, f.img, `${best.name} – ${best.seller}`); found++; }
+    }
+    status.textContent = `Готово: намерени ${found} от ${missing.length}. Прегледай ги горе и одобри правилните.`;
+    btn.disabled = false; render();
+  };
+  return h('div', null,
+    pageHead('Логата на фирмите', `${list.length - missing.length} от ${list.length} фирми имат лого. Шофьорите го виждат в профила си и могат да предложат друго.`),
+    h('section', { class: 'card' }, cardTitle('sparkle', 'Намери автоматично'),
+      h('p', { class: 'muted small' }, 'Търси всяка фирма без лого в App Store (иконата на приложението ѝ). Намереното идва за одобрение – нищо не се сменя само.'),
+      h('button', { class: 'btn btn-page', disabled: !missing.length, onclick: (e) => auto(e.currentTarget) }, icon('search', 18), `Намери за ${missing.length} фирми`), status),
+    h('section', { class: 'card' }, cardTitle('inbox', `Чакат одобрение (${reqs.length})`),
+      reqs.length ? h('div', { class: 'lg-reqs' }, reqs.map((r) => h('div', { class: 'lg-req' },
+        h('div', { class: 'lg-pair' }, box(logos[r.key]?.img, r.company), icon('right', 16), box(r.img, r.company)),
+        h('div', { class: 'grow' }, h('b', null, r.company), h('small', null, r.source === 'auto' ? `App Store: ${r.note}` : `${r.name}${r.city ? ', ' + r.city : ''}${r.note ? ' – „' + r.note + '“' : ''}`)),
+        h('button', { class: 'btn btn-page', onclick: () => { store.admin.approveLogo(r.id); toast('Одобрено'); render(); } }, icon('check', 16), 'Одобри'),
+        h('button', { class: 'btn btn-ghost', onclick: () => { store.admin.rejectLogo(r.id); render(); } }, 'Откажи'))))
+        : h('p', { class: 'muted small' }, 'Няма предложения.')),
+    h('section', { class: 'card' }, cardTitle('car', 'Фирми'),
+      h('div', { class: 'lg-list' }, list.map((x) => { const l = logos[companyKey(x.company)]; return h('div', { class: 'lg-row' },
+        box(l?.img, x.company),
+        h('div', { class: 'grow' }, h('b', null, x.company), h('small', null, [x.city, `${drivers(x.company)} шофьори`, l ? ({ appstore: 'от App Store', user: 'от шофьор', admin: 'качено' })[l.source] || '' : 'без лого'].filter(Boolean).join(' · '))),
+        h('button', { class: 'btn btn-ghost', disabled: !live, title: live ? '' : 'Само на живия сайт', onclick: () => search(x) }, icon('search', 16), 'App Store'),
+        h('button', { class: 'btn btn-ghost', onclick: () => upload(x) }, icon('upload', 16), 'Качи'),
+        l && h('button', { class: 'btn btn-ghost', 'aria-label': 'Махни логото', onclick: () => { store.admin.setLogo(x.company, null); render(); } }, icon('trash', 16))); }))));
+}
+
 function owners(r) {
   const cars = store.admin.cars();
   const logs = store.admin.carLogs();
