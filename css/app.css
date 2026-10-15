@@ -1634,3 +1634,5 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .c6-facts small { font-size: .72rem; font-weight: 600; color: var(--ch-on-v, var(--muted)); }
 .c6-facts b { font-size: .95rem; font-weight: 700; white-space: nowrap; overflow: hidden; }
 .c6-facts b.wrap { white-space: normal; line-height: 1.2; }
+.c6-city { font-weight: 500; color: var(--ch-on-v, var(--muted)); }
+.c6-name + .c6-scheme { margin-top: 10px; }
