@@ -161,21 +161,24 @@ export function profileCover(user, d) {
   });
   // всеки ред се събира на един ред: ако е дълъг, буквите леко се смаляват (без „…“); ако пак не стига – пренася се
   const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth + 1 && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap'); });
-  // Като профил във Facebook: снимката на колата е корица, върху нея – кръглата профилна снимка, името, редовете и „Промени данните“
-  const sec = h('section', { class: 'cover5' },
-    h('div', { class: cx('c5-photo', !d.carPhoto && 'empty') },
-      d.carPhoto && h('img', { class: 'c5-bg', src: d.carPhoto, alt: 'Колата' }),
-      h('button', { class: 'c5-cam', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', onclick: () => photo('carPhoto') }, icon('camera', 18), !d.carPhoto && h('span', null, 'Снимка на колата')),
-      h('div', { class: 'c5-info' },
-        h('button', { class: 'c5-ava', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => photo('photo') },
-          d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials),
-          h('i', null, icon('camera', 14))),
-        h('div', { class: 'c5-txt' },
-          h('b', null, user.name),
-          who && h('span', { class: 'c5-line' }, icon('pin', 15), h('span', null, who)),
-          h('span', { class: 'c5-line c5-car' }, icon('car', 15), h('span', null, carLine || 'Добави кода, номера и модела на колата'))),
-        h('button', { class: 'c5-edit', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'))));
-  setTimeout(() => sec.querySelectorAll('.c5-txt > b, .c5-line > span').forEach(fit), 0);
+  // Като профил във Facebook: снимката на колата е корица от край до край, отдолу заоблен лист,
+  // голямата кръгла профилна снимка застъпва корицата в средата, името, колата, градът и два бутона.
+  const own = d.carType !== 'rent';
+  const sec = h('section', { class: 'cover6' },
+    h('div', { class: cx('c6-cover', !d.carPhoto && 'empty') },
+      d.carPhoto && h('img', { src: d.carPhoto, alt: 'Колата' }),
+      h('button', { class: 'c6-cam', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', onclick: () => photo('carPhoto') }, icon('camera', 18), !d.carPhoto && h('span', null, 'Снимка на колата'))),
+    h('div', { class: 'c6-sheet' },
+      h('button', { class: 'c6-ava', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => photo('photo') },
+        d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials),
+        h('i', null, icon('camera', 16))),
+      h('div', { class: 'c6-name', role: 'heading', 'aria-level': '1' }, user.name),
+      h('p', { class: 'c6-car' }, h('span', null, carLine || 'Добави кода, номера и модела на колата')),
+      who && h('p', { class: 'c6-who' }, icon('pin', 16), h('span', null, who)),
+      h('div', { class: 'c6-btns' },
+        h('button', { class: 'c6-btn primary', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'),
+        h('a', { class: 'c6-btn', href: own ? '#/vehicle' : '#/car' }, icon(own ? 'tool' : 'car', 18), own ? 'Колата ми' : 'Колата'))));
+  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-car > span, .c6-who > span').forEach(fit), 0);
   return sec;
 }
 

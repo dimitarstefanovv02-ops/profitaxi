@@ -26,7 +26,7 @@ export function meView({ go, user, data }) {
   const group = (k, title, ...rows) => [k, h('section', { class: 'me-group' }, h('h2', { class: 'section-title' }, title), zone('drv.me.' + k, { class: 'big-links' }, rows.filter(Boolean)))];
   return h('div', { class: 'screen', 'data-page': 'me' },
     topSearch(() => go('/me')),
-    h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Профил'), h('div', { class: 'date' }, 'Акаунт, колата и помощ')),
+    fleet && h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Профил'), h('div', { class: 'date' }, 'Акаунт, колата и помощ')),
       fleet && h('button', { class: 'tab-avatar', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => setPhoto('photo', () => go('/me')) },
         data.profile.photo ? h('img', { src: data.profile.photo, alt: '' }) : h('span', null, user.name.split(' ').map((x) => x[0]).slice(0, 2).join('')))),
     !fleet && profileCover(user, data.profile),

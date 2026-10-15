@@ -1568,29 +1568,30 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .ptp-steps span { color: var(--muted); font-size: .94rem; line-height: 1.4; }
 .ptp-note { margin: 16px 4px 0; }
 
-/* ---------- Профил: корица като във Facebook – всичко е върху снимката на колата ---------- */
-.cover5 { margin: 0 0 8px; }
-.c5-photo { position: relative; min-height: 330px; border-radius: 24px; overflow: hidden; background: #231F20; display: flex; flex-direction: column; justify-content: flex-end; }
-.c5-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.c5-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 22%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.86) 100%); pointer-events: none; }
-.c5-photo.empty { background: linear-gradient(160deg, #3A3536, #1A1718); }
-.c5-cam { position: absolute; z-index: 2; right: 12px; top: 12px; height: 38px; min-width: 38px; padding: 0 10px; border-radius: 19px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  background: rgba(20,19,19,.5); color: #fff; border: 1px solid rgba(255,255,255,.3); font: 600 .82rem/1 var(--font); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.c5-info { position: relative; z-index: 1; padding: 0 16px 16px; color: #fff; display: grid; gap: 12px; }
-.c5-ava { position: relative; width: 96px; height: 96px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: #BFF0BE; color: #0F3A18; font: 800 1.7rem/1 var(--font);
-  display: grid; place-items: center; box-shadow: 0 8px 22px -8px rgba(0,0,0,.7); }
-.c5-ava > img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
-.c5-ava > i { position: absolute; right: -2px; bottom: 2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #E9E4E4; color: #141313; border: 2px solid #231F20; font-style: normal; }
-.c5-txt { min-width: 0; display: grid; gap: 4px; text-shadow: 0 1px 4px rgba(0,0,0,.55); }
-.c5-txt > b { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; overflow: hidden; }
-.c5-line { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: .92rem; color: rgba(255,255,255,.88); }
-.c5-line > .ic { flex: none; opacity: .9; }
-.c5-line > span { min-width: 0; white-space: nowrap; overflow: hidden; }
-.c5-line > span.wrap { white-space: normal; }
-.c5-car { color: #fff; font-weight: 600; }
-.c5-edit { width: 100%; height: 46px; border-radius: 14px; border: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 .98rem/1 var(--font);
-  background: rgba(255,255,255,.92); color: #141313; cursor: pointer; }
-.c5-edit:active { background: #fff; }
+/* ---------- Профил като във Facebook: корица от край до край, заоблен лист, кръгла снимка в средата ---------- */
+.cover6 { margin: 4px -16px 6px; }
+.c6-cover { position: relative; height: 210px; background: #231F20; overflow: hidden; }
+.c6-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.c6-cover.empty { background: linear-gradient(160deg, #3A3536, #1A1718); }
+.c6-cam { position: absolute; right: 14px; bottom: 40px; height: 38px; min-width: 38px; padding: 0 10px; border-radius: 19px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(255,255,255,.92); color: #141313; border: 0; font: 600 .82rem/1 var(--font); box-shadow: 0 4px 12px -4px rgba(0,0,0,.4); }
+.c6-sheet { position: relative; margin-top: -26px; padding: 0 16px 6px; border-radius: 26px 26px 0 0; background: var(--ch-bg, var(--bg)); display: flex; flex-direction: column; align-items: center; text-align: center; }
+.c6-ava { position: relative; margin-top: -92px; width: 150px; height: 150px; padding: 0; border-radius: 50%; border: 5px solid var(--ch-bg, var(--bg)); background: #BFF0BE; color: #0F3A18;
+  font: 800 2.6rem/1 var(--font); display: grid; place-items: center; box-shadow: 0 10px 26px -12px rgba(0,0,0,.55); }
+.c6-ava > img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.c6-ava > i { position: absolute; right: 2px; bottom: 6px; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-style: normal;
+  background: var(--ch-low, var(--surface-2)); color: var(--ch-on, var(--text)); border: 3px solid var(--ch-bg, var(--bg)); }
+.c6-name { margin: 10px 0 0 !important; max-width: 100%; font-size: 1.65rem !important; font-weight: 800 !important; font-family: var(--font) !important; letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; overflow: hidden; color: var(--ch-on, var(--text)); }
+.c6-car, .c6-who { margin: 6px 0 0; max-width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--ch-on, var(--text)); }
+.c6-car { font-weight: 700; font-size: .98rem; }
+.c6-who { font-size: .94rem; color: var(--ch-on-v, var(--muted)); }
+.c6-car > span, .c6-who > span { min-width: 0; white-space: nowrap; overflow: hidden; }
+.c6-car > span.wrap, .c6-who > span.wrap, .c6-name.wrap { white-space: normal; }
+.c6-who .ic-fill { display: none; }
+.c6-btns { width: 100%; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 10px; margin-top: 16px; }
+.c6-btn { height: 46px; padding: 0 10px; border-radius: 12px; border: 0; display: flex; align-items: center; justify-content: center; gap: 7px; font: 700 .95rem/1 var(--font) !important; white-space: nowrap; text-decoration: none; cursor: pointer;
+  background: var(--ch-low, var(--surface-2)); color: var(--ch-on, var(--text)); }
+.c6-btn.primary { background: var(--ch-on, var(--text)); color: var(--ch-bg, var(--bg)); }
 .talon-btn { margin-bottom: 12px; }
 .grid-mm { grid-template-columns: minmax(0, 1fr) 96px !important; }
 .c5-line .ic-fill { display: none; }
