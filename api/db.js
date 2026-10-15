@@ -18,7 +18,7 @@ import * as PK from '../lib/passkey.js';
 import * as MSG from '../lib/messenger.js';
 import { periodStats, shiftDate } from '../js/calc.js';
 import { todayStr } from '../js/util.js';
-import { rentState, deadlines, idleDays } from '../js/fleet.js';
+import { rentState, deadlines, idleDays, dlDays } from '../js/fleet.js';
 
 // Датите (вчера, понеделник, 10:00 и 20:00) са по българско време
 process.env.TZ ||= 'Europe/Sofia';
@@ -286,7 +286,7 @@ async function applyPush(s, set = {}, del = []) {
         const who = all2[`users:${id}`]?.name || 'Шофьор';
         const eur2 = (x) => `${Math.round((Number(x) || 0) * 100) / 100} €`.replace('.', ',');
         if (owner && v.driverId && v.driverId !== id) {
-          const t = { remind: ['Напомняне за наема', v.text || `Наемът за колата: ${eur2(v.amount)}. Отбележи „Платих“, щом платиш.`], fine: ['Глоба', `${eur2(v.amount)}${v.text ? ' – ' + v.text : ''}. Записана е в разходите ти.`], handover: ['Колата е предадена', `Километраж при предаване: ${v.km || ''} км`] }[v.kind];
+          const t = { remind: ['Напомняне за наема', v.text || `Наемът за колата: ${eur2(v.amount)}. Отбележи „Платих“, щом платиш.`], notice: [v.title || 'Съобщение от собственика', v.text || ''], fine: ['Глоба', `${eur2(v.amount)}${v.text ? ' – ' + v.text : ''}. Записана е в разходите ти.`], handover: ['Колата е предадена', `Километраж при предаване: ${v.km || ''} км`] }[v.kind];
           if (t) toDrivers.push({ direct: { userId: v.driverId, title: t[0], body: t[1], url: '#/home', tag: `cl-${k}` } });
         }
         if (!owner && car) {
@@ -893,7 +893,7 @@ async function runCron(slot, { force = false } = {}) {
   if (dead.length) await one(['HDEL', 'pt:push', ...new Set(dead)]);
   return { ok: true, sent, users: byUser.size };
 }
-// Автопарк (сутрин): срокове 14 и 3 дни преди изтичане, просрочен наем, коли, които стоят, седмичен отчет в избрания ден
+// Автопарк (сутрин): срокове 14, 7 и 3 дни преди изтичане (или колкото е избрал собственикът), просрочен наем, коли, които стоят, седмичен отчет в избрания ден
 function fleetMsgs(all, id, profile, today, now) {
   const cars = Object.entries(all).filter(([f, v]) => fieldColl(f) === 'cars' && v?.ownerId === id).map(([, v]) => v);
   if (!cars.length) return [];
@@ -905,7 +905,7 @@ function fleetMsgs(all, id, profile, today, now) {
     const costs = vals.filter((v) => v && v.carId === car.id && v.amount != null && v.period);
     const logs = vals.filter((v) => v && v.carId === car.id && v.kind && v.by);
     const ms = (car.members || []).filter((m) => m.userId !== car.ownerId);
-    for (const x of deadlines(car, costs, today)) if ([14, 3, 0].includes(x.left)) out.push({ kind: 'fleet', title: `${nm(car)}: ${x.title}`, body: x.left === 0 ? `Изтича днес (${fmtDay(x.date)}).` : `Изтича след ${x.left} дни – ${fmtDay(x.date)}.${x.amount ? ` Сума ${eur(x.amount)}.` : ''}`, url: `/app#/cars/${car.id}`, tag: `dl-${x.key}-${x.date}-${x.left}` });
+    for (const x of deadlines(car, costs, today)) if ([...dlDays(profile), 0].includes(x.left)) out.push({ kind: 'fleet', title: `${nm(car)}: ${x.title}`, body: x.left === 0 ? `Изтича днес (${fmtDay(x.date)}).` : `Изтича след ${x.left} дни – ${fmtDay(x.date)}.${x.amount ? ` Сума ${eur(x.amount)}.` : ''}`, url: `/app#/cars/${car.id}`, tag: `dl-${x.key}-${x.date}-${x.left}` });
     for (const m of ms) {
       const r = rentState(m, logs, today);
       if (r.late && [1, 3, 7, 14].includes(r.lateDays)) out.push({ kind: 'fleet', title: `${(all[`users:${m.userId}`]?.name || m.name || 'Шофьор').split(' ')[0]} не е платил наема`, body: `${nm(car)}: дължи ${eur(r.debt)}, просрочено ${r.lateDays} ${r.lateDays === 1 ? 'ден' : 'дни'}.`, url: '/app#/home', tag: `late-${car.id}-${m.userId}-${today}` });

@@ -3,7 +3,7 @@
 import { h, icon, cx, money, fmtDate, fmtNum, fmtDuration, todayStr, addDays, parseDate, toLocalInput, fromLocalInput, startOfMonth } from '../util.js';
 import * as store from '../store.js';
 import { openSheet, sheetHead, toast, field, segmented, confirmSheet, empty, openNumpad } from '../ui.js';
-import { rentState, depositState, carStatus, kmGaps, deadlines, driverScore, whoDrove, parseCarVoice, idleDays, STATUS, RENT_PERIODS, CAR_DOCS, DRIVER_DOCS } from '../fleet.js';
+import { rentState, depositState, carStatus, kmGaps, deadlines, driverScore, whoDrove, parseCarVoice, idleDays, STATUS, RENT_PERIODS, CAR_DOCS, DRIVER_DOCS, dlDays, DL_CHOICES } from '../fleet.js';
 import { costCat } from '../constants.js';
 
 export const carName = (c) => [c.name, c.plate].filter(Boolean).join(' · ') || 'Кола';
@@ -33,14 +33,84 @@ export function carInfo(car, today = todayStr()) {
   return { car, logs, shifts, costs, users, members, rents, status, active, drivingToday, last, idle: idleDays(last, today), gaps, deadlines: deadlines(car, costs, today), pendings: logs.filter((l) => l.kind === 'pay' && l.status !== 'ok') };
 }
 
-export const statusChip = (st, onclick) => h(onclick ? 'button' : 'span', { class: cx('st-chip', 'st-' + st), onclick }, h('i'), STATUS[st].label);
+// Свои статуси на собственика (напр. „На ремонт при майстора“, „Почистване“) – пазят се в профила му
+const ST_COLORS = ['#8B5CF6', '#F59E0B', '#14B8A6', '#EC4899', '#0EA5E9', '#64748B'];
+export const customStatuses = () => store.getProfile().carStatuses || [];
+export const stOf = (st) => STATUS[st] || (() => { const c = customStatuses().find((x) => 'c:' + x.id === st); return c ? { label: c.label, cls: 'custom', ic: 'star', color: c.color } : STATUS.free; })();
+export const statusChip = (st, onclick) => { const o = stOf(st); return h(onclick ? 'button' : 'span', { class: cx('st-chip', 'st-' + (STATUS[st] ? st : 'custom')), onclick }, h('i', { style: o.color ? { background: o.color } : null }), o.label); };
 
-// ---------- Статус на колата ----------
+// ---------- Статус на колата: вградените + свои ----------
 export function statusSheet(car, redraw) {
   const opts = [['', 'Кара се', 'car'], ['free', 'Свободна', 'key'], ['service', 'В сервиз', 'wrench']];
-  openSheet((close) => h('div', null, sheetHead('Статус на колата', close, carName(car)),
-    h('div', { class: 'quick' }, opts.map(([k, l, ic]) => h('button', { class: cx((car.status || '') === k && 'on'), onclick: () => { store.setCarStatus(car.id, k); close(); toast(l); redraw(); } }, h('span', { class: 'q-ic' }, icon(ic, 21)), l)))));
+  openSheet((close) => {
+    const body = h('div');
+    const newStatus = () => {
+      let color = ST_COLORS[customStatuses().length % ST_COLORS.length];
+      const name = h('input', { class: 'input', placeholder: 'напр. На ремонт, Почистване, При мен', maxlength: 24 });
+      const sw = h('div', { class: 'st-colors' });
+      const paint = () => sw.replaceChildren(...ST_COLORS.map((c) => h('button', { class: cx('st-col', c === color && 'on'), style: { background: c }, 'aria-label': 'Цвят', onclick: () => { color = c; paint(); } })));
+      paint();
+      body.replaceChildren(h('div', { class: 'form' }, field('Име на статуса', name), h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Цвят'), sw),
+        h('button', { class: 'btn btn-primary btn-lg', onclick: () => { const l = name.value.trim(); if (!l) return; const id = Math.random().toString(36).slice(2, 8);
+          store.updateProfile({ carStatuses: [...customStatuses(), { id, label: l, color }] }); store.setCarStatus(car.id, 'c:' + id); close(); toast(l); redraw(); } }, icon('check', 18), 'Добави и сложи')));
+      setTimeout(() => name.focus(), 50);
+    };
+    const draw = () => body.replaceChildren(
+      h('div', { class: 'quick' },
+        opts.map(([k, l, ic]) => h('button', { class: cx((car.status || '') === k && 'on'), onclick: () => { store.setCarStatus(car.id, k); close(); toast(l); redraw(); } }, h('span', { class: 'q-ic' }, icon(ic, 21)), l)),
+        customStatuses().map((c) => h('button', { class: cx(car.status === 'c:' + c.id && 'on'), onclick: () => { store.setCarStatus(car.id, 'c:' + c.id); close(); toast(c.label); redraw(); } }, h('span', { class: 'q-ic', style: { color: c.color } }, icon('star', 21)), c.label)),
+        h('button', { class: 'st-add', onclick: newStatus }, h('span', { class: 'q-ic' }, icon('plus', 21)), 'Нов статус')),
+      customStatuses().length > 0 && h('div', { class: 'st-own' }, h('small', { class: 'muted' }, 'Твоите статуси – натисни ×, за да махнеш'),
+        h('div', { class: 'chip-row' }, customStatuses().map((c) => h('span', { class: 'chip' }, h('i', { class: 'dot', style: { background: c.color } }), c.label,
+          h('button', { class: 'x', type: 'button', 'aria-label': 'Махни ' + c.label, onclick: () => { store.updateProfile({ carStatuses: customStatuses().filter((x) => x.id !== c.id) }); draw(); } }, icon('x', 13)))))));
+    draw();
+    return h('div', null, sheetHead('Статус на колата', close, carName(car)), body);
+  });
 }
+
+// ---------- Напомни на всички: наем, обслужване или друго ----------
+export function remindAll(infos, redraw) {
+  const debtors = infos.flatMap((i) => i.rents.filter((x) => x.r.debt > 0).map((x) => ({ i, x })));
+  const all = infos.flatMap((i) => (i.car.members || []).filter((m) => m.userId !== i.car.ownerId).map((m) => ({ car: i.car, m })));
+  const TOPICS = { rent: ['Наем', 'coins'], service: ['Обслужване', 'wrench'], other: ['Друго', 'inbox'] };
+  const pre = { service: 'Колата има обслужване. Свържи се с мен за ден и час.', other: '' };
+  let topic = debtors.length ? 'rent' : 'service';
+  openSheet((close) => {
+    const body = h('div');
+    const text = h('textarea', { class: 'input', rows: 3, placeholder: 'Текст на известието' });
+    const draw = () => {
+      if (topic !== 'rent' && !text.value) text.value = pre[topic] || '';
+      body.replaceChildren(
+        h('div', { class: 'quick' }, Object.entries(TOPICS).map(([k, [l, ic]]) => h('button', { class: cx(topic === k && 'on'), onclick: () => { if (k !== topic) text.value = ''; topic = k; draw(); } }, h('span', { class: 'q-ic' }, icon(ic, 21)), l))),
+        topic === 'rent'
+          ? h('p', { class: 'muted' }, debtors.length ? `До ${debtors.length} ${debtors.length === 1 ? 'шофьор, който дължи' : 'шофьори, които дължат'} – всеки вижда своята сума.` : 'В момента никой не дължи наем.')
+          : h('div', { class: 'form' }, h('p', { class: 'muted' }, `До всички ${all.length} шофьори на колите ти.`), text),
+        h('button', { class: 'btn btn-primary btn-lg btn-block', disabled: topic === 'rent' ? !debtors.length : !all.length, onclick: () => {
+          if (topic === 'rent') { debtors.forEach(({ i, x }) => remind(i.car, [{ userId: x.m.userId, amount: x.r.debt }])); }
+          else {
+            const t = text.value.trim(); if (!t) { toast('Напиши текста', 'err'); return; }
+            all.forEach(({ car, m }) => store.addCarLog({ carId: car.id, kind: 'notice', driverId: m.userId, title: topic === 'other' ? 'Съобщение от собственика' : `Обслужване · ${shortName(car)}`, text: t }));
+            toast(`Изпратено до ${all.length} шофьори`);
+          }
+          close(); redraw(); } }, icon('bell', 18), 'Изпрати'));
+    };
+    draw();
+    return h('div', null, sheetHead('Напомни на всички', close, 'Известие до шофьорите – за наема, обслужване или друго.'), body);
+  });
+}
+
+// ---------- Кога да напомняме за сроковете ----------
+export function dlSheet(redraw) {
+  let days = [...dlDays(store.getProfile())];
+  openSheet((close) => {
+    const box = h('div');
+    const draw = () => box.replaceChildren(h('div', { class: 'chip-row' }, DL_CHOICES.map((d) => h('button', { class: cx('chip-btn', days.includes(d) && 'on'), onclick: () => { days = days.includes(d) ? days.filter((x) => x !== d) : [...days, d]; draw(); } }, d === 1 ? '1 ден' : `${d} дни`))));
+    draw();
+    return h('div', { class: 'form' }, sheetHead('Напомняне за сроковете', close, 'Колко дни преди да изтече ГО, каско, винетка, преглед, лиценз или документ на шофьор. И в самия ден.'), box,
+      h('button', { class: 'btn btn-primary btn-lg', onclick: () => { store.updateProfile({ dlDays: days.length ? days.sort((x, y) => y - x) : [14, 7, 3] }); close(); toast('Запазено'); redraw?.(); } }, icon('check', 18), 'Запази'));
+  });
+}
+export const dlLabel = () => dlDays(store.getProfile()).join(', ') + ' дни';
 
 // ---------- Записи по колата ----------
 const KINDS = {
@@ -199,7 +269,7 @@ export function handoverSheet(car, m, d, redraw) {
 export function docsSheet(car, m, d, redraw) {
   const ins = {};
   openSheet((close) => h('div', { class: 'form' },
-    sheetHead(`Документи · ${d.name || m.name}`, close, 'Със срок на валидност – напомняме 14 и 3 дни преди изтичане.'),
+    sheetHead(`Документи · ${d.name || m.name}`, close, `Със срок на валидност – напомняме ${dlLabel()} преди изтичане.`),
     Object.entries(DRIVER_DOCS).map(([k, l]) => { ins[k] = h('input', { class: 'input', type: 'date', value: m.docs?.[k] || '' }); return field(`${l} – валидно до`, ins[k]); }),
     h('button', { class: 'btn btn-primary btn-lg', onclick: () => { store.setMemberDocs(car.id, m.userId, Object.fromEntries(Object.entries(ins).map(([k, i]) => [k, i.value || null]))); close(); toast('Запазено'); redraw(); } }, icon('check', 18), 'Запази')));
 }
@@ -235,7 +305,7 @@ export function swipeRow(content, actions) {
   const front = h('div', { class: 'sw-front' }, content);
   const wrap = h('div', { class: 'sw' }, acts, front);
   let x0 = 0, y0 = 0, dx = 0, open = false, drag = false, lock = null;
-  const W = () => acts.offsetWidth || actions.length * 82;
+  const W = () => acts.offsetWidth || actions.length * 70;
   const set = (v, anim) => { wrap.classList.toggle('swiping', !!v || drag); front.style.transition = anim ? 'transform .22s ease' : 'none'; front.style.transform = v ? `translateX(${v}px)` : ''; };
   const close = () => { open = false; set(0, true); };
   front.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; dx = 0; drag = true; lock = null; }, { passive: true });
@@ -257,6 +327,8 @@ export function myCarCard(car, user, redraw, { compact } = {}) {
   const r = rentState(m, logs);
   const dep = depositState(user.id, logs);
   const reminder = logs.find((l) => l.kind === 'remind' && l.driverId === user.id && l.at > (r.history[0]?.at || ''));
+  // съобщение от собственика (обслужване и др.) – вижда се 5 дни
+  const notice = logs.filter((l) => l.kind === 'notice' && l.driverId === user.id && (l.at || '') >= addDays(todayStr(), -5)).sort((a, b) => String(b.at).localeCompare(String(a.at)))[0];
   const has = m.rent?.amount > 0;
   if (compact && !has) return null;
   return h('section', { class: cx('card my-car', r.debt > 0 && 'owes') },
@@ -264,6 +336,7 @@ export function myCarCard(car, user, redraw, { compact } = {}) {
       has && (r.debt > 0 ? h('span', { class: 'neg b' }, `дължиш ${money(r.debt, r.debt % 1 ? 2 : 0)}`) : r.advance > 0 ? h('span', { class: 'pos b' }, `аванс ${money(r.advance)}`) : h('span', { class: 'pos b' }, 'платено'))),
     has ? h('p', { class: 'muted small' }, `${money(m.rent.amount)} ${RENT_PERIODS[m.rent.period] || ''}`, r.late ? ` · неплатено от ${fmtDate(r.next.date)} (${dd(r.lateDays)})` : r.next ? ` · следващо: ${fmtDate(r.next.date)}${r.next.amount ? `, ${money(r.next.amount, r.next.amount % 1 ? 2 : 0)}` : ''}` : '') : h('p', { class: 'muted' }, 'Собственикът още не е задал наема.'),
     reminder && r.debt > 0 && h('p', { class: 'remind-line' }, icon('bell', 15), reminder.text),
+    notice && h('p', { class: 'remind-line' }, icon('bell', 15), h('b', null, notice.title + ': '), notice.text),
     r.pendingSum > 0 && h('p', { class: 'muted small' }, `Чака потвърждение от собственика: ${money(r.pendingSum, r.pendingSum % 1 ? 2 : 0)}`),
     has && h('div', { class: 'row gap', style: { marginTop: '10px', flexWrap: 'wrap' } },
       h('button', { class: 'btn btn-primary', onclick: () => paySheet(car, r, redraw) }, icon('check', 16), 'Платих'),
@@ -298,8 +371,8 @@ export function damageSheet(car, redraw) {
 }
 
 // ---------- Дневникът на колата ----------
-const LOG_TXT = { pay: 'Наем', fine: 'Глоба', damage: 'Щета / снимки', deposit: 'Депозит', deduct: 'Удръжка от депозита', refund: 'Върнат депозит', handover: 'Предаване', personal: 'Лично каране', remind: 'Напомняне', km: 'Километраж' };
-const LOG_IC = { pay: 'coins', fine: 'alert', damage: 'camera', deposit: 'lock', deduct: 'minus', refund: 'download', handover: 'road', personal: 'route', remind: 'bell', km: 'gauge' };
+const LOG_TXT = { notice: 'Съобщение', pay: 'Наем', fine: 'Глоба', damage: 'Щета / снимки', deposit: 'Депозит', deduct: 'Удръжка от депозита', refund: 'Върнат депозит', handover: 'Предаване', personal: 'Лично каране', remind: 'Напомняне', km: 'Километраж' };
+const LOG_IC = { notice: 'bell', pay: 'coins', fine: 'alert', damage: 'camera', deposit: 'lock', deduct: 'minus', refund: 'download', handover: 'road', personal: 'route', remind: 'bell', km: 'gauge' };
 export function logRow(l, info, redraw) {
   const who = info.users[l.driverId || l.by]?.name;
   const owner = info.car.ownerId === store.currentUser()?.id;

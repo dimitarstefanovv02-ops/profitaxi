@@ -7,6 +7,7 @@ import * as store from '../store.js';
 import { openSheet, sheetHead, toast, field, cardTitle, segmented, confirmSheet, empty, topSearch } from '../ui.js';
 import { costCat } from '../constants.js';
 import { editCost } from './costs.js';
+import { dlLabel, dlSheet } from './fleetui.js';
 import { carInfo, statusChip, statusSheet, quickAdd, recordSheet, carVoice, driverSheet, remind, rentSheet, handoverSheet, carDocsSheet, myCarCard, damageSheet, logRow, carName, shortName, first, leftText, face, STATUS, RENT_PERIODS } from './fleetui.js';
 import { carProfit, payback } from '../fleet.js';
 export { fleetHomeView } from './fleethome.js';
@@ -168,7 +169,8 @@ function carDetail({ go, data, user, rerender }, id) {
       h('span', { class: 'grow' }, h('b', null, x.title), h('small', { class: x.left <= 3 ? 'neg' : x.left <= 14 ? 'warn' : '' }, `${fmtDate(x.date)} · ${leftText(x.left)}`)),
       x.amount ? h('b', { class: 'num' }, money(x.amount)) : null,
       x.costId && h('button', { class: 'chip page', onclick: () => { store.markCostPaid(x.costId); toast('Платено – следващият падеж е преместен'); redraw(); } }, 'Платено')))
-      : h('p', { class: 'muted' }, info.deadlines.length ? 'Нищо не изтича в следващите 60 дни.' : 'Добави до кога са ГО, каско, винетка, преглед, лиценз и тахограф – напомняме 14 и 3 дни преди това.'));
+      : h('p', { class: 'muted' }, info.deadlines.length ? 'Нищо не изтича в следващите 60 дни.' : `Добави до кога са ГО, каско, винетка, преглед, лиценз и тахограф – напомняме ${dlLabel()} преди това.`),
+    h('button', { class: 'dl-set', type: 'button', onclick: () => dlSheet(redraw) }, icon('bell', 14), `Напомняне ${dlLabel()} преди`, icon('right', 14)));
 
   // Разходите на колата
   const costsCard = (owner || car.type === 'own') && h('section', { class: 'card' },

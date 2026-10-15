@@ -3,6 +3,10 @@
 import { todayStr, addDays, parseDate, dateStr, eachDay, daysInMonth, round2 } from './util.js';
 import { fixedForDay } from './calc.js';
 
+// Напомняне за сроковете: колко дни преди (по подразбиране 14, 7 и 3; собственикът си ги сменя)
+export const DL_DAYS = [14, 7, 3];
+export const DL_CHOICES = [30, 14, 7, 3, 1];
+export const dlDays = (profile) => (Array.isArray(profile?.dlDays) && profile.dlDays.length ? [...profile.dlDays].sort((a, b) => b - a) : DL_DAYS);
 export const RENT_PERIODS = { day: 'на ден', week: 'на седмица', month: 'на месец', once: 'за целия период' };
 export const STATUS = {
   driving: { label: 'Кара се', cls: 'ok', ic: 'car' },
@@ -107,6 +111,7 @@ export function kmGaps(records, startKm = 0) {
 // Статус на колата: в сервиз / свободна са ръчни; иначе – просрочен наем, кара се или стои
 export function carStatus(car, { rents = [], lastShift = null, active = false, today = todayStr() } = {}) {
   if (car.status === 'service') return 'service';
+  if (String(car.status || '').startsWith('c:')) return car.status; // свой статус на собственика
   const drivers = (car.members || []).filter((m) => m.userId !== car.ownerId || car.type === 'own');
   if (car.status === 'free' || !drivers.length) return 'free';
   if (rents.some((r) => r.late)) return 'late';

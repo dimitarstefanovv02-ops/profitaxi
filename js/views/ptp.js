@@ -36,7 +36,7 @@ export function ptpView() {
     h('div', { class: 'page-title' }, h('h1', null, 'При ПТП'), h('div', { class: 'date' }, 'Двустранен протокол от телефона')),
     h('div', { class: 'ptp-hero' },
       h('span', { class: 'ptp-ic' }, icon('doc', 28)),
-      h('p', null, 'При леко ПТП без пострадали попълвате двустранния протокол онлайн с приложението ', h('b', null, 'ДКП'), '. Накрая получавате PDF, който давате на застрахователя.'),
+      h('p', null, 'При леко ПТП без пострадали попълвате двустранния протокол онлайн с безплатното приложение ', h('b', null, 'ДКП'), '. Накрая получавате PDF, който давате на застрахователя.'),
       storeButtons(),
       h('a', { class: 'btn btn-ghost btn-block', href: DKP.site, target: '_blank', rel: 'noopener' }, icon('share', 18), 'Отвори dkp.bg')),
     h('a', { class: 'ptp-112', href: 'tel:112' }, icon('alert', 22), h('span', null, h('b', null, 'Има пострадали или не сте съгласни?'), h('span', null, 'Не попълвай протокол – звънни на 112.')), icon('call', 20)),

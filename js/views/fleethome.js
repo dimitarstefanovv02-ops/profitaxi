@@ -1,10 +1,11 @@
 // „Автопарк“ – началният екран на собственика на коли под наем.
 // Голяма цифра за месеца, заетост на парка, лента „Днес“ (какво да направиш днес), колите със статус
-// (плъзни за Платено / В сервиз / Свободна), „Напомни на всички“, печалба по кола, чакащи шофьори.
+// (плъзни за Платено / В сервиз / Статус – и свои статуси), „Напомни на всички“, печалба по кола, чакащи шофьори.
 import { h, icon, cx, money, fmtDate, fmtNum, fmtDuration, todayStr, addDays, startOfMonth, endOfMonth, parseDate, MONTHS, WEEKDAYS, eachDay } from '../util.js';
 import * as store from '../store.js';
 import { toast, cardTitle, topSearch, openSheet, sheetHead, field, confirmSheet, segmented } from '../ui.js';
-import { carInfo, statusChip, statusSheet, recordSheet, remind, swipeRow, carName, shortName, first, leftText, face, STATUS } from './fleetui.js';
+import { carInfo, statusChip, statusSheet, recordSheet, remind, remindAll, swipeRow, carName, shortName, first, leftText, face, STATUS, stOf } from './fleetui.js';
+import { dlDays } from '../fleet.js';
 import { carProfit } from '../fleet.js';
 import { costCat } from '../constants.js';
 import { verifyBanner } from './auth.js';
@@ -44,7 +45,7 @@ export function fleetHomeView({ go, user, rerender }) {
       else if (r.debt > 0) items.push({ k: `due-${i.car.id}-${m.userId}`, cls: 'warn', ic: 'coins', t: `${first(d.name || m.name)} трябва да плати ${money(r.debt, r.debt % 1 ? 2 : 0)}`, s: `${n} · днес`, acts: [['Платено', () => recordSheet(i, 'pay', { driverId: m.userId }, redraw)]] });
     }
     for (const l of i.pendings) items.push({ k: `pend-${l.id}`, cls: 'good', ic: 'check', t: `${first(i.users[l.driverId]?.name)}: „Платих ${money(l.amount, l.amount % 1 ? 2 : 0)}“`, s: `${n} · ${fmtDate(l.date)}`, acts: [['Потвърди', () => { store.confirmPay(l.id); toast('Потвърдено'); redraw(); }]] });
-    for (const x of i.deadlines.filter((y) => y.left <= 14)) items.push({ k: `dl-${x.key}`, cls: x.left <= 3 ? 'bad' : 'warn', ic: x.kind === 'driver' ? 'user' : x.kind === 'cost' ? 'calendar' : 'shield', t: `${n} – ${x.title}`, s: `${leftText(x.left)} · ${fmtDate(x.date)}${x.amount ? ' · ' + money(x.amount) : ''}`, acts: x.costId ? [['Платено', () => { store.markCostPaid(x.costId); toast('Платено'); redraw(); }]] : [] });
+    for (const x of i.deadlines.filter((y) => y.left <= Math.max(...dlDays(store.getProfile())))) items.push({ k: `dl-${x.key}`, cls: x.left <= 3 ? 'bad' : 'warn', ic: x.kind === 'driver' ? 'user' : x.kind === 'cost' ? 'calendar' : 'shield', t: `${n} – ${x.title}`, s: `${leftText(x.left)} · ${fmtDate(x.date)}${x.amount ? ' · ' + money(x.amount) : ''}`, acts: x.costId ? [['Платено', () => { store.markCostPaid(x.costId); toast('Платено'); redraw(); }]] : [] });
     if (i.status === 'idle') items.push({ k: `idle-${i.car.id}`, cls: 'warn', ic: 'clock', t: `${n} стои ${i.idle >= 99 ? 'без смени' : `${i.idle} дни`}`, s: i.idle >= 3 && wait[0] ? `Може да я дадеш на ${wait[0].name} – чака от ${fmtDate(wait[0].at.slice(0, 10))}` : 'Няма смяна от последните дни', acts: [] });
     if (i.status === 'free' && i.car.status !== 'service') items.push({ k: `free-${i.car.id}`, cls: 'calm', ic: 'key', t: `${n} е свободна`, s: wait[0] ? `Първи чака ${wait[0].name}${wait[0].phone ? ' · ' + wait[0].phone : ''}` : 'Прати линка на нов шофьор', acts: wait[0]?.phone ? [['Обади се', () => { location.href = 'tel:' + wait[0].phone; }]] : [] });
     if (i.gaps.gap > 0) items.push({ k: `gap-${i.car.id}`, cls: 'warn', ic: 'road', t: `${n}: неотчетени ${fmtNum(i.gaps.gap)} км`, s: 'Между края на една смяна и началото на следващата', acts: [] });
@@ -81,7 +82,7 @@ export function fleetHomeView({ go, user, rerender }) {
 
     // Днес
     cars.length > 0 && h('section', { class: 'card today-strip' },
-      cardTitle('bolt', 'Днес', debtors.length > 1 && h('button', { class: 'chip page', onclick: () => { debtors.forEach(({ i, x }) => remind(i.car, [{ userId: x.m.userId, amount: x.r.debt }])); toast(`Изпратени ${debtors.length} напомняния`); redraw(); } }, icon('bell', 14), 'Напомни на всички')),
+      cardTitle('bolt', 'Днес', infos.some((i) => (i.car.members || []).some((m) => m.userId !== i.car.ownerId)) && h('button', { class: 'chip page', onclick: () => remindAll(infos, redraw) }, icon('bell', 14), 'Напомни на всички')),
       items.length ? items.slice(0, 12).map((it) => h('div', { class: cx('td-row', it.cls) },
         h('span', { class: 'td-ic' }, icon(it.ic, 17)),
         h('span', { class: 'grow' }, h('b', null, it.t), h('small', null, it.s)),
@@ -96,17 +97,16 @@ export function fleetHomeView({ go, user, rerender }) {
       const debt = i.rents.reduce((a, x) => a + x.r.debt, 0);
       const km = i.shifts.filter((s) => (s.start || '').slice(0, 10) >= m1).reduce((a, s) => a + Math.max(0, (s.kmEnd || 0) - (s.kmStart || 0)), 0);
       const row = h('a', { class: cx('card car-item', 'st-' + i.status), href: '#/cars/' + i.car.id },
-        h('span', { class: 'ci-ic' }, icon(STATUS[i.status].ic, 20)),
+        h('span', { class: 'ci-ic', style: stOf(i.status).color ? { color: stOf(i.status).color } : null }, icon(stOf(i.status).ic, 20)),
         h('span', { class: 'grow' },
-          h('b', null, carName(i.car)),
-          h('small', null, [drv.length ? drv.join(', ') : 'няма шофьор', `${fmtNum(km)} км този месец`, debt > 0 ? null : null].filter(Boolean).join(' · ')),
-          debt > 0 && h('small', { class: 'neg b' }, `дължат ${money(debt, debt % 1 ? 2 : 0)}`)),
-        statusChip(i.status));
+          h('span', { class: 'ci-top' }, h('b', null, i.car.name || i.car.plate || 'Кола'), statusChip(i.status)),
+          h('small', null, [i.car.name && i.car.plate, drv.length ? drv.join(', ') : 'без шофьор', `${fmtNum(km)} км`, debt > 0 ? null : null].filter(Boolean).join(' · ')),
+          debt > 0 && h('small', { class: 'neg b' }, `дължат ${money(debt, debt % 1 ? 2 : 0)}`)));
       const first0 = i.rents.find((x) => x.r.debt > 0) || i.rents[0];
       return swipeRow(row, [
         first0 && { label: 'Платено', ic: 'coins', cls: 'ok', run: () => recordSheet(i, 'pay', { driverId: first0.m.userId }, redraw) },
         { label: i.car.status === 'service' ? 'Кара се' : 'В сервиз', ic: 'wrench', cls: 'warn', run: () => { store.setCarStatus(i.car.id, i.car.status === 'service' ? '' : 'service'); toast(i.car.status === 'service' ? 'Колата се кара' : 'В сервиз'); redraw(); } },
-        { label: i.car.status === 'free' ? 'Кара се' : 'Свободна', ic: 'key', cls: 'calm', run: () => { store.setCarStatus(i.car.id, i.car.status === 'free' ? '' : 'free'); toast(i.car.status === 'free' ? 'Колата се кара' : 'Свободна'); redraw(); } },
+        { label: 'Статус', ic: 'more', cls: 'calm', run: () => statusSheet(i.car, redraw) },
       ].filter(Boolean));
     })),
     h('button', { class: 'btn btn-primary btn-block', style: { marginTop: '12px' }, onclick: () => go('/cars?new=1') }, icon('plus', 18), 'Добави кола'),

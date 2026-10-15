@@ -1670,3 +1670,26 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .cover6 .c6-call { background: #DDF3E0; color: #146C2E; }
 :root[data-theme="dark"] .cover6 .c6-call { background: #1F3A24; color: #8FD18E; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="sun"]) .cover6 .c6-call { background: #1F3A24; color: #8FD18E; } }
+
+/* Автопарк: свои статуси, по-компактно плъзгане, напомняне за сроковете */
+.st-chip.st-custom { background: var(--surface-2); }
+.st-own { margin-top: 14px; display: grid; gap: 8px; }
+.st-own .chip { display: inline-flex; align-items: center; gap: 6px; }
+.st-own .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.st-own .x { border: 0; background: none; padding: 0 0 0 2px; color: var(--muted); display: grid; place-items: center; cursor: pointer; }
+.st-colors { display: flex; gap: 10px; flex-wrap: wrap; }
+.st-col { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
+.st-col.on { border-color: var(--text); }
+.quick .st-add { border-style: dashed !important; }
+.sw-acts { padding: 6px 6px 6px 0; gap: 6px; }
+.sw-a { width: 64px; border-radius: 14px; font-size: .7rem; gap: 3px; }
+.sw-a.ok { background: #22A355; } .sw-a.warn { background: #3B6FE0; } .sw-a.calm { background: #6B7280; }
+.sw-a .ic { width: 17px; height: 17px; }
+.fleet-cars .car-item { padding-top: 12px; padding-bottom: 12px; }
+.fleet-cars .car-item b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fleet-cars .car-item .st-chip { padding: 4px 9px; font-size: .74rem; }
+.dl-set { margin-top: 10px; display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 4px 0; color: var(--muted); font: 600 .84rem/1.2 var(--font); cursor: pointer; }
+.fleet-cars .car-item .grow { min-width: 0; }
+.fleet-cars .ci-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.fleet-cars .ci-top b { min-width: 0; }
+.fleet-cars .car-item .grow > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
