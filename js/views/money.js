@@ -44,17 +44,15 @@ export function moneyView({ go, data, rerender }) {
 
     zone('drv.money', { class: 'dz' }, [
     // Месецът накратко: голямото число и двете суми под него
-    ['sum', h('div', { class: 'ms-stack' }, h('section', { class: 'card month-sum' },
-      h('div', { class: 'ms-total' }, h('span', null, isNow ? 'Чисто този месец' : `Чисто за ${monthName(cur).toLowerCase()}`), h('b', { class: net < 0 ? 'neg' : '' }, money(net))),
-      h('div', { class: 'ms-cells' },
-        h('div', { class: 'ms-row' }, h('span', null, 'Изкарах'), h('b', null, money(st.income))),
-        h('div', { class: 'ms-row' }, h('span', null, 'Разходи'), h('b', null, `−${money(spent)}`))),
-      h('p', { class: 'muted small' }, isNow
-        ? `Наемът и другите постоянни плащания се смятат ден по ден – дотук ${money(st.fixedExp)}. Очаквано за целия месец: ${money(g.forecast)}.`
-        : `Постоянните плащания за месеца: ${money(st.fixedExp)}. ${st.shifts} ${st.shifts === 1 ? 'смяна' : 'смени'}.`)),
+    // Месецът накратко – малко поле (голямото число е само на „Днес“)
+    ['sum', h('div', { class: 'ms-stack mini' }, h('section', { class: 'ms-mini' },
+      h('div', { class: 'ms-c main' }, h('span', null, isNow ? 'Чисто' : 'Чисто'), h('b', { class: net < 0 ? 'neg' : '' }, money(net))),
+      h('div', { class: 'ms-c' }, h('span', null, 'Изкарах'), h('b', null, money(st.income))),
+      h('div', { class: 'ms-c' }, h('span', null, 'Разходи'), h('b', null, `−${money(spent)}`))),
       h('div', { class: 'ms-chips' },
+        isNow && h('span', { class: 'chip' }, `Очаквано: ${money(g.forecast)}`),
         fuelLine(st),
-        isNow && h('button', { class: 'chip ms-share', type: 'button', onclick: () => shareMonth({ net: g.net, income: st.income, shifts: st.shifts, hours: st.hours, name: '' }) }, icon('share', 16), 'Сподели месеца като картинка')))],
+        isNow && h('button', { class: 'chip ms-share', type: 'button', 'aria-label': 'Сподели месеца като картинка', onclick: () => shareMonth({ net: g.net, income: st.income, shifts: st.shifts, hours: st.hours, name: '' }) }, icon('share', 15), 'Сподели')))],
 
     st.shifts > 0 && pts.length > 1 && ['chart', h('section', { class: 'card chart-card' }, cardTitle('chart', 'Чисто по дни'), barChart(pts, { height: 130, highlight: today }))],
 

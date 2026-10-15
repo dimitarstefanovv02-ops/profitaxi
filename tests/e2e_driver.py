@@ -127,7 +127,7 @@ async def main():
         await pg.click('.sheet >> text=Запази'); await pg.wait_for_timeout(500)
         body = await T('#app').inner_text()
         ok('Нов разход с падеж след 2 дни е в „Предстоящи плащания“', 'Разрешително' in body)
-        await pg.click('.rem-actions .btn >> nth=0'); await pg.wait_for_timeout(500)
+        await pg.click('.rem-paid >> nth=0'); await pg.wait_for_timeout(500)
         ok('„Платено“ мести падежа с година', 'Следващо плащане' in await T('#toast').inner_text(), await T('#toast').inner_text())
         # --- Напомняне по км ---
         await pg.click('text=Напомняне'); await pg.wait_for_timeout(300)

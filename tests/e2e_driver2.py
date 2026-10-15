@@ -75,7 +75,7 @@ async def main():
         # пари: гориво на 100 км и споделяне
         await pg.goto(B+'#/money'); await pg.wait_for_timeout(500)
         ok('Пари: разход на гориво на 100 км и на км се вижда', '/100 км' in await pg.inner_text('.fuel-line') and 'на км' in await pg.inner_text('.fuel-line'))
-        ok('Пари: „Сподели месеца като картинка“', await pg.locator('text=Сподели месеца като картинка').count()==1)
+        ok('Пари: „Сподели месеца като картинка“', await pg.locator('[aria-label="Сподели месеца като картинка"]').count()==1)
         # графика: натисни колона
         await pg.click('.bars-hit button >> nth=2'); await pg.wait_for_timeout(200)
         ok('Натиснатата колона показва сумата', '€' in await pg.inner_text('.chart-tip'))

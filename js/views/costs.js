@@ -107,7 +107,6 @@ function remRow(r, data, km) {
   const big = r.daysLeft != null ? (r.daysLeft < 0 ? '!' : r.daysLeft === 0 ? 'днес' : r.daysLeft) : r.kmLeft < 0 ? '!' : `${Math.round(r.kmLeft / 100) / 10}к`;
   const small = r.daysLeft != null ? (r.daysLeft < 0 ? 'изтекло' : r.daysLeft === 0 ? '' : r.daysLeft === 1 ? 'ден' : 'дни') : r.kmLeft < 0 ? 'просрочено' : 'км';
   const cost = r.kind === 'cost' ? r.ref : null;
-  const last = cost?.payments?.length ? cost.payments[cost.payments.length - 1] : null;
   const paid = () => {
     if (cost) { const c = store.markCostPaid(cost.id); toast(c?.dueDate ? `Платено. Следващо плащане: ${fmtDate(c.dueDate, { year: true })}` : 'Отбелязано като платено'); }
     else { store.markReminderDone(r.ref.id, km); toast('Отбелязано като готово'); }
@@ -117,11 +116,9 @@ function remRow(r, data, km) {
       h('div', { class: cx('rem-days', bad ? 'bad' : days != null && days <= 3 ? 'bad' : days != null && days <= 14 ? 'warn' : '') }, h('b', null, big), small && h('span', null, small)),
       h('div', { class: 'grow' },
         h('div', { style: { fontWeight: 700 } }, r.title),
-        h('div', { class: 'muted small' }, reminderText(r)),
-        cost && h('div', { class: 'faint small' }, `${PERIODS[cost.period]?.every || ''}${last ? `, последно платено ${fmtDate(last.date)}` : ''}`)),
-      h('button', { class: 'icon-btn plain', 'aria-label': 'Редактирай', onclick: () => (cost ? editCost(cost, data) : editReminder(r.ref, km)) }, icon('edit', 18))),
-    ((days != null && days <= 14) || bad) && h('div', { class: 'rem-actions' },
-      h('button', { class: 'btn btn-ok btn-sm', onclick: paid }, icon('check', 16), cost ? 'Платено' : 'Готово')));
+        h('div', { class: 'muted small' }, [reminderText(r), cost && PERIODS[cost.period]?.every].filter(Boolean).join(' · '))),
+      ((days != null && days <= 14) || bad) && h('button', { class: 'rem-paid', onclick: paid, 'aria-label': cost ? 'Платено' : 'Готово', title: cost ? 'Платено' : 'Готово' }, icon('check', 18)),
+      h('button', { class: 'icon-btn plain', 'aria-label': 'Редактирай', onclick: () => (cost ? editCost(cost, data) : editReminder(r.ref, km)) }, icon('edit', 18))));
 }
 
 export function editCost(c, data) {

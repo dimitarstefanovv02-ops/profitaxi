@@ -1693,3 +1693,79 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .fleet-cars .ci-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
 .fleet-cars .ci-top b { min-width: 0; }
 .fleet-cars .car-item .grow > small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+/* ===================== Плътност: по-малко скролване в шофьорското приложение =====================
+   Корицата в Профил (.cover6) не се пипа. */
+:root[data-skin] .screen:not([data-page="admin"]) { --gap-s: 8px; }
+/* заглавия на страниците */
+:root[data-skin] .screen .page-title { margin-bottom: 8px !important; }
+:root[data-skin] .screen .page-title h1 { font-size: 1.55rem !important; line-height: 1.15 !important; }
+:root[data-skin] .screen .page-title .date { font-size: .82rem !important; margin-top: 1px !important; }
+:root[data-skin] .screen .section-title { margin: 14px 4px 6px !important; font-size: .82rem !important; }
+:root[data-skin] .screen .me-group .section-title { margin-top: 12px !important; }
+/* карти */
+:root[data-skin] .screen .card { padding: 13px 14px !important; margin-bottom: 8px !important; }
+:root[data-skin] .screen .card-title { margin-bottom: 8px !important; }
+:root[data-skin] .screen > .dz > * + *, :root[data-skin] .screen .dz > * + * { margin-top: 8px; }
+/* менюта (Пари, Профил): ред с иконка, заглавие и един ред пояснение */
+:root[data-skin] .screen .big-links { gap: 0 !important; }
+:root[data-skin] .screen .big-link { padding: 9px 12px !important; gap: 12px !important; min-height: 0 !important; }
+:root[data-skin] .screen .big-link .bl-ic { width: 26px !important; height: 26px !important; }
+:root[data-skin] .screen .big-link .grow { min-width: 0; }
+:root[data-skin] .screen .big-link b { font-size: .97rem !important; }
+:root[data-skin] .screen .big-link .grow > span { display: block; font-size: .8rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Днес: плочките Календар / Резервации – един ред */
+:root[data-skin] .screen .home-links { gap: 8px !important; margin-top: 8px !important; }
+:root[data-skin] .screen .home-link { flex-direction: row !important; align-items: center !important; gap: 10px !important; padding: 10px 26px 10px 12px !important; border-radius: 16px !important; }
+/* списъци в карти */
+:root[data-skin] .screen .list-btn { padding-top: 10px !important; padding-bottom: 10px !important; min-height: 0 !important; }
+:root[data-skin] .screen .info-row { padding-top: 8px !important; padding-bottom: 8px !important; }
+/* Пари: месецът в малко поле */
+.ms-stack.mini { display: grid; gap: 8px; }
+.ms-mini { display: grid; grid-template-columns: 1.15fr 1fr 1fr; border-radius: 16px; overflow: hidden; background: var(--ch-low, var(--surface-2)); }
+.ms-mini .ms-c { display: grid; gap: 1px; padding: 10px 12px; min-width: 0; }
+.ms-mini .ms-c + .ms-c { border-left: 1px solid var(--ch-outline-v, var(--line)); }
+.ms-mini .ms-c span { font-size: .74rem; color: var(--ch-on-v, var(--muted)); }
+.ms-mini .ms-c b { font-size: 1.05rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ms-mini .ms-c.main b { font-size: 1.15rem; }
+.ms-stack.mini .ms-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.ms-stack.mini .ms-chips .chip { margin: 0; }
+/* Статистика, Смени, Разходи, Календар: голямото тъмно поле → малко светло поле (голямото е само на „Днес“) */
+:root[data-skin] .screen .hero-wrap .hero, :root[data-skin] .screen > .hero:not(.page-title) { background: var(--ch-low, var(--surface-2)) !important; color: var(--ch-on, var(--text)) !important; padding: 10px 14px !important; border-radius: 16px !important; min-height: 0 !important; }
+:root[data-skin] .screen .hero .hero-num { font-size: 1.65rem !important; line-height: 1.1 !important; color: var(--ch-on, var(--text)) !important; margin: 0 !important; }
+:root[data-skin] .screen .hero .hero-label, :root[data-skin] .screen .hero .hero-sub, :root[data-skin] .screen .hero .hero-line { font-size: .78rem !important; color: var(--ch-on-v, var(--muted)) !important; margin: 0 !important; opacity: 1 !important; }
+:root[data-skin] .screen .hero .hero-chips { margin-top: 6px !important; gap: 6px !important; }
+:root[data-skin] .screen .hero .hero-chip { background: var(--ch-c, var(--surface-3)) !important; color: var(--ch-on, var(--text)) !important; font-size: .74rem !important; padding: 3px 8px !important; }
+/* Статистика: четирите числа – в един ред */
+:root[data-skin] .screen .st-sum { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 6px !important; margin: 8px 0 !important; }
+:root[data-skin] .screen .st-tile { padding: 8px 8px !important; border-radius: 12px !important; gap: 0 !important; }
+:root[data-skin] .screen .st-tile .st-l { font-size: .68rem !important; }
+:root[data-skin] .screen .st-tile .st-v { font-size: .95rem !important; white-space: nowrap; }
+:root[data-skin] .screen .st-tile small { display: none !important; }
+:root[data-skin] .screen .st-fold > summary { min-height: 48px !important; padding: 10px 14px !important; }
+/* Разходи: „Платено“ на реда, по-ниски редове */
+:root[data-skin] .screen .rem { padding-top: 8px !important; padding-bottom: 8px !important; }
+:root[data-skin] .screen .rem-main { gap: 10px !important; align-items: center !important; }
+:root[data-skin] .screen .rem-days { width: 44px !important; height: 44px !important; min-width: 44px !important; }
+:root[data-skin] .screen .rem-days b { font-size: 1rem !important; }
+:root[data-skin] .screen .rem-paid { flex: none; height: 32px !important; padding: 0 10px !important; font-size: .8rem !important; }
+:root[data-skin] .screen .cost-row { padding-top: 9px !important; padding-bottom: 9px !important; gap: 10px !important; }
+:root[data-skin] .screen .cost-det { gap: 4px 6px !important; }
+/* Статистика: сгъваемите редове и „Кога се печели“ */
+:root[data-skin] .screen .st-fold { margin: 0 0 6px !important; }
+:root[data-skin] .screen .st-fold .st-fic { width: 30px !important; height: 30px !important; }
+:root[data-skin] .screen .st-fold > summary { min-height: 44px !important; font-size: .95rem !important; }
+/* Смени: по-ниски редове */
+:root[data-skin] .screen .shift-row { padding-top: 7px !important; padding-bottom: 7px !important; }
+/* Настройки на колата: по-ниски плочки за вид кола и гориво */
+:root[data-skin] .screen .option-grid { gap: 6px !important; }
+:root[data-skin] .screen .option-grid > button, :root[data-skin] .screen .option-grid > .option { padding: 8px 6px !important; min-height: 0 !important; gap: 2px !important; }
+:root[data-skin] .screen .option-grid small, :root[data-skin] .screen .option-grid .opt-sub { display: none !important; }
+:root[data-skin] .screen .rem-paid { flex: none; width: 38px !important; height: 38px !important; padding: 0 !important; border-radius: 50% !important; border: 0; display: grid; place-items: center; background: #DDF3E0 !important; color: #146C2E !important; cursor: pointer; }
+:root[data-theme="dark"] .screen .rem-paid { background: #1F3A24 !important; color: #8FD18E !important; }
+/* Смяната: по-ниски редове с данни, приходи и разходи */
+:root[data-skin] .screen .f-row { padding-top: 6px !important; padding-bottom: 6px !important; min-height: 0 !important; }
+:root[data-skin] .screen .f-row .grow small { font-size: .74rem !important; }
+:root[data-skin] [data-page="shift"] .card { padding-top: 10px !important; padding-bottom: 10px !important; }
+:root[data-skin] .screen .home-link .grow, :root[data-skin] .screen .home-link > span:not(.hl-ic) { min-width: 0; }
+:root[data-skin] .screen .home-link small, :root[data-skin] .screen .home-link span span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
