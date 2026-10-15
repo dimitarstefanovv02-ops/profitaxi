@@ -170,12 +170,14 @@ export function profileCover(user, d) {
         user.company && h('div', { class: 'c6-firm' },
           h('button', { class: cx('c6-logo', !logo && 'none'), type: 'button', 'aria-label': 'Логото на фирмата', onclick: () => logoSheet(user, logo, pending) },
             logo ? h('img', { src: logo, alt: firm }) : h('span', null, initialsOf(firm))),
-          h('div', { class: 'c6-firm-t' }, h('b', null, firm, user.city && h('span', { class: 'c6-city' }, ' · ' + user.city)), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, icon('call', 13), firmPhone))),
+          h('div', { class: 'c6-firm-t' }, h('b', null, firm), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, icon('call', 13), firmPhone)),
+          user.city && h('div', { class: 'c6-town' }, h('small', null, 'град'), h('b', null, user.city))),
+        h('div', { class: 'c6-cut', 'aria-hidden': 'true' }),
         h('a', { class: 'c6-facts', href: '#/car' },
-          h('span', null, h('small', null, 'Код'), h('b', null, car.code || '—')),
-          h('span', null, h('small', null, 'Номер'), h('b', null, car.plate ? plateFmt(car.plate) : '—')),
-          h('span', { class: 'wide' }, h('small', null, 'Колата'), h('b', null, carName || 'Добави'))))));
-  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-facts b').forEach(fit), 0);
+          h('span', null, h('small', null, icon('key', 13), 'Код'), h('b', null, car.code || '—')),
+          h('span', null, h('small', null, icon('doc', 13), 'Номер'), h('b', null, car.plate ? plateFmt(car.plate) : '—')),
+          h('span', { class: 'wide' }, h('small', null, icon('car', 13), 'Колата', car.year && h('em', null, car.year)), h('b', null, car.model || 'Добави'))))));
+  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-town > b, .c6-facts b').forEach(fit), 0);
   return sec;
 }
 
