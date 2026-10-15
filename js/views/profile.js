@@ -174,10 +174,10 @@ export function profileCover(user, d) {
           user.city && h('div', { class: 'c6-town' }, h('small', null, 'град'), h('b', null, user.city))),
         h('div', { class: 'c6-cut', 'aria-hidden': 'true' }),
         h('a', { class: 'c6-facts', href: '#/car' },
-          h('span', null, h('small', null, icon('key', 13), 'Код'), h('b', null, car.code || '—')),
-          h('span', null, h('small', null, icon('doc', 13), 'Номер'), h('b', null, car.plate ? plateFmt(car.plate) : '—')),
-          h('span', { class: 'wide' }, h('small', null, icon('car', 13), 'Колата', car.year && h('em', null, car.year)), h('b', null, car.model || 'Добави'))))));
-  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-town > b, .c6-facts b').forEach(fit), 0);
+          h('span', { class: 'c6-chip' }, h('small', null, 'Код'), h('b', null, car.code || '—')),
+          h('span', { class: 'c6-chip' }, h('small', null, 'Номер'), h('b', null, car.plate ? plateFmt(car.plate) : '—')),
+          h('span', { class: 'c6-chip car' }, icon('car', 15), h('b', null, car.model || 'Добави колата'), car.year && h('small', null, car.year))))));
+  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-town > b').forEach(fit), 0);
   return sec;
 }
 
