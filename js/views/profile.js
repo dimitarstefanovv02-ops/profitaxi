@@ -172,12 +172,11 @@ export function profileCover(user, d) {
             logo ? h('img', { src: logo, alt: firm }) : h('span', null, initialsOf(firm))),
           h('div', { class: 'c6-firm-t' }, h('b', null, firm), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, icon('call', 13), firmPhone)),
           user.city && h('div', { class: 'c6-town' }, h('small', null, 'град'), h('b', null, user.city))),
-        h('div', { class: 'c6-cut', 'aria-hidden': 'true' }),
         h('a', { class: 'c6-facts', href: '#/car' },
           h('span', { class: 'c6-chip' }, h('small', null, 'Код'), h('b', null, car.code || '—')),
           h('span', { class: 'c6-chip' }, h('small', null, 'Номер'), h('b', null, car.plate ? plateFmt(car.plate) : '—')),
           h('span', { class: 'c6-chip car' }, icon('car', 15), h('b', null, car.model || 'Добави колата'), car.year && h('small', null, car.year))))));
-  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-town > b').forEach(fit), 0);
+  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-town > b, .c6-chip b').forEach(fit), 0);
   return sec;
 }
 

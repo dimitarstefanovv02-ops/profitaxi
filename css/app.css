@@ -1636,21 +1636,20 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .c6-facts b.wrap { white-space: normal; line-height: 1.2; }
 .c6-city { font-weight: 500; color: var(--ch-on-v, var(--muted)); }
 .c6-name + .c6-scheme { margin-top: 10px; }
-/* Картата под името: горе фирмата и градът (едро), тънка перфорация, долу код · номер · колата като компактни хапчета */
-.cover6 .c6-scheme { display: block !important; position: relative; margin-top: 10px; border-radius: 20px; overflow: visible; background: var(--ch-low, var(--surface-2)); }
-.cover6 .c6-firm { display: flex !important; align-items: center; gap: 10px; padding: 12px 14px 8px; background: none; }
-.cover6 .c6-firm-t { flex: 0 1 auto; min-width: 0; }
-.cover6 .c6-town { display: flex !important; flex: 1 1 auto; min-width: 0; flex-direction: column; align-items: flex-end; text-align: right; line-height: 1; }
-.cover6 .c6-town small { display: block; font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ch-on-v, var(--muted)); margin-bottom: 2px; }
-.cover6 .c6-town b { display: block; max-width: 100%; font-size: 1.6rem; font-weight: 800; letter-spacing: -.03em; white-space: nowrap; overflow: hidden; color: var(--ch-on, var(--text)); }
-.cover6 .c6-cut { position: relative; display: block; height: 10px; margin: 0 14px; background: radial-gradient(circle, var(--ch-outline, var(--line)) 1.1px, transparent 1.5px) 0 50% / 8px 4px repeat-x; }
-.cover6 .c6-cut::before, .cover6 .c6-cut::after { content: ''; position: absolute; top: -3px; width: 16px; height: 16px; border-radius: 50%; background: var(--ch-bg, var(--bg)); }
-.cover6 .c6-cut::before { left: -22px; } .cover6 .c6-cut::after { right: -22px; }
-.cover6 .c6-facts { display: flex !important; flex-wrap: wrap; gap: 6px; padding: 6px 12px 12px; border: 0; color: var(--ch-on, var(--text)); text-decoration: none; }
-.cover6 .c6-chip { display: inline-flex !important; align-items: baseline; gap: 6px; padding: 7px 10px; border-radius: 10px; border: 0 !important; background: var(--ch-c, var(--surface-3)); min-width: 0; max-width: 100%; }
-.cover6 .c6-chip small { display: inline; font-size: .72rem; font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ch-on-v, var(--muted)); }
-.cover6 .c6-chip b { font-size: .95rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cover6 .c6-chip.car { align-items: center; }
-.cover6 .c6-chip .ic { flex: none; align-self: center; } .cover6 .c6-chip .ic-fill { display: none; }
-.cover6 .c6-chip { flex: 1 1 auto; }
-.cover6 .c6-chip.car { flex-basis: 100%; }
+/* Картата под името – изчистена: горе фирмата и градът, тънка линия, долу код · номер и колата. Едри букви, без рамки и кутийки. */
+.cover6 .c6-scheme { display: block !important; margin-top: 10px; border-radius: 20px; overflow: hidden; background: var(--ch-low, var(--surface-2)); }
+.cover6 .c6-firm { display: flex !important; align-items: center; gap: 12px; padding: 14px 16px; background: none; border-radius: 0; }
+.cover6 .c6-logo { width: 46px; height: 46px; border-radius: 12px; }
+.cover6 .c6-firm-t { flex: 0 1 auto; min-width: 0; gap: 2px; }
+.cover6 .c6-firm-t b { font-size: 1.15rem; }
+.cover6 .c6-firm-t a { font-size: .95rem; }
+.cover6 .c6-town { display: block !important; flex: 1 1 auto; min-width: 0; text-align: right; line-height: 1; }
+.cover6 .c6-town small { display: none; }
+.cover6 .c6-town b { display: block; font-size: 2rem; font-weight: 800; letter-spacing: -.035em; white-space: nowrap; overflow: hidden; color: var(--ch-on, var(--text)); }
+.cover6 .c6-facts { display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: 10px 20px; padding: 14px 16px 16px; border-top: 1px solid var(--ch-outline-v, var(--line)); color: var(--ch-on, var(--text)); text-decoration: none; }
+.cover6 .c6-chip { display: flex !important; align-items: baseline; gap: 8px; padding: 0; border: 0 !important; background: none; min-width: 0; }
+.cover6 .c6-chip.car { grid-column: 1 / -1; align-items: center; }
+.cover6 .c6-chip small { font-size: .8rem; font-weight: 600; color: var(--ch-on-v, var(--muted)); text-transform: none; letter-spacing: 0; }
+.cover6 .c6-chip b { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; }
+.cover6 .c6-chip.car b { font-size: 1.3rem; }
+.cover6 .c6-chip .ic { flex: none; width: 20px; height: 20px; color: var(--ch-on-v, var(--muted)); } .cover6 .c6-chip .ic-fill { display: none; }
