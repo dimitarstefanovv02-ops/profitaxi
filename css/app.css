@@ -1568,24 +1568,29 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .ptp-steps span { color: var(--muted); font-size: .94rem; line-height: 1.4; }
 .ptp-note { margin: 16px 4px 0; }
 
-/* ---------- Профил: компактна корица (снимка на колата + профилна снимка и текст върху нея) ---------- */
+/* ---------- Профил: корица като във Facebook – всичко е върху снимката на колата ---------- */
 .cover5 { margin: 0 0 8px; }
-.c5-photo { position: relative; height: 176px; border-radius: 24px; overflow: hidden; background: #231F20; }
-.c5-photo > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-.c5-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 30%, rgba(0,0,0,.72) 100%); pointer-events: none; }
-.c5-photo.empty { background: linear-gradient(135deg, #3A3536, #231F20); }
-.c5-photo.empty::after { display: none; }
-.c5-cam { position: absolute; z-index: 2; right: 10px; top: 10px; height: 36px; min-width: 36px; padding: 0 9px; border-radius: 18px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+.c5-photo { position: relative; min-height: 330px; border-radius: 24px; overflow: hidden; background: #231F20; display: flex; flex-direction: column; justify-content: flex-end; }
+.c5-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.c5-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0) 22%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.86) 100%); pointer-events: none; }
+.c5-photo.empty { background: linear-gradient(160deg, #3A3536, #1A1718); }
+.c5-cam { position: absolute; z-index: 2; right: 12px; top: 12px; height: 38px; min-width: 38px; padding: 0 10px; border-radius: 19px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   background: rgba(20,19,19,.5); color: #fff; border: 1px solid rgba(255,255,255,.3); font: 600 .82rem/1 var(--font); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
-.c5-info { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 12px; display: flex; align-items: center; gap: 12px; color: #fff; }
-.c5-ava { flex: none; width: 60px; height: 60px; padding: 0; border-radius: 18px; overflow: hidden; border: 2px solid #fff; background: #BFF0BE; color: #0F3A18; font: 800 1.2rem/1 var(--font); display: grid; place-items: center; box-shadow: 0 6px 16px -6px rgba(0,0,0,.6); }
-.c5-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.c5-txt { min-width: 0; display: grid; gap: 1px; text-shadow: 0 1px 3px rgba(0,0,0,.5); }
-.c5-txt b { font-size: 1.12rem; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; }
-.c5-txt span { font-size: .84rem; opacity: .9; white-space: nowrap; overflow: hidden; }
-.c5-txt .wrap { white-space: normal; }
-.c5-txt .c5-car { font-weight: 600; opacity: 1; }
-.c5-edit { margin-top: 8px; width: 100%; height: 48px; border-radius: 16px; border: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font: 600 .98rem/1 var(--font);
-  background: var(--ch-low, var(--surface-2)); color: var(--ch-on, var(--text)); cursor: pointer; }
+.c5-info { position: relative; z-index: 1; padding: 0 16px 16px; color: #fff; display: grid; gap: 12px; }
+.c5-ava { position: relative; width: 96px; height: 96px; padding: 0; border-radius: 50%; border: 3px solid #fff; background: #BFF0BE; color: #0F3A18; font: 800 1.7rem/1 var(--font);
+  display: grid; place-items: center; box-shadow: 0 8px 22px -8px rgba(0,0,0,.7); }
+.c5-ava > img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 50%; }
+.c5-ava > i { position: absolute; right: -2px; bottom: 2px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: #E9E4E4; color: #141313; border: 2px solid #231F20; font-style: normal; }
+.c5-txt { min-width: 0; display: grid; gap: 4px; text-shadow: 0 1px 4px rgba(0,0,0,.55); }
+.c5-txt > b { font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; white-space: nowrap; overflow: hidden; }
+.c5-line { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: .92rem; color: rgba(255,255,255,.88); }
+.c5-line > .ic { flex: none; opacity: .9; }
+.c5-line > span { min-width: 0; white-space: nowrap; overflow: hidden; }
+.c5-line > span.wrap { white-space: normal; }
+.c5-car { color: #fff; font-weight: 600; }
+.c5-edit { width: 100%; height: 46px; border-radius: 14px; border: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font: 700 .98rem/1 var(--font);
+  background: rgba(255,255,255,.92); color: #141313; cursor: pointer; }
+.c5-edit:active { background: #fff; }
 .talon-btn { margin-bottom: 12px; }
 .grid-mm { grid-template-columns: minmax(0, 1fr) 96px !important; }
+.c5-line .ic-fill { display: none; }

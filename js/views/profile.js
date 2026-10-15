@@ -161,19 +161,21 @@ export function profileCover(user, d) {
   });
   // всеки ред се събира на един ред: ако е дълъг, буквите леко се смаляват (без „…“); ако пак не стига – пренася се
   const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth + 1 && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap'); });
+  // Като профил във Facebook: снимката на колата е корица, върху нея – кръглата профилна снимка, името, редовете и „Промени данните“
   const sec = h('section', { class: 'cover5' },
     h('div', { class: cx('c5-photo', !d.carPhoto && 'empty') },
-      d.carPhoto && h('img', { src: d.carPhoto, alt: 'Колата' }),
+      d.carPhoto && h('img', { class: 'c5-bg', src: d.carPhoto, alt: 'Колата' }),
       h('button', { class: 'c5-cam', type: 'button', 'aria-label': d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', onclick: () => photo('carPhoto') }, icon('camera', 18), !d.carPhoto && h('span', null, 'Снимка на колата')),
       h('div', { class: 'c5-info' },
         h('button', { class: 'c5-ava', type: 'button', 'aria-label': 'Смени профилната снимка', onclick: () => photo('photo') },
-          d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials)),
+          d.photo ? h('img', { src: d.photo, alt: '' }) : h('span', null, initials),
+          h('i', null, icon('camera', 14))),
         h('div', { class: 'c5-txt' },
           h('b', null, user.name),
-          who && h('span', null, who),
-          h('span', { class: 'c5-car' }, carLine || 'Добави кода, номера и модела на колата')))),
-    h('button', { class: 'c5-edit', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'));
-  setTimeout(() => sec.querySelectorAll('.c5-txt > *').forEach(fit), 0);
+          who && h('span', { class: 'c5-line' }, icon('pin', 15), h('span', null, who)),
+          h('span', { class: 'c5-line c5-car' }, icon('car', 15), h('span', null, carLine || 'Добави кода, номера и модела на колата'))),
+        h('button', { class: 'c5-edit', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'))));
+  setTimeout(() => sec.querySelectorAll('.c5-txt > b, .c5-line > span').forEach(fit), 0);
   return sec;
 }
 
