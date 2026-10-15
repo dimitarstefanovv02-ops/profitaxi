@@ -32,12 +32,13 @@ export function meView({ go, user, data }) {
     !fleet && profileCover(user, data.profile),
     zone('drv.me', { class: 'dz' }, [
     group('acc', 'Акаунт',
-      row('profile', 'user', 'Лични данни', fleet ? 'Име, телефон, снимки, известия, изглед, парола, изход' : 'Известия, изглед, парола, Face ID, изход', null, '#/profile'),
+      row('profile', 'user', 'Лични данни', 'Име, телефон, снимки, известия, изглед, парола, изход', null, '#/profile'),
       row('kind', fleet ? 'key' : 'car', 'Вид акаунт', `${fleet ? 'Собственик на коли' : 'Шофьор'} · избира се при регистрация. За смяна – пиши ни`, null, '#/help')),
     !fleet && group('car', 'Колата',
       data.profile.carType !== 'rent' && row('vehicle', 'tool', 'Колата ми', carSub(data), null, '#/vehicle'),
       (() => { const sh = (data.cars || []).find((c) => c.ownerId === user.id && c.type === 'own'); const n = sh ? (sh.members || []).filter((m) => m.userId !== user.id).length : 0;
         return row('share', 'users', sh && n ? 'Други шофьори на колата ми' : 'Дай колата си на друг шофьор', sh && n ? `${n} ${n === 1 ? 'шофьор' : 'шофьори'} – часове, гориво, км, плащане, % от разходите` : 'Виждаш часовете, горивото и км му – без приходите. Плащане за деня или седмицата, % от разходите.', null, sh ? '#/cars/' + sh.id : '#/cars?new=1'); })(),
+      row('carset', 'car', 'Настройки на колата', 'Код, номер, марка и модел (или снимка на талона), своя или под наем, гориво', null, '#/car'),
       row('ptp', 'alert', 'При ПТП – двустранен протокол', 'Попълваш го онлайн с приложението ДКП – Google Play и App Store', null, '#/ptp'),
       row('cars', 'key', 'Обща кола и автопарк', (data.cars || []).length ? `${data.cars.length} ${data.cars.length === 1 ? 'кола' : 'коли'} – шофьори, разходи, покани` : 'Кола с няколко шофьори или коли под наем – покани с линк', null, '#/cars')),
     fleet && group('fleet', 'Автопарк',

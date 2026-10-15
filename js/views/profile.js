@@ -137,8 +137,7 @@ export function askFrom(onPick) {
 const upcomingCount = (data) => upcomingReservations(data.reservations || []).length;
 const refLabel = () => { const r = store.myReferrals(); return r ? `${r.count} поканени` : ''; };
 
-// Горната част: компактна корица – снимката на колата, върху нея профилната снимка, името и колата.
-// Отдолу един бутон „Промени данните“ (лични данни, колата, снимките).
+// Горната част: като профил във Facebook (виж по-долу).
 export function profileCover(user, d) {
   const car = d.car || {};
   const initials = user.name.split(' ').map((x) => x[0]).slice(0, 2).join('');
@@ -150,20 +149,10 @@ export function profileCover(user, d) {
   };
   const who = [user.city, user.company].filter(Boolean).join(' · ');
   const carLine = [car.code && `Код ${car.code}`, car.plate, [car.model, car.year].filter(Boolean).join(' ')].filter(Boolean).join(' · ');
-  const edit = () => openSheet((close) => {
-    const opt = (ic, title, sub, fn) => h('button', { class: 'list-btn', onclick: () => { close(); fn(); } },
-      h('span', { class: 'l-ic' }, icon(ic, 18)), h('span', { class: 'grow' }, title, h('small', { class: 'muted', style: { display: 'block', fontWeight: 500 } }, sub)), icon('right', 18));
-    return h('div', { class: 'form' }, sheetHead('Промени данните', close),
-      opt('user', 'Лични данни', 'Име, телефон, град и фирма', () => editAccount(store.currentUser() || user)),
-      opt('car', 'Колата', 'Код, номер, марка, модел, година – или снимай талона', () => { location.hash = '#/car'; }),
-      opt('camera', d.carPhoto ? 'Смени снимката на колата' : 'Добави снимка на колата', 'Изрязваш я с пръст', () => photo('carPhoto')),
-      opt('user', d.photo ? 'Смени профилната снимка' : 'Добави профилна снимка', 'Показва се върху колата', () => photo('photo')));
-  });
   // всеки ред се събира на един ред: ако е дълъг, буквите леко се смаляват (без „…“); ако пак не стига – пренася се
   const fit = (el) => requestAnimationFrame(() => { if (!el.isConnected) return; let f = parseFloat(getComputedStyle(el).fontSize); while (el.scrollWidth > el.clientWidth + 1 && f > 11) { f -= 0.5; el.style.fontSize = f + 'px'; } if (el.scrollWidth > el.clientWidth + 1) el.classList.add('wrap'); });
   // Като профил във Facebook: снимката на колата е корица от край до край, отдолу заоблен лист,
-  // голямата кръгла профилна снимка застъпва корицата в средата, името, колата, градът и два бутона.
-  const own = d.carType !== 'rent';
+  // кръглата профилна снимка застъпва корицата в средата, отдолу името, колата, градът и фирмата.
   const sec = h('section', { class: 'cover6' },
     h('div', { class: cx('c6-cover', !d.carPhoto && 'empty') },
       d.carPhoto && h('img', { src: d.carPhoto, alt: 'Колата' }),
@@ -174,10 +163,7 @@ export function profileCover(user, d) {
         h('i', null, icon('camera', 16))),
       h('div', { class: 'c6-name', role: 'heading', 'aria-level': '1' }, user.name),
       h('p', { class: 'c6-car' }, h('span', null, carLine || 'Добави кода, номера и модела на колата')),
-      who && h('p', { class: 'c6-who' }, icon('pin', 16), h('span', null, who)),
-      h('div', { class: 'c6-btns' },
-        h('button', { class: 'c6-btn primary', type: 'button', onclick: edit }, icon('edit', 18), 'Промени данните'),
-        h('a', { class: 'c6-btn', href: own ? '#/vehicle' : '#/car' }, icon(own ? 'tool' : 'car', 18), own ? 'Колата ми' : 'Колата'))));
+      who && h('p', { class: 'c6-who' }, icon('pin', 16), h('span', null, who))));
   setTimeout(() => sec.querySelectorAll('.c6-name, .c6-car > span, .c6-who > span').forEach(fit), 0);
   return sec;
 }
