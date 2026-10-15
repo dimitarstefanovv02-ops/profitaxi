@@ -1636,20 +1636,23 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .c6-facts b.wrap { white-space: normal; line-height: 1.2; }
 .c6-city { font-weight: 500; color: var(--ch-on-v, var(--muted)); }
 .c6-name + .c6-scheme { margin-top: 10px; }
-/* Картата под името – изчистена: горе фирмата и градът, тънка линия, долу код · номер и колата. Едри букви, без рамки и кутийки. */
-.cover6 .c6-scheme { display: block !important; margin-top: 10px; border-radius: 20px; overflow: hidden; background: var(--ch-low, var(--surface-2)); }
-.cover6 .c6-firm { display: flex !important; align-items: center; gap: 12px; padding: 14px 16px; background: none; border-radius: 0; }
-.cover6 .c6-logo { width: 46px; height: 46px; border-radius: 12px; }
-.cover6 .c6-firm-t { flex: 0 1 auto; min-width: 0; gap: 2px; }
-.cover6 .c6-firm-t b { font-size: 1.15rem; }
-.cover6 .c6-firm-t a { font-size: .95rem; }
-.cover6 .c6-town { display: block !important; flex: 1 1 auto; min-width: 0; text-align: right; line-height: 1; }
-.cover6 .c6-town small { display: none; }
-.cover6 .c6-town b { display: block; font-size: 2rem; font-weight: 800; letter-spacing: -.035em; white-space: nowrap; overflow: hidden; color: var(--ch-on, var(--text)); }
-.cover6 .c6-facts { display: grid !important; grid-template-columns: auto minmax(0, 1fr); gap: 10px 20px; padding: 14px 16px 16px; border-top: 1px solid var(--ch-outline-v, var(--line)); color: var(--ch-on, var(--text)); text-decoration: none; }
-.cover6 .c6-chip { display: flex !important; align-items: baseline; gap: 8px; padding: 0; border: 0 !important; background: none; min-width: 0; }
-.cover6 .c6-chip.car { grid-column: 1 / -1; align-items: center; }
-.cover6 .c6-chip small { font-size: .8rem; font-weight: 600; color: var(--ch-on-v, var(--muted)); text-transform: none; letter-spacing: 0; }
-.cover6 .c6-chip b { font-size: 1.3rem; font-weight: 800; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; }
-.cover6 .c6-chip.car b { font-size: 1.3rem; }
-.cover6 .c6-chip .ic { flex: none; width: 20px; height: 20px; color: var(--ch-on-v, var(--muted)); } .cover6 .c6-chip .ic-fill { display: none; }
+/* Картата под името – в стила на Apple: два реда, малки чисти шрифтове, тънка линия */
+.cover6 .c6-scheme { display: block !important; margin-top: 8px; border-radius: 14px; overflow: hidden; background: var(--ch-low, var(--surface-2)); }
+.cover6 .c6-firm { display: flex !important; align-items: center; gap: 10px; padding: 9px 12px; background: none; border-radius: 0; }
+.cover6 .c6-logo { width: 34px; height: 34px; border-radius: 9px; font-size: .62rem !important; }
+.cover6 .c6-firm-t { flex: 0 1 auto; min-width: 0; gap: 0; line-height: 1.25; }
+.cover6 .c6-firm-t b { font-size: .94rem; font-weight: 600; letter-spacing: -.01em; }
+.cover6 .c6-firm-t a { font-size: .8rem; gap: 4px; }
+.cover6 .c6-firm-t a .ic { width: 11px; height: 11px; }
+.cover6 .c6-town { display: block !important; flex: 1 1 auto; min-width: 0; text-align: right; }
+.cover6 .c6-town b { display: block; font-size: .94rem; font-weight: 500; white-space: nowrap; overflow: hidden; color: var(--ch-on-v, var(--muted)); }
+.cover6 .c6-facts { display: flex !important; align-items: baseline; gap: 0; padding: 8px 12px 9px; margin-left: 56px; border-top: .5px solid var(--ch-outline-v, var(--line)); color: var(--ch-on, var(--text)); text-decoration: none; white-space: nowrap; overflow: hidden; font-size: .9rem; }
+.cover6 .c6-chip { display: inline-flex !important; align-items: baseline; gap: 4px; padding: 0; border: 0 !important; background: none; min-width: 0; flex: none; }
+.cover6 .c6-chip + .c6-chip::before { content: '·'; margin: 0 7px; color: var(--ch-on-v, var(--muted)); }
+.cover6 .c6-chip.car { flex: 0 1 auto; overflow: hidden; }
+.cover6 .c6-chip small { font-size: 1em; font-weight: 400; color: var(--ch-on-v, var(--muted)); text-transform: none; letter-spacing: 0; }
+.cover6 .c6-chip b { font-size: 1em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cover6 .c6-facts { margin-left: 0; padding-left: 12px; }
+.cover6 .c6-chip.car { flex: none; overflow: visible; }
+.cover6 .c6-chip b { overflow: visible; text-overflow: clip; }
+.cover6 .c6-name { font-size: 1.5rem !important; margin-top: 8px !important; }
