@@ -1660,3 +1660,13 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .cover6 .c6-firm-t.one { display: flex; align-items: baseline; gap: 0; white-space: nowrap; }
 .cover6 .c6-firm-t.one a { font-size: .94rem; font-weight: 400; color: var(--ch-on-v, var(--muted)); }
 .cover6 .c6-firm-t.one a::before { content: '·'; margin: 0 6px; }
+/* градът – след фирмата; телефонът – бутонче със слушалка вдясно */
+.cover6 .c6-firm-t.one { flex: 1 1 auto; overflow: hidden; }
+.cover6 .c6-town-in { font-size: .94rem; color: var(--ch-on-v, var(--muted)); }
+.cover6 .c6-town-in::before { content: '·'; margin: 0 6px; }
+.cover6 .c6-call { flex: none; display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 11px 0 9px; border-radius: 15px; text-decoration: none; white-space: nowrap;
+  font-size: .82rem; font-weight: 600; background: var(--ch-pri-c, #D7F0D6); color: var(--ch-on-pri-c, #0F3A18); }
+.cover6 .c6-call .ic { width: 14px; height: 14px; } .cover6 .c6-call .ic-fill { display: none; }
+.cover6 .c6-call { background: #DDF3E0; color: #146C2E; }
+:root[data-theme="dark"] .cover6 .c6-call { background: #1F3A24; color: #8FD18E; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]):not([data-theme="sun"]) .cover6 .c6-call { background: #1F3A24; color: #8FD18E; } }

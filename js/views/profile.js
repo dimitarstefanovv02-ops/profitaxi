@@ -170,13 +170,13 @@ export function profileCover(user, d) {
         user.company && h('div', { class: 'c6-firm' },
           h('button', { class: cx('c6-logo', !logo && 'none'), type: 'button', 'aria-label': 'Логото на фирмата', onclick: () => logoSheet(user, logo, pending) },
             logo ? h('img', { src: logo, alt: firm }) : h('span', null, initialsOf(firm))),
-          h('div', { class: 'c6-firm-t one' }, h('b', null, firm), firmPhone && h('a', { href: 'tel:' + firmPhone.replace(/\s/g, '') }, firmPhone)),
-          user.city && h('div', { class: 'c6-town' }, h('b', null, user.city))),
+          h('div', { class: 'c6-firm-t one' }, h('b', null, firm), user.city && h('span', { class: 'c6-town-in' }, user.city)),
+          firmPhone && h('a', { class: 'c6-call', href: 'tel:' + firmPhone.replace(/\s/g, ''), 'aria-label': 'Обади се на ' + firm }, icon('call', 15), firmPhone)),
         h('a', { class: 'c6-facts', href: '#/car' },
           h('span', { class: 'c6-chip' }, h('small', null, 'Код'), h('b', null, car.code || '—')),
           h('span', { class: 'c6-chip' }, h('b', null, car.plate ? plateFmt(car.plate) : 'Без номер')),
           h('span', { class: 'c6-chip car' }, h('b', null, [car.model, car.year].filter(Boolean).join(' ') || 'Добави колата'))))));
-  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t > b, .c6-town > b, .c6-facts').forEach(fit), 0);
+  setTimeout(() => sec.querySelectorAll('.c6-name, .c6-firm-t, .c6-facts').forEach(fit), 0);
   return sec;
 }
 
