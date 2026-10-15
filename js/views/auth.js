@@ -39,11 +39,19 @@ export function loginView({ go }) {
     } }, icon('faceid', 22), `Вход с ${faceLabel()}`));
   });
   const fill = () => { email.value = 'ivan@demo.bg'; pw.value = 'demo123'; };
+  // Акаунтите, които вече са влезли на този телефон – с едно натискане
+  const saved = store.savedAccounts();
+  const savedBox = saved.length > 0 && h('div', { class: 'acct-saved' },
+    h('small', { class: 'muted' }, 'Влезли на този телефон'),
+    saved.map((a) => h('button', { type: 'button', class: 'acct-row', onclick: async () => {
+      const r = await store.switchAccount(a.id); if (r.error) { err.textContent = r.error; return; } go('/home');
+    } }, h('img', { src: APP_ICONS[a.fleet ? 'fleet' : 'driver'], alt: '' }), h('span', { class: 'grow' }, h('b', null, a.name), h('small', null, a.fleet ? 'Собственик на коли' : 'Шофьор')), icon('right', 18))));
   return h('div', { class: 'auth' },
     brand(),
+    savedBox,
     h('div', { class: 'auth-hero' },
-      h('h1', null, 'Колко изкарваш наистина'),
-      h('p', null, 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
+      h('h1', null, saved.length ? 'Добави акаунт' : 'Колко изкарваш наистина'),
+      h('p', null, saved.length ? 'Влез в друг акаунт – шофьорски или на собственик. Горните остават влезли.' : 'Приходи, разходи и чиста печалба от всяка смяна. Въвеждаш за секунди.')),
     h('form', { class: 'form', onsubmit: submit },
       field('Имейл или телефон', email),
       field('Парола', pw),

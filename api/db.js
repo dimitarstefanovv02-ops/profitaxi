@@ -61,7 +61,7 @@ async function notifyDrivers(items) {
       if (it.msg && forUserSrv(it.msg.target, u)) data = { title: clip(it.msg.title || 'Съобщение', 60), body: clip(it.msg.text, 160), url: base + '#/home', tag: 'msg-' + it.msg.id };
       if (it.reply && it.reply.userId === u.id) data = { title: 'Отговор на въпроса ти', body: clip(it.text, 160), url: base + '#/help', tag: 'tk-' + it.reply.id };
       if (it.direct && it.direct.userId === u.id) data = { title: clip(it.direct.title, 60), body: clip(it.direct.body, 160), url: base + (it.direct.url || '#/home'), tag: it.direct.tag };
-      if (data) jobs.push(sendPush(r.sub, { ...data, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); }).catch(() => {}));
+      if (data) jobs.push(sendPush(r.sub, { ...data, as: r.id, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); }).catch(() => {}));
     }
     await Promise.race([Promise.allSettled(jobs), sleep(5000)]);
     if (dead.length) await one(['HDEL', 'pt:push', ...new Set(dead)]);
@@ -626,10 +626,13 @@ const ops = {
     if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) return { error: 'Невалиден абонамент' };
     if (!/^https:\/\//.test(sub.endpoint) && !MEMORY) return { error: 'Невалиден адрес' };
     const t = (Array.isArray(types) ? types : DRV_TYPES).filter((x) => DRV_TYPES.includes(x));
-    await one(['HSET', 'pt:push', 'd:' + subKey(sub.endpoint), JSON.stringify({ id: s.id, role: 'driver', sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, types: t, v: v === 2 ? 2 : undefined, at: new Date().toISOString() })]);
+    // няколко акаунта на един телефон (шофьор и собственик): запис за всеки акаунт; старият общ запис се мести
+    const sk = subKey(sub.endpoint); const legacy = parse(await one(['HGET', 'pt:push', 'd:' + sk]));
+    if (legacy) { if (legacy.id && legacy.id !== s.id) await one(['HSET', 'pt:push', `d:${sk}:${legacy.id}`, JSON.stringify(legacy)]); await one(['HDEL', 'pt:push', 'd:' + sk]); }
+    await one(['HSET', 'pt:push', `d:${sk}:${s.id}`, JSON.stringify({ id: s.id, role: 'driver', sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, types: t, v: v === 2 ? 2 : undefined, at: new Date().toISOString() })]);
     return { ok: true, ready: pushReady() };
   },
-  async drvPushUnsub({ endpoint }, s) { if (endpoint) await one(['HDEL', 'pt:push', 'd:' + subKey(endpoint)]); return { ok: true }; },
+  async drvPushUnsub({ endpoint }, s) { if (endpoint) await one(['HDEL', 'pt:push', 'd:' + subKey(endpoint), `d:${subKey(endpoint)}:${s.id}`]); return { ok: true }; },
   // Админ: пусни напомнянията сега (за проба), без да чака 10:00 / 20:00
   async cronRun({ slot }, s) {
     if (s.role !== 'admin') return { error: 'Само за админ' };
@@ -926,7 +929,7 @@ async function runCron(slot, { force = false } = {}) {
     const u = all[`users:${id}`]; if (!u || (u.status && u.status !== 'active')) continue;
     const d = userData(all, id); const base = '/app';
     const msgs = slot === 'am' ? fleetMsgs(all, id, d.profile || {}, today, now) : [];
-    if (d.profile?.accountType === 'fleet') { pushAll(list, msgs); continue; } // собственик на автопарк – не кара, без напомняния за смени
+    if (d.profile?.accountType === 'fleet') { pushAll(list, msgs, '/icons/fleet-192.png'); continue; } // собственик на автопарк – не кара, без напомняния за смени
     const created = new Date(u.createdAt || 0); const createdDay = `${created.getFullYear()}-${String(created.getMonth() + 1).padStart(2, '0')}-${String(created.getDate()).padStart(2, '0')}`;
     const hasY = d.shifts.some((x) => shiftDate(x) === yest);
     const off = (d.profile.offDays || []).includes(yest);
@@ -942,11 +945,11 @@ async function runCron(slot, { force = false } = {}) {
     }
     pushAll(list, msgs);
   }
-  function pushAll(list, msgs) {
+  function pushAll(list, msgs, icon = '/icons/icon-192.png') {
     for (const [k, r] of list) for (const m of msgs) {
       if (m.kind !== 'fleet' && !(r.types || DRV_TYPES).includes(m.kind)) continue;
       const { kind, ...data } = m;
-      jobs.push(sendPush(r.sub, { ...data, icon: '/icons/icon-192.png' }).then((st) => { if (st === 404 || st === 410) dead.push(k); else if (st >= 200 && st < 300) sent++; }).catch(() => {}));
+      jobs.push(sendPush(r.sub, { ...data, as: r.id, icon }).then((st) => { if (st === 404 || st === 410) dead.push(k); else if (st >= 200 && st < 300) sent++; }).catch(() => {}));
     }
   }
   await Promise.race([Promise.allSettled(jobs), sleep(8000)]);

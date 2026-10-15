@@ -72,6 +72,13 @@ let lastRaw = null;
 function render() {
   const app = document.getElementById('app');
   const route = parse();
+  // Известие за другия акаунт на телефона (…?as=<id>) – минаваме на него
+  const as = route.query.get('as');
+  if (as) {
+    const clean = route.raw.replace(/([?&])as=[^&]*&?/, '$1').replace(/[?&]$/, '');
+    if (store.currentUser()?.id !== as && store.savedAccounts().some((a) => a.id === as)) { store.switchAccount(as).then(() => go(clean, true)); return; }
+    return go(clean, true);
+  }
   const user = store.currentUser();
   document.documentElement.dataset.page = route.name.slice(1);
 
@@ -93,6 +100,7 @@ function render() {
   if (!profile.onboarded && route.name !== '/onboarding' && route.name !== '/guide') return go('/onboarding', true);
   const fleet = store.isFleet(profile);
   setAppIcon(fleet);
+  store.rememberAccount();
   TABS = fleet ? FLEET_TABS : DRIVER_TABS;
   PARENT['/cars'] = fleet ? '/home' : '/me'; PARENT['/join'] = PARENT['/cars']; PARENT_LABEL['/home'] = fleet ? 'Автопарк' : 'Днес';
   // Собственикът на автопарк не кара: „Днес“ е автопаркът, смените и парите на шофьора ги няма

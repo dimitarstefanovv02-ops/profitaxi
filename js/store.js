@@ -113,7 +113,7 @@ export function login(loginId, password, { company } = {}) {
   if (!u || u.password !== password) return { error: 'Грешни данни за вход – провери имейла/телефона и паролата' };
   localStorage.setItem(SESSION_KEY, u.id);
   u.lastLoginAt = new Date().toISOString();
-  commit();
+  commit(); rememberAccount();
   return { user: clone(u) };
 }
 // Вход с Face ID / пръст (само на живия сайт): credential е отговорът на navigator.credentials.get
@@ -134,7 +134,86 @@ export function setOffDay(day, on = true) {
   if (on) set.add(day); else set.delete(day);
   updateProfile({ offDays: [...set].sort().slice(-90) });
 }
-export function logout() { if (PREVIEW) endPreview(); else { localStorage.removeItem(SESSION_KEY); if (LIVE) dropLive('app'); } listeners.forEach((fn) => fn()); }
+export function logout() {
+  if (PREVIEW) { endPreview(); listeners.forEach((fn) => fn()); return; }
+  const id = localStorage.getItem(SESSION_KEY);
+  forgetAccount(id);
+  localStorage.removeItem(SESSION_KEY); if (LIVE) dropLive('app');
+  listeners.forEach((fn) => fn());
+}
+// „Изход“ от менюто: ако на телефона има и друг акаунт – минаваме на него, вместо на входа
+export async function logoutAndSwitch() {
+  const id = localStorage.getItem(SESSION_KEY);
+  const next = readAccounts().find((a) => a.id !== id && (!LIVE || a.token));
+  logout();
+  if (next) await switchAccount(next.id);
+}
+
+// ================= Няколко акаунта на едно устройство =================
+// Шофьорски и собственически акаунт (или два шофьорски) остават влезли едновременно;
+// сменят се с едно натискане, без парола – като в Instagram.
+const ACCOUNTS_KEY = 'profitaxi.accounts';
+const readAccounts = () => { try { const a = JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } };
+const writeAccounts = (a) => { try { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(a.slice(0, 5))); } catch { /* */ } };
+const cacheKey = (id) => `profitaxi.live.app.u.${id}`;
+// Записва текущия акаунт в списъка (с ключа за вход на живия сайт)
+export function rememberAccount() {
+  if (PREVIEW) return;
+  const u = currentUser(); if (!u) return;
+  const p = db.profiles[u.id] || {};
+  const list = readAccounts();
+  const prev = list.find((a) => a.id === u.id);
+  const entry = { id: u.id, name: u.name, fleet: isFleet(p), photo: p.photo ? 1 : 0, login: u.email || u.phone || '', token: LIVE ? getToken('app') : null, at: prev?.at || Date.now() };
+  if (prev && prev.name === entry.name && prev.fleet === entry.fleet && prev.token === entry.token && prev.login === entry.login) return;
+  writeAccounts([entry, ...list.filter((a) => a.id !== u.id)]);
+}
+export function savedAccounts() {
+  return readAccounts().filter((a) => !LIVE || a.token).map(({ token, ...a }) => a);
+}
+export function forgetAccount(id) {
+  writeAccounts(readAccounts().filter((a) => a.id !== id));
+  try { localStorage.removeItem(cacheKey(id)); localStorage.removeItem(cacheKey(id) + '.base'); } catch { /* */ }
+}
+// Прибира текущия акаунт настрана (остава влязъл) – за „Добави акаунт“ и смяна
+async function parkCurrent() {
+  rememberAccount();
+  const id = localStorage.getItem(SESSION_KEY);
+  if (LIVE && id) {
+    if (diff().n) await flush();
+    try { localStorage.setItem(cacheKey(id), JSON.stringify(db)); localStorage.setItem(cacheKey(id) + '.base', JSON.stringify({ f: base, rev })); } catch { /* */ }
+  }
+}
+export async function switchAccount(id) {
+  const a = readAccounts().find((x) => x.id === id); if (!a) return { error: 'Няма такъв акаунт на телефона' };
+  if (id === localStorage.getItem(SESSION_KEY)) return { ok: true };
+  await parkCurrent();
+  if (LIVE) {
+    setToken('app', a.token);
+    let cached = null, b = null;
+    try { cached = JSON.parse(localStorage.getItem(cacheKey(id))); b = JSON.parse(localStorage.getItem(cacheKey(id) + '.base')); } catch { /* */ }
+    db = cached && typeof cached === 'object' ? cached : emptyDb(); db.settings ||= defaultSettings();
+    base = b?.f || {}; rev = b?.rev ?? null;
+    if (!cached) { base = {}; rev = null; }
+    ensureExt(); registerAllCustom(); saveLive(); saveBase();
+    localStorage.setItem(SESSION_KEY, id);
+    listeners.forEach((fn) => fn());
+    await syncNow();
+    if (!currentUser()) { forgetAccount(id); localStorage.removeItem(SESSION_KEY); listeners.forEach((fn) => fn()); return { error: 'Входът в този акаунт е изтекъл – влез отново' }; }
+  } else {
+    if (!db.users.some((u) => u.id === id && u.role === 'driver')) { forgetAccount(id); return { error: 'Акаунтът го няма' }; }
+    localStorage.setItem(SESSION_KEY, id);
+    listeners.forEach((fn) => fn());
+  }
+  rememberAccount();
+  return { ok: true };
+}
+// „Добави акаунт“: текущият остава влязъл, отваря се входът / регистрацията за втори
+export async function addAccount() {
+  await parkCurrent();
+  localStorage.removeItem(SESSION_KEY);
+  if (LIVE) { setToken('app', null); db = emptyDb(); base = {}; rev = null; ensureExt(); saveLive(); saveBase(); }
+  listeners.forEach((fn) => fn());
+}
 
 function validateAccount({ name, email, password, city, company, carType, by }, { skipPassword } = {}) {
   if (!name?.trim()) return 'Въведи име';
@@ -219,7 +298,7 @@ export function register(f) {
   if (referrer) u.referredBy = referrer.id; // наградата идва, когато новият шофьор плати
   db.profiles[u.id].tour = f.accountType === 'fleet' ? 'done' : 'pending'; // кратка разходка при първото влизане (само за шофьори)
   localStorage.setItem(SESSION_KEY, u.id);
-  commit();
+  commit(); rememberAccount();
   return { user: clone(u) };
 }
 // Промо кодове: „2 месеца безплатно“ или „-50% първия месец“, с лимит и срок
@@ -1128,6 +1207,7 @@ function startSync() {
   if (syncStarted) return; syncStarted = true;
   setOnAuthLost((sc) => {
     if (sc !== scope()) return;
+    if (sc === 'app') forgetAccount(localStorage.getItem(SESSION_KEY));
     localStorage.removeItem(sc === 'admin' ? ADMIN_SESSION_KEY : SESSION_KEY);
     dropLive(sc); listeners.forEach((fn) => fn());
   });
@@ -1151,6 +1231,7 @@ async function liveAuth(op, body, sc, sessionKey) {
   setToken(sc, r.token);
   localStorage.setItem(sessionKey, r.user.id);
   applyFields(r.fields, r.rev);
+  if (sc === 'app') rememberAccount();
   return { user: clone(r.user) };
 }
 async function registerLive(f) {
@@ -1164,6 +1245,7 @@ async function registerLive(f) {
   setToken('app', r.token);
   localStorage.setItem(SESSION_KEY, r.user.id);
   applyFields(r.fields, r.rev);
+  rememberAccount();
   return { user: clone(r.user) };
 }
 

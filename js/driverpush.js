@@ -9,9 +9,18 @@ const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.p
 const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const b64ToBytes = (s) => { const p = '='.repeat((4 - (s.length % 4)) % 4); const raw = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(raw, (c) => c.charCodeAt(0)); };
 
+// Настройката е за всеки акаунт поотделно (на телефона може да има шофьорски и собственически акаунт)
+const ukey = () => `${KEY}.u.${store.currentUser()?.id || ''}`;
+function rawTypes() {
+  try {
+    let v = localStorage.getItem(ukey());
+    if (v == null && localStorage.getItem(KEY) != null) { v = localStorage.getItem(KEY); localStorage.setItem(ukey(), v); localStorage.removeItem(KEY); }
+    return v;
+  } catch { return null; }
+}
 export function pushTypes() {
   try {
-    const t = JSON.parse(localStorage.getItem(KEY) || '[]');
+    const t = JSON.parse(rawTypes() || '[]');
     // включилите известията преди „Съобщения“ ги получават – показваме го като включено
     return t.length && !localStorage.getItem(KEY + '.v2') && !t.includes('msg') ? [...t, 'msg'] : t;
   } catch { return []; }
@@ -36,7 +45,7 @@ export async function setPushTypes(types) {
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC) });
   const r = await store.driverCall('drvPushSub', { sub: sub.toJSON(), types, v: 2 });
   if (r.error) return r;
-  try { localStorage.setItem(KEY, JSON.stringify(types)); localStorage.setItem(KEY + '.v2', '1'); } catch { /* */ }
+  try { localStorage.setItem(ukey(), JSON.stringify(types)); localStorage.setItem(KEY + '.v2', '1'); } catch { /* */ }
   return r;
 }
 async function disable() {
@@ -45,5 +54,13 @@ async function disable() {
     const sub = await reg?.pushManager?.getSubscription();
     if (sub) await store.driverCall('drvPushUnsub', { endpoint: sub.endpoint });
   } catch { /* */ }
-  try { localStorage.setItem(KEY, '[]'); } catch { /* */ }
+  try { localStorage.setItem(ukey(), '[]'); } catch { /* */ }
+}
+
+// След смяна на акаунт: ако телефонът вече има разрешени известия, а този акаунт още не е избирал – включваме ги и за него
+export async function autoPushForAccount() {
+  try {
+    if (rawTypes() != null || pushBlocker() || Notification.permission !== 'granted') return;
+    await setPushTypes(Object.keys(PUSH_TYPES));
+  } catch { /* */ }
 }

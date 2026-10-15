@@ -3,11 +3,12 @@
 
 import { h, icon, cx } from '../util.js';
 import { zone, setArranging } from '../arrange.js';
-import { toast, topSearch, openSheet, sheetHead } from '../ui.js';
+import { toast, topSearch, openSheet, sheetHead, APP_ICONS } from '../ui.js';
 // „Подреди екраните“: режимът важи за всички страници, докато не натиснеш „Готово“
 function startArrange() { setArranging(true); toast('Задръж карта или бутон и го влачи. Мини през страниците от менюто долу.'); }
 import * as store from '../store.js';
 import { profileCover, setPhoto } from './profile.js';
+import { autoPushForAccount } from '../driverpush.js';
 import { carStats, carLog } from './vehicle.js';
 import { money } from '../util.js';
 // Подзаглавие за „Колата ми“
@@ -50,6 +51,8 @@ export function meView({ go, user, data }) {
         !fleet && sub('doc', 'Презентация', 'Как работи приложението – за преглед и теглене', '#/guide'),
         sub('sparkle', 'Кратка разходка', '5 стъпки за 1 минута', null, () => { try { sessionStorage.setItem('profitaxi.tourNow', '1'); } catch { /* */ } go('/home'); })])),
       row('settings', 'tool', 'Настройки', 'Известия, изглед, парола, Face ID, изход', null, '#/settings'),
+      (() => { const others = store.savedAccounts().filter((a) => a.id !== user.id);
+        return row('accounts', 'users', others.length ? 'Смени акаунт' : 'Добави акаунт', others.length ? others.map((a) => `${a.name.split(' ')[0]} · ${a.fleet ? 'собственик' : 'шофьор'}`).join(', ') : 'Шофьор и собственик на един телефон', () => accountsSheet(user, go)); })(),
       row('arrange', 'grid', 'Подреди екраните', 'Мести и скривай картите и бутоните', () => startArrange()),
       row('ideas', 'sparkle', 'Предложи функция', 'Напиши идея или гласувай за чужда', null, '#/ideas'),
     ].filter(Boolean)))],
@@ -62,4 +65,24 @@ function subMenu(title, items) {
   openSheet((close) => h('div', null, sheetHead(title, close),
     h('div', { class: 'big-links sub-menu' }, items.filter(Boolean).map((it) => h('button', { class: 'big-link', type: 'button', onclick: () => { close(); if (it.fn) it.fn(); else location.hash = it.href; } },
       h('span', { class: 'bl-ic' }, icon(it.ic, 22)), h('span', { class: 'grow' }, h('b', null, it.title), it.text && h('span', null, it.text)), icon('right', 18))))));
+}
+
+// Акаунтите на телефона: всички остават влезли, сменят се с едно натискане
+export function accountsSheet(user, go) {
+  const list = store.savedAccounts();
+  if (!list.some((a) => a.id === user.id)) list.unshift({ id: user.id, name: user.name, fleet: store.isFleet(store.getProfile()) });
+  openSheet((close) => h('div', null,
+    sheetHead('Акаунти на телефона', close, 'Всички остават влезли – сменяш с едно натискане, без парола.'),
+    h('div', { class: 'acct-list' },
+      list.map((a) => h('button', { class: cx('acct-row', a.id === user.id && 'on'), type: 'button', onclick: async () => {
+        if (a.id === user.id) { close(); return; }
+        const r = await store.switchAccount(a.id); close();
+        if (r.error) { toast(r.error, 'err'); go('/login'); return; }
+        toast(`Влезе като ${a.name.split(' ')[0]}`); go('/home'); autoPushForAccount();
+      } },
+        h('img', { src: APP_ICONS[a.fleet ? 'fleet' : 'driver'], alt: '' }),
+        h('span', { class: 'grow' }, h('b', null, a.name), h('small', null, a.fleet ? 'Собственик на коли' : 'Шофьор')),
+        a.id === user.id ? icon('check', 20) : icon('right', 18))),
+      h('button', { class: 'acct-row add', type: 'button', onclick: async () => { close(); await store.addAccount(); go('/login'); } },
+        h('span', { class: 'acct-plus' }, icon('plus', 22)), h('span', { class: 'grow' }, h('b', null, 'Добави акаунт'), h('small', null, 'Влез или се регистрирай – този остава влязъл'))))));
 }
