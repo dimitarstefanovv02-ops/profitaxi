@@ -4,7 +4,7 @@ import { h, fill, icon, cx } from '../util.js';
 import { CAR_TYPES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
-import { toast, field, segmented } from '../ui.js';
+import { toast, field, segmented, APP_ICONS, setAppIcon } from '../ui.js';
 import { passkeySupported, loginWithPasskey, faceLabel, passkeyOn, shouldOffer, enablePasskey, markOffered } from '../passkey.js';
 
 export const brand = () => h('a', { class: 'brand', href: '/', style: { textDecoration: 'none' } },
@@ -87,13 +87,13 @@ export function registerView({ go }) {
   let by = 'email';
   const byBox = h('div'), idWrap = h('div'), otherWrap = h('div');
   const drawPhone = () => {
-    byBox.replaceChildren(segmented({ email: 'С имейл', phone: 'С телефон' }, by, (k) => { by = k; drawPhone(); }, { page: true }));
+    byBox.replaceChildren(segmented({ email: 'С имейл', phone: 'С телефон' }, by, (k) => { by = k; drawPhone(); }, { page: true, small: true }));
     if (by === 'phone') {
       fill(idWrap, store.phoneCodeOn() ? field('Телефон', h('div', { class: 'form', style: { gap: '8px' } }, phone, smsBox), 'Ще ти пратим код по SMS. С него влизаш в профила.', true) : field('Телефон', phone, 'С него влизаш в профила.', true));
-      fill(otherWrap, field('Имейл', email, 'По желание'));
+      fill(otherWrap, field('Имейл · по желание', email));
     } else {
-      fill(idWrap, field('Имейл', email, store.emailVerifyOn() ? 'Ще ти пратим линк за потвърждение. С него влизаш в профила.' : 'С него влизаш в профила.', true));
-      fill(otherWrap, field('Телефон', phone, 'По желание – за да могат да ти се обаждат'));
+      fill(idWrap, field('Имейл', email, store.emailVerifyOn() ? 'Ще ти пратим линк за потвърждение.' : null, true));
+      fill(otherWrap, field('Телефон · по желание', phone));
     }
   };
   drawPhone(); store.loadVerifyCfg().then(drawPhone);
@@ -106,25 +106,30 @@ export function registerView({ go }) {
   // Код за обща кола (от собственика) – идва и от линка за покана
   let joinPre = ''; try { joinPre = localStorage.getItem('profitaxi.joinCode') || ''; } catch { /* */ }
   const carCode = input({ placeholder: 'напр. 56JRLJMIQL', value: joinPre, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
-  const cc = cityCompanyPicker();
+  const cc = cityCompanyPicker({ hint: false, short: true });
   let carType = '';
-  // Вид акаунт: шофьор или собственик на коли, който сам не кара
+  // Вид акаунт: шофьор или собственик на коли – всеки със своята иконка на приложението
   let kind = 'driver';
   const kindBox = h('div');
-  const carGroup = h('div');
+  const carGroup = h('div', { class: 'reg-car' });
+  const whereTitle = h('h3');
   const drawKind = () => {
-    fill(kindBox, h('div', { class: 'option-grid' },
-      h('button', { type: 'button', class: cx('option', kind === 'driver' && 'on'), onclick: () => { kind = 'driver'; drawKind(); } }, icon('car', 24), 'Шофьор', h('small', null, 'Карам и следя колко ми остава')),
-      h('button', { type: 'button', class: cx('option', kind === 'fleet' && 'on'), onclick: () => { kind = 'fleet'; drawKind(); } }, icon('key', 24), 'Собственик на коли', h('small', null, 'Колите ми карат други шофьори'))));
+    const opt = (k, title, sub) => h('button', { type: 'button', class: cx('option acct-opt', kind === k && 'on'), 'aria-pressed': String(kind === k), onclick: () => { kind = k; drawKind(); } },
+      h('img', { src: APP_ICONS[k], alt: '' }), h('b', null, title), h('small', null, sub));
+    fill(kindBox, h('div', { class: 'acct-pick' },
+      opt('driver', 'Шофьор', 'Карам и следя парите'),
+      opt('fleet', 'Собственик на коли', 'Колите ми карат други')));
     carGroup.style.display = kind === 'fleet' ? 'none' : '';
+    whereTitle.textContent = kind === 'fleet' ? 'Къде са колите' : 'Къде караш';
+    setAppIcon(kind === 'fleet');
   };
   const carBox = h('div');
-  const drawCar = () => fill(carBox, h('div', { class: 'option-grid' }, Object.entries(CAR_TYPES).map(([k, v]) =>
-    h('button', { type: 'button', class: cx('option', carType === k && 'on'), onclick: () => { carType = k; drawCar(); } }, icon(v.icon, 24), v.label, h('small', null, v.hint)))));
+  const drawCar = () => fill(carBox, h('div', { class: 'option-grid reg-seg' }, Object.entries(CAR_TYPES).map(([k, v]) =>
+    h('button', { type: 'button', class: cx('option', carType === k && 'on'), onclick: () => { carType = k; drawCar(); } }, icon(v.icon, 18), v.label))));
   drawCar();
   drawKind();
   drawSms();
-  const agree = h('input', { type: 'checkbox', style: { width: '22px', height: '22px', accentColor: 'var(--accent)', flex: 'none' } });
+  const agree = h('input', { type: 'checkbox' });
   const err = h('p', { class: 'err', role: 'alert' });
   const submit = async (e) => {
     e.preventDefault();
@@ -155,25 +160,30 @@ export function registerView({ go }) {
     if (r.error) { err.textContent = r.error; return; }
     go(kind === 'fleet' ? '/fguide?walk=1&first=1' : joinCode ? '/home' : '/guide?first=1');
   };
-  const group = (ic, title, ...kids) => h('div', { class: 'reg-group' }, h('h3', null, h('span', { class: 't-ic' }, icon(ic, 15)), title), ...kids);
-  return h('div', { class: 'auth' },
+  // Кодовете са по желание – скрити зад „Имам код“, освен ако идват от линк
+  const codes = h('details', { class: 'reg-codes', open: !!(refFromLink || promoFromLink || joinPre) },
+    h('summary', null, icon('key', 16), 'Имам промо код или код за кола'),
+    h('div', { class: 'form' },
+      field('Промо код', promo),
+      field('Код за кола', carCode, 'От собственика на колата – код или линк')));
+  const group = (title, ...kids) => h('div', { class: 'reg-group' }, title && (typeof title === 'string' ? h('h3', null, title) : title), ...kids);
+  return h('div', { class: 'auth auth-reg', 'data-page': 'register' },
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),
-    h('div', { class: 'auth-hero', style: { margin: '14px 0 20px' } },
+    h('div', { class: 'auth-hero' },
       h('h1', null, 'Нов акаунт'),
-      h('p', null, 'Безплатно по време на теста, без карта. Полетата със звездичка са задължителни.')),
+      h('p', null, 'Безплатно по време на теста, без карта.')),
     h('form', { class: 'form', onsubmit: submit, novalidate: true },
-      group('key', 'Аз съм', kindBox),
-      group('user', 'Акаунт',
-        h('div', { class: 'field' }, h('span', { class: 'field-label' }, 'Регистрирай се'), byBox),
+      kindBox,
+      group('Акаунт',
+        byBox,
         field('Име', name, null, true),
         phoneWrap,
         field('Парола', pw, null, true),
         otherWrap,
-        field('Промо код', promo, 'По желание – ако имаш код за отстъпка'),
-        field('Код за кола', carCode, 'По желание – ако собственикът на колата ти е пратил код или линк')),
-      group('target', 'Къде караш', cc.el),
-      (carGroup.replaceChildren(group('car', 'Колата е', carBox)), carGroup),
-      h('label', { class: 'row gap small' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'политиката за поверителност'))),
+        codes),
+      group(whereTitle, h('div', { class: 'reg-cc' }, cc.el),
+        (carGroup.replaceChildren(h('h3', null, 'Колата е'), carBox), carGroup)),
+      h('label', { class: 'reg-agree' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'поверителността'))),
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Създай акаунт')),
     h('p', { class: 'auth-foot' }, 'Имаш акаунт? ', h('a', { href: '#/login' }, 'Вход')));

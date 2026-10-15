@@ -4,7 +4,7 @@ import { h, fill } from '../util.js';
 import { CITIES, OTHER_CITY, OTHER, companiesFor } from '../constants.js';
 import { field } from '../ui.js';
 
-export function cityCompanyPicker({ city = '', company = '' } = {}) {
+export function cityCompanyPicker({ city = '', company = '', hint = true, short = false } = {}) {
   const known = CITIES.includes(city);
   const st = { city: known ? city : city ? OTHER_CITY : '', cityOther: known ? '' : city, company: '', companyOther: '' };
   const list = () => companiesFor(st.city === OTHER_CITY ? '' : st.city);
@@ -21,12 +21,12 @@ export function cityCompanyPicker({ city = '', company = '' } = {}) {
       h('option', { value: OTHER_CITY, selected: st.city === OTHER_CITY }, OTHER_CITY));
     const cityOther = st.city === OTHER_CITY && h('input', { class: 'input', placeholder: 'Име на града', value: st.cityOther, oninput: (e) => { st.cityOther = e.target.value; } });
     const compSel = h('select', { class: 'input', disabled: !st.city, onchange: (e) => { st.company = e.target.value; draw(); } },
-      h('option', { value: '', disabled: true, selected: !st.company }, st.city ? 'Избери фирма' : 'Първо избери град'),
+      h('option', { value: '', disabled: true, selected: !st.company }, st.city ? 'Избери фирма' : short ? 'Първо град' : 'Първо избери град'),
       list().map((c) => h('option', { value: c, selected: st.company === c }, c === OTHER ? 'Друга (напиши името)' : c)));
     const compOther = st.company === OTHER && h('input', { class: 'input', placeholder: 'Име на фирмата', value: st.companyOther, oninput: (e) => { st.companyOther = e.target.value; } });
     fill(box,
       field('Град', h('div', { class: 'form', style: { gap: '8px' } }, citySel, cityOther), null, true),
-      field('Таксиметрова фирма', h('div', { class: 'form', style: { gap: '8px' } }, compSel, compOther), 'Ако работиш самостоятелно, избери „Друга“ и го напиши.', true));
+      field(short ? 'Фирма' : 'Таксиметрова фирма', h('div', { class: 'form', style: { gap: '8px' } }, compSel, compOther), hint ? 'Ако работиш самостоятелно, избери „Друга“ и го напиши.' : null, true));
   };
   draw();
   return {

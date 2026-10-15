@@ -309,3 +309,17 @@ export function topSearch(onTheme) {
     h('a', { class: 'g-search', href: '#/search' }, icon('search', 22), h('span', null, 'Питай или търси'), icon('mic', 22)),
     themeToggle(onTheme));
 }
+
+// Иконата на приложението според вида акаунт: шофьор – тъмната, собственик на коли – зелената с ключ.
+// Сменя манифеста и иконата за iPhone, преди човек да сложи приложението на началния екран.
+export const APP_ICONS = { driver: '/icons/icon-192.png', fleet: '/icons/fleet-192.png' };
+export function setAppIcon(fleet) {
+  const k = fleet ? 'fleet' : 'driver';
+  if (document.documentElement.dataset.appIcon === k) return;
+  document.documentElement.dataset.appIcon = k;
+  const set = (sel, attr, v) => { const el = document.querySelector(sel); if (el) el.setAttribute(attr, v); };
+  set('link[rel=manifest]', 'href', fleet ? '/manifest-fleet.webmanifest' : '/manifest.webmanifest');
+  set('link[rel=apple-touch-icon]', 'href', fleet ? '/icons/fleet-touch-icon.png' : '/icons/apple-touch-icon.png');
+  set('link[rel=icon]', 'href', fleet ? '/icons/fleet-64.png' : '/icons/favicon-64.png');
+  set('meta[name=apple-mobile-web-app-title]', 'content', fleet ? 'Чисто Автопарк' : 'Чисто');
+}

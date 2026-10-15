@@ -2,7 +2,7 @@
 
 import { h, icon, clear, cx, fmtTimer } from './util.js';
 import * as store from './store.js';
-import { applyTheme, toast, themeToggle } from './ui.js';
+import { applyTheme, toast, themeToggle, setAppIcon } from './ui.js';
 import './picker.js';
 import { checkNotifications } from './notify.js';
 import { loginView, registerView, forgotView, resetView, verifiedView } from './views/auth.js';
@@ -92,6 +92,7 @@ function render() {
   const profile = store.getProfile();
   if (!profile.onboarded && route.name !== '/onboarding' && route.name !== '/guide') return go('/onboarding', true);
   const fleet = store.isFleet(profile);
+  setAppIcon(fleet);
   TABS = fleet ? FLEET_TABS : DRIVER_TABS;
   PARENT['/cars'] = fleet ? '/home' : '/me'; PARENT['/join'] = PARENT['/cars']; PARENT_LABEL['/home'] = fleet ? 'Автопарк' : 'Днес';
   // Собственикът на автопарк не кара: „Днес“ е автопаркът, смените и парите на шофьора ги няма

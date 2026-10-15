@@ -5,6 +5,7 @@ import * as store from '../store.js';
 import { openSheet, sheetHead, toast, field, segmented, confirmSheet, empty, openNumpad } from '../ui.js';
 import { rentState, depositState, carStatus, kmGaps, deadlines, driverScore, whoDrove, parseCarVoice, idleDays, STATUS, RENT_PERIODS, CAR_DOCS, DRIVER_DOCS, dlDays, DL_CHOICES } from '../fleet.js';
 import { costCat } from '../constants.js';
+import { contractDoc } from './fleetplus.js';
 
 export const carName = (c) => [c.name, c.plate].filter(Boolean).join(' · ') || 'Кола';
 export const shortName = (c) => c.name || c.plate || 'Колата';
@@ -234,6 +235,7 @@ export function driverSheet(info, userId, redraw) {
       dep.balance > 0 && h('button', { class: 'btn btn-ghost', onclick: () => { close(); recordSheet(info, 'deduct', { driverId: userId }, redraw); } }, icon('minus', 16), 'Удръжка'),
       h('button', { class: 'btn btn-ghost', onclick: () => { close(); docsSheet(car, m, d, redraw); } }, icon('doc', 16), 'Документи'),
       h('button', { class: 'btn btn-ghost', onclick: () => { close(); slotSheet(car, m, d, redraw); } }, icon('clock', 16), 'Ден / нощ'),
+      h('button', { class: 'btn btn-ghost', onclick: () => contractDoc(info, userId) }, icon('doc', 16), 'Договор'),
       h('button', { class: 'btn btn-ghost', onclick: () => confirmSheet({ title: `Да махна ли ${d.name || m.name}?`, text: 'Шофьорът спира да вижда колата. Смените му остават при него.', okLabel: 'Махни', danger: true, onOk: () => { store.removeMember(car.id, userId); close(); redraw(); } }) }, icon('trash', 16), 'Махни'))), { tall: true });
 }
 

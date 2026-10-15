@@ -9,6 +9,7 @@ import { dlDays } from '../fleet.js';
 import { carProfit } from '../fleet.js';
 import { costCat } from '../constants.js';
 import { verifyBanner } from './auth.js';
+import { fleetGoal, goalSheet, forecast, serviceState, serviceSheet, serviceText, adSheet, accountantSheet } from './fleetplus.js';
 
 const cap = (s) => s.replace(/^./, (x) => x.toUpperCase());
 const pct = (a, b) => (Math.abs(b) > 0.5 ? Math.round((a - b) / Math.abs(b) * 100) : null);
@@ -28,6 +29,7 @@ export function fleetHomeView({ go, user, rerender }) {
   const sum = (from, to) => infos.reduce((a, i) => { const p = carProfit(i.costs, i.logs, from, to); return { income: a.income + p.income, expense: a.expense + p.expense, net: a.net + p.net }; }, { income: 0, expense: 0, net: 0 });
   const now = sum(m1, today), before = sum(prev1, sameDayPrev), prevFull = sum(prev1, prevEnd);
   const ch = pct(now.net, before.net);
+  const goal = fleetGoal();
 
   // Заетост: колко коли карат днес и колко % от дните този месец са били на път
   const withDrivers = infos.filter((i) => i.status !== 'free' && i.status !== 'service');
@@ -47,11 +49,14 @@ export function fleetHomeView({ go, user, rerender }) {
     for (const l of i.pendings) items.push({ k: `pend-${l.id}`, cls: 'good', ic: 'check', t: `${first(i.users[l.driverId]?.name)}: „Платих ${money(l.amount, l.amount % 1 ? 2 : 0)}“`, s: `${n} · ${fmtDate(l.date)}`, acts: [['Потвърди', () => { store.confirmPay(l.id); toast('Потвърдено'); redraw(); }]] });
     for (const x of i.deadlines.filter((y) => y.left <= Math.max(...dlDays(store.getProfile())))) items.push({ k: `dl-${x.key}`, cls: x.left <= 3 ? 'bad' : 'warn', ic: x.kind === 'driver' ? 'user' : x.kind === 'cost' ? 'calendar' : 'shield', t: `${n} – ${x.title}`, s: `${leftText(x.left)} · ${fmtDate(x.date)}${x.amount ? ' · ' + money(x.amount) : ''}`, acts: x.costId ? [['Платено', () => { store.markCostPaid(x.costId); toast('Платено'); redraw(); }]] : [] });
     if (i.status === 'idle') items.push({ k: `idle-${i.car.id}`, cls: 'warn', ic: 'clock', t: `${n} стои ${i.idle >= 99 ? 'без смени' : `${i.idle} дни`}`, s: i.idle >= 3 && wait[0] ? `Може да я дадеш на ${wait[0].name} – чака от ${fmtDate(wait[0].at.slice(0, 10))}` : 'Няма смяна от последните дни', acts: [] });
-    if (i.status === 'free' && i.car.status !== 'service') items.push({ k: `free-${i.car.id}`, cls: 'calm', ic: 'key', t: `${n} е свободна`, s: wait[0] ? `Първи чака ${wait[0].name}${wait[0].phone ? ' · ' + wait[0].phone : ''}` : 'Прати линка на нов шофьор', acts: wait[0]?.phone ? [['Обади се', () => { location.href = 'tel:' + wait[0].phone; }]] : [] });
+    if (i.status === 'free' && i.car.status !== 'service') items.push({ k: `free-${i.car.id}`, cls: 'calm', ic: 'key', t: `${n} е свободна`, s: wait[0] ? `Първи чака ${wait[0].name}${wait[0].phone ? ' · ' + wait[0].phone : ''}` : 'Прати линка на нов шофьор', acts: [wait[0]?.phone && ['Обади се', () => { location.href = 'tel:' + wait[0].phone; }], ['Обява', () => adSheet(i)]].filter(Boolean) });
+    const sv = serviceState(i);
+    if (sv && sv.left <= 1000) items.push({ k: `svc-${i.car.id}`, cls: sv.left <= 0 ? 'bad' : 'warn', ic: 'wrench', t: `${n}: обслужване ${serviceText(sv)}`, s: `на ${fmtNum(sv.next)} км · сега ${fmtNum(sv.odo)} км`, acts: [['Готово', () => serviceSheet(i, redraw)]] });
     if (i.gaps.gap > 0) items.push({ k: `gap-${i.car.id}`, cls: 'warn', ic: 'road', t: `${n}: неотчетени ${fmtNum(i.gaps.gap)} км`, s: 'Между края на една смяна и началото на следващата', acts: [] });
   }
   const order = { bad: 0, warn: 1, good: 2, calm: 3 };
   items.sort((a, b) => order[a.cls] - order[b.cls]);
+  const fc = forecast(infos, now.net, today);
   const debtors = infos.flatMap((i) => i.rents.filter((x) => x.r.debt > 0).map((x) => ({ i, x })));
 
   // Печалба по кола за годината – от най-печелившата до най-губещата
@@ -64,12 +69,16 @@ export function fleetHomeView({ go, user, rerender }) {
     h('div', { class: 'page-title tab-head' }, h('div', null, h('h1', null, 'Автопарк'), h('div', { class: 'date' }, `${greet}, ${first(user.name)}`))),
     verifyBanner(user, redraw),
     cars.length ? h('section', { class: 'meter fleet-sum' },
-      h('div', { class: 'meter-label' }, h('span', null, `${cap(MONTHS[parseDate(today).getMonth()])} · ${cars.length} ${cars.length === 1 ? 'кола' : 'коли'}`)),
+      h('div', { class: 'meter-label' }, h('span', null, `${cap(MONTHS[parseDate(today).getMonth()])} · ${cars.length} ${cars.length === 1 ? 'кола' : 'коли'}`),
+        h('button', { class: 'fs-goal-btn', type: 'button', onclick: () => goalSheet(redraw) }, icon('target', 14), goal ? `Цел ${money(goal)}` : 'Цел')),
       h('div', { class: cx('meter-value', now.net < 0 && 'neg') }, `${now.net >= 0 ? '+' : '−'}${money(Math.abs(now.net))}`),
-      h('div', { class: 'meter-goal' }, `наем ${money(now.income)} − разходи ${money(now.expense)}`),
-      h('div', { class: 'fleet-cmp' }, ch == null || ch === 0 ? `Миналия месец: ${prevFull.net >= 0 ? '+' : '−'}${money(Math.abs(prevFull.net))}` : `${ch >= 0 ? '▲' : '▼'} ${Math.abs(ch)}% спрямо същите дни на миналия месец`),
+      h('div', { class: 'meter-goal' }, `наем ${money(now.income)} − разходи ${money(now.expense)}`, ch == null || ch === 0 ? '' : ` · ${ch >= 0 ? '▲' : '▼'} ${Math.abs(ch)}%`),
+      goal > 0 && h('div', { class: 'fs-bar' }, h('i', { style: { width: `${Math.max(2, Math.min(100, now.net / goal * 100))}%` } })),
+      h('div', { class: 'fs-lines' },
+        goal > 0 && h('span', null, now.net >= goal ? h('b', null, 'Целта е постигната 🎉') : [h('b', null, money(goal - now.net)), ' до целта']),
+        fc.end > today && h('span', null, 'Очаквано до ', fmtDate(fc.end), ': ', h('b', null, `${fc.net >= 0 ? '+' : '−'}${money(Math.abs(fc.net))}`))),
       h('div', { class: 'fleet-occ' },
-        h('span', null, h('b', null, `${drivingNow} от ${cars.length}`), ' коли карат днес'),
+        h('span', null, h('b', null, `${drivingNow}/${cars.length}`), ' карат днес'),
         h('span', null, h('b', null, `${busy}%`), ' от дните на път')))
       : h('section', { class: 'card' },
         cardTitle('key', 'Как започваш'),
@@ -83,15 +92,11 @@ export function fleetHomeView({ go, user, rerender }) {
     // Днес
     cars.length > 0 && h('section', { class: 'card today-strip' },
       cardTitle('bolt', 'Днес', infos.some((i) => (i.car.members || []).some((m) => m.userId !== i.car.ownerId)) && h('button', { class: 'chip page', onclick: () => remindAll(infos, redraw) }, icon('bell', 14), 'Напомни на всички')),
-      items.length ? items.slice(0, 12).map((it) => h('div', { class: cx('td-row', it.cls) },
-        h('span', { class: 'td-ic' }, icon(it.ic, 17)),
-        h('span', { class: 'grow' }, h('b', null, it.t), h('small', null, it.s)),
-        it.acts.length > 0 && h('div', { class: 'td-acts' }, it.acts.map(([l, fn]) => h('button', { class: 'chip page', onclick: fn }, l)))))
-        : h('p', { class: 'muted' }, 'Всичко е наред – няма плащания, срокове или коли, които стоят.'),
-      debtors.length === 1 && h('button', { class: 'btn btn-dark btn-block', style: { marginTop: '10px' }, onclick: () => { remind(debtors[0].i.car, [{ userId: debtors[0].x.m.userId, amount: debtors[0].x.r.debt }]); redraw(); } }, icon('bell', 16), 'Напомни за наема')),
+      items.length ? todayRows(items) : h('p', { class: 'muted' }, 'Всичко е наред – няма плащания, срокове или коли, които стоят.')),
 
     // Колите
-    cars.length > 0 && h('div', { class: 'card-title fleet-h' }, h('h3', null, h('span', { class: 't-ic' }, icon('car', 17)), 'Колите'), h('small', { class: 'faint' }, 'плъзни наляво за действия')),
+    cars.length > 0 && h('div', { class: 'card-title fleet-h' }, h('h3', null, h('span', { class: 't-ic' }, icon('car', 17)), 'Колите', h('small', { class: 'faint' }, 'плъзни наляво')),
+      h('button', { class: 'chip page', onclick: () => go('/cars?new=1') }, icon('plus', 14), 'Кола')),
     infos.length > 0 && h('div', { class: 'car-list fleet-cars' }, infos.map((i) => {
       const drv = i.rents.map((x) => first(x.d.name || x.m.name));
       const debt = i.rents.reduce((a, x) => a + x.r.debt, 0);
@@ -109,7 +114,7 @@ export function fleetHomeView({ go, user, rerender }) {
         { label: 'Статус', ic: 'more', cls: 'calm', run: () => statusSheet(i.car, redraw) },
       ].filter(Boolean));
     })),
-    h('button', { class: 'btn btn-primary btn-block', style: { marginTop: '12px' }, onclick: () => go('/cars?new=1') }, icon('plus', 18), 'Добави кола'),
+    !cars.length && h('button', { class: 'btn btn-primary btn-block', style: { marginTop: '12px' }, onclick: () => go('/cars?new=1') }, icon('plus', 18), 'Добави кола'),
 
     // Печалба по кола
     ranked.length > 1 && h('section', { class: 'card', style: { marginTop: '14px' } },
@@ -129,10 +134,25 @@ export function fleetHomeView({ go, user, rerender }) {
         h('button', { class: 'icon-btn plain', 'aria-label': 'Махни', onclick: () => { store.updateProfile({ waitlist: (profile.waitlist || []).filter((x) => x.id !== w.id) }); redraw(); } }, icon('x', 18))))
         : h('p', { class: 'muted' }, 'Шофьори, които искат кола. Когато някоя се освободи, виждаш кой е чакал пръв.')),
 
-    // Седмичен отчет
-    cars.length > 0 && h('section', { class: 'card', style: { marginTop: '14px' } },
-      cardTitle('chart', 'Седмичен отчет', h('button', { class: 'chip page', onclick: () => reportSheet(infos) }, 'Виж')),
-      h('p', { class: 'muted small' }, `По кола: км, часове, дни и кой е карал. Идва като известие всеки `, h('button', { class: 'link-btn', onclick: () => daySheet(profile, redraw) }, (WEEKDAYS[(profile.reportDay ?? 1) === 0 ? 6 : (profile.reportDay ?? 1) - 1] || 'Понеделник').toLowerCase()), ' сутрин.')));
+    // Отчети: седмичният (и денят му) и Excel за счетоводителя
+    cars.length > 0 && h('section', { class: 'card fs-reports' },
+      cardTitle('chart', 'Отчети'),
+      h('button', { class: 'rep-row', onclick: () => reportSheet(infos) }, icon('calendar', 18), h('span', { class: 'grow' }, h('b', null, 'Последните 7 дни'), h('small', null, 'км, часове, дни и кой е карал – по кола')), icon('right', 16)),
+      h('button', { class: 'rep-row', onclick: () => accountantSheet(infos) }, icon('download', 18), h('span', { class: 'grow' }, h('b', null, 'Excel за счетоводителя'), h('small', null, 'наем, разходи и печалба по коли за месец')), icon('right', 16)),
+      h('p', { class: 'faint small' }, 'Седмичният идва като известие всеки ', h('button', { class: 'link-btn', onclick: () => daySheet(profile, redraw) }, (WEEKDAYS[(profile.reportDay ?? 1) === 0 ? 6 : (profile.reportDay ?? 1) - 1] || 'Понеделник').toLowerCase()), ' сутрин.')));
+}
+
+// „Днес“: първите 5, останалите – с „Още“
+function todayRows(items) {
+  const box = h('div', { class: 'td-list' });
+  const row = (it) => h('div', { class: cx('td-row', it.cls) },
+    h('span', { class: 'td-ic' }, icon(it.ic, 16)),
+    h('span', { class: 'grow' }, h('b', null, it.t), h('small', null, it.s)),
+    it.acts.length > 0 && h('div', { class: 'td-acts' }, it.acts.map(([l, fn]) => h('button', { class: 'chip page', onclick: fn }, l))));
+  const draw = (all) => box.replaceChildren(...(all ? items : items.slice(0, 5)).map(row),
+    !all && items.length > 5 ? h('button', { class: 'td-more', onclick: () => draw(true) }, `Още ${items.length - 5}`, icon('down', 14)) : '');
+  draw(false);
+  return box;
 }
 
 function waitSheet(redraw) {

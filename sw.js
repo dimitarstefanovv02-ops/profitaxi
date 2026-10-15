@@ -1,7 +1,7 @@
 // Чисто – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v150';
+const VERSION = 'profitaxi-v152';
 const SHELL = [
-  '/app', '/app.html', '/css/app.css?v=150', '/css/skins.css?v=150', '/js/skin.js', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/favicon-64.png',
+  '/app', '/app.html', '/css/app.css?v=152', '/css/skins.css?v=152', '/js/skin.js', '/manifest.webmanifest', '/manifest-fleet.webmanifest', '/icons/icon-192.png', '/icons/fleet-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/sync.js', '/js/schema.js', '/js/config.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',
   '/js/views/auth.js', '/js/views/onboarding.js', '/js/views/home.js', '/js/views/shift.js', '/js/views/shifts.js',
   '/js/views/stats.js', '/js/views/costs.js', '/js/views/profile.js', '/js/views/carSettings.js', '/js/views/cityPicker.js',
@@ -28,7 +28,7 @@ self.addEventListener('fetch', (e) => {
 // Известие от сървъра (админ: нов шофьор, въпрос)
 self.addEventListener('push', (e) => {
   let d = {}; try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
-  e.waitUntil(self.registration.showNotification(d.title || 'Чисто', { body: d.body || '', tag: d.tag, icon: /^\/admin/.test(d.url || '/admin') ? '/icons/admin-192.png' : '/icons/icon-192.png', badge: '/icons/favicon-64.png', data: { url: d.url || '/admin' } }));
+  e.waitUntil(self.registration.showNotification(d.title || 'Чисто', { body: d.body || '', tag: d.tag, icon: d.icon || (/^\/admin/.test(d.url || '/admin') ? '/icons/admin-192.png' : '/icons/icon-192.png'), badge: '/icons/favicon-64.png', data: { url: d.url || '/admin' } }));
 });
 
 // Натискане на известие отваря приложението на страница Разходи

@@ -4,6 +4,7 @@
 // Кола под наем: собственикът задава наема на всеки шофьор; разходите по колата са негови.
 import { h, icon, cx, money, fmtDate, fmtDuration, fmtNum, todayStr, startOfMonth, endOfMonth, MONTHS, parseDate } from '../util.js';
 import * as store from '../store.js';
+import { serviceState, serviceSheet, serviceText, adSheet } from './fleetplus.js';
 import { openSheet, sheetHead, toast, field, cardTitle, segmented, confirmSheet, empty, topSearch } from '../ui.js';
 import { costCat } from '../constants.js';
 import { editCost } from './costs.js';
@@ -99,7 +100,8 @@ function carDetail({ go, data, user, rerender }, id) {
     owner && h('div', { class: 'car-acts' },
       h('button', { class: 'btn btn-primary', onclick: () => quickAdd(info, redraw) }, icon('plus', 18), 'Запиши'),
       h('button', { class: 'btn btn-dark', onclick: () => carVoice(info, redraw) }, icon('mic', 18), 'Кажи'),
-      h('button', { class: 'btn btn-ghost', onclick: () => carDocsSheet(car, redraw) }, icon('edit', 16), 'Данни'))];
+      h('button', { class: 'btn btn-ghost', onclick: () => carDocsSheet(car, redraw) }, icon('edit', 16), 'Данни'),
+      car.type === 'rent' && (st === 'free' || st === 'idle') && h('button', { class: 'btn btn-ghost', onclick: () => adSheet(info) }, icon('share', 16), 'Обява'))];
 
   // Пари по колата – само за собственика
   const year = today.slice(0, 4);
@@ -125,13 +127,12 @@ function carDetail({ go, data, user, rerender }, id) {
   // Покана с линк – само собственикът
   const invite = owner && h('section', { class: 'card invite-car' },
     cardTitle('users', 'Покани шофьор'),
-    h('p', { class: 'muted small', style: { marginBottom: '10px' } }, 'Прати линка на шофьора. Като го отвори и влезе (или се регистрира), колата и наемът излизат и при него.'),
     h('div', { class: 'inv-link' }, h('code', null, linkOf(car))),
-    h('div', { class: 'row gap', style: { marginTop: '10px', flexWrap: 'wrap' } },
+    h('div', { class: 'row gap inv-acts' },
       h('button', { class: 'btn btn-dark', onclick: async () => { try { await navigator.clipboard.writeText(linkOf(car)); toast('Линкът е копиран'); } catch { toast('Копирай линка ръчно'); } } }, icon('copy', 16), 'Копирай'),
       navigator.share && h('button', { class: 'btn btn-ghost', onclick: () => navigator.share({ title: 'Покана за колата', text: `Покана за ${car.name || 'колата'} в „Чисто“`, url: linkOf(car) }).catch(() => {}) }, icon('share', 16), 'Изпрати'),
       h('button', { class: 'btn btn-ghost', onclick: () => confirmSheet({ title: 'Нов линк?', text: 'Старият линк спира да работи. Шофьорите, които вече са в колата, остават.', okLabel: 'Нов линк', onOk: () => { store.newInvite(car.id); redraw(); } }) }, 'Нов линк')),
-    h('p', { class: 'faint small', style: { marginTop: '8px' } }, `Код: ${car.invite}`));
+    h('p', { class: 'faint small' }, `Код: ${car.invite} · шофьорът отваря линка и колата излиза при него`));
 
   // Шофьорите: км, часове, дни, смени (+ гориво при лична кола), наемът и дългът – без приходите им
   const others = drivers.filter((d) => !(owner && d.userId === user.id && car.type === 'rent'));
@@ -159,7 +160,7 @@ function carDetail({ go, data, user, rerender }, id) {
     })) : h('p', { class: 'muted' }, owner ? 'Още няма шофьори. Прати им линка отдолу.' : 'Само ти си в колата.'),
     owner && car.type === 'own' && (car.members || []).length > 1 && h('button', { class: 'btn btn-ghost btn-block', style: { marginTop: '10px' }, onclick: () => sharesSheet(car, drivers, redraw) }, '% от разходите'),
     owner && info.gaps.gap > 0 && h('p', { class: 'gap-line' }, icon('alert', 15), `Неотчетени ${fmtNum(info.gaps.gap)} км – началният километраж на смяна е по-голям от крайния на предишната.`),
-    h('p', { class: 'faint small', style: { marginTop: '8px' } }, car.type === 'own' ? 'Виждаш километри, часове, дни, смени и гориво – без приходите на шофьорите.' : 'Виждаш километри, часове, дни и смени – приходите и разходите на шофьорите остават лични. Натисни шофьор за наема, депозита и документите му.'));
+    h('p', { class: 'faint small drv-note' }, car.type === 'own' ? 'Без приходите на шофьорите.' : 'Без приходите на шофьорите · натисни шофьор за наем, депозит, договор.'));
 
   // Срокове: застраховки, винетка, преглед, лиценз, тахограф – и документите на шофьорите
   const dls = owner ? info.deadlines.filter((x) => x.left <= 60) : [];
@@ -170,6 +171,12 @@ function carDetail({ go, data, user, rerender }, id) {
       x.amount ? h('b', { class: 'num' }, money(x.amount)) : null,
       x.costId && h('button', { class: 'chip page', onclick: () => { store.markCostPaid(x.costId); toast('Платено – следващият падеж е преместен'); redraw(); } }, 'Платено')))
       : h('p', { class: 'muted' }, info.deadlines.length ? 'Нищо не изтича в следващите 60 дни.' : `Добави до кога са ГО, каско, винетка, преглед, лиценз и тахограф – напомняме ${dlLabel()} преди това.`),
+    (() => { const sv = serviceState(info); return h('button', { class: 'cc-row svc-row', type: 'button', onclick: () => serviceSheet(info, redraw) },
+      h('span', { class: cx('cc-ic', sv && (sv.left <= 0 ? 'bad' : sv.left <= 1000 ? 'warn' : '')) }, icon('wrench', 17)),
+      h('span', { class: 'grow' }, h('b', null, 'Обслужване по километраж'),
+        sv ? [h('small', { class: sv.left <= 0 ? 'neg' : sv.left <= 1000 ? 'warn' : '' }, `${serviceText(sv)} · на ${fmtNum(sv.next)} км`), h('span', { class: 'svc-bar' }, h('i', { style: { width: `${sv.pct}%` } }))]
+          : h('small', null, 'Масло и филтри на всеки N км – натисни да настроиш')),
+      icon('right', 16)); })(),
     h('button', { class: 'dl-set', type: 'button', onclick: () => dlSheet(redraw) }, icon('bell', 14), `Напомняне ${dlLabel()} преди`, icon('right', 14)));
 
   // Разходите на колата
@@ -190,13 +197,17 @@ function carDetail({ go, data, user, rerender }, id) {
     car.type === 'own' && me && h('p', { class: 'faint small', style: { marginTop: '8px' } }, `Твоят дял е ${fmtNum(me.share || 0)}% – влиза сам в твоите постоянни разходи.`));
 
   // Дневник
-  const shown = info.logs.filter((l) => owner || l.driverId === user.id || l.by === user.id).slice(0, 15);
-  const logCard = shown.length > 0 && h('section', { class: 'card' }, cardTitle('list', 'Дневник на колата'), shown.map((l) => logRow(l, info, redraw)));
+  const shown = info.logs.filter((l) => owner || l.driverId === user.id || l.by === user.id).slice(0, 40);
+  const logBox = h('div');
+  const drawLog = (all) => logBox.replaceChildren(...(all ? shown : shown.slice(0, 5)).map((l) => logRow(l, info, redraw)),
+    !all && shown.length > 5 ? h('button', { class: 'td-more', onclick: () => drawLog(true) }, `Още ${shown.length - 5}`, icon('down', 14)) : '');
+  drawLog(false);
+  const logCard = shown.length > 0 && h('section', { class: 'card' }, cardTitle('list', 'Дневник на колата'), logBox);
 
   // За шофьора, който кара колата
   const mine = !owner && me && myCarCard(car, user, redraw);
 
-  const danger = h('div', { style: { marginTop: '18px' } },
+  const danger = h('div', { class: 'car-danger' },
     owner
       ? h('button', { class: 'btn btn-ghost btn-block', onclick: () => confirmSheet({ title: 'Да изтрия ли колата?', text: 'Шофьорите спират да я виждат, общите ѝ разходи се махат. Смените на всеки остават при него.', okLabel: 'Изтрий', danger: true, onOk: () => { store.deleteCar(car.id); go('/cars'); } }) }, icon('trash', 16), 'Изтрий колата')
       : h('button', { class: 'btn btn-ghost btn-block', onclick: () => confirmSheet({ title: 'Да изляза ли от колата?', text: 'Спираш да я виждаш и общите ѝ разходи вече не са твои.', okLabel: 'Излез', danger: true, onOk: () => { store.leaveCar(car.id); go('/cars'); } }) }, 'Излез от колата'));

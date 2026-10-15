@@ -1773,3 +1773,106 @@ body:has(.nav) .theme-fab, body:has(.tour) .theme-fab, body:has(.sheet-wrap) .th
 .sub-menu .big-link { padding: 10px 12px !important; gap: 12px !important; }
 .sub-menu .big-link .grow > span { display: block; font-size: .8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sub-menu .big-link .grow { min-width: 0; }
+
+/* ---------- Регистрация: по-кратка, с иконките на приложението ---------- */
+:root[data-skin] .auth-reg .auth-hero { margin: 8px 0 14px !important; }
+:root[data-skin] .auth-reg .auth-hero h1 { font-size: 1.9rem !important; }
+:root[data-skin] .auth-reg .auth-hero p { margin-top: 4px !important; }
+:root[data-skin] .auth-reg > .form { gap: 12px !important; }
+.acct-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+:root[data-skin] .auth-reg .acct-opt { padding: 14px 10px 12px !important; gap: 4px !important; border: 2px solid transparent !important; border-radius: 20px !important; background: var(--surface) !important; box-shadow: var(--shadow); text-align: center; min-height: 0 !important; }
+:root[data-skin] .auth-reg .acct-opt.on { border-color: var(--text) !important; }
+.acct-opt img { width: 58px; height: 58px; border-radius: 14px; margin-bottom: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.18); transition: transform .15s; }
+.acct-opt.on img { transform: scale(1.06); }
+.acct-opt b { font-size: .98rem; line-height: 1.2; }
+:root[data-skin] .auth-reg .acct-opt small { display: block !important; font-size: .78rem !important; line-height: 1.25; color: var(--muted) !important; font-weight: 500; }
+:root[data-skin] .auth-reg .reg-group { padding: 14px !important; gap: 10px !important; border-radius: 20px !important; }
+:root[data-skin] .auth-reg .reg-group h3 { font-size: .92rem !important; margin: 0 !important; }
+.reg-cc > .form { display: grid !important; grid-template-columns: 1fr 1fr; gap: 10px !important; align-items: start; }
+.reg-cc .field { min-width: 0; }
+.reg-seg { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+:root[data-skin] .auth-reg .reg-seg .option { flex-direction: row !important; justify-content: center; padding: 11px 8px !important; gap: 8px !important; border: 2px solid transparent !important; border-radius: 14px !important; }
+:root[data-skin] .auth-reg .reg-seg .option.on { border-color: var(--text) !important; }
+:root[data-skin] .auth-reg .reg-seg .option small { display: none !important; }
+.reg-codes summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: .9rem; color: var(--muted); padding: 4px 0; }
+.reg-codes summary::-webkit-details-marker { display: none; }
+.reg-codes[open] summary { margin-bottom: 10px; color: var(--text); }
+.reg-agree { display: flex; align-items: center; gap: 10px; font-size: .86rem; color: var(--muted); }
+.reg-agree input { width: 22px; height: 22px; accent-color: var(--text); flex: none; }
+.reg-agree a { color: var(--text); }
+:root[data-skin] .auth-reg .auth-foot { margin-top: 14px !important; }
+.reg-car { display: flex; flex-direction: column; gap: 8px; }
+:root[data-skin] .auth-reg .reg-car h3 { font-size: .86rem !important; color: var(--muted); font-weight: 600; }
+
+/* ---------- Собственик на коли: по-плътно, по-малко скролване ---------- */
+:root[data-skin] [data-page="fleet"] .card, :root[data-skin] [data-page="cars"] .card { padding: 12px 14px !important; margin-bottom: 10px !important; }
+:root[data-skin] [data-page="fleet"] .card-title, :root[data-skin] [data-page="cars"] .card-title { margin-bottom: 4px !important; min-height: 0 !important; }
+:root[data-skin] [data-page="fleet"] .card-title .chip, :root[data-skin] [data-page="cars"] .card-title .chip { min-height: 30px !important; padding: 0 11px !important; font-size: .8rem !important; }
+/* главната карта */
+:root[data-skin] [data-page="fleet"] .meter.fleet-sum { padding: 14px 16px !important; gap: 0 !important; margin-bottom: 10px !important; }
+:root[data-skin] [data-page="fleet"] .fleet-sum .meter-label { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+:root[data-skin] [data-page="fleet"] .fleet-sum .meter-value { font-size: 2.4rem !important; line-height: 1.1 !important; margin: 2px 0 2px !important; }
+:root[data-skin] [data-page="fleet"] .fleet-sum .meter-goal { font-size: .86rem !important; opacity: .85; margin: 0 !important; }
+.fs-goal-btn { display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,.28); background: rgba(255,255,255,.08); color: inherit; border-radius: 999px; padding: 4px 10px; font: inherit; font-size: .78rem; font-weight: 700; cursor: pointer; }
+.fs-bar { height: 6px; border-radius: 99px; background: rgba(255,255,255,.16); margin-top: 10px; overflow: hidden; order: 4; }
+.fs-bar i { display: block; height: 100%; border-radius: inherit; background: #52C46A; }
+.fs-lines { display: flex; flex-wrap: wrap; gap: 2px 14px; margin-top: 8px; font-size: .84rem; opacity: .92; order: 5; }
+:root[data-skin] [data-page="fleet"] .fleet-occ { margin-top: 10px !important; padding-top: 10px !important; font-size: .84rem !important; gap: 4px 14px !important; }
+/* „Днес“ */
+:root[data-skin] [data-page="fleet"] .td-row { padding: 8px 0 !important; gap: 10px !important; flex-wrap: nowrap !important; }
+.td-list > .td-row:first-child { border-top: 0 !important; }
+:root[data-skin] [data-page="fleet"] .td-row .grow { flex: 1 1 auto !important; }
+:root[data-skin] [data-page="fleet"] .td-row b { font-size: .9rem; line-height: 1.25; }
+:root[data-skin] [data-page="fleet"] .td-row small { font-size: .78rem !important; }
+:root[data-skin] [data-page="fleet"] .td-ic { width: 30px !important; height: 30px !important; border-radius: 9px !important; flex: none; }
+:root[data-skin] [data-page="fleet"] .td-acts { width: auto !important; padding-left: 0 !important; gap: 6px !important; flex: none; flex-direction: column; align-items: stretch; }
+:root[data-skin] [data-page="fleet"] .td-acts .chip { min-height: 30px !important; padding: 0 10px !important; font-size: .78rem !important; }
+.td-more { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; border: 0; border-top: 1px solid var(--line); background: none; color: var(--muted); font: inherit; font-size: .84rem; font-weight: 600; padding: 9px 0 2px; cursor: pointer; }
+/* колите – един списък */
+:root[data-skin] [data-page="fleet"] .fleet-h { margin: 6px 2px 6px !important; display: flex; align-items: center; justify-content: space-between; }
+:root[data-skin] [data-page="fleet"] .fleet-h h3 small { font-weight: 500; font-size: .74rem; margin-left: 6px; }
+:root[data-skin] [data-page="fleet"] .fleet-cars { gap: 6px !important; margin-bottom: 10px; }
+:root[data-skin] [data-page="fleet"] .fleet-cars .car-item { padding: 9px 12px !important; gap: 10px !important; margin: 0 !important; }
+:root[data-skin] [data-page="fleet"] .fleet-cars .ci-ic { width: 34px !important; height: 34px !important; border-radius: 10px !important; }
+:root[data-skin] [data-page="fleet"] .fleet-cars small { font-size: .78rem !important; }
+/* печалба по кола, чакащи, отчети */
+:root[data-skin] [data-page="fleet"] .rank-row { padding: 7px 0 !important; gap: 10px !important; }
+:root[data-skin] [data-page="fleet"] .rank-row .grow { gap: 4px !important; }
+:root[data-skin] [data-page="fleet"] .rank-row b { font-size: .88rem; }
+:root[data-skin] [data-page="fleet"] .rk { width: 24px !important; height: 24px !important; font-size: .76rem !important; }
+:root[data-skin] [data-page="fleet"] .cc-row, :root[data-skin] [data-page="cars"] .cc-row { padding: 7px 0 !important; gap: 10px !important; }
+:root[data-skin] [data-page="fleet"] .cc-row small, :root[data-skin] [data-page="cars"] .cc-row small { font-size: .78rem !important; }
+:root[data-skin] [data-page="cars"] .cc-row .cc-ic { width: 32px !important; height: 32px !important; border-radius: 10px !important; }
+:root[data-skin] [data-page="fleet"] .card[style] { margin-top: 0 !important; }
+.rep-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 0; border: 0; border-top: 1px solid var(--line); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.fs-reports .card-title + .rep-row { border-top: 0; }
+.rep-row .grow { display: flex; flex-direction: column; min-width: 0; }
+.rep-row b { font-size: .9rem; } .rep-row small { color: var(--muted); font-size: .78rem; }
+.fs-reports > p { margin-top: 6px; }
+/* една кола */
+:root[data-skin] [data-page="cars"] .car-head { margin-bottom: 6px !important; align-items: center !important; }
+:root[data-skin] [data-page="cars"] .car-head h1 { font-size: 1.5rem !important; }
+:root[data-skin] [data-page="cars"] .car-head p { font-size: .82rem !important; margin: 0 !important; }
+:root[data-skin] [data-page="cars"] .car-acts { display: flex !important; flex-wrap: wrap; gap: 6px !important; margin: 0 0 10px !important; }
+:root[data-skin] [data-page="cars"] .car-acts .btn { min-height: 38px !important; padding: 0 14px !important; font-size: .88rem !important; flex: 1 1 auto; }
+:root[data-skin] [data-page="cars"] .big-num { font-size: 1.9rem !important; margin: 0 !important; }
+:root[data-skin] [data-page="cars"] .payback { margin-top: 8px !important; gap: 4px !important; }
+:root[data-skin] [data-page="cars"] .drv-row { padding: 8px 0 !important; gap: 10px !important; }
+:root[data-skin] [data-page="cars"] .drv-row .grow { gap: 2px !important; }
+:root[data-skin] [data-page="cars"] .drv-nums { gap: 2px 10px !important; font-size: .84rem; }
+:root[data-skin] [data-page="cars"] .drv-row small { font-size: .78rem !important; }
+:root[data-skin] [data-page="cars"] .drv-face { width: 36px !important; height: 36px !important; font-size: .8rem !important; }
+.drv-note { margin-top: 6px; }
+:root[data-skin] [data-page="cars"] .gap-line { margin-top: 6px !important; padding: 8px 10px !important; font-size: .8rem !important; }
+:root[data-skin] [data-page="cars"] .hist-row, :root[data-skin] [data-page="cars"] .log-row { padding-top: 7px !important; padding-bottom: 7px !important; }
+.svc-row { width: 100%; }
+.svc-bar { display: block; height: 4px; border-radius: 99px; background: var(--surface-3); margin-top: 5px; overflow: hidden; }
+.svc-bar i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.svc-done { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--surface-2); }
+.inv-acts { margin-top: 8px; flex-wrap: wrap; }
+:root[data-skin] [data-page="cars"] .inv-acts .btn { min-height: 38px !important; padding: 0 14px !important; font-size: .86rem !important; }
+:root[data-skin] [data-page="cars"] .invite-car .faint { margin-top: 6px; }
+.car-danger { margin-top: 6px; }
+:root[data-skin] [data-page="cars"] .car-danger .btn { min-height: 40px !important; border: 0 !important; color: var(--muted) !important; font-size: .86rem !important; }
+:root[data-skin] [data-page="fleet"] .td-list > .td-row:nth-child(n+2) { border-top: 1px solid var(--line) !important; }
+:root[data-skin] [data-page="cars"] .car-head { display: flex !important; flex-wrap: wrap; gap: 4px 10px; }

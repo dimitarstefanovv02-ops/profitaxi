@@ -14,6 +14,7 @@ async def main():
         await pg.goto(B + '/app#/register'); await pg.wait_for_timeout(500)
         await pg.fill('input[autocomplete=name]', 'Нов Шофьор'); await pg.fill('input[autocomplete=username], input[type=email]', 'nov@test.bg'); await pg.fill('input[type=password]', '123456')
         await pg.fill('input[type=tel]', '0877555666')
+        if not await pg.locator('input[placeholder="напр. START2"]').is_visible(): await pg.click('summary:has-text("Имам")')
         await pg.fill('input[placeholder="напр. START2"]', car['invite'])  # кодът – по грешка в промо кода
         await pg.select_option('select >> nth=0', 'Пловдив'); await pg.wait_for_timeout(150); await pg.select_option('select >> nth=1', index=1)
         await pg.click('button.option:has-text("Под наем")')
