@@ -55,7 +55,7 @@ export function loginView({ go }) {
       h('b', null, 'Демо версия. '), `Пробвай с готов профил: ivan@demo.bg / demo123. `,
       h('button', { type: 'button', onclick: fill }, 'Попълни')),
     h('p', { class: 'auth-foot' }, 'Нямаш акаунт? ', h('a', { href: '#/register' }, 'Регистрирай се')),
-    h('p', { class: 'auth-foot auth-other' }, store.isFleetPath() ? h('a', { href: '/app' }, 'Шофьор ли си? Вход за шофьори') : h('a', { href: store.FLEET_PATH }, 'Даваш коли под наем? Вход за собственици')));
+    store.isFleetPath() && h('p', { class: 'auth-foot auth-other' }, h('a', { href: '/app' }, 'Шофьор ли си? Вход за шофьори')));
 }
 
 // Попълненото и избраното остават, ако екранът се нарисува наново (напр. след SMS или обновяване)
@@ -113,14 +113,15 @@ export function registerView({ go }) {
   const cc = cityCompanyPicker({ hint: false, short: true });
   let carType = D.carType || '';
   // Вид акаунт: шофьор или собственик на коли – всеки със своята иконка на приложението
-  let kind = D.kind || (store.isFleetPath() ? 'fleet' : 'driver');
+  // Собствениците засега се регистрират само от /avtopark – в /app няма избор на вид акаунт
+  let kind = store.isFleetPath() ? (D.kind || 'fleet') : 'driver';
   const kindBox = h('div');
   const carGroup = h('div', { class: 'reg-car' });
   const whereTitle = h('h3');
   const drawKind = () => {
     const opt = (k, title, sub) => h('button', { type: 'button', class: cx('option acct-opt', kind === k && 'on'), 'aria-pressed': String(kind === k), onclick: () => { kind = D.kind = k; drawKind(); } },
       h('img', { src: APP_ICONS[k], alt: '' }), h('b', null, title), h('small', null, sub));
-    fill(kindBox, h('div', { class: 'acct-pick' },
+    if (!store.isFleetPath()) kindBox.replaceChildren(); else fill(kindBox, h('div', { class: 'acct-pick' },
       opt('driver', 'Шофьор', 'Карам и следя парите'),
       opt('fleet', 'Собственик на коли', 'Колите ми карат други')));
     carGroup.style.display = kind === 'fleet' ? 'none' : '';
@@ -165,12 +166,14 @@ export function registerView({ go }) {
     Object.keys(D).forEach((k) => delete D[k]);
     go(kind === 'fleet' ? '/fguide?walk=1&first=1' : joinCode ? '/home' : '/guide?first=1');
   };
+  // Кодът за кола (от собственик) – засега само в /avtopark или ако идва от линк за покана
+  const showCar = store.isFleetPath() || !!joinPre;
   // Кодовете са по желание – скрити зад „Имам код“, освен ако идват от линк
   const codes = h('details', { class: 'reg-codes', open: !!(refFromLink || promoFromLink || joinPre) },
-    h('summary', null, icon('key', 16), 'Имам промо код или код за кола'),
+    h('summary', null, icon('key', 16), showCar ? 'Имам промо код или код за кола' : 'Имам промо код'),
     h('div', { class: 'form' },
       field('Промо код', promo),
-      field('Код за кола', carCode, 'От собственика на колата – код или линк')));
+      showCar && field('Код за кола', carCode, 'От собственика на колата – код или линк')));
   const group = (title, ...kids) => h('div', { class: 'reg-group' }, title && (typeof title === 'string' ? h('h3', null, title) : title), ...kids);
   return h('div', { class: 'auth auth-reg', 'data-page': 'register' },
     h('a', { class: 'back', href: '#/login' }, icon('left', 20), 'Назад'),

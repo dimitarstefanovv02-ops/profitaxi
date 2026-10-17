@@ -13,7 +13,7 @@
 import crypto from 'node:crypto';
 import { fieldColl, fieldKey } from '../js/schema.js';
 import { sendPush, pushReady } from '../lib/webpush.js';
-import { GUIDE } from '../lib/guide.js';
+import { GUIDE, GUIDE_FLEET } from '../lib/guide.js';
 import * as PK from '../lib/passkey.js';
 import * as MSG from '../lib/messenger.js';
 import { periodStats, shiftDate } from '../js/calc.js';
@@ -760,7 +760,10 @@ const ops = {
     if (groqMock()) a = mockAnswer || 'Excel файлът е в Пари → „Свали в Excel“.';
     else if (!GROQ) return { error: 'AI отговорите още не са включени на сървъра.' };
     else {
-      try { a = await groqChat([{ role: 'system', content: ASK_SYSTEM }, { role: 'user', content: text }]); }
+      // описанието за собственици на коли – само за собствениците (засега скрито от шофьорите)
+      const prof = parse(await one(['HGET', 'pt:db', `profiles:${s.id}`]));
+      const sys = prof?.accountType === 'fleet' ? ASK_SYSTEM + '\n\n' + GUIDE_FLEET : ASK_SYSTEM;
+      try { a = await groqChat([{ role: 'system', content: sys }, { role: 'user', content: text }]); }
       catch (e) { console.error('ask', e); return { error: 'AI не отговаря в момента. Опитай след малко.' }; }
     }
     const u = parse(await one(['HGET', 'pt:db', `users:${s.id}`]));

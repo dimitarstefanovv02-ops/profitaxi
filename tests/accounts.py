@@ -27,7 +27,7 @@ async def main():
         await o.goto(B + '/avtopark#/register'); await o.wait_for_timeout(500)
         ok('/avtopark: регистрацията е избрана за собственик', await o.locator('.acct-opt.on:has-text("Собственик")').count() == 1)
         await d.goto(B + '/app#/login'); await d.wait_for_timeout(500)
-        ok('/app: линк към входа за собственици', await d.locator('a[href="/avtopark"]').count() == 1)
+        ok('/app: без линк към собствениците (скрити засега)', await d.locator('a[href="/avtopark"]').count() == 0 and await d.locator('.acct-opt').count() == 0)
         # шофьор в /app
         e = await d.evaluate(reg('Иво Шофьоров', 'ivo.drv@t.bg', '0888700001', 'driver')); ok('/app: регистрация шофьор', e is None, e)
         await d.goto(B + '/app#/home'); await d.wait_for_timeout(900)

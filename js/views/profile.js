@@ -42,7 +42,8 @@ export function profileView({ go, user, data, route, settings }) {
         listBtn('user', d.photo ? 'Смени профилната снимка' : 'Качи профилна снимка', () => setPhoto('photo', draw), true),
         listBtn('camera', d.carPhoto ? 'Смени снимката на колата' : 'Качи снимка на колата', () => setPhoto('carPhoto', draw), true)))],
 
-      ['kind', h('div', null, h('h2', { class: 'section-title' }, 'Вид акаунт'),
+      // „Вид акаунт“ – засега само при собствениците (шофьорите не виждат, че има друг вид)
+      fleet && ['kind', h('div', null, h('h2', { class: 'section-title' }, 'Вид акаунт'),
       h('section', { class: 'card', style: { padding: '8px 18px' } },
         h('a', { class: 'list-btn', href: '#/help' }, h('span', { class: 'l-ic' }, icon(fleet ? 'key' : 'car', 18)),
           h('span', { class: 'grow' }, fleet ? 'Собственик на коли' : 'Шофьор', h('small', { class: 'muted', style: { display: 'block', fontWeight: 500 } }, 'Избира се при регистрация. За смяна – пиши ни')), icon('right', 18))))],
@@ -64,7 +65,7 @@ export function profileView({ go, user, data, route, settings }) {
       ['exit', h('section', { class: 'card', style: { padding: '8px 18px' } },
         listBtn('logout', 'Изход', () => { store.logout(); go('/login'); }),
         h('button', { class: 'list-btn danger', onclick: delAccount }, h('span', { class: 'l-ic' }, icon('trash', 18)), h('span', { class: 'grow' }, 'Изтрий акаунта')))],
-      ].filter(([k]) => (settings ? !PERSONAL.includes(k) : PERSONAL.includes(k)))),
+      ].filter(Boolean).filter(([k]) => (settings ? !PERSONAL.includes(k) : PERSONAL.includes(k)))),
       settings && h('p', { class: 'faint small', style: { textAlign: 'center', marginTop: '18px' } }, store.live() ? 'Данните се пазят в облака – влез от всеки телефон и ги виждаш.' : 'Демо версия. Данните се пазят на това устройство.'));
   };
   draw();

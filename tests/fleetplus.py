@@ -17,7 +17,7 @@ async def main():
         pg = await ctx.new_page(); errs = []; pg.set_default_timeout(8000)
         pg.on('pageerror', lambda e: errs.append(str(e)))
         # иконките при регистрация
-        await pg.goto(B + '/app'); await pg.evaluate("localStorage.clear(); localStorage.setItem('profitaxi.fwalk','1'); localStorage.setItem('profitaxi.installed','1')"); await pg.goto(B + '/app#/register'); await pg.wait_for_timeout(600)
+        await pg.goto(B + '/app'); await pg.evaluate("localStorage.clear(); localStorage.setItem('profitaxi.fwalk','1'); localStorage.setItem('profitaxi.installed','1')"); await pg.goto(B + '/avtopark#/register'); await pg.wait_for_timeout(600)
         srcs = await pg.eval_on_selector_all('.acct-opt img', 'e => e.map(x => x.getAttribute("src"))')
         ok('Регистрация: двете иконки на приложението', srcs == ['/icons/icon-192.png', '/icons/fleet-192.png'], srcs)
         await pg.click('button.option:has-text("Собственик на коли")'); await pg.wait_for_timeout(150)

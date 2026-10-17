@@ -34,7 +34,7 @@ async def main():
     await pg.goto('http://localhost:8765/app#/me'); await pg.wait_for_timeout(400)
     ok(await pg.locator('.nav a[href="#/me"]').inner_text()=='Профил', 'Третият бутон се казва „Профил“')
     await pg.click('.big-link:has-text("Помощ")'); await pg.wait_for_timeout(400); await pg.click('.sheet .big-link:has-text("Презентация")'); await pg.wait_for_timeout(500)
-    ok('#/guide' in pg.url and await pg.locator('.guide-page').count()==19 and await pg.locator('.guide-next').count()==0, 'Профил → Презентация: 16 страници, без „Нататък“')
+    ok('#/guide' in pg.url and await pg.locator('.guide-page').count()==18 and await pg.locator('.guide-next').count()==0, 'Профил → Презентация: 16 страници, без „Нататък“')
     r=await pg.evaluate("async()=>[(await fetch('/guide/p16.webp')).status,(await fetch('/guide/Chisto-vavedenie.pdf')).status]")
     ok(r==[200,200], 'Картинките и PDF-ът съществуват', r)
     ok(not errs, 'Без грешки в JS', errs)

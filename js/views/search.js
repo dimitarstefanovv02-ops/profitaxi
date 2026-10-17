@@ -30,7 +30,9 @@ export function searchKB(q, n = 3) {
   const qs = [...new Set(words(q))];
   if (!qs.length) return [];
   const out = [];
+  const fleet = store.isFleetPath();
   for (const it of INDEX) {
+    if (it.e.fleet && !fleet) continue; // отговорите за собственици – само в /avtopark
     let score = 0, hit = 0;
     for (const w of qs) {
       let s = 0;

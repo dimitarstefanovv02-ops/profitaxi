@@ -8,7 +8,7 @@ async def main():
     async with async_playwright() as p:
         b=await p.chromium.launch(); pg=await b.new_page(viewport={'width':390,'height':844},device_scale_factor=2); errs=[]; pg.set_default_timeout(8000)
         pg.on('pageerror',lambda e: errs.append(str(e)))
-        await pg.goto(B+'/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B+'/app#/register'); await pg.wait_for_timeout(500)
+        await pg.goto(B+'/app'); await pg.evaluate('localStorage.clear()'); await pg.goto(B+'/avtopark#/register'); await pg.wait_for_timeout(500)
         await pg.click('button.option:has-text("Собственик на коли")'); await pg.wait_for_timeout(150)
         ok('При собственик полето „Колата е“ се скрива', not await pg.locator('h3:has-text("Колата е")').is_visible())
         await pg.fill('input[autocomplete=name]','Петър Собственик'); await pg.fill('input[autocomplete=username], input[type=email]','owner@test.bg'); await pg.fill('input[type=password]','123456')
