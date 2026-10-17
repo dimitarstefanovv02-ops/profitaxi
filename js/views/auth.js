@@ -1,7 +1,7 @@
 // Вход, регистрация, забравена парола
 
 import { h, fill, icon, cx } from '../util.js';
-import { CAR_TYPES } from '../constants.js';
+import { CAR_TYPES, AGE_RANGES } from '../constants.js';
 import { cityCompanyPicker } from './cityPicker.js';
 import * as store from '../store.js';
 import { toast, field, segmented, APP_ICONS, setAppIcon } from '../ui.js';
@@ -103,6 +103,8 @@ export function registerView({ go }) {
   drawPhone(); store.loadVerifyCfg().then(drawPhone);
   phoneWrap.append(idWrap);
   const pw = keep(input({ type: 'password', autocomplete: 'new-password', placeholder: 'Поне 6 символа' }), 'pw');
+  // Възраст – по желание
+  const age = keep(h('select', { class: 'input reg-age' }, h('option', { value: '' }, 'Не искам да казвам'), Object.entries(AGE_RANGES).map(([k, v]) => h('option', { value: k }, v))), 'age');
   const refFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('ref') || '';
   const ref = input({ placeholder: 'напр. IVAN-7K2Q', value: refFromLink, autocapitalize: 'characters', style: { textTransform: 'uppercase' } });
   const promoFromLink = new URLSearchParams(location.hash.split('?')[1] || '').get('promo') || '';
@@ -160,7 +162,7 @@ export function registerView({ go }) {
     if (!agree.checked) { err.textContent = 'Приеми общите условия, за да продължиш'; return; }
     const btn = e.target.querySelector('button[type=submit]'); if (btn) btn.disabled = true;
     try { if (joinCode) localStorage.setItem('profitaxi.joinCode', joinCode); else localStorage.removeItem('profitaxi.joinCode'); } catch { /* */ } // след първата настройка влизаш в колата
-    const r = await store.register({ by, name: name.value, email: email.value.trim(), password: pw.value, phone: phone.value.trim(), city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promoCode });
+    const r = await store.register({ by, name: name.value, email: email.value.trim(), password: pw.value, phone: phone.value.trim(), city: v.city, company: v.company, carType: kind === 'fleet' ? 'own' : carType, accountType: kind, refCode: ref.value, promo: promoCode, ageRange: AGE_RANGES[age.value] ? age.value : '' });
     if (btn) btn.disabled = false;
     if (r.error) { err.textContent = r.error; return; }
     Object.keys(D).forEach((k) => delete D[k]);
@@ -191,6 +193,7 @@ export function registerView({ go }) {
         codes),
       group(whereTitle, h('div', { class: 'reg-cc' }, cc.el),
         (carGroup.replaceChildren(h('h3', null, 'Колата е'), carBox), carGroup)),
+      group(null, field('На каква възраст си · по желание', age)),
       h('label', { class: 'reg-agree' }, agree, h('span', null, 'Приемам ', h('a', { href: '/terms.html', target: '_blank' }, 'общите условия'), ' и ', h('a', { href: '/privacy.html', target: '_blank' }, 'поверителността'))),
       err,
       h('button', { class: 'btn btn-primary btn-xl', type: 'submit' }, 'Създай акаунт')),

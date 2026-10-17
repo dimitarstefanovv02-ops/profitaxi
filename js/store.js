@@ -233,7 +233,7 @@ export function checkAccessCode(code, company) {
   return { code: clone(c) };
 }
 // Собственик на автопарк: не кара – без първа настройка на колата и без разходка
-const fleetProfile = (f) => (f.accountType === 'fleet' ? { carType: 'own', accountType: 'fleet', onboarded: true } : { carType: f.carType });
+const fleetProfile = (f) => ({ ...(f.accountType === 'fleet' ? { carType: 'own', accountType: 'fleet', onboarded: true } : { carType: f.carType }), ...(f.ageRange ? { ageRange: f.ageRange } : {}) });
 export const isFleet = (p) => p?.accountType === 'fleet';
 export function register(f) {
   load();

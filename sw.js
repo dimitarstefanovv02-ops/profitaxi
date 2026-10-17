@@ -1,5 +1,5 @@
 // Чисто – service worker: приложението се отваря и без интернет.
-const VERSION = 'profitaxi-v160';
+const VERSION = 'profitaxi-v161';
 const SHELL = [
   '/app', '/app.html', '/avtopark', '/avtopark.html', '/css/app.css?v=159', '/css/skins.css?v=159', '/js/skin.js', '/manifest.webmanifest', '/manifest-fleet.webmanifest', '/icons/icon-192.png', '/icons/fleet-192.png', '/icons/favicon-64.png',
   '/js/app.js', '/js/util.js', '/js/store.js', '/js/sync.js', '/js/schema.js', '/js/config.js', '/js/calc.js', '/js/ui.js', '/js/constants.js',

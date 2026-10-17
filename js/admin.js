@@ -9,7 +9,7 @@ import { applyTheme, toast, confirmSheet, openSheet, sheetHead, field, barChart,
 import { startTour, ADMIN_TOUR } from './tour.js';
 import { rentState as rentStateA } from './fleet.js';
 import { periodStats, series, shiftIncome, shiftExpenses, shiftKm, shiftHours, shiftDate, costMonthly, goalProgress, timeInsights, activeCosts } from './calc.js';
-import { CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costCat, allCompanies, companyKey, splitCompany } from './constants.js';
+import { AGE_RANGES, CAR_TYPES, FUELS, PERIODS, INCOME_TYPES, incomeTypes, expenseCat, costCat, allCompanies, companyKey, splitCompany } from './constants.js';
 import { pickImage } from './views/categories.js';
 import { periodPicker, periodRange, statsBody, exportCsv } from './views/stats.js';
 import { cityCompanyPicker } from './views/cityPicker.js';
@@ -1008,6 +1008,7 @@ function driverDetail(r) {
         info('Град', u.city || '—'), info('Фирма', u.company || '—'),
         info('Регистриран', fmtDate(isoToDateStr(u.createdAt), { year: true })),
         info('Откъде', SOURCES[u.source] || '—'),
+        info('Възраст', AGE_RANGES[p.ageRange] || 'Не е посочена'),
         info('Последен вход', u.lastLoginAt ? timeTxt(u.lastLoginAt) : '—'),
         info('Кола', `${CAR_TYPES[p.carType]?.label || 'Собствена'}${p.carType === 'rent' ? `, ${money(p.rent.amount)} ${PERIODS[p.rent.period].label}` : ''}`),
         p.car?.plate && info('Номер', `${p.car.model || ''} ${p.car.plate}${p.car.code ? `, код ${p.car.code}` : ''}`.trim()),
@@ -1552,6 +1553,7 @@ function sourcesTab(all) {
   const promos = isOwner() ? store.admin.promos() : [];
   return flow('growth.sources', [
     ['bars', card('target', 'Откъде идват регистрациите', hbars(rows.map(([k, l]) => [SOURCES[k] || k, l.length]), all.length))],
+    ['age', card('user', 'На каква възраст са', hbars([...Object.entries(AGE_RANGES).map(([k, l]) => [l, all.filter((x) => x.profile?.ageRange === k).length]), ['Не е посочена', all.filter((x) => !AGE_RANGES[x.profile?.ageRange]).length]], all.length))],
     ['conv', card('trophy', 'Кой източник носи платени', table(['Източник', 'Регистрации', 'Платили', 'Дял', 'Активни'], rows.map(([k, l]) => { const p = l.filter((d) => d.user.subscription.paidSince).length; return { cells: [h('b', null, SOURCES[k] || k), String(l.length), String(p), pct(p, l.length), String(l.filter(isActive).length)] }; }), { rightFrom: 1 }),
       note('Сравни източниците: откъдето идват платили шофьори, там си струва да даваш повече за реклама.'))],
     promos.length > 0 && ['promo', card('gift', 'Промо кодове', table(['Код', 'Отстъпка', 'Ползван', 'Платили'], promos.map((p) => { const l = all.filter((d) => d.user.promo === p.code); return { cells: [h('b', { class: 'code' }, p.code), p.kind === 'months' ? `${p.value} мес. безплатно` : `-${p.value}%`, `${p.uses}${p.limit ? ` от ${p.limit}` : ''}`, String(l.filter((d) => d.user.subscription.paidSince).length)] }; }), { rightFrom: 2 }))],
